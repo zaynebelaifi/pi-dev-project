@@ -1,0 +1,37 @@
+{# templates/landingpage/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Big4 - landingpage{% endblock %}
+
+{% block content %}
+    <div class="fade-in">
+        <h1 class="mb-3">Welcome to Big4 Admin</h1>
+        
+        <div class="grid-3">
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Total Deliveries</div>
+                    <div class="stat-value">1,284</div>
+                    <div class="stat-change">↑ 8% this week</div>
+                </div>
+                <i class="fas fa-truck-loading fa-2x" style="color: var(--accent);"></i>
+            </div>
+
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Active Couriers</div>
+                    <div class="stat-value">42</div>
+                </div>
+                <i class="fas fa-user-check fa-2x" style="color: var(--info);"></i>
+            </div>
+
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Revenue</div>
+                    <div class="stat-value">$12.5k</div>
+                </div>
+                <i class="fas fa-wallet fa-2x" style="color: var(--success);"></i>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}DeliveryMan index{% endblock %}
+
+{% block body %}
+    <h1>DeliveryMan index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Delivery_man_id</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Vehicle_type</th>
+                <th>Vehicle_number</th>
+                <th>Status</th>
+                <th>Address</th>
+                <th>Salary</th>
+                <th>Date_of_joining</th>
+                <th>Rating</th>
+                <th>Created_at</th>
+                <th>Updated_at</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for delivery_man in delivery_men %}
+            <tr>
+                <td>{{ delivery_man.deliveryManId }}</td>
+                <td>{{ delivery_man.name }}</td>
+                <td>{{ delivery_man.phone }}</td>
+                <td>{{ delivery_man.email }}</td>
+                <td>{{ delivery_man.vehicleType }}</td>
+                <td>{{ delivery_man.vehicleNumber }}</td>
+                <td>{{ delivery_man.status }}</td>
+                <td>{{ delivery_man.address }}</td>
+                <td>{{ delivery_man.salary }}</td>
+                <td>{{ delivery_man.dateOfJoining ? delivery_man.dateOfJoining|date('Y-m-d') : '' }}</td>
+                <td>{{ delivery_man.rating }}</td>
+                <td>{{ delivery_man.createdAt ? delivery_man.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ delivery_man.updatedAt ? delivery_man.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_delivery_man_show', {'delivery_man_id': delivery_man.delivery_man_id}) }}">show</a>
+                    <a href="{{ path('app_delivery_man_edit', {'delivery_man_id': delivery_man.delivery_man_id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="14">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_delivery_man_new') }}">Create new</a>
+{% endblock %}

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIG 4 — Admin Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ivory:    #FAF6EF;
+  --ivory-2:  #F4EDE0;
+  --ivory-3:  #EDE4D0;
+  --ivory-4:  #E5D9C3;
+  --gold:     #B8872A;
+  --gold-2:   #D4A23E;
+  --gold-lt:  #E8C472;
+  --gold-pale:#F5E4B8;
+  --gold-wash:#FBF4E3;
+  --brown:    #5C3D1E;
+  --brown-lt: #8C6340;
+  --espresso: #2C1A0E;
+  --text:     #2C1A0E;
+  --text-2:   #7A5C3A;
+  --text-3:   #A88C6E;
+  --border:   rgba(184,135,42,0.18);
+  --border-2: rgba(184,135,42,0.30);
+  --shadow:   rgba(92,61,30,0.10);
+  --shadow-md:rgba(92,61,30,0.16);
+  --sidebar-w:256px;
+
+  --green:    #2E9E6A;
+  --green-bg: rgba(46,158,106,0.1);
+  --red:      #D94040;
+  --red-bg:   rgba(217,64,64,0.1);
+  --amber:    #C87D20;
+  --amber-bg: rgba(200,125,32,0.1);
+  --blue:     #3A7EC9;
+  --blue-bg:  rgba(58,126,201,0.1);
+  --purple:   #7C4FC4;
+  --purple-bg:rgba(124,79,196,0.1);
+  --rose:     #C94070;
+  --rose-bg:  rgba(201,64,112,0.1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--ivory-2);color:var(--text);font-family:'Jost',sans-serif;font-weight:400;display:flex;min-height:100vh;overflow-x:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--ivory);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;box-shadow:2px 0 20px var(--shadow);}
+.sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.brand-badge{width:38px;height:38px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.1rem;color:var(--ivory);flex-shrink:0;}
+.brand-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);letter-spacing:.08em;line-height:1;font-weight:600;}
+.brand-sub{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);margin-top:2px;}
+.sidebar-sec{padding:1.1rem .9rem .4rem;}
+.sidebar-sec-lbl{font-size:.54rem;letter-spacing:.28em;text-transform:uppercase;color:var(--text-3);padding:0 .5rem;margin-bottom:.5rem;}
+.nav-item{display:flex;align-items:center;gap:.7rem;padding:.6rem .75rem;border-radius:6px;text-decoration:none;color:var(--text-2);font-size:.75rem;font-weight:500;letter-spacing:.02em;transition:all .2s;cursor:pointer;border:1px solid transparent;margin-bottom:1px;}
+.nav-item:hover{background:var(--gold-wash);color:var(--brown);border-color:var(--border);}
+.nav-item.active{background:var(--gold-pale);color:var(--gold);border-color:rgba(184,135,42,.22);font-weight:600;}
+.nav-icon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--gold);color:var(--ivory);font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center;}
+.nav-badge.red{background:var(--red);color:white;}
+.sidebar-footer{margin-top:auto;padding:1rem;border-top:1px solid var(--border);}
+.admin-card{display:flex;align-items:center;gap:9px;padding:.7rem 1rem;background:var(--ivory-2);border-radius:8px;border:1px solid var(--border);}
+.admin-av{width:32px;height:32px;border-radius:50%;background:var(--gold-pale);border:1.5px solid rgba(184,135,42,.3);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--gold);flex-shrink:0;}
+.admin-name{font-size:.73rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.admin-role{font-size:.58rem;color:var(--text-3);letter-spacing:.08em;}
+.admin-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);flex-shrink:0;margin-left:auto;}
+
+/* MAIN */
+.main-wrap{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+/* TOPBAR */
+.topbar{height:62px;background:var(--ivory);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px var(--shadow);}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--espresso);font-weight:600;line-height:1;}
+.topbar-bc{font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-3);margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:.85rem;}
+.t-btn{display:flex;align-items:center;gap:.35rem;padding:.42rem .95rem;border:1px solid var(--border-2);background:transparent;color:var(--text-2);font-size:.7rem;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.06em;cursor:pointer;border-radius:4px;text-decoration:none;transition:all .2s;}
+.t-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-wash);}
+.t-btn.primary{background:var(--gold);border-color:var(--gold);color:var(--ivory);font-weight:700;}
+.t-btn.primary:hover{background:var(--gold-2);border-color:var(--gold-2);color:var(--ivory);}
+.t-div{width:1px;height:22px;background:var(--border);}
+.notif{position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-2);border-radius:6px;background:transparent;color:var(--text-2);cursor:pointer;font-size:1rem;transition:all .2s;}
+.notif:hover{border-color:var(--gold);color:var(--gold);}
+.notif-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--red);border:1px solid var(--ivory);}
+
+/* CONTENT */
+.content{padding:2rem;flex:1;}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+.kpi{background:var(--ivory);border:1px solid var(--border);border-radius:10px;padding:1.3rem 1.5rem;position:relative;overflow:hidden;transition:all .3s;cursor:default;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-lt));transform:scaleX(0);transform-origin:left;transition:transform .35s;}
+.kpi:hover{box-shadow:0 8px 28px var(--shadow-md);border-color:var(--border-2);}
+.kpi:hover::before{transform:scaleX(1);}
+.kpi-lbl{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);margin-bottom:.8rem;display:flex;justify-content:space-between;align-items:center;}
+.kpi-icon{font-size:.85rem;}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:600;color:var(--espresso);line-height:1;margin-bottom:.35rem;}
+.kpi-chg{font-size:.66rem;display:flex;align-items:center;gap:.25rem;}
+.up{color:var(--green);}.down{color:var(--red);}
+
+/* SECTION HEAD */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.sec-head h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--espresso);display:flex;align-items:center;gap:.55rem;}
+.sec-head h2::before{content:'';width:3px;height:16px;background:var(--gold);border-radius:2px;flex-shrink:0;}
+.view-all{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:.3rem;transition:gap .2s;}
+.view-all:hover{gap:.6rem;}
+
+/* MODULE CARDS */
+.mod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-bottom:2rem;}
+.mod-card{background:var(--ivory);border:1px solid var(--border);border-radius:12px;padding:1.7rem 1.6rem;cursor:pointer;position:relative;overflow:hidden;transition:all .38s cubic-bezier(.34,1.4,.64,1);}
+.mod-card::after{content:'';position:absolute;inset:0;border-radius:12px;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(184,135,42,.05),transparent 65%);opacity:0;transition:opacity .3s;pointer-events:none;}
+.mod-card:hover{border-color:var(--border-2);transform:translateY(-5px) rotateX(1.5deg) rotateY(-1deg);box-shadow:0 18px 50px var(--shadow-md),0 0 0 1px rgba(184,135,42,.08);}
+.mod-card:hover::after{opacity:1;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.4rem;}
+.c-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+.c-icon.gold{background:var(--gold-pale);}
+.c-icon.green{background:var(--green-bg);}
+.c-icon.red{background:var(--red-bg);}
+.c-icon.blue{background:var(--blue-bg);}
+.c-icon.amber{background:var(--amber-bg);}
+.c-icon.purple{background:var(--purple-bg);}
+.c-icon.rose{background:var(--rose-bg);}
+.pill{font-size:.57rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:20px;}
+.p-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(46,158,106,.2);}
+.p-amber{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(200,125,32,.2);}
+.p-blue{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(58,126,201,.2);}
+.p-red{background:var(--red-bg);color:var(--red);border:1px solid rgba(217,64,64,.2);}
+.p-purple{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(124,79,196,.2);}
+.p-rose{background:var(--rose-bg);color:var(--rose);border:1px solid rgba(201,64,112,.2);}
+.c-title{font-family:'Cormorant Garamond',serif;font-size:1.22rem;font-weight:600;color:var(--espresso);margin-bottom:.3rem;}
+.c-desc{font-size:.73rem;line-height:1.7;color:var(--text-2);margin-bottom:1.2rem;}
+.c-stats{display:flex;gap:1rem;padding-top:1rem;border-top:1px solid var(--border);}
+.cs-item{flex:1;}
+.cs-num{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--espresso);line-height:1;}
+.cs-lbl{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-top:2px;}
+.c-bar{height:3px;background:var(--ivory-3);border-radius:2px;margin-top:.65rem;overflow:hidden;}
+.c-bar-fill{height:100%;border-radius:2px;background:var(--gold);transition:width .8s ease;}
+.c-bar-fill.green{background:var(--green);}
+.c-bar-fill.blue{background:var(--blue);}
+.c-bar-fill.amber{background:var(--amber);}
+.c-bar-fill.purple{background:var(--purple);}
+.c-bar-fill.rose{background:var(--rose);}
+.c-action{display:inline-flex;align-items:center;gap:.35rem;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-decoration:none;margin-top:1rem;transition:gap .22s;}
+.mod-card:hover .c-action{gap:.65rem;}
+
+/* TABLE */
+.tbl-card{background:var(--ivory);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:2rem;box-shadow:0 2px 16px var(--shadow);}
+.tbl-head{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--ivory);}
+.tbl-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--espresso);}
+.tbl-filters{display:flex;gap:.4rem;}
+.f-btn{padding:.28rem .72rem;font-size:.63rem;font-family:'Jost',sans-serif;letter-spacing:.06em;border:1px solid var(--border-2);background:transparent;color:var(--text-2);border-radius:4px;cursor:pointer;transition:all .2s;}
+.f-btn.active,.f-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-wash);}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:.7rem 1.5rem;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);text-align:left;background:var(--ivory-2);font-weight:500;border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid rgba(184,135,42,.07);transition:background .2s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--gold-wash);}
+tbody td{padding:.95rem 1.5rem;font-size:.77rem;}
+.ord-id{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:var(--gold);}
+.cust-cell{display:flex;align-items:center;gap:.7rem;}
+.av-sm{width:30px;height:30px;border-radius:50%;background:var(--ivory-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:var(--gold);flex-shrink:0;}
+.cust-name{font-weight:500;color:var(--espresso);font-size:.77rem;}
+.cust-type{font-size:.58rem;color:var(--text-3);}
+.sbadge{display:inline-flex;align-items:center;gap:.28rem;padding:3px 10px;border-radius:20px;font-size:.6rem;font-weight:600;letter-spacing:.06em;}
+.sbadge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.s-delivered{background:var(--green-bg);color:var(--green);}
+.s-preparing{background:var(--amber-bg);color:var(--amber);}
+.s-pending{background:var(--blue-bg);color:var(--blue);}
+.s-cancelled{background:var(--red-bg);color:var(--red);}
+.amount{font-weight:600;color:var(--espresso);}
+.dots{color:var(--text-3);font-size:1rem;cursor:pointer;letter-spacing:2px;transition:color .2s;}
+tbody tr:hover .dots{color:var(--gold);}
+
+/* BOTTOM */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:2rem;}
+.panel{background:var(--ivory);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 2px 12px var(--shadow);}
+.p-head{padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.p-title{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--espresso);display:flex;align-items:center;gap:.45rem;}
+.p-body{padding:1.1rem 1.5rem;}
+.act-item{display:flex;align-items:flex-start;gap:.7rem;padding:.65rem 0;border-bottom:1px solid rgba(184,135,42,.06);}
+.act-item:last-child{border-bottom:none;}
+.act-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.act-text{font-size:.73rem;color:var(--text-2);line-height:1.5;}
+.act-text strong{color:var(--espresso);font-weight:600;}
+.act-time{margin-left:auto;font-size:.6rem;color:var(--text-3);white-space:nowrap;padding-left:.8rem;}
+.q-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+.q-btn{display:flex;flex-direction:column;align-items:flex-start;gap:.25rem;padding:.95rem 1rem;background:var(--ivory-2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .25s;text-align:left;}
+.q-btn:hover{border-color:var(--border-2);background:var(--gold-wash);transform:translateY(-1px);box-shadow:0 4px 16px var(--shadow);}
+.q-icon{font-size:1.1rem;}
+.q-lbl{font-size:.7rem;font-weight:600;color:var(--espresso);}
+.q-sub{font-size:.6rem;color:var(--text-3);}
+
+@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(2,1fr);}.mod-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:900px){:root{--sidebar-w:0px;}.sidebar{transform:translateX(-256px);width:256px;}.main-wrap{margin-left:0;}.bottom-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-badge">B</div>
+    <div><div class="brand-name">BIG 4</div><div class="brand-sub">Admin Console</div></div>
+  </div>
+  <div class="sidebar-sec">
+    <div class="sidebar-sec-lbl">Main</div>
+    <a class="nav-item active" href="#"><div class="nav-icon">🏠</div>Dashboard</a>
+    <a class="nav-item" href="#"><div class="nav-icon">📊</div>Analytics</a>
+  </div>
+  <div class="sidebar-sec">
+    <div class="sidebar-sec-lbl">Operations</div>
+    <a class="nav-item" href="#"><div class="nav-icon">🛵</div>Delivery<span class="nav-badge red">7</span></a>
+    <a class="nav-item" href="#"><div class="nav-icon">📋</div>Menu Manager</a>
+    <a class="nav-item" href="#"><div class="nav-icon">🗑️</div>Waste Tracker</a>
+    <a class="nav-item" href="#"><div class="nav-icon">🎪</div>Events<span class="nav-badge">4</span></a>
+  </div>
+  <div class="sidebar-sec">
+    <div class="sidebar-sec-lbl">Management</div>
+    <a class="nav-item" href="#"><div class="nav-icon">🛒</div>Orders<span class="nav-badge">23</span></a>
+    <a class="nav-item" href="#"><div class="nav-icon">👥</div>Users</a>
+    <a class="nav-item" href="#"><div class="nav-icon">⚙️</div>Settings</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-sec-lbl" style="padding:0;margin-bottom:.5rem">Logged in as</div>
+    <div class="admin-card">
+      <div class="admin-av">AD</div>
+      <div><div class="admin-name">Admin Manager</div><div class="admin-role">Super Admin</div></div>
+      <div class="admin-dot"></div>
+    </div>
+  </div>
+</aside>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <div><div class="topbar-title">Dashboard</div><div class="topbar-bc">Big 4 · Admin · Overview</div></div>
+    <div class="topbar-right">
+      <a href="big4-frontend.html" class="t-btn" target="_blank">🌐 View Homepage</a>
+      <div class="t-div"></div>
+      <button class="notif">🔔<div class="notif-dot"></div></button>
+      <a href="#" class="t-btn primary">+ New Order</a>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-lbl">Today's Revenue <span class="kpi-icon">💰</span></div>
+        <div class="kpi-val">2,847 <span style="font-size:1rem;color:var(--text-3)">TND</span></div>
+        <div class="kpi-chg up">↑ 12.4% vs yesterday</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Active Orders <span class="kpi-icon">🛒</span></div>
+        <div class="kpi-val">23</div>
+        <div class="kpi-chg up">↑ 8 new this hour</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Deliveries Today <span class="kpi-icon">🚚</span></div>
+        <div class="kpi-val">41</div>
+        <div class="kpi-chg up">7 in transit now</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Waste Index <span class="kpi-icon">📉</span></div>
+        <div class="kpi-val">3.2<span style="font-size:1rem;color:var(--text-3)">%</span></div>
+        <div class="kpi-chg up">↓ 0.8% improvement</div>
+      </div>
+    </div>
+
+    <!-- MODULES -->
+    <div class="sec-head">
+      <h2>Operations Modules</h2>
+      <a href="#" class="view-all">Configure →</a>
+    </div>
+    <div class="mod-grid">
+
+      <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
+        <div class="card-top"><div class="c-icon gold">🛵</div><span class="pill p-green">Live</span></div>
+        <div class="c-title">Delivery</div>
+        <div class="c-desc">Track active deliveries, assign riders, manage zones and ETA estimates in real-time.</div>
+        <div class="c-stats">
+          <div class="cs-item"><div class="cs-num">7</div><div class="cs-lbl">In Transit</div></div>
+          <div class="cs-item"><div class="cs-num">34</div><div class="cs-lbl">Completed</div></div>
+          <div class="cs-item"><div class="cs-num">28 min</div><div class="cs-lbl">Avg. ETA</div></div>
+        </div>
+        <div class="c-bar"><div class="c-bar-fill green" style="width:82%"></div></div>
+        <a href="#" class="c-action">Manage Delivery →</a>
+      </div>
+
+      <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
+        <div class="card-top"><div class="c-icon blue">📋</div><span class="pill p-blue">48 Items</span></div>
+        <div class="c-title">Menu Manager</div>
+        <div class="c-desc">Add, edit or archive items, manage categories, prices, availability and dietary tags.</div>
+        <div class="c-stats">
+          <div class="cs-item"><div class="cs-num">48</div><div class="cs-lbl">Items</div></div>
+          <div class="cs-item"><div class="cs-num">6</div><div class="cs-lbl">Categories</div></div>
+          <div class="cs-item"><div class="cs-num">3</div><div class="cs-lbl">Out of Stock</div></div>
+        </div>
+        <div class="c-bar"><div class="c-bar-fill blue" style="width:94%"></div></div>
+        <a href="#" class="c-action">Edit Menu →</a>
+      </div>
+
+      <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
+        <div class="card-top"><div class="c-icon amber">🗑️</div><span class="pill p-amber">Low Waste</span></div>
+        <div class="c-title">Waste Tracker</div>
+        <div class="c-desc">Monitor ingredient waste, track disposal logs, identify patterns to reduce overhead and spoilage.</div>
+        <div class="c-stats">
+          <div class="cs-item"><div class="cs-num">3.2%</div><div class="cs-lbl">Waste Rate</div></div>
+          <div class="cs-item"><div class="cs-num">18 TND</div><div class="cs-lbl">Today's Loss</div></div>
+          <div class="cs-item"><div class="cs-num">-0.8%</div><div class="cs-lbl">Vs Last Week</div></div>
+        </div>
+        <div class="c-bar"><div class="c-bar-fill amber" style="width:32%"></div></div>
+        <a href="#" class="c-action">View Report →</a>
+      </div>
+
+      <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
+        <div class="card-top"><div class="c-icon purple">🎪</div><span class="pill p-purple">4 Upcoming</span></div>
+        <div class="c-title">Events</div>
+        <div class="c-desc">Create and manage lounge events, handle RSVPs, send invitations and publish to frontend.</div>
+        <div class="c-stats">
+          <div class="cs-item"><div class="cs-num">4</div><div class="cs-lbl">Upcoming</div></div>
+          <div class="cs-item"><div class="cs-num">87</div><div class="cs-lbl">RSVPs</div></div>
+          <div class="cs-item"><div class="cs-num">Apr 12</div><div class="cs-lbl">Next Event</div></div>
+        </div>
+        <div class="c-bar"><div class="c-bar-fill purple" style="width:65%"></div></div>
+        <a href="#" class="c-action">Manage Events →</a>
+      </div>
+
+      <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
+        <div class="card-top"><div class="c-icon green">🛒</div><span class="pill p-green">Active</span></div>
+        <div class="c-title">Orders</div>
+        <div class="c-desc">View all incoming orders across dine-in, delivery and takeaway. Update status, print tickets.</div>
+        <div class="c-stats">
+          <div class="cs-item"><div class="cs-num">23</div><div class="cs-lbl">Pending</div></div>
+          <div class="cs-item"><div class="cs-num">156</div><div class="cs-lbl">Today Total</div></div>
+          <div class="cs-item"><div class="cs-num">18 TND</div><div class="cs-lbl">Avg. Order</div></div>
+        </div>
+        <div class="c-bar"><div class="c-bar-fill green" style="width:75%"></div></div>
+        <a href="#" class="c-action">View All Orders →</a>
+      </div>
+
+      <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
+        <div class="card-top"><div class="c-icon rose">👥</div><span class="pill p-rose">1.2k Members</span></div>
+        <div class="c-title">Users</div>
+        <div class="c-desc">Manage customer accounts, loyalty points, contact info, order history and access levels.</div>
+        <div class="c-stats">
+          <div class="cs-item"><div class="cs-num">1,248</div><div class="cs-lbl">Total Users</div></div>
+          <div class="cs-item"><div class="cs-num">34</div><div class="cs-lbl">New This Week</div></div>
+          <div class="cs-item"><div class="cs-num">89%</div><div class="cs-lbl">Retention</div></div>
+        </div>
+        <div class="c-bar"><div class="c-bar-fill rose" style="width:89%"></div></div>
+        <a href="#" class="c-action">Manage Users →</a>
+      </div>
+
+    </div>
+
+    <!-- ORDERS TABLE -->
+    <div class="sec-head">
+      <h2>Recent Orders</h2>
+      <a href="#" class="view-all">View All →</a>
+    </div>
+    <div class="tbl-card">
+      <div class="tbl-head">
+        <div class="tbl-title">Today's Orders</div>
+        <div class="tbl-filters">
+          <button class="f-btn active">All</button>
+          <button class="f-btn">Dine-in</button>
+          <button class="f-btn">Delivery</button>
+          <button class="f-btn">Pending</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th><th>Customer</th><th>Items</th>
+            <th>Type</th><th>Amount</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="ord-id">#B401</span></td>
+            <td><div class="cust-cell"><div class="av-sm">AK</div><div><div class="cust-name">Amir Khalil</div><div class="cust-type">Loyalty Member</div></div></div></td>
+            <td style="color:var(--text-2);font-size:.75rem">Espresso × 2, Croissant</td>
+            <td style="color:var(--text-2);font-size:.75rem">Dine-in</td>
+            <td><span class="amount">24.00 TND</span></td>
+            <td><span class="sbadge s-delivered">Delivered</span></td>
+            <td><span class="dots">···</span></td>
+          </tr>
+          <tr>
+            <td><span class="ord-id">#B402</span></td>
+            <td><div class="cust-cell"><div class="av-sm">SM</div><div><div class="cust-name">Sara Mekki</div><div class="cust-type">New Customer</div></div></div></td>
+            <td style="color:var(--text-2);font-size:.75rem">Latte, Avocado Toast</td>
+            <td style="color:var(--text-2);font-size:.75rem">Delivery</td>
+            <td><span class="amount">31.50 TND</span></td>
+            <td><span class="sbadge s-preparing">Preparing</span></td>
+            <td><span class="dots">···</span></td>
+          </tr>
+          <tr>
+            <td><span class="ord-id">#B403</span></td>
+            <td><div class="cust-cell"><div class="av-sm">OB</div><div><div class="cust-name">Omar Ben Ali</div><div class="cust-type">VIP Member</div></div></div></td>
+            <td style="color:var(--text-2);font-size:.75rem">Cold Brew × 3, Cake</td>
+            <td style="color:var(--text-2);font-size:.75rem">Delivery</td>
+            <td><span class="amount">47.00 TND</span></td>
+            <td><span class="sbadge s-pending">Pending</span></td>
+            <td><span class="dots">···</span></td>
+          </tr>
+          <tr>
+            <td><span class="ord-id">#B404</span></td>
+            <td><div class="cust-cell"><div class="av-sm">LB</div><div><div class="cust-name">Lina Bouaziz</div><div class="cust-type">Regular</div></div></div></td>
+            <td style="color:var(--text-2);font-size:.75rem">Cappuccino, Muffin</td>
+            <td style="color:var(--text-2);font-size:.75rem">Takeaway</td>
+            <td><span class="amount">16.00 TND</span></td>
+            <td><span class="sbadge s-delivered">Delivered</span></td>
+            <td><span class="dots">···</span></td>
+          </tr>
+          <tr>
+            <td><span class="ord-id">#B405</span></td>
+            <td><div class="cust-cell"><div class="av-sm">KT</div><div><div class="cust-name">Karim Tounsi</div><div class="cust-type">New Customer</div></div></div></td>
+            <td style="color:var(--text-2);font-size:.75rem">Matcha Latte, Waffle</td>
+            <td style="color:var(--text-2);font-size:.75rem">Dine-in</td>
+            <td><span class="amount">28.50 TND</span></td>
+            <td><span class="sbadge s-cancelled">Cancelled</span></td>
+            <td><span class="dots">···</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="bottom-grid">
+      <div class="panel">
+        <div class="p-head"><div class="p-title">🔔 Live Activity</div><a href="#" class="view-all" style="font-size:.6rem">All →</a></div>
+        <div class="p-body">
+          <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text"><strong>New order #B406</strong> received — 2 lattes + sandwich via delivery</div><div class="act-time">Just now</div></div>
+          <div class="act-item"><div class="act-dot" style="background:var(--blue)"></div><div class="act-text"><strong>Sara Mekki</strong> completed table reservation for Apr 12</div><div class="act-time">4 min</div></div>
+          <div class="act-item"><div class="act-dot" style="background:var(--amber)"></div><div class="act-text"><strong>Low stock alert</strong> — Oat milk running below 10% threshold</div><div class="act-time">11 min</div></div>
+          <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text"><strong>Order #B401</strong> marked as delivered by Rider Yassine</div><div class="act-time">18 min</div></div>
+          <div class="act-item"><div class="act-dot" style="background:var(--purple)"></div><div class="act-text"><strong>Jazz Evening</strong> event published to frontend by Admin</div><div class="act-time">32 min</div></div>
+          <div class="act-item"><div class="act-dot" style="background:var(--rose)"></div><div class="act-text"><strong>34 new user</strong> registrations processed this week</div><div class="act-time">1 hr</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="p-head"><div class="p-title">⚡ Quick Actions</div></div>
+        <div class="p-body">
+          <div class="q-grid">
+            <button class="q-btn"><div class="q-icon">➕</div><div class="q-lbl">Add Menu Item</div><div class="q-sub">Create new dish or drink</div></button>
+            <button class="q-btn"><div class="q-icon">📅</div><div class="q-lbl">New Event</div><div class="q-sub">Publish to frontend</div></button>
+            <button class="q-btn"><div class="q-icon">📣</div><div class="q-lbl">Send Promo</div><div class="q-sub">Notify all members</div></button>
+            <button class="q-btn"><div class="q-icon">🖨️</div><div class="q-lbl">Print Report</div><div class="q-sub">Daily summary PDF</div></button>
+            <button class="q-btn"><div class="q-icon">🗑️</div><div class="q-lbl">Log Waste</div><div class="q-sub">Record disposal entry</div></button>
+            <button class="q-btn"><div class="q-icon">🌐</div><div class="q-lbl">View Homepage</div><div class="q-sub">Open live frontend</div></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function tilt(e,el){
+  const r=el.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width;
+  const y=(e.clientY-r.top)/r.height;
+  el.style.transform=`translateY(-5px) rotateX(${(y-.5)*-7}deg) rotateY(${(x-.5)*7}deg)`;
+  el.style.setProperty('--mx',(x*100)+'%');
+  el.style.setProperty('--my',(y*100)+'%');
+}
+function untilt(el){el.style.transform='';}
+document.querySelectorAll('.f-btn').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    this.closest('.tbl-filters').querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+// Animate KPIs
+document.querySelectorAll('.kpi-val').forEach((el,i)=>{
+  el.style.opacity='0';el.style.transform='translateY(10px)';el.style.transition='all .5s ease';
+  setTimeout(()=>{el.style.opacity='1';el.style.transform='translateY(0)';},200+i*110);
+});
+// Animate bars
+setTimeout(()=>{
+  document.querySelectorAll('.c-bar-fill').forEach(el=>{
+    const w=el.style.width;el.style.width='0';
+    setTimeout(()=>{el.style.width=w;},100);
+  });
+},500);
+// Animate module cards
+const obs=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>{e.target.style.opacity='1';e.target.style.transform='translateY(0)';},i*80);obs.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.mod-card,.kpi').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(16px)';el.style.transition='opacity .55s ease,transform .55s ease';obs.observe(el);});
+</script>
+</body>
+</html>

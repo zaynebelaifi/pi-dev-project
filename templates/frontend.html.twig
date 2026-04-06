@@ -1,4 +1,15 @@
-﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIG 4 — Ultra Luxury Coffee Lounge</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
     :root{
       --ivory:#FAF6EF;
       --ivory-2:#F4EDE1;
@@ -876,4 +887,539 @@
       .booking-form{grid-template-columns:1fr}
       .cart-drawer{width:100%}
     }
-  
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <div class="nav-inner">
+      <a href="#home" class="brand">
+        <img src="FB_IMG_1698958536626-removebg-preview (1).png" alt="BIG 4 logo" onerror="this.style.display='none'">
+        <div>
+          <h1>BIG 4</h1>
+          <span>Coffee Lounge</span>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#menu-section">Menu</a></li>
+        <li><a href="#delivery">Delivery</a></li>
+        <li><a href="#events">Events</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="cart-btn" id="openCart">
+          Cart <span class="cart-badge" id="cartCount">0</span>
+        </button>
+        <button class="profile-btn" id="openProfile">Profile</button>
+        <a href="#" class="nav-btn" id="openBooking">Book Now</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="container hero-grid">
+      <div class="reveal-left show">
+        <div class="eyebrow">Tunis • Elevated Dining & Coffee</div>
+        <h2>Where Coffee Meets <em>Luxury</em></h2>
+        <div class="hero-sub">BIG 4 Coffee Lounge</div>
+        <p class="lead">A refined escape for coffee lovers, dinner guests, and late-evening conversations — designed with warmth, elegance, and unforgettable atmosphere.</p>
+        <div class="hero-actions">
+          <a href="#" class="btn-primary" id="openBooking2">Reserve a Table</a>
+          <a href="#gallery" class="btn-secondary">Discover the Space</a>
+        </div>
+      </div>
+
+      <div class="hero-card reveal-right show">
+        <small>Signature Experience</small>
+        <h3>Modern Lounge Dining</h3>
+        <p>From handcrafted espresso to intimate dinners and curated evenings, BIG 4 blends contemporary luxury with timeless hospitality.</p>
+        <div class="hero-stats">
+          <div><strong>4.9</strong><span>Guest Rating</span></div>
+          <div><strong>48</strong><span>Signature Items</span></div>
+          <div><strong>30m</strong><span>Fast Delivery</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="container about-grid">
+      <div class="about-image reveal-left">
+        <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80" alt="Luxury restaurant interior">
+      </div>
+      <div class="about-panel reveal-right">
+        <small class="eyebrow" style="margin-bottom:1rem">Our Story</small>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:300;line-height:1.05;color:var(--espresso)">A Space Crafted for <span style="color:var(--gold);font-style:italic">Taste & Atmosphere</span></h3>
+        <p>BIG 4 was imagined as more than a café — a destination where refined design, gourmet flavors, and ambient evenings come together. Every detail is curated to feel elegant, intimate, and memorable.</p>
+        <div class="stats-grid">
+          <div class="stat"><strong>2023</strong><span>Founded in Tunis</span></div>
+          <div class="stat"><strong>1.2K+</strong><span>Loyal Guests</span></div>
+          <div class="stat"><strong>Midnight</strong><span>Open Until</span></div>
+          <div class="stat"><strong>Private</strong><span>Reservations</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="features">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <small>Signature Offerings</small>
+          <h3>Curated for a <em>Premium</em> Experience</h3>
+        </div>
+        <p>Every service is designed to feel polished, elevated, and indulgent — whether you're dining in, reserving for a special night, or ordering from home.</p>
+      </div>
+
+      <div class="cards">
+        <div class="card reveal">
+          <div class="number">01</div>
+          <h4>Refined Menu</h4>
+          <p>Specialty coffee, elegant desserts, gourmet plates, and signature beverages created to satisfy both daytime cravings and evening indulgence.</p>
+        </div>
+        <div class="card reveal">
+          <div class="number">02</div>
+          <h4>Private Reservations</h4>
+          <p>Reserve your table for intimate dinners, stylish gatherings, business meetings, or a relaxed evening in a luxurious setting.</p>
+        </div>
+        <div class="card reveal">
+          <div class="number">03</div>
+          <h4>Luxury Delivery</h4>
+          <p>Enjoy the BIG 4 experience at home with carefully packaged orders, prompt delivery, and presentation that feels premium.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOD MENU -->
+  <section id="menu-section">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <small>Luxury Menu</small>
+          <h3>Signature <em>Flavours</em> of BIG 4</h3>
+        </div>
+        <p>A polished menu designed for coffee lovers, brunch guests, and elegant dining moments.</p>
+      </div>
+
+      <div class="menu-grid">
+
+        <div class="menu-card reveal">
+          <img src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80" alt="Espresso">
+          <div class="menu-card-content">
+            <h4>Espresso</h4>
+            <p>Rich espresso, cappuccino, flat white, and handcrafted coffee selections with a refined finish.</p>
+            <span class="price">6 TND</span>
+            <button class="add-cart-btn" data-name="Espresso" data-price="6">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="menu-card reveal">
+          <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1000&q=80" alt="Desserts">
+          <div class="menu-card-content">
+            <h4>Desserts</h4>
+            <p>Luxury cakes, pistachio pastries, chocolate creations, and elegant dessert presentations.</p>
+            <span class="price">12 TND</span>
+            <button class="add-cart-btn" data-name="Desserts" data-price="12">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="menu-card reveal">
+          <img src="https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=1000&q=80" alt="Brunch">
+          <div class="menu-card-content">
+            <h4>Brunch</h4>
+            <p>Curated brunch plates with eggs, artisan breads, gourmet toppings, and fresh seasonal sides.</p>
+            <span class="price">22 TND</span>
+            <button class="add-cart-btn" data-name="Brunch" data-price="22">Add to Cart</button>
+          </div>
+        </div>
+
+        <div class="menu-card reveal">
+          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" alt="Signature Dishes">
+          <div class="menu-card-content">
+            <h4>Signature Dishes</h4>
+            <p>Chef-inspired plates crafted for dinner, lounge evenings, and unforgettable dining experiences.</p>
+            <span class="price">28 TND</span>
+            <button class="add-cart-btn" data-name="Signature Dishes" data-price="28">Add to Cart</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="gallery">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <small>Visual Atmosphere</small>
+          <h3>Inside the <em>BIG 4</em> Experience</h3>
+        </div>
+        <p>Elegant interiors, signature drinks, and warm lighting — a destination designed to feel cinematic and unforgettable.</p>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80" alt="Luxury lounge interior"><span>Elegant Lounge Ambience</span></div>
+        <div class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80" alt="Coffee presentation"><span>Signature Coffee</span></div>
+        <div class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80" alt="Restaurant table setup"><span>Fine Dining Touch</span></div>
+        <div class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1515669097368-22e68427d265?auto=format&fit=crop&w=900&q=80" alt="Dessert plating"><span>Curated Desserts</span></div>
+        <div class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=900&q=80" alt="Elegant drinks"><span>Evening Signatures</span></div>
+        <div class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80" alt="Food"><span>Luxury Dining</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DELIVERY -->
+  <section id="delivery">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <small>Fast Service</small>
+          <h3>Elegant <em>Delivery</em> at Your Door</h3>
+        </div>
+        <p>Enjoy BIG 4 from the comfort of your home with premium packaging, stylish presentation, and carefully delivered orders.</p>
+      </div>
+
+      <div class="cards">
+        <div class="card reveal"><div class="number">01</div><h4>Fast Arrival</h4><p>Freshly prepared items delivered promptly while preserving temperature, presentation, and taste.</p></div>
+        <div class="card reveal"><div class="number">02</div><h4>Premium Packaging</h4><p>Luxury-inspired packaging designed to keep your order elegant and intact from our lounge to your table.</p></div>
+        <div class="card reveal"><div class="number">03</div><h4>Easy Ordering</h4><p>A seamless experience for coffee, desserts, and signature dishes whenever you want BIG 4 at home.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVENTS -->
+  <section id="events">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <small>Upcoming Moments</small>
+          <h3>Events & <em>Exclusive Nights</em></h3>
+        </div>
+        <p>Transform ordinary evenings into memorable occasions with curated live experiences, themed dinners, and social lounge nights.</p>
+      </div>
+      <div class="event-list">
+        <div class="event reveal"><div class="date"><strong>12</strong><span>Apr</span></div><div><h5>Barista Signature Night</h5><p>Live coffee artistry, tasting sessions, and a showcase of BIG 4’s signature creations.</p></div><div class="badge">Featured</div></div>
+        <div class="event reveal"><div class="date"><strong>19</strong><span>Apr</span></div><div><h5>Jazz Dinner Evening</h5><p>A warm candlelit atmosphere with soft live music, curated drinks, and a refined dinner service.</p></div><div class="badge">Live Music</div></div>
+        <div class="event reveal"><div class="date"><strong>26</strong><span>Apr</span></div><div><h5>Origin Coffee Masterclass</h5><p>An immersive tasting journey through exceptional beans, roast profiles, and brewing rituals.</p></div><div class="badge">Masterclass</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="container">
+      <div class="cta-box reveal">
+        <h3>Your <span style="color:var(--gold);font-style:italic">Luxury Order</span></h3>
+        <p>Add your favorite espresso, desserts, brunch selections, and signature dishes for a premium at-home experience.</p>
+        <div class="hero-actions" style="justify-content:center;position:relative;z-index:1">
+          <button class="btn-primary" id="openCart2">View Cart</button>
+          <a href="#delivery" class="btn-secondary">Track Delivery</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer id="profile">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h4>BIG 4 Coffee Lounge</h4>
+          <p>An elegant destination in Tunis where refined coffee, sophisticated dining, and unforgettable evenings come together.</p>
+        </div>
+        <div class="footer-col">
+          <h6>Navigate</h6>
+          <a href="#home">Home</a><br>
+          <a href="#about">About</a><br>
+          <a href="#menu-section">Menu</a><br>
+          <a href="#gallery">Gallery</a>
+        </div>
+        <div class="footer-col">
+          <h6>Experience</h6>
+          <a href="#">Reservations</a><br>
+          <a href="#events">Events</a><br>
+          <a href="#">Private Booking</a><br>
+          <a href="#">Loyalty Program</a>
+        </div>
+        <div class="footer-col">
+          <h6>Contact</h6>
+          <address>
+            Tunis, Tunisia<br>
+            info@big4lounge.tn<br>
+            +216 XX XXX XXX<br>
+            Daily · 8 AM — Midnight
+          </address>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 BIG 4 Coffee Lounge. All rights reserved.</span>
+        <span>Privacy Policy · Terms</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- BOOKING POPUP -->
+  <div class="popup-overlay" id="bookingPopup">
+    <div class="popup-box">
+      <button class="close-popup" id="closeBooking">&times;</button>
+      <h3>Reserve Your Table</h3>
+      <p>Book your luxury dining moment at BIG 4. Select your preferred date, time, and guest count.</p>
+
+      <form class="booking-form" id="bookingForm">
+        <div class="full">
+          <input type="text" placeholder="Full Name" required>
+        </div>
+        <div>
+          <input type="date" required>
+        </div>
+        <div>
+          <input type="time" required>
+        </div>
+        <div class="full">
+          <select required>
+            <option value="">Select Guests</option>
+            <option>1 Guest</option>
+            <option>2 Guests</option>
+            <option>3 Guests</option>
+            <option>4 Guests</option>
+            <option>5 Guests</option>
+            <option>6+ Guests</option>
+          </select>
+        </div>
+        <div class="full">
+          <button type="submit" class="btn-primary" style="width:100%">Confirm Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PROFILE POPUP -->
+  <div class="profile-overlay" id="profilePopup">
+    <div class="profile-box">
+      <button class="close-popup" id="closeProfile">&times;</button>
+      <h3>Your Profile</h3>
+      <p>Welcome to BIG 4 Lounge. Your profile can be used for future reservations, loyalty rewards, and personalized dining experiences.</p>
+
+      <form class="booking-form" id="profileForm">
+        <div class="full">
+          <input type="text" placeholder="Full Name">
+        </div>
+        <div>
+          <input type="email" placeholder="Email Address">
+        </div>
+        <div>
+          <input type="tel" placeholder="Phone Number">
+        </div>
+        <div class="full">
+          <button type="submit" class="btn-primary" style="width:100%">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CART DRAWER -->
+  <div class="cart-overlay" id="cartOverlay">
+    <div class="cart-drawer">
+      <div class="cart-header">
+        <h3>Your Cart</h3>
+        <button class="close-popup" id="closeCart">&times;</button>
+      </div>
+
+      <div class="cart-items" id="cartItems">
+        <div class="empty-cart">Your luxury cart is currently empty.</div>
+      </div>
+
+      <div class="cart-footer">
+        <div class="cart-total">
+          <span>Total</span>
+          <strong id="cartTotal">0 TND</strong>
+        </div>
+        <button class="btn-primary" style="width:100%" id="checkoutBtn">Proceed to Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // NAV SCROLL
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll',()=>{
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // SMOOTH REVEAL
+    const observer = new IntersectionObserver((entries)=>{
+      entries.forEach((entry)=>{
+        if(entry.isIntersecting){
+          entry.target.classList.add('show');
+          observer.unobserve(entry.target);
+        }
+      });
+    },{threshold:0.15});
+
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el=>{
+      observer.observe(el);
+    });
+
+    // BOOKING POPUP
+    const bookingPopup = document.getElementById('bookingPopup');
+    const openBooking = document.getElementById('openBooking');
+    const openBooking2 = document.getElementById('openBooking2');
+    const closeBooking = document.getElementById('closeBooking');
+    const bookingForm = document.getElementById('bookingForm');
+
+    function showBooking(){
+      bookingPopup.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function hideBooking(){
+      bookingPopup.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    openBooking.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
+    openBooking2.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
+    closeBooking.addEventListener('click', hideBooking);
+
+    bookingPopup.addEventListener('click', (e)=>{
+      if(e.target === bookingPopup) hideBooking();
+    });
+
+    bookingForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      alert("Your booking request has been submitted successfully!");
+      bookingForm.reset();
+      hideBooking();
+    });
+
+    // PROFILE POPUP
+    const profilePopup = document.getElementById('profilePopup');
+    const openProfile = document.getElementById('openProfile');
+    const closeProfile = document.getElementById('closeProfile');
+    const profileForm = document.getElementById('profileForm');
+
+    function showProfile(){
+      profilePopup.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function hideProfile(){
+      profilePopup.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    openProfile.addEventListener('click', showProfile);
+    closeProfile.addEventListener('click', hideProfile);
+
+    profilePopup.addEventListener('click', (e)=>{
+      if(e.target === profilePopup) hideProfile();
+    });
+
+    profileForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      alert("Your profile has been saved successfully!");
+      profileForm.reset();
+      hideProfile();
+    });
+
+    // CART SYSTEM
+    const cartOverlay = document.getElementById('cartOverlay');
+    const openCart = document.getElementById('openCart');
+    const openCart2 = document.getElementById('openCart2');
+    const closeCart = document.getElementById('closeCart');
+    const cartItemsContainer = document.getElementById('cartItems');
+    const cartTotal = document.getElementById('cartTotal');
+    const cartCount = document.getElementById('cartCount');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    let cart = [];
+
+    function showCart(){
+      cartOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function hideCart(){
+      cartOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    openCart.addEventListener('click', showCart);
+    openCart2.addEventListener('click', showCart);
+    closeCart.addEventListener('click', hideCart);
+
+    cartOverlay.addEventListener('click', (e)=>{
+      if(e.target === cartOverlay) hideCart();
+    });
+
+    document.querySelectorAll('.add-cart-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const name = btn.dataset.name;
+        const price = Number(btn.dataset.price);
+
+        cart.push({name, price});
+        updateCart();
+
+        btn.textContent = "Added";
+        setTimeout(()=> btn.textContent = "Add to Cart", 1200);
+      });
+    });
+
+    function updateCart(){
+      cartItemsContainer.innerHTML = '';
+
+      if(cart.length === 0){
+        cartItemsContainer.innerHTML = `<div class="empty-cart">Your luxury cart is currently empty.</div>`;
+      } else {
+        cart.forEach((item, index)=>{
+          const cartItem = document.createElement('div');
+          cartItem.classList.add('cart-item');
+          cartItem.innerHTML = `
+            <div>
+              <h4>${item.name}</h4>
+              <p>${item.price} TND</p>
+            </div>
+            <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
+          `;
+          cartItemsContainer.appendChild(cartItem);
+        });
+      }
+
+      const total = cart.reduce((sum, item)=> sum + item.price, 0);
+      cartTotal.textContent = `${total} TND`;
+      cartCount.textContent = cart.length;
+    }
+
+    function removeFromCart(index){
+      cart.splice(index,1);
+      updateCart();
+    }
+
+    window.removeFromCart = removeFromCart;
+
+    checkoutBtn.addEventListener('click', ()=>{
+      if(cart.length === 0){
+        alert("Your cart is empty.");
+        return;
+      }
+
+      alert("Your luxury order has been placed successfully!");
+      cart = [];
+      updateCart();
+      hideCart();
+    });
+
+    // ESC CLOSE
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === "Escape"){
+        hideBooking();
+        hideCart();
+        hideProfile();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New DeliveryMan{% endblock %}
+
+{% block body %}
+    <h1>Create new DeliveryMan</h1>
+
+    {{ include('delivery_man/_form.html.twig') }}
+
+    <a href="{{ path('app_delivery_man_index') }}">back to list</a>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Delivery index{% endblock %}
+
+{% block body %}
+    <h1>Delivery index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Delivery_id</th>
+                <th>Order_id</th>
+                <th>Delivery_address</th>
+                <th>Recipient_name</th>
+                <th>Recipient_phone</th>
+                <th>Pickup_location</th>
+                <th>Status</th>
+                <th>Scheduled_date</th>
+                <th>Actual_delivery_date</th>
+                <th>Estimated_time</th>
+                <th>Current_latitude</th>
+                <th>Current_longitude</th>
+                <th>Delivery_notes</th>
+                <th>Rating</th>
+                <th>Created_at</th>
+                <th>Updated_at</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for delivery in deliveries %}
+            <tr>
+                <td>{{ delivery.deliveryId }}</td>
+                <td>{{ delivery.orderId }}</td>
+                <td>{{ delivery.deliveryAddress }}</td>
+                <td>{{ delivery.recipientName }}</td>
+                <td>{{ delivery.recipientPhone }}</td>
+                <td>{{ delivery.pickupLocation }}</td>
+                <td>{{ delivery.status }}</td>
+                <td>{{ delivery.scheduledDate ? delivery.scheduledDate|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ delivery.actualDeliveryDate ? delivery.actualDeliveryDate|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ delivery.estimatedTime }}</td>
+                <td>{{ delivery.currentLatitude }}</td>
+                <td>{{ delivery.currentLongitude }}</td>
+                <td>{{ delivery.deliveryNotes }}</td>
+                <td>{{ delivery.rating }}</td>
+                <td>{{ delivery.createdAt ? delivery.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ delivery.updatedAt ? delivery.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_delivery_show', {'delivery_id': delivery.delivery_id}) }}">show</a>
+                    <a href="{{ path('app_delivery_edit', {'delivery_id': delivery.delivery_id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="17">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_delivery_new') }}">Create new</a>
+{% endblock %}
