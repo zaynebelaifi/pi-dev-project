@@ -273,44 +273,6 @@
     </div>
   </section>
 
-  {% if user_role == 'ROLE_ADMIN' %}
-  <!-- ADMIN TESTING SECTION -->
-  <section style="background: linear-gradient(135deg, rgba(184,135,42,.1), rgba(184,135,42,.05)); padding: 4rem 0; margin-bottom: 4rem;">
-    <div class="container">
-      <div class="section-head reveal">
-        <div>
-          <small>System Management</small>
-          <h3><em>Admin Panel</em> & Testing</h3>
-        </div>
-        <p>Access the delivery management system to create, view, edit, and manage deliveries and delivery personnel.</p>
-      </div>
-
-      <div class="cards" style="margin-top: 2rem;">
-        <div class="card reveal" style="text-align: center;">
-          <div class="number">📦</div>
-          <h4>Create New Delivery</h4>
-          <p>Place a new delivery order. Order number and delivery person will be assigned automatically.</p>
-          <a href="{{ path('app_delivery_new') }}" class="btn-primary" style="display: inline-block; margin-top: 1rem;">Create Delivery</a>
-        </div>
-
-        <div class="card reveal" style="text-align: center;">
-          <div class="number">📋</div>
-          <h4>Manage Deliveries</h4>
-          <p>View all deliveries, track orders, and manage delivery information.</p>
-          <a href="{{ path('app_delivery_index') }}" class="btn-primary" style="display: inline-block; margin-top: 1rem;">View Deliveries</a>
-        </div>
-
-        <div class="card reveal" style="text-align: center;">
-          <div class="number">👤</div>
-          <h4>Manage Delivery Men</h4>
-          <p>Register delivery personnel, update their information, and track performance.</p>
-          <a href="{{ path('app_delivery_man_index') }}" class="btn-primary" style="display: inline-block; margin-top: 1rem;">View Delivery Men</a>
-        </div>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
   <!-- FOOTER -->
   <footer id="profile">
     <div class="container">

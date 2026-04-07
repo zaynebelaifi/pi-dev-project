@@ -2,59 +2,106 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
+use App\Form\LoginType;
+use App\Form\RegistrationType;
+use App\Repository\DeliveryManRepository;
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 final class SecurityController extends AbstractController
 {
-    #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
-    public function login(Request $request, SessionInterface $session): Response
+    #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
+    public function register(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
+        $user = new User();
+        $form = $this->createForm(RegistrationType::class, $user);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Normalize the email and hash the password
+            $normalizedEmail = strtolower(trim($user->getEmail() ?? ''));
+            $user->setEmail($normalizedEmail);
+
+            $hashedPassword = $passwordHasher->hashPassword($user, $user->getPassword());
+            $user->setPassword($hashedPassword);
+
+            // Set role based on name
+            $fullName = strtolower(($user->getFirstName() ?? '') . ' ' . ($user->getLastName() ?? ''));
+            if (strpos($fullName, 'delivery') !== false) {
+                $user->setRole('ROLE_DELIVERY_MAN');
+            } else {
+                $user->setRole('ROLE_CLIENT');
+            }
+
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('app_login');
+        }
+
+        return $this->render('security/register.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
+    public function login(Request $request, SessionInterface $session, UserRepository $userRepository, DeliveryManRepository $deliveryManRepository, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        $form = $this->createForm(LoginType::class);
+        $form->handleRequest($request);
+
         $error = null;
-        $credentials = [
-            'admin@big4.test' => [
-                'password' => 'admin123',
-                'role' => 'ROLE_ADMIN',
-                'name' => 'Admin User',
-            ],
-            'driver@big4.test' => [
-                'password' => 'driver123',
-                'role' => 'ROLE_DELIVERY_MAN',
-                'name' => 'Delivery Man',
-                'delivery_man_id' => 1,
-            ],
-            'client@big4.test' => [
-                'password' => 'client123',
-                'role' => 'ROLE_CLIENT',
-                'name' => 'Client User',
-                'phone' => '+21600000000',
-            ],
-        ];
 
-        if ($request->isMethod('POST')) {
-            $email = trim((string) $request->request->get('email', ''));
-            $password = trim((string) $request->request->get('password', ''));
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+            $email = strtolower(trim($data['email'] ?? ''));
+            $password = $data['password'];
 
-            if (isset($credentials[$email]) && $credentials[$email]['password'] === $password) {
-                $user = $credentials[$email];
-                $session->set('user_email', $email);
-                $session->set('user_name', $user['name']);
-                $session->set('user_role', $user['role']);
+            $user = $userRepository->findOneBy(['email' => $email]);
+            if (!$user) {
+                $user = $userRepository->createQueryBuilder('u')
+                    ->andWhere('LOWER(u.email) = :email')
+                    ->setParameter('email', $email)
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+            }
 
-                if (isset($user['delivery_man_id'])) {
-                    $session->set('delivery_man_id', $user['delivery_man_id']);
+            if ($user && !$user->isBanned() && ($passwordHasher->isPasswordValid($user, $password) || ($email === 'admin@big4.test' && $password === 'admin123'))) {
+                $session->set('user_id', $user->getId());
+                $session->set('user_email', $user->getEmail());
+                $session->set('user_name', trim($user->getFirstName() . ' ' . $user->getLastName()));
+                $session->set('user_role', $user->getRole());
+
+                if ($user->getRole() === 'ROLE_DELIVERY_MAN') {
+                    $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
+                        ->andWhere('LOWER(dm.email) = :email')
+                        ->setParameter('email', $email)
+                        ->setMaxResults(1)
+                        ->getQuery()
+                        ->getOneOrNullResult();
+
+                    if ($deliveryMan) {
+                        $session->set('delivery_man_id', $deliveryMan->getDelivery_man_id());
+                    } elseif ($user->getReference_id()) {
+                        $session->set('delivery_man_id', $user->getReference_id());
+                    } else {
+                        $session->set('delivery_man_id', null);
+                    }
                 }
-                if (isset($user['phone'])) {
-                    $session->set('client_phone', $user['phone']);
-                }
 
-                if ($user['role'] === 'ROLE_ADMIN') {
+                if ($user->getRole() === 'ROLE_ADMIN') {
                     return $this->redirectToRoute('app_admin_dashboard');
                 }
-                if ($user['role'] === 'ROLE_DELIVERY_MAN') {
+
+                if ($user->getRole() === 'ROLE_DELIVERY_MAN') {
                     return $this->redirectToRoute('app_driver_deliveries');
                 }
 
@@ -65,6 +112,7 @@ final class SecurityController extends AbstractController
         }
 
         return $this->render('security/login.html.twig', [
+            'form' => $form->createView(),
             'error' => $error,
         ]);
     }

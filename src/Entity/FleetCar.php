@@ -98,4 +98,19 @@ class FleetCar
         return $this;
     }
 
+    // Symfony PropertyAccessor camelCase aliases for snake_case properties
+    public function getId(): ?int { return $this->getCar_id(); }
+    public function setId(int $id): self { return $this->setCar_id($id); }
+    
+    public function getCarId(): ?int { return $this->getCar_id(); }
+    public function setCarId(int $id): self { return $this->setCar_id($id); }
+    
+    public function getLicensePlate(): ?string { return $this->getLicense_plate(); }
+    public function setLicensePlate(string $plate): self { return $this->setLicense_plate($plate); }
+    
+    public function getVehicleType(): ?string { return $this->getVehicle_type(); }
+    public function setVehicleType(string $type): self { return $this->setVehicle_type($type); }
+    
+    public function getDeliveryManId(): ?int { return $this->getDelivery_man_id(); }
+    public function setDeliveryManId(?int $id): self { return $this->setDelivery_man_id($id); }
 }

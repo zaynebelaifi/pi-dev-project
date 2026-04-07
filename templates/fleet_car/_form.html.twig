@@ -1,0 +1,69 @@
+{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+    <div class="form-section">
+        <div class="form-section-title">Vehicle Information</div>
+        <div class="form-rows">
+            <div class="form-group">
+                {{ form_label(form.make) }}
+                {{ form_widget(form.make, {attr: {class: 'form-input', placeholder: 'e.g., Toyota'}}) }}
+                {% if form.make.vars.errors %}
+                    <div class="form-error">{{ form_errors(form.make) }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                {{ form_label(form.model) }}
+                {{ form_widget(form.model, {attr: {class: 'form-input', placeholder: 'e.g., Camry'}}) }}
+                {% if form.model.vars.errors %}
+                    <div class="form-error">{{ form_errors(form.model) }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-section">
+        <div class="form-section-title">Vehicle Details</div>
+        <div class="form-rows">
+            <div class="form-group">
+                {{ form_label(form.licensePlate) }}
+                {{ form_widget(form.licensePlate, {attr: {class: 'form-input', placeholder: 'Tunisian format: 123AB456'}}) }}
+                {% if form.licensePlate.vars.errors %}
+                    <div class="form-error">{{ form_errors(form.licensePlate) }}</div>
+                {% endif %}
+                <div class="form-hint">Format: Numbers (1-6 digits) → Letters (2) → Numbers (1-3), e.g., 123AB456</div>
+            </div>
+            
+            <div class="form-group">
+                {{ form_label(form.vehicleType) }}
+                {{ form_widget(form.vehicleType, {attr: {class: 'form-select'}}) }}
+                {% if form.vehicleType.vars.errors %}
+                    <div class="form-error">{{ form_errors(form.vehicleType) }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-section">
+        <div class="form-section-title">Driver Assignment</div>
+        <div class="form-rows">
+            <div class="form-group">
+                {{ form_label(form.deliveryManId) }}
+                {{ form_widget(form.deliveryManId, {attr: {class: 'form-select'}}) }}
+                {% if form.deliveryManId.vars.errors %}
+                    <div class="form-error">{{ form_errors(form.deliveryManId) }}</div>
+                {% endif %}
+                <div class="form-hint">Select a delivery driver to assign to this vehicle (optional)</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-actions">
+        <button type="submit" class="btn-submit">
+            {{ button_label|default('Add Vehicle') }}
+        </button>
+        <a href="{{ path('app_admin_vehicles') }}" class="btn-cancel">
+            Cancel
+        </a>
+    </div>
+
+{{ form_end(form) }}

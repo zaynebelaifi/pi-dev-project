@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Delivery;
 use App\Entity\DeliveryMan;
+use App\Entity\FleetCar;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -46,6 +47,20 @@ class DeliveryType extends AbstractType
             ->add('rating', IntegerType::class, [
                 'label' => 'Rating',
                 'required' => false
+            ])
+            ->add('license_plate', TextType::class, [
+                'label' => 'License Plate (Tunisian Format)',
+                'required' => false,
+                'help' => 'Format: e.g., 123456AB789'
+            ])
+            ->add('fleetCar', EntityType::class, [
+                'class' => FleetCar::class,
+                'choice_label' => function(FleetCar $car) {
+                    return sprintf('%s %s (%s)', $car->getMake(), $car->getModel(), $car->getLicense_plate());
+                },
+                'label' => 'Assigned Fleet Car',
+                'required' => false,
+                'placeholder' => '-- Select a car --'
             ])
         ;
     }

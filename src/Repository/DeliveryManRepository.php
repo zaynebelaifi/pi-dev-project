@@ -46,16 +46,28 @@ class DeliveryManRepository extends ServiceEntityRepository
      */
     public function findAvailableDeliveryMen(): array
     {
-        return $this->createQueryBuilder('dm')
-            ->leftJoin('dm.deliverys', 'd')
-            ->andWhere('dm.status = :online')
-            ->andWhere('d.status IS NULL OR d.status NOT IN (:inDelivery)')
-            ->setParameter('online', 'ONLINE')
+        $available = $this->createQueryBuilder('dm')
+            ->leftJoin('dm.deliverys', 'd', 'WITH', 'd.status IN (:inDelivery)')
+            ->andWhere('LOWER(dm.status) = :active')
+            ->andWhere('d.delivery_id IS NULL')
+            ->setParameter('active', 'active')
             ->setParameter('inDelivery', ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'])
             ->orderBy('dm.rating', 'DESC')
             ->getQuery()
             ->getResult()
         ;
+
+        if (empty($available)) {
+            return $this->createQueryBuilder('dm')
+                ->andWhere('LOWER(dm.status) = :active')
+                ->setParameter('active', 'active')
+                ->orderBy('dm.rating', 'DESC')
+                ->getQuery()
+                ->getResult()
+            ;
+        }
+
+        return $available;
     }
 
     public function searchAndSort(?string $search, ?string $sortField, ?string $sortDirection): array

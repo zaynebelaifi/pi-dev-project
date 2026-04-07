@@ -1,29 +1,27 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Login - BIG 4{% endblock %}
+{% block title %}Register - BIG 4{% endblock %}
 
 {% block body %}
 <div class="auth-page">
     <div class="auth-card">
         <div class="auth-header">
-            <h1>Sign In</h1>
-            <p>Use your credentials to access your delivery dashboard.</p>
+            <h1>Sign Up</h1>
+            <p>Create your account and start tracking deliveries.</p>
         </div>
 
-        {% if error %}
-            <div class="alert alert-error">
-                {{ error }}
-            </div>
-        {% endif %}
-
         {{ form_start(form) }}
+            <div class="form-row">{{ form_row(form.firstName) }}</div>
+            <div class="form-row">{{ form_row(form.lastName) }}</div>
             <div class="form-row">{{ form_row(form.email) }}</div>
-            <div class="form-row">{{ form_row(form.password) }}</div>
-            <button type="submit" class="btn btn-primary">Sign In</button>
+            <div class="form-row">{{ form_row(form.phone) }}</div>
+            <div class="form-row">{{ form_row(form.password.first) }}</div>
+            <div class="form-row">{{ form_row(form.password.second) }}</div>
+            <button type="submit" class="btn btn-primary">Sign Up</button>
         {{ form_end(form) }}
 
         <p class="auth-footer">
-            Don't have an account? <a href="{{ path('app_register') }}">Sign Up</a>
+            Already have an account? <a href="{{ path('app_login') }}">Sign In</a>
         </p>
     </div>
 </div>
@@ -56,14 +54,6 @@
 }
 .form-row { margin-bottom: 1rem; }
 .btn { width: 100%; }
-.alert-error {
-    background: #fff0f1;
-    color: #9a1b1b;
-    border: 1px solid #f5c6cb;
-    padding: 1rem;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-}
 .auth-footer {
     text-align: center;
     color: var(--text-2);

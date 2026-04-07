@@ -1,0 +1,77 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Fleet Vehicles - BIG 4 Admin{% endblock %}
+
+{% block topbar_title %}Fleet Vehicles{% endblock %}
+
+{% block body %}
+<style>
+    .fleet-index-header { margin-bottom: 2rem; }
+    .fleet-index-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; color: var(--espresso); margin-bottom: 0.5rem; }
+    .fleet-index-header p { color: var(--text-2); font-size: 0.95rem; }
+    .fleet-actions { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+    .fleet-actions .btn-primary { padding: 0.85rem 1.6rem; border-radius: 10px; }
+    .fleet-table-card { background: var(--ivory); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 16px rgba(92,61,30,0.08); }
+    .fleet-table { width: 100%; border-collapse: collapse; }
+    .fleet-table th, .fleet-table td { padding: 1.2rem 1.4rem; border-bottom: 1px solid rgba(184,135,42,0.12); }
+    .fleet-table th { background: var(--espresso); color: var(--ivory); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; text-align: left; }
+    .fleet-table tbody tr:hover { background: rgba(248,227,168,0.25); }
+    .fleet-table tbody td { font-size: 0.9rem; color: var(--text); }
+    .fleet-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 999px; background: var(--gold-wash); color: var(--gold); font-weight: 700; font-size: 0.8rem; }
+    .fleet-actions-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .fleet-link { display: inline-flex; align-items: center; justify-content: center; padding: 0.55rem 0.95rem; border-radius: 8px; background: var(--gold); color: var(--ivory); text-decoration: none; font-size: 0.8rem; font-weight: 700; transition: all 0.2s; }
+    .fleet-link:hover { background: var(--gold-2); }
+    .fleet-empty { text-align: center; padding: 3rem; color: var(--text-3); }
+    .fleet-label { color: var(--text-3); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+</style>
+
+<div class="fleet-index-header">
+    <h2>Fleet Vehicles</h2>
+    <p>Review, assign, and manage all vehicles registered in the fleet.</p>
+</div>
+
+<div class="fleet-actions">
+    <a href="{{ path('app_fleet_car_new') }}" class="btn-primary">+ Add New Vehicle</a>
+</div>
+
+<div class="fleet-table-card">
+    <table class="fleet-table">
+        <thead>
+            <tr>
+                <th>Vehicle</th>
+                <th>License Plate</th>
+                <th>Type</th>
+                <th>Assigned Driver</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for fleet_car in fleet_cars %}
+            <tr>
+                <td>
+                    <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                        <span style="font-weight:700;color:var(--espresso);">{{ fleet_car.make }} {{ fleet_car.model }}</span>
+                        <span class="fleet-label">Vehicle ID #{{ fleet_car.carId }}</span>
+                    </div>
+                </td>
+                <td><span class="fleet-badge">{{ fleet_car.licensePlate }}</span></td>
+                <td>{{ fleet_car.vehicleType|capitalize }}</td>
+                <td>{{ fleet_car.deliveryManId ? fleet_car.deliveryManId : 'Unassigned' }}</td>
+                <td>
+                    <div class="fleet-actions-row">
+                        <a href="{{ path('app_fleet_car_show', {'car_id': fleet_car.car_id}) }}" class="fleet-link">View</a>
+                        <a href="{{ path('app_fleet_car_edit', {'car_id': fleet_car.car_id}) }}" class="fleet-link">Edit</a>
+                    </div>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5" class="fleet-empty">
+                    No fleet vehicles found. <a href="{{ path('app_fleet_car_new') }}" style="color: var(--gold); font-weight: 700;">Add a vehicle</a> to get started.
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

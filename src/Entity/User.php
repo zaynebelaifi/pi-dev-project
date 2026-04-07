@@ -5,12 +5,13 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 use App\Repository\UserRepository;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'user')]
-class User
+class User implements PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -45,14 +46,14 @@ class User
     #[ORM\Column(type: 'string', nullable: false)]
     private ?string $password_hash = null;
 
-    public function getPassword_hash(): ?string
+    public function getPassword(): ?string
     {
         return $this->password_hash;
     }
 
-    public function setPassword_hash(string $password_hash): self
+    public function setPassword(string $password): self
     {
-        $this->password_hash = $password_hash;
+        $this->password_hash = $password;
         return $this;
     }
 
@@ -85,16 +86,44 @@ class User
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $full_name = null;
+    private ?string $first_name = null;
 
-    public function getFull_name(): ?string
+    public function getFirstName(): ?string
     {
-        return $this->full_name;
+        return $this->first_name;
     }
 
-    public function setFull_name(?string $full_name): self
+    public function setFirstName(?string $first_name): self
     {
-        $this->full_name = $full_name;
+        $this->first_name = $first_name;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $last_name = null;
+
+    public function getLastName(): ?string
+    {
+        return $this->last_name;
+    }
+
+    public function setLastName(?string $last_name): self
+    {
+        $this->last_name = $last_name;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => false])]
+    private bool $banned = false;
+
+    public function isBanned(): bool
+    {
+        return $this->banned;
+    }
+
+    public function setBanned(bool $banned): self
+    {
+        $this->banned = $banned;
         return $this;
     }
 
