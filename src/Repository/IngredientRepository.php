@@ -75,4 +75,20 @@ class IngredientRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findOneByNormalizedNameAndUnit(string $name, string $unit, ?int $excludeId = null): ?Ingredient
+    {
+        $qb = $this->createQueryBuilder('i')
+            ->andWhere('LOWER(TRIM(i.name)) = :name')
+            ->andWhere('LOWER(TRIM(i.unit)) = :unit')
+            ->setParameter('name', mb_strtolower(trim($name)))
+            ->setParameter('unit', mb_strtolower(trim($unit)))
+            ->setMaxResults(1);
+
+        if (null !== $excludeId) {
+            $qb->andWhere('i.id <> :excludeId')->setParameter('excludeId', $excludeId);
+        }
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
 }

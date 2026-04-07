@@ -11,6 +11,10 @@
     </div>
     <div style="display:flex; gap:.7rem;">
       <a href="{{ path('admin_waste_index') }}" class="t-btn">Waste Logs</a>
+      <form method="post" action="{{ path('admin_ingredient_sync_all') }}" style="display:inline-block;">
+        <input type="hidden" name="_token" value="{{ csrf_token('sync_ingredients') }}">
+        <button type="submit" class="t-btn" onclick="return confirm('Run full inventory sync? This will move expired stock to waste and merge duplicate ingredients.');">Fix Inventory</button>
+      </form>
       <a href="{{ path('admin_ingredient_new') }}" class="t-btn primary">+ New Ingredient</a>
     </div>
   </div>

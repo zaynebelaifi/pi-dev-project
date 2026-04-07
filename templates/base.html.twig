@@ -156,49 +156,43 @@
         <p>A polished menu designed for coffee lovers, brunch guests, and elegant dining moments.</p>
       </div>
 
-      <div class="menu-grid">
+      {% if menuSections is defined and menuSections is not empty %}
+        {% for section in menuSections %}
+          <div style="margin: 1.2rem 0 .7rem;">
+            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">
+              {{ section.menu.title }}
+            </h4>
+            {% if section.menu.description %}
+              <p style="margin:.25rem 0 0;color:var(--text-2);">{{ section.menu.description }}</p>
+            {% endif %}
+          </div>
 
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80" alt="Espresso">
-          <div class="menu-card-content">
-            <h4>Espresso</h4>
-            <p>Rich espresso, cappuccino, flat white, and handcrafted coffee selections with a refined finish.</p>
-            <span class="price">6 TND</span>
-            <button class="add-cart-btn" data-name="Espresso" data-price="6">Add to Cart</button>
+          <div class="menu-grid">
+            {% for dish in section.dishes %}
+              {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
+              <div class="menu-card reveal">
+                <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
+                <div class="menu-card-content">
+                  <h4>{{ dish.name }}</h4>
+                  <p>{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
+                  <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
+                  <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="menu-grid">
+          <div class="menu-card reveal">
+            <div class="menu-card-content">
+              <h4>Menu Coming Soon</h4>
+              <p>Our dishes are being updated right now. Please check back shortly.</p>
+              <span class="price">--</span>
+            </div>
           </div>
         </div>
-
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1000&q=80" alt="Desserts">
-          <div class="menu-card-content">
-            <h4>Desserts</h4>
-            <p>Luxury cakes, pistachio pastries, chocolate creations, and elegant dessert presentations.</p>
-            <span class="price">12 TND</span>
-            <button class="add-cart-btn" data-name="Desserts" data-price="12">Add to Cart</button>
-          </div>
-        </div>
-
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1000&q=80" alt="Brunch">
-          <div class="menu-card-content">
-            <h4>Brunch</h4>
-            <p>Curated brunch plates with eggs, artisan breads, gourmet toppings, and fresh seasonal sides.</p>
-            <span class="price">22 TND</span>
-            <button class="add-cart-btn" data-name="Brunch" data-price="22">Add to Cart</button>
-          </div>
-        </div>
-
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" alt="Signature Dishes">
-          <div class="menu-card-content">
-            <h4>Signature Dishes</h4>
-            <p>Chef-inspired plates crafted for dinner, lounge evenings, and unforgettable dining experiences.</p>
-            <span class="price">28 TND</span>
-            <button class="add-cart-btn" data-name="Signature Dishes" data-price="28">Add to Cart</button>
-          </div>
-        </div>
-
-      </div>
+      {% endif %}
     </div>
   </section>
 
