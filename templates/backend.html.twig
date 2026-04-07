@@ -85,6 +85,9 @@ body{background:var(--ivory-2);color:var(--text);font-family:'Jost',sans-serif;f
 
 /* CONTENT */
 .content{padding:2rem;flex:1;}
+.admin-flash{margin-bottom:.8rem;padding:.75rem 1rem;border-radius:8px;border:1px solid transparent;font-size:.8rem;line-height:1.4;}
+.admin-flash-error{background:var(--red-bg);color:var(--red);border-color:rgba(217,64,64,.25);}
+.admin-flash-success{background:var(--green-bg);color:var(--green);border-color:rgba(46,158,106,.25);}
 
 /* KPI */
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
@@ -243,6 +246,13 @@ tbody tr:hover .dots{color:var(--gold);}
   </header>
 
   <div class="content">
+    {% for message in app.flashes('error') %}
+      <div class="admin-flash admin-flash-error">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('success') %}
+      <div class="admin-flash admin-flash-success">{{ message }}</div>
+    {% endfor %}
+
     {% block body %}
     <!-- KPI -->
     <div class="kpi-row">

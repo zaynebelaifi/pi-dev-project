@@ -17,6 +17,7 @@ class IngredientType extends AbstractType
         $builder
             ->add('name', TextType::class, [
                 'label' => 'Ingredient name',
+                'required' => true,
                 'attr' => [
                     'maxlength' => 255,
                     'placeholder' => 'e.g. Tomato',
@@ -24,6 +25,7 @@ class IngredientType extends AbstractType
             ])
             ->add('unit', TextType::class, [
                 'label' => 'Unit',
+                'required' => true,
                 'attr' => [
                     'maxlength' => 50,
                     'placeholder' => 'kg, L, unit',
@@ -31,6 +33,7 @@ class IngredientType extends AbstractType
             ])
             ->add('quantityInStock', NumberType::class, [
                 'label' => 'Quantity in stock',
+                'required' => true,
                 'scale' => 2,
                 'html5' => true,
                 'attr' => [
@@ -41,6 +44,7 @@ class IngredientType extends AbstractType
             ])
             ->add('minStockLevel', NumberType::class, [
                 'label' => 'Minimum stock level',
+                'required' => true,
                 'scale' => 2,
                 'html5' => true,
                 'attr' => [
@@ -51,6 +55,7 @@ class IngredientType extends AbstractType
             ])
             ->add('unitCost', NumberType::class, [
                 'label' => 'Unit cost (TND)',
+                'required' => true,
                 'scale' => 2,
                 'html5' => true,
                 'attr' => [
@@ -61,6 +66,7 @@ class IngredientType extends AbstractType
             ])
             ->add('expiryDate', DateType::class, [
                 'label' => 'Expiry date',
+                'required' => true,
                 'widget' => 'single_text',
             ]);
     }

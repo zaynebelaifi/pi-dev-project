@@ -21,10 +21,12 @@ class WasterecordType extends AbstractType
             ->add('ingredient', EntityType::class, [
                 'class' => Ingredient::class,
                 'choice_label' => fn (Ingredient $ingredient) => sprintf('%s (stock: %s %s)', $ingredient->getName(), rtrim(rtrim(number_format((float) $ingredient->getQuantityInStock(), 2, '.', ''), '0'), '.'), $ingredient->getUnit()),
+                'required' => true,
                 'placeholder' => 'Select ingredient',
             ])
             ->add('quantityWasted', NumberType::class, [
                 'label' => 'Quantity wasted',
+                'required' => true,
                 'scale' => 2,
                 'html5' => true,
                 'attr' => [
@@ -35,6 +37,7 @@ class WasterecordType extends AbstractType
             ])
             ->add('wasteType', ChoiceType::class, [
                 'label' => 'Waste type',
+                'required' => true,
                 'choices' => [
                     'Expired' => 'Expired',
                     'Spoilage' => 'Spoilage',
@@ -45,6 +48,7 @@ class WasterecordType extends AbstractType
             ])
             ->add('reason', TextType::class, [
                 'label' => 'Reason',
+                'required' => true,
                 'attr' => [
                     'maxlength' => 255,
                     'placeholder' => 'Short reason for waste entry',
@@ -52,6 +56,7 @@ class WasterecordType extends AbstractType
             ])
             ->add('date', DateType::class, [
                 'label' => 'Waste date',
+                'required' => true,
                 'widget' => 'single_text',
             ]);
     }

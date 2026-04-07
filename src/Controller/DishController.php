@@ -29,6 +29,10 @@ final class DishController extends AbstractController
         $form = $this->createForm(DishType::class, $dish);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($dish);
             $entityManager->flush();
@@ -55,6 +59,10 @@ final class DishController extends AbstractController
     {
         $form = $this->createForm(DishType::class, $dish);
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();

@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/admin/inventory/ingredient')]
 final class AdminIngredientController extends AbstractController
@@ -47,7 +49,7 @@ final class AdminIngredientController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_ingredient_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
@@ -59,7 +61,42 @@ final class AdminIngredientController extends AbstractController
         $form = $this->createForm(IngredientType::class, $ingredient);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
+            $violations = $validator->validate([
+                'quantityInStock' => (float) ($ingredient->getQuantityInStock() ?? 0),
+                'minStockLevel' => (float) ($ingredient->getMinStockLevel() ?? 0),
+                'unitCost' => (float) ($ingredient->getUnitCost() ?? 0),
+            ], new Assert\Collection([
+                'allowExtraFields' => true,
+                'fields' => [
+                    'quantityInStock' => [new Assert\PositiveOrZero(message: 'Quantity in stock must be 0 or greater.')],
+                    'minStockLevel' => [new Assert\PositiveOrZero(message: 'Minimum stock level must be 0 or greater.')],
+                    'unitCost' => [new Assert\PositiveOrZero(message: 'Unit cost must be 0 or greater.')],
+                ],
+            ]));
+
+            if (count($violations) > 0) {
+                foreach ($violations as $violation) {
+                    $this->addFlash('error', $violation->getMessage());
+                }
+
+                return $this->render('admin/inventory/ingredient/new.html.twig', [
+                    'form' => $form,
+                ]);
+            }
+
+            if ((float) ($ingredient->getMinStockLevel() ?? 0) > (float) ($ingredient->getQuantityInStock() ?? 0)) {
+                $this->addFlash('error', 'Minimum stock level cannot be greater than quantity in stock.');
+
+                return $this->render('admin/inventory/ingredient/new.html.twig', [
+                    'form' => $form,
+                ]);
+            }
+
             $entityManager->persist($ingredient);
             $entityManager->flush();
 
@@ -74,7 +111,7 @@ final class AdminIngredientController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_ingredient_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Ingredient $ingredient, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Ingredient $ingredient, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
@@ -83,7 +120,44 @@ final class AdminIngredientController extends AbstractController
         $form = $this->createForm(IngredientType::class, $ingredient);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
+            $violations = $validator->validate([
+                'quantityInStock' => (float) ($ingredient->getQuantityInStock() ?? 0),
+                'minStockLevel' => (float) ($ingredient->getMinStockLevel() ?? 0),
+                'unitCost' => (float) ($ingredient->getUnitCost() ?? 0),
+            ], new Assert\Collection([
+                'allowExtraFields' => true,
+                'fields' => [
+                    'quantityInStock' => [new Assert\PositiveOrZero(message: 'Quantity in stock must be 0 or greater.')],
+                    'minStockLevel' => [new Assert\PositiveOrZero(message: 'Minimum stock level must be 0 or greater.')],
+                    'unitCost' => [new Assert\PositiveOrZero(message: 'Unit cost must be 0 or greater.')],
+                ],
+            ]));
+
+            if (count($violations) > 0) {
+                foreach ($violations as $violation) {
+                    $this->addFlash('error', $violation->getMessage());
+                }
+
+                return $this->render('admin/inventory/ingredient/edit.html.twig', [
+                    'ingredient' => $ingredient,
+                    'form' => $form,
+                ]);
+            }
+
+            if ((float) ($ingredient->getMinStockLevel() ?? 0) > (float) ($ingredient->getQuantityInStock() ?? 0)) {
+                $this->addFlash('error', 'Minimum stock level cannot be greater than quantity in stock.');
+
+                return $this->render('admin/inventory/ingredient/edit.html.twig', [
+                    'ingredient' => $ingredient,
+                    'form' => $form,
+                ]);
+            }
+
             $entityManager->flush();
 
             $this->addFlash('success', 'Ingredient updated successfully.');

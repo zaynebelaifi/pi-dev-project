@@ -42,6 +42,10 @@ final class DeliveryController extends AbstractController
         $form = $this->createForm(DeliveryType::class, $delivery);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             // Auto-generate order ID
             $delivery->setOrder_id(random_int(100000, 999999));
@@ -292,6 +296,10 @@ final class DeliveryController extends AbstractController
 
         $form = $this->createForm(DeliveryType::class, $delivery);
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();

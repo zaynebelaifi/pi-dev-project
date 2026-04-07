@@ -14,6 +14,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
  
 #[Route('/admin/dish')]
 final class AdminDishController extends AbstractController
@@ -53,7 +55,7 @@ final class AdminDishController extends AbstractController
     }
  
     #[Route('/new', name: 'admin_dish_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, MenuRepository $menuRepository, IngredientRepository $ingredientRepository): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, MenuRepository $menuRepository, IngredientRepository $ingredientRepository, ValidatorInterface $validator): Response
     {
         $session = $request->getSession();
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
@@ -82,6 +84,10 @@ final class AdminDishController extends AbstractController
         ]);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         $ingredients = $ingredientRepository->findBy([], ['name' => 'ASC']);
         $ingredientsById = [];
         foreach ($ingredients as $ingredient) {
@@ -105,17 +111,31 @@ final class AdminDishController extends AbstractController
                 $quantity = is_numeric($quantityRaw) ? (float) $quantityRaw : 0.0;
 
                 // Allow empty rows in the dynamic UI.
-                if ($ingredientId <= 0 && $quantity <= 0) {
+                if ($ingredientId <= 0 && ($quantityRaw === null || $quantityRaw === '' || $quantity <= 0)) {
                     continue;
                 }
 
-                if ($ingredientId <= 0) {
-                    $recipeErrors[] = sprintf('Recipe row %d: ingredient is required.', $idx + 1);
-                    continue;
-                }
+                $violations = $validator->validate([
+                    'ingredient' => $ingredientIdRaw,
+                    'quantity' => $quantityRaw,
+                ], new Assert\Collection([
+                    'allowExtraFields' => true,
+                    'fields' => [
+                        'ingredient' => [
+                            new Assert\NotBlank(message: sprintf('Recipe row %d: ingredient is required.', $idx + 1)),
+                            new Assert\Regex(pattern: '/^\d+$/', message: sprintf('Recipe row %d: ingredient is required.', $idx + 1)),
+                        ],
+                        'quantity' => [
+                            new Assert\NotBlank(message: sprintf('Recipe row %d: quantity is required.', $idx + 1)),
+                            new Assert\Positive(message: sprintf('Recipe row %d: quantity must be greater than 0.', $idx + 1)),
+                        ],
+                    ],
+                ]));
 
-                if ($quantity <= 0) {
-                    $recipeErrors[] = sprintf('Recipe row %d: quantity must be greater than 0.', $idx + 1);
+                if (count($violations) > 0) {
+                    foreach ($violations as $violation) {
+                        $recipeErrors[] = $violation->getMessage();
+                    }
                     continue;
                 }
 
@@ -222,6 +242,10 @@ final class AdminDishController extends AbstractController
             'lock_menu' => null !== $lockedMenu,
         ]);
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
  
         if ($form->isSubmitted() && $form->isValid()) {
             if (null !== $lockedMenu) {

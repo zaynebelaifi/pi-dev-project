@@ -44,6 +44,10 @@ final class DeliveryManController extends AbstractController
         $form = $this->createForm(DeliveryManType::class, $deliveryMan);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($deliveryMan);
             $entityManager->flush();
@@ -77,6 +81,10 @@ final class DeliveryManController extends AbstractController
         }
         $form = $this->createForm(DeliveryManType::class, $deliveryMan);
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();

@@ -29,6 +29,10 @@ final class MenuController extends AbstractController
         $form = $this->createForm(MenuType::class, $menu);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($menu);
             $entityManager->flush();
@@ -55,6 +59,10 @@ final class MenuController extends AbstractController
     {
         $form = $this->createForm(MenuType::class, $menu);
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();

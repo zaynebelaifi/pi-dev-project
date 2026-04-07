@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/admin/inventory/waste')]
 final class AdminWasteRecordController extends AbstractController
@@ -33,7 +35,7 @@ final class AdminWasteRecordController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_waste_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
@@ -45,9 +47,37 @@ final class AdminWasteRecordController extends AbstractController
         $form = $this->createForm(WasterecordType::class, $record);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $ingredient = $record->getIngredient();
             $quantity = (float) $record->getQuantityWasted();
+            $wasteDate = $record->getDate();
+
+            $violations = $validator->validate([
+                'ingredient' => $ingredient?->getId(),
+                'quantity' => $quantity,
+                'date' => $wasteDate,
+            ], new Assert\Collection([
+                'allowExtraFields' => true,
+                'fields' => [
+                    'ingredient' => [new Assert\NotBlank(message: 'Ingredient is required.')],
+                    'quantity' => [new Assert\Positive(message: 'Wasted quantity must be greater than 0.')],
+                    'date' => [new Assert\NotNull(message: 'Waste date is required.')],
+                ],
+            ]));
+
+            if (count($violations) > 0) {
+                foreach ($violations as $violation) {
+                    $this->addFlash('error', $violation->getMessage());
+                }
+
+                return $this->render('admin/inventory/waste/new.html.twig', [
+                    'form' => $form,
+                ]);
+            }
 
             if (!$ingredient instanceof Ingredient) {
                 $this->addFlash('error', 'Ingredient is required.');
@@ -74,7 +104,7 @@ final class AdminWasteRecordController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_waste_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Wasterecord $record, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Wasterecord $record, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
@@ -87,9 +117,38 @@ final class AdminWasteRecordController extends AbstractController
         $form = $this->createForm(WasterecordType::class, $record);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $newIngredient = $record->getIngredient();
             $newQuantity = (float) ($record->getQuantityWasted() ?? 0);
+            $wasteDate = $record->getDate();
+
+            $violations = $validator->validate([
+                'ingredient' => $newIngredient?->getId(),
+                'quantity' => $newQuantity,
+                'date' => $wasteDate,
+            ], new Assert\Collection([
+                'allowExtraFields' => true,
+                'fields' => [
+                    'ingredient' => [new Assert\NotBlank(message: 'Ingredient is required.')],
+                    'quantity' => [new Assert\Positive(message: 'Wasted quantity must be greater than 0.')],
+                    'date' => [new Assert\NotNull(message: 'Waste date is required.')],
+                ],
+            ]));
+
+            if (count($violations) > 0) {
+                foreach ($violations as $violation) {
+                    $this->addFlash('error', $violation->getMessage());
+                }
+
+                return $this->render('admin/inventory/waste/edit.html.twig', [
+                    'record' => $record,
+                    'form' => $form,
+                ]);
+            }
 
             if (!$newIngredient instanceof Ingredient || !$originalIngredient instanceof Ingredient) {
                 $this->addFlash('error', 'Ingredient is required.');

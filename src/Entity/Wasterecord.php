@@ -58,7 +58,7 @@ class Wasterecord
         return $this->quantityWasted;
     }
 
-    public function setQuantityWasted(float $quantityWasted): self
+    public function setQuantityWasted(?float $quantityWasted): self
     {
         $this->quantityWasted = $quantityWasted;
         return $this;
@@ -74,7 +74,7 @@ class Wasterecord
         return $this->wasteType;
     }
 
-    public function setWasteType(string $wasteType): self
+    public function setWasteType(?string $wasteType): self
     {
         $this->wasteType = $wasteType;
         return $this;
@@ -89,7 +89,7 @@ class Wasterecord
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setDate(?\DateTimeInterface $date): self
     {
         $this->date = $date;
         return $this;
@@ -105,7 +105,7 @@ class Wasterecord
         return $this->reason;
     }
 
-    public function setReason(string $reason): self
+    public function setReason(?string $reason): self
     {
         $this->reason = $reason;
         return $this;

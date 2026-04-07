@@ -68,7 +68,7 @@ class Delivery
         return $this->delivery_address;
     }
 
-    public function setDelivery_address(string $delivery_address): self
+    public function setDelivery_address(?string $delivery_address): self
     {
         $this->delivery_address = $delivery_address;
         return $this;
@@ -305,7 +305,7 @@ class Delivery
     public function setOrderId(int $id): self { return $this->setOrder_id($id); }
     
     public function getDeliveryAddress(): ?string { return $this->getDelivery_address(); }
-    public function setDeliveryAddress(string $addr): self { return $this->setDelivery_address($addr); }
+    public function setDeliveryAddress(?string $addr): self { return $this->setDelivery_address($addr); }
     
     public function getRecipientName(): ?string { return $this->getRecipient_name(); }
     public function setRecipientName(?string $name): self { return $this->setRecipient_name($name); }

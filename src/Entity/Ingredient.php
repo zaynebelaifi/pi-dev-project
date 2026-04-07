@@ -39,7 +39,7 @@ class Ingredient
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName(?string $name): self
     {
         $this->name = $name;
         return $this;
@@ -55,7 +55,7 @@ class Ingredient
         return $this->quantityInStock;
     }
 
-    public function setQuantityInStock(float $quantityInStock): self
+    public function setQuantityInStock(?float $quantityInStock): self
     {
         $this->quantityInStock = $quantityInStock;
         return $this;
@@ -71,7 +71,7 @@ class Ingredient
         return $this->unit;
     }
 
-    public function setUnit(string $unit): self
+    public function setUnit(?string $unit): self
     {
         $this->unit = $unit;
         return $this;
@@ -101,7 +101,7 @@ class Ingredient
         return $this->minStockLevel;
     }
 
-    public function setMinStockLevel(float $minStockLevel): self
+    public function setMinStockLevel(?float $minStockLevel): self
     {
         $this->minStockLevel = $minStockLevel;
         return $this;
@@ -117,7 +117,7 @@ class Ingredient
         return $this->unitCost;
     }
 
-    public function setUnitCost(float $unitCost): self
+    public function setUnitCost(?float $unitCost): self
     {
         $this->unitCost = $unitCost;
         return $this;
@@ -150,7 +150,7 @@ class Ingredient
         return $this->expiryDate;
     }
 
-    public function setExpiryDate(\DateTimeInterface $expiryDate): self
+    public function setExpiryDate(?\DateTimeInterface $expiryDate): self
     {
         $this->expiryDate = $expiryDate;
         return $this;

@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/admin/dish/{id}/recipe')]
 final class AdminDishRecipeController extends AbstractController
@@ -34,7 +36,7 @@ final class AdminDishRecipeController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_dish_recipe_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, Dish $dish, DishIngredientRepository $dishIngredientRepository, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, Dish $dish, DishIngredientRepository $dishIngredientRepository, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
@@ -46,8 +48,41 @@ final class AdminDishRecipeController extends AbstractController
         $form = $this->createForm(DishIngredientType::class, $recipeLine);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $ingredient = $recipeLine->getIngredient();
+            $quantity = (float) ($recipeLine->getQuantityRequired() ?? 0);
+
+            $violations = $validator->validate([
+                'ingredient' => $ingredient?->getId(),
+                'quantity' => $quantity,
+            ], new Assert\Collection([
+                'allowExtraFields' => true,
+                'fields' => [
+                    'ingredient' => [
+                        new Assert\NotBlank(message: 'Ingredient is required.'),
+                    ],
+                    'quantity' => [
+                        new Assert\Positive(message: 'Quantity required must be greater than 0.'),
+                    ],
+                ],
+            ]));
+
+            if (count($violations) > 0) {
+                foreach ($violations as $violation) {
+                    $this->addFlash('error', $violation->getMessage());
+                }
+
+                return $this->render('admin/dish/recipe_edit.html.twig', [
+                    'dish' => $dish,
+                    'recipeLine' => $recipeLine,
+                    'form' => $form,
+                    'isEdit' => false,
+                ]);
+            }
 
             if ($ingredient instanceof Ingredient && $dishIngredientRepository->findOneByDishAndIngredient($dish, $ingredient)) {
                 $this->addFlash('error', 'This ingredient already exists in the dish recipe. Edit the existing line instead.');
@@ -70,7 +105,7 @@ final class AdminDishRecipeController extends AbstractController
     }
 
     #[Route('/{ingredientId}/edit', name: 'admin_dish_recipe_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Dish $dish, int $ingredientId, IngredientRepository $ingredientRepository, DishIngredientRepository $dishIngredientRepository, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Dish $dish, int $ingredientId, IngredientRepository $ingredientRepository, DishIngredientRepository $dishIngredientRepository, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
@@ -91,7 +126,30 @@ final class AdminDishRecipeController extends AbstractController
         ]);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
+            $quantity = (float) ($recipeLine->getQuantityRequired() ?? 0);
+
+            $violations = $validator->validate($quantity, [
+                new Assert\Positive(message: 'Quantity required must be greater than 0.'),
+            ]);
+
+            if (count($violations) > 0) {
+                foreach ($violations as $violation) {
+                    $this->addFlash('error', $violation->getMessage());
+                }
+
+                return $this->render('admin/dish/recipe_edit.html.twig', [
+                    'dish' => $dish,
+                    'recipeLine' => $recipeLine,
+                    'form' => $form,
+                    'isEdit' => true,
+                ]);
+            }
+
             $entityManager->flush();
             $this->addFlash('success', 'Recipe line updated.');
 

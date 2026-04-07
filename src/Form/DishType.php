@@ -22,6 +22,7 @@ class DishType extends AbstractType
         $builder
             ->add('name', TextType::class, [
                 'label' => 'Dish name',
+                'required' => true,
                 'attr' => [
                     'placeholder' => 'e.g. Truffle Espresso Pancakes',
                     'class' => 'form-control',
@@ -40,6 +41,7 @@ class DishType extends AbstractType
             ])
             ->add('base_price', NumberType::class, [
                 'label' => 'Base price (TND)',
+                'required' => true,
                 'scale' => 2,
                 'html5' => true,
                 'invalid_message' => 'Price must be a valid number (e.g. 12.50).',
@@ -75,6 +77,7 @@ class DishType extends AbstractType
                 'class' => Menu::class,
                 'choice_label' => 'title',
                 'label' => 'Menu',
+                'required' => true,
                 'placeholder' => $options['lock_menu'] ? null : 'Select menu',
                 'disabled' => $options['lock_menu'],
             ])

@@ -18,11 +18,13 @@ class DishIngredientType extends AbstractType
             ->add('ingredient', EntityType::class, [
                 'class' => Ingredient::class,
                 'choice_label' => fn (Ingredient $ingredient) => sprintf('%s (%s)', $ingredient->getName(), $ingredient->getUnit()),
+                'required' => true,
                 'placeholder' => 'Select ingredient',
                 'disabled' => $options['lock_ingredient'],
             ])
             ->add('quantityRequired', NumberType::class, [
                 'label' => 'Quantity required',
+                'required' => true,
                 'scale' => 3,
                 'html5' => true,
                 'attr' => [

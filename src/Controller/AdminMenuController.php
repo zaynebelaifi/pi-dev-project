@@ -49,6 +49,10 @@ final class AdminMenuController extends AbstractController
  
         $form = $this->createForm(MenuType::class, $menu);
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
  
         if ($form->isSubmitted() && $form->isValid()) {
             $menu->setUpdated_at(new \DateTimeImmutable());
@@ -90,6 +94,10 @@ final class AdminMenuController extends AbstractController
  
         $form = $this->createForm(MenuType::class, $menu);
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
  
         if ($form->isSubmitted() && $form->isValid()) {
             $menu->setUpdated_at(new \DateTimeImmutable());

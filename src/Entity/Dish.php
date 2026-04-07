@@ -65,7 +65,7 @@ class Dish
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName(?string $name): self
     {
         $this->name = $name;
         return $this;
@@ -105,13 +105,13 @@ class Dish
         return $this->base_price;
     }
 
-    public function setBase_price(float $base_price): self
+    public function setBase_price(?float $base_price): self
     {
         $this->base_price = $base_price;
         return $this;
     }
 
-    public function setBasePrice(float $basePrice): self
+    public function setBasePrice(?float $basePrice): self
     {
         $this->base_price = $basePrice;
         return $this;

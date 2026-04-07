@@ -53,7 +53,7 @@ class DishIngredient
         return $this->quantityRequired;
     }
 
-    public function setQuantityRequired(float $quantityRequired): self
+    public function setQuantityRequired(?float $quantityRequired): self
     {
         $this->quantityRequired = $quantityRequired;
         return $this;
