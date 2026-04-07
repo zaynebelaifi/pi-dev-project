@@ -83,6 +83,10 @@ final class AdminDishController extends AbstractController
         $form->handleRequest($request);
 
         $ingredients = $ingredientRepository->findBy([], ['name' => 'ASC']);
+        $ingredientsById = [];
+        foreach ($ingredients as $ingredient) {
+            $ingredientsById[$ingredient->getId()] = $ingredient;
+        }
         $recipeIngredientDraft = (array) $request->request->all('recipe_ingredient');
         $recipeQuantityDraft = (array) $request->request->all('recipe_quantity');
  
@@ -120,7 +124,7 @@ final class AdminDishController extends AbstractController
                     continue;
                 }
 
-                $ingredient = $ingredientRepository->find($ingredientId);
+                $ingredient = $ingredientsById[$ingredientId] ?? null;
                 if (null === $ingredient) {
                     $recipeErrors[] = sprintf('Recipe row %d: selected ingredient was not found.', $idx + 1);
                     continue;

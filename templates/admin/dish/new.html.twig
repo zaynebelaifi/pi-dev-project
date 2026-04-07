@@ -63,7 +63,7 @@
           <h3>Recipe Ingredients</h3>
           <button type="button" class="t-btn" id="addRecipeLine">+ Add Ingredient</button>
         </div>
-        <p class="recipe-sub">Set ingredient quantity required for one serving of this dish.</p>
+        <p class="recipe-sub">Set ingredient quantity required for one serving of this dish. Duplicates are flagged automatically.</p>
 
         <div id="recipeLines">
           {% set rowCount = recipeIngredientDraft|length > 0 ? recipeIngredientDraft|length : 1 %}
@@ -76,14 +76,16 @@
                   {% set selectedId = recipeIngredientDraft[i] ?? '' %}
                   {% for ingredient in ingredients %}
                     <option value="{{ ingredient.id }}" {{ selectedId|striptags == ingredient.id ? 'selected' : '' }}>
-                      {{ ingredient.name }} ({{ ingredient.unit }})
+                      {{ ingredient.name }} ({{ ingredient.unit }}) - stock {{ ingredient.quantityInStock|number_format(2, '.', ' ') }}
                     </option>
                   {% endfor %}
                 </select>
+                <small class="recipe-hint">Pick one ingredient per row.</small>
               </div>
               <div class="form-group">
                 <label>Quantity required</label>
                 <input type="number" name="recipe_quantity[]" value="{{ recipeQuantityDraft[i] ?? '' }}" min="0.001" step="0.001" placeholder="e.g. 0.250">
+                <small class="recipe-hint">For one dish serving.</small>
               </div>
               <div class="form-group recipe-remove-wrap">
                 <button type="button" class="mini-action mini-action-danger recipe-remove">Remove</button>
@@ -91,6 +93,29 @@
             </div>
           {% endfor %}
         </div>
+
+        <template id="recipeLineTemplate">
+          <div class="recipe-line">
+            <div class="form-group">
+              <label>Ingredient</label>
+              <select name="recipe_ingredient[]" class="recipe-select">
+                <option value="">Select ingredient</option>
+                {% for ingredient in ingredients %}
+                  <option value="{{ ingredient.id }}">{{ ingredient.name }} ({{ ingredient.unit }}) - stock {{ ingredient.quantityInStock|number_format(2, '.', ' ') }}</option>
+                {% endfor %}
+              </select>
+              <small class="recipe-hint">Pick one ingredient per row.</small>
+            </div>
+            <div class="form-group">
+              <label>Quantity required</label>
+              <input type="number" name="recipe_quantity[]" min="0.001" step="0.001" placeholder="e.g. 0.250">
+              <small class="recipe-hint">For one dish serving.</small>
+            </div>
+            <div class="form-group recipe-remove-wrap">
+              <button type="button" class="mini-action mini-action-danger recipe-remove">Remove</button>
+            </div>
+          </div>
+        </template>
       </div>
 
       <div class="form-actions">
@@ -218,6 +243,16 @@
       font-size: .9rem;
       font-family: 'Jost', sans-serif;
     }
+    .recipe-line.duplicate-row {
+      border-color: #d99b9b;
+      background: #fff6f6;
+    }
+    .recipe-hint {
+      margin-top: .35rem;
+      display: block;
+      font-size: .72rem;
+      color: var(--text-3);
+    }
     .recipe-remove-wrap {
       display: flex;
       align-items: end;
@@ -235,29 +270,37 @@
     (() => {
       const container = document.getElementById('recipeLines');
       const addBtn = document.getElementById('addRecipeLine');
+      const template = document.getElementById('recipeLineTemplate');
       if (!container || !addBtn) return;
 
-      const optionsHtml = {{ ingredients|map(i => '<option value="' ~ i.id ~ '">' ~ i.name|e('js') ~ ' (' ~ i.unit|e('js') ~ ')</option>')|join('')|json_encode|raw }};
+      function refreshDuplicateState() {
+        const selects = Array.from(container.querySelectorAll('.recipe-select'));
+        const seen = new Map();
+        selects.forEach((select) => {
+          const row = select.closest('.recipe-line');
+          row?.classList.remove('duplicate-row');
+        });
+
+        selects.forEach((select) => {
+          const value = select.value;
+          if (!value) return;
+          if (!seen.has(value)) {
+            seen.set(value, [select]);
+            return;
+          }
+          seen.get(value).push(select);
+        });
+
+        seen.forEach((list) => {
+          if (list.length < 2) return;
+          list.forEach((select) => select.closest('.recipe-line')?.classList.add('duplicate-row'));
+        });
+      }
 
       addBtn.addEventListener('click', () => {
-        const row = document.createElement('div');
-        row.className = 'recipe-line';
-        row.innerHTML = `
-          <div class="form-group">
-            <label>Ingredient</label>
-            <select name="recipe_ingredient[]" class="recipe-select">
-              <option value="">Select ingredient</option>${JSON.parse(optionsHtml)}
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Quantity required</label>
-            <input type="number" name="recipe_quantity[]" min="0.001" step="0.001" placeholder="e.g. 0.250">
-          </div>
-          <div class="form-group recipe-remove-wrap">
-            <button type="button" class="mini-action mini-action-danger recipe-remove">Remove</button>
-          </div>
-        `;
-        container.appendChild(row);
+        const content = template.content.cloneNode(true);
+        container.appendChild(content);
+        refreshDuplicateState();
       });
 
       container.addEventListener('click', (event) => {
@@ -266,7 +309,15 @@
         const lines = container.querySelectorAll('.recipe-line');
         if (lines.length <= 1) return;
         btn.closest('.recipe-line')?.remove();
+        refreshDuplicateState();
       });
+
+      container.addEventListener('change', (event) => {
+        if (!event.target.classList.contains('recipe-select')) return;
+        refreshDuplicateState();
+      });
+
+      refreshDuplicateState();
     })();
   </script>
 {% endblock %}
