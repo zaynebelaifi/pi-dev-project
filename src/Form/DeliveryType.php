@@ -20,32 +20,28 @@ class DeliveryType extends AbstractType
         $builder
             ->add('delivery_address', TextType::class, [
                 'label' => 'Delivery Address',
-                'required' => true
+                'required' => false,
             ])
             ->add('recipient_name', TextType::class, [
                 'label' => 'Recipient Name',
-                'required' => false
+                'required' => false,
             ])
             ->add('recipient_phone', TextType::class, [
                 'label' => 'Recipient Phone',
-                'required' => false
+                'required' => false,
             ])
             ->add('pickup_location', TextType::class, [
                 'label' => 'Pickup Location',
-                'required' => false
+                'required' => false,
             ])
             ->add('delivery_notes', TextareaType::class, [
                 'label' => 'Delivery Notes',
-                'required' => false
+                'required' => false,
             ])
             ->add('order_total', NumberType::class, [
                 'label' => 'Order Total',
                 'required' => false,
-                'scale' => 2
-            ])
-            ->add('rating', IntegerType::class, [
-                'label' => 'Rating',
-                'required' => false
+                'scale' => 2,
             ])
         ;
     }

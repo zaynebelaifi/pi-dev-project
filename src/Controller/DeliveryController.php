@@ -201,13 +201,13 @@ final class DeliveryController extends AbstractController
         if ($request->isMethod('POST')) {
             $rawCartItems = $request->request->get('cart_items', '[]');
             $orderTotal = $request->request->get('order_total', '0');
-            $deliveryAddress = $request->request->get('delivery_address');
-            $recipientName = $request->request->get('recipient_name');
-            $recipientPhone = $request->request->get('recipient_phone');
-            $pickupLocation = $request->request->get('pickup_location');
-            $deliveryNotes = $request->request->get('delivery_notes');
+            $deliveryAddress = trim((string) $request->request->get('delivery_address', ''));
+            $recipientName = trim((string) $request->request->get('recipient_name', ''));
+            $recipientPhone = trim((string) $request->request->get('recipient_phone', ''));
+            $pickupLocation = trim((string) $request->request->get('pickup_location', ''));
+            $deliveryNotes = trim((string) $request->request->get('delivery_notes', ''));
 
-            if (!$deliveryAddress || !$recipientName || !$recipientPhone || !$pickupLocation) {
+            if ($deliveryAddress === '' || $recipientName === '' || $recipientPhone === '' || $pickupLocation === '') {
                 $this->addFlash('error', 'Please complete all required delivery details.');
                 return $this->redirectToRoute('app_delivery_create', ['cart_items' => $rawCartItems, 'order_total' => $orderTotal]);
             }
@@ -258,13 +258,23 @@ final class DeliveryController extends AbstractController
     #[Route('/track/{id}', name: 'app_delivery_tracking', methods: ['GET', 'POST'])]
     public function track(Request $request, Delivery $delivery, EntityManagerInterface $entityManager): Response
     {
-        // Handle rating submission if delivered
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_CLIENT' || $session->get('client_phone') !== $delivery->getRecipient_phone()) {
+            return $this->redirectToRoute('app_home');
+        }
+
         if ($request->isMethod('POST') && $delivery->getStatus() === 'DELIVERED') {
-            $rating = $request->request->get('rating');
-            if ($rating) {
-                $delivery->setRating((float)$rating);
-                $entityManager->flush();
-                $this->addFlash('success', 'Thank you for rating your delivery!');
+            if ($delivery->getRating() !== null) {
+                $this->addFlash('error', 'This delivery has already been rated.');
+            } else {
+                $rating = $request->request->get('rating');
+                if (!in_array($rating, ['1', '2', '3', '4', '5'], true)) {
+                    $this->addFlash('error', 'Please select a valid rating between 1 and 5.');
+                } else {
+                    $delivery->setRating((int)$rating);
+                    $entityManager->flush();
+                    $this->addFlash('success', 'Thank you for rating your delivery!');
+                }
             }
         }
 

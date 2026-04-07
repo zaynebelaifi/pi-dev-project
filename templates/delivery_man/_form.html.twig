@@ -1,4 +1,4 @@
-{{ form_start(form, {'attr': {'class': 'admin-form'}}) }}
+{{ form_start(form, {'attr': {'class': 'admin-form', 'novalidate': 'novalidate'}}) }}
     {% for field in form %}
         {% if field.vars.name != '_token' %}
         <div class="form-group">

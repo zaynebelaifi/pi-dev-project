@@ -20,15 +20,15 @@ class DeliveryManType extends AbstractType
         $builder
             ->add('name', TextType::class, [
                 'label' => 'Full Name',
-                'required' => true
+                'required' => false,
             ])
             ->add('phone', TextType::class, [
                 'label' => 'Phone Number',
-                'required' => true
+                'required' => false,
             ])
             ->add('email', EmailType::class, [
                 'label' => 'Email Address',
-                'required' => false
+                'required' => false,
             ])
             ->add('vehicle_type', ChoiceType::class, [
                 'label' => 'Vehicle Type',
@@ -42,11 +42,11 @@ class DeliveryManType extends AbstractType
                     'Truck' => 'truck',
                     'Other' => 'other'
                 ],
-                'placeholder' => 'Select vehicle type'
+                'placeholder' => 'Select vehicle type',
             ])
             ->add('vehicle_number', TextType::class, [
                 'label' => 'Vehicle Number/License Plate',
-                'required' => false
+                'required' => false,
             ])
             ->add('status', ChoiceType::class, [
                 'label' => 'Status',
@@ -57,26 +57,21 @@ class DeliveryManType extends AbstractType
                     'On Leave' => 'on_leave',
                     'Suspended' => 'suspended'
                 ],
-                'placeholder' => 'Select status'
+                'placeholder' => 'Select status',
             ])
             ->add('address', TextType::class, [
                 'label' => 'Address',
-                'required' => false
+                'required' => false,
             ])
             ->add('salary', NumberType::class, [
                 'label' => 'Salary',
                 'required' => false,
-                'scale' => 2
+                'scale' => 2,
             ])
             ->add('date_of_joining', DateType::class, [
                 'label' => 'Date of Joining',
                 'required' => false,
-                'widget' => 'single_text'
-            ])
-            ->add('rating', NumberType::class, [
-                'label' => 'Rating',
-                'required' => false,
-                'scale' => 1
+                'widget' => 'single_text',
             ])
         ;
     }

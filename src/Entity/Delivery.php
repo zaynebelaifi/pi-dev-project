@@ -74,7 +74,8 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Recipient name is required.')]
     #[Assert\Length(max: 100, maxMessage: 'Recipient name cannot be longer than {{ limit }} characters.')]
     private ?string $recipient_name = null;
 
@@ -89,9 +90,9 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    #[Assert\Regex(pattern: '/^[\+]?[0-9\-\(\)\s]+$/', message: 'Please enter a valid phone number.')]
-    #[Assert\Length(max: 20, maxMessage: 'Phone number cannot be longer than {{ limit }} characters.')]
+    #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Recipient phone is required.')]
+    #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Phone number must be exactly 8 digits.')]
     private ?string $recipient_phone = null;
 
     public function getRecipient_phone(): ?string
@@ -105,7 +106,8 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Pickup location is required.')]
     #[Assert\Length(max: 500, maxMessage: 'Pickup location cannot be longer than {{ limit }} characters.')]
     private ?string $pickup_location = null;
 

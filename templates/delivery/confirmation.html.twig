@@ -3,217 +3,213 @@
 {% block title %}Delivery Confirmation{% endblock %}
 
 {% block body %}
-<div class="container">
-    <div class="confirmation-header">
-        <h1>Delivery Order Confirmed!</h1>
-        <p>Your delivery has been successfully created and assigned.</p>
-    </div>
-
-    <div class="confirmation-actions">
-        <a href="{{ path('app_delivery_tracking', {'id': delivery.delivery_id}) }}" class="btn btn-primary">Track Your Order</a>
-        <a href="{{ path('app_home') }}" class="btn btn-secondary">Back to Home</a>
-    </div>
-
-    <div class="confirmation-details">
-        <div class="detail-card">
-            <h3>Order Details</h3>
-            <table class="confirmation-table">
-                <tbody>
-                    <tr>
-                        <td><strong>Order Number:</strong></td>
-                        <td>{{ delivery.order_id }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Estimated Delivery Time:</strong></td>
-                        <td>{{ delivery.estimated_time }} minutes</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Status:</strong></td>
-                        <td><span class="status-badge status-{{ delivery.status|lower }}">{{ delivery.status }}</span></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Delivery Address:</strong></td>
-                        <td>{{ delivery.delivery_address }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Recipient:</strong></td>
-                        <td>{{ delivery.recipient_name }} - {{ delivery.recipient_phone }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Pickup Location:</strong></td>
-                        <td>{{ delivery.pickup_location }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Order Total:</strong></td>
-                        <td>{{ delivery.order_total }} TND</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        {% if delivery.cart_items %}
-        <div class="detail-card">
-            <h3>Selected Items</h3>
-            <div class="order-items">
-                {{ delivery.cart_items|nl2br }}
+<div class="page-shell">
+    <section class="confirmation-panel">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">Delivery Confirmed</p>
+                <h1>Order #{{ delivery.order_id }} is on its way</h1>
+                <p class="subtitle">Your delivery has been accepted and assigned to a driver. Track it below or return home.</p>
             </div>
-        </div>
-        {% endif %}
 
-        {% if delivery.deliveryMan %>
-        <div class="detail-card">
-            <h3>Assigned Delivery Person</h3>
-            <table class="confirmation-table">
-                <tbody>
-                    <tr>
-                        <td><strong>Name:</strong></td>
-                        <td>{{ delivery.deliveryMan.name }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Phone:</strong></td>
-                        <td>{{ delivery.deliveryMan.phone }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Vehicle:</strong></td>
-                        <td>{{ delivery.deliveryMan.vehicle_type }} - {{ delivery.deliveryMan.vehicle_number }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Rating:</strong></td>
-                        <td>{{ delivery.deliveryMan.rating }}/5 ⭐</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
+            <div class="page-actions">
+                <a href="{{ path('app_delivery_tracking', {'id': delivery.delivery_id}) }}" class="btn btn-primary">Track Delivery</a>
+                <a href="{{ path('app_home') }}" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </header>
 
-        {% if delivery.delivery_notes %}
-        <div class="detail-card">
-            <h3>Delivery Notes</h3>
-            <p>{{ delivery.delivery_notes }}</p>
+        <div class="summary-grid">
+            <article class="detail-card">
+                <h2>Delivery Summary</h2>
+                <table class="detail-table">
+                    <tbody>
+                        <tr>
+                            <td>Order Number</td>
+                            <td>{{ delivery.order_id }}</td>
+                        </tr>
+                        <tr>
+                            <td>Status</td>
+                            <td><span class="status-badge status-{{ delivery.status|lower }}">{{ delivery.status }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>ETA</td>
+                            <td>{{ delivery.estimated_time }} min</td>
+                        </tr>
+                        <tr>
+                            <td>Address</td>
+                            <td>{{ delivery.delivery_address }}</td>
+                        </tr>
+                        <tr>
+                            <td>Recipient</td>
+                            <td>{{ delivery.recipient_name }}<br><span class="muted">{{ delivery.recipient_phone }}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Pickup Location</td>
+                            <td>{{ delivery.pickup_location }}</td>
+                        </tr>
+                        <tr>
+                            <td>Order Total</td>
+                            <td>{{ delivery.order_total }} TND</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </article>
+
+            {% if delivery.deliveryMan %}
+            <article class="detail-card overview-card">
+                <h2>Delivery Person</h2>
+                <div class="profile-block">
+                    <p><strong>{{ delivery.deliveryMan.name }}</strong></p>
+                    <p class="muted">{{ delivery.deliveryMan.vehicle_type|capitalize }} • {{ delivery.deliveryMan.vehicle_number }}</p>
+                    <p class="rating">Rating: {{ delivery.deliveryMan.rating }}/5 ⭐</p>
+                    <p><strong>Phone:</strong> {{ delivery.deliveryMan.phone }}</p>
+                </div>
+            </article>
+            {% endif %}
         </div>
-        {% endif %}
-    </div>
+
+        <div class="card-stack">
+            {% if delivery.cart_items %}
+            <article class="detail-card">
+                <h2>Order Items</h2>
+                <div class="order-items">
+                    {{ delivery.cart_items|nl2br }}
+                </div>
+            </article>
+            {% endif %}
+
+            {% if delivery.delivery_notes %}
+            <article class="detail-card">
+                <h2>Delivery Notes</h2>
+                <p>{{ delivery.delivery_notes }}</p>
+            </article>
+            {% endif %}
+        </div>
+    </section>
 </div>
 
-{% verbatim %}
 <style>
-.container {
-    max-width: 1200px;
+.page-shell {
+    max-width: 1180px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 2rem 1rem;
 }
 
-.confirmation-header {
-    text-align: center;
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-.confirmation-header h1 {
-    color: var(--gold);
-    font-size: 2.5rem;
+.eyebrow {
+    display: inline-block;
     margin-bottom: 0.5rem;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.85rem;
 }
 
-.confirmation-header p {
+.subtitle {
     color: var(--text-2);
-    font-size: 1.1rem;
+    max-width: 620px;
 }
 
-.confirmation-actions {
+.page-actions {
     display: flex;
     gap: 1rem;
-    justify-content: center;
-    margin-bottom: 2rem;
+    flex-wrap: wrap;
 }
 
-.confirmation-details {
+.summary-grid {
     display: grid;
-    gap: 2rem;
-    margin-top: 2rem;
+    grid-template-columns: 1.4fr 0.8fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.card-stack {
+    display: grid;
+    gap: 1.5rem;
 }
 
 .detail-card {
     background: var(--ivory);
     border: 1px solid var(--gold);
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    padding: 1.75rem;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
 }
 
-.detail-card h3 {
+.detail-card h2 {
+    margin-top: 0;
     color: var(--gold);
-    margin-bottom: 1rem;
     font-size: 1.2rem;
+    margin-bottom: 1rem;
 }
 
-.confirmation-table {
+.detail-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.confirmation-table td {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
+.detail-table td {
+    padding: 0.75rem 0;
+    vertical-align: top;
+    color: var(--text-2);
 }
 
-.confirmation-table td:first-child {
-    font-weight: bold;
-    width: 40%;
+.detail-table td:first-child {
+    width: 35%;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.profile-block p {
+    margin: 0.5rem 0;
+}
+
+.rating {
+    margin-top: 1rem;
+    font-weight: 700;
+}
+
+.order-items {
+    padding: 1rem;
+    background: rgba(255, 250, 240, 0.9);
+    border-radius: 12px;
+    line-height: 1.7;
 }
 
 .status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
     text-transform: uppercase;
 }
 
-.status-pending {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.status-assigned {
-    background: #cce5ff;
-    color: #004085;
-}
-
-.status-delivered {
-    background: #d4edda;
-    color: #155724;
-}
+.status-pending { background: #fff4cd; color: #856404; }
+.status-assigned { background: #dbeafe; color: #1d4ed8; }
+.status-picked_up, .status-in_transit { background: #d1fae5; color: #166534; }
+.status-delivered { background: #d1fae5; color: #166534; }
 
 .btn {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-primary {
-    background: var(--gold);
-    color: var(--espresso);
-}
-
-.btn-primary:hover {
-    background: var(--brown);
-    color: white;
-}
-
-.btn-secondary {
-    background: var(--text-2);
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: var(--espresso);
+@media (max-width: 900px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
-{% endverbatim %}
 {% endblock %}
