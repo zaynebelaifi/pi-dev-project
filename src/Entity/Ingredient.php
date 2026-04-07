@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\IngredientRepository;
 
@@ -29,6 +30,8 @@ class Ingredient
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Ingredient name is required.')]
+    #[Assert\Length(max: 255, maxMessage: 'Ingredient name cannot exceed {{ limit }} characters.')]
     private ?string $name = null;
 
     public function getName(): ?string
@@ -42,7 +45,9 @@ class Ingredient
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
+    #[ORM\Column(name: 'quantityInStock', type: 'decimal', nullable: false)]
+    #[Assert\NotNull(message: 'Quantity in stock is required.')]
+    #[Assert\PositiveOrZero(message: 'Quantity in stock must be 0 or greater.')]
     private ?float $quantityInStock = null;
 
     public function getQuantityInStock(): ?float
@@ -57,6 +62,8 @@ class Ingredient
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Unit is required.')]
+    #[Assert\Length(max: 50, maxMessage: 'Unit cannot exceed {{ limit }} characters.')]
     private ?string $unit = null;
 
     public function getUnit(): ?string
@@ -70,7 +77,7 @@ class Ingredient
         return $this;
     }
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[ORM\Column(name: 'createdAt', type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function getCreatedAt(): ?\DateTimeInterface
@@ -84,7 +91,9 @@ class Ingredient
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
+    #[ORM\Column(name: 'minStockLevel', type: 'decimal', nullable: false)]
+    #[Assert\NotNull(message: 'Minimum stock level is required.')]
+    #[Assert\PositiveOrZero(message: 'Minimum stock level must be 0 or greater.')]
     private ?float $minStockLevel = null;
 
     public function getMinStockLevel(): ?float
@@ -98,7 +107,9 @@ class Ingredient
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
+    #[ORM\Column(name: 'unitCost', type: 'decimal', nullable: false)]
+    #[Assert\NotNull(message: 'Unit cost is required.')]
+    #[Assert\PositiveOrZero(message: 'Unit cost must be 0 or greater.')]
     private ?float $unitCost = null;
 
     public function getUnitCost(): ?float
@@ -112,8 +123,27 @@ class Ingredient
         return $this;
     }
 
-    #[ORM\Column(type: 'date', nullable: false)]
+    #[ORM\Column(name: 'expiryDate', type: 'date', nullable: false)]
+    #[Assert\NotNull(message: 'Expiry date is required.')]
     private ?\DateTimeInterface $expiryDate = null;
+
+    /**
+     * @var Collection<int, DishIngredient>
+     */
+    #[ORM\OneToMany(mappedBy: 'ingredient', targetEntity: DishIngredient::class, orphanRemoval: true)]
+    private Collection $dishIngredients;
+
+    /**
+     * @var Collection<int, Wasterecord>
+     */
+    #[ORM\OneToMany(mappedBy: 'ingredient', targetEntity: Wasterecord::class, orphanRemoval: true)]
+    private Collection $wasteRecords;
+
+    public function __construct()
+    {
+        $this->dishIngredients = new ArrayCollection();
+        $this->wasteRecords = new ArrayCollection();
+    }
 
     public function getExpiryDate(): ?\DateTimeInterface
     {
@@ -124,6 +154,22 @@ class Ingredient
     {
         $this->expiryDate = $expiryDate;
         return $this;
+    }
+
+    /**
+     * @return Collection<int, DishIngredient>
+     */
+    public function getDishIngredients(): Collection
+    {
+        return $this->dishIngredients;
+    }
+
+    /**
+     * @return Collection<int, Wasterecord>
+     */
+    public function getWasteRecords(): Collection
+    {
+        return $this->wasteRecords;
     }
 
 }

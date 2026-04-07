@@ -1,0 +1,64 @@
+<div class="menu-form-card">
+  {{ form_start(form, {'attr': {'class': 'admin-form', 'novalidate': 'novalidate'}}) }}
+    <div class="menu-form-grid">
+      <div class="form-group">{{ form_label(form.name) }}{{ form_widget(form.name) }}{{ form_errors(form.name) }}</div>
+      <div class="form-group">{{ form_label(form.unit) }}{{ form_widget(form.unit) }}{{ form_errors(form.unit) }}</div>
+      <div class="form-group">{{ form_label(form.quantityInStock) }}{{ form_widget(form.quantityInStock) }}{{ form_errors(form.quantityInStock) }}</div>
+      <div class="form-group">{{ form_label(form.minStockLevel) }}{{ form_widget(form.minStockLevel) }}{{ form_errors(form.minStockLevel) }}</div>
+      <div class="form-group">{{ form_label(form.unitCost) }}{{ form_widget(form.unitCost) }}{{ form_errors(form.unitCost) }}</div>
+      <div class="form-group">{{ form_label(form.expiryDate) }}{{ form_widget(form.expiryDate) }}{{ form_errors(form.expiryDate) }}</div>
+    </div>
+    <div class="form-actions"><button type="submit" class="t-btn primary">{{ submitLabel }}</button></div>
+  {{ form_end(form) }}
+</div>
+
+<style>
+  .menu-form-card {
+    margin-top: 1.5rem;
+    background: var(--ivory);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    box-shadow: 0 4px 16px var(--shadow);
+    max-width: 900px;
+  }
+  .menu-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem 1.5rem;
+  }
+  .menu-form-card .form-group label {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--text-3);
+    margin-bottom: .4rem;
+  }
+  .menu-form-card .form-group input {
+    width: 100%;
+    padding: .7rem .9rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-2);
+    background: #fff;
+    font-size: .9rem;
+    font-family: 'Jost', sans-serif;
+  }
+  .menu-form-card .form-group ul {
+    margin: .45rem 0 0;
+    padding-left: 1rem;
+    color: #b3261e;
+    font-size: .82rem;
+    list-style: disc;
+  }
+  .menu-form-card .form-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+  @media (max-width: 900px) {
+    .menu-form-card { padding: 1.25rem 1.3rem; }
+    .menu-form-grid { grid-template-columns: 1fr; }
+  }
+</style>

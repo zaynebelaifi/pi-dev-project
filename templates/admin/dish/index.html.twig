@@ -78,25 +78,35 @@
               Available{% if sort == 'available' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
             </a>
           </th>
+          <th>Servings</th>
           <th>Actions</th>
         </tr>
         </thead>
         <tbody>
         {% for dish in dishes %}
+          {% set availability = dishAvailability[dish.id] ?? null %}
           <tr>
             <td class="delivery-id">#{{ dish.id }}</td>
             <td>{{ dish.name }}</td>
             <td>{{ dish.menu ? dish.menu.title : '—' }}</td>
             <td>{{ dish.basePrice|number_format(2, '.', ' ') }} TND</td>
             <td>
-              {% if dish.available %}
+              {% if availability and availability.is_available %}
                 <span class="status-badge status-completed">Available</span>
               {% else %}
                 <span class="status-badge status-cancelled">Unavailable</span>
               {% endif %}
             </td>
+            <td>
+              {% if availability and availability.has_recipe %}
+                {{ availability.possible_servings }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
             <td class="action-cell">
               <a href="{{ path('admin_dish_show', {id: dish.id}) }}" class="mini-action" title="View">View</a>
+              <a href="{{ path('admin_dish_recipe_index', {id: dish.id}) }}" class="mini-action" title="Recipe">Recipe</a>
               <a href="{{ selectedMenu ? path('admin_dish_edit', {id: dish.id, menu: selectedMenu.id}) : path('admin_dish_edit', {id: dish.id}) }}" class="mini-action" title="Edit">Edit</a>
               <form method="post" action="{{ path('admin_dish_delete', {id: dish.id}) }}" onsubmit="return confirm('Delete this dish?');" style="display:inline-block;">
                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ dish.id) }}">

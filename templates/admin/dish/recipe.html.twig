@@ -1,0 +1,102 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Recipe · {{ dish.name }}{% endblock %}
+{% block topbar_title %}Dish Recipe{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Recipe: {{ dish.name }}</h2>
+      <p class="sec-sub">Manage dish ingredients and required quantities.</p>
+    </div>
+    <div style="display:flex; gap:.7rem;">
+      <a href="{{ path('admin_dish_recipe_new', {id: dish.id}) }}" class="t-btn primary">+ Add Ingredient</a>
+      <a href="{{ path('admin_dish_show', {id: dish.id}) }}" class="t-btn">Back to Dish</a>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="margin-bottom:1.2rem;">
+    <div class="kpi">
+      <div class="kpi-lbl">Availability</div>
+      <div class="kpi-val" style="font-size:1.6rem;">{{ availability.is_available ? 'Available' : 'Blocked' }}</div>
+      <div class="kpi-chg {{ availability.is_available ? 'up' : 'down' }}">Recipe-based status</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Possible Servings</div>
+      <div class="kpi-val" style="font-size:1.6rem;">{{ availability.possible_servings }}</div>
+      <div class="kpi-chg up">Computed from stock and ratios</div>
+    </div>
+  </div>
+
+  {% if availability.reasons is not empty %}
+    <div class="delivery-table-card" style="margin-bottom:1rem;">
+      <div class="table-header"><div class="table-title">Blocking Reasons</div></div>
+      <div style="padding:1rem 1.5rem;">
+        <ul style="margin:0; padding-left:1.2rem;">
+          {% for reason in availability.reasons %}
+            <li>{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="delivery-table-card">
+    <div class="table-header">
+      <div class="table-title">Recipe Lines</div>
+      <div class="table-count">{{ recipeLines|length }} total</div>
+    </div>
+
+    {% if recipeLines is empty %}
+      <div class="no-results">No ingredients linked yet. Add recipe lines to compute availability.</div>
+    {% else %}
+      <table class="delivery-table">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>Required</th>
+            <th>Stock</th>
+            <th>Unit</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in recipeLines %}
+            {% set ingredient = line.ingredient %}
+            {% set required = line.quantityRequired|default(0) %}
+            {% set stock = ingredient ? ingredient.quantityInStock|default(0) : 0 %}
+            {% set expired = ingredient and ingredient.expiryDate and ingredient.expiryDate|date('Y-m-d') < 'now'|date('Y-m-d') %}
+            {% set enough = ingredient and stock >= required %}
+            <tr>
+              <td>{{ ingredient ? ingredient.name : 'Missing ingredient' }}</td>
+              <td>{{ required|number_format(3, '.', ' ') }}</td>
+              <td>{{ stock|number_format(2, '.', ' ') }}</td>
+              <td>{{ ingredient ? ingredient.unit : '—' }}</td>
+              <td>
+                {% if expired %}
+                  <span class="status-badge status-cancelled">Expired</span>
+                {% elseif enough %}
+                  <span class="status-badge status-completed">OK</span>
+                {% else %}
+                  <span class="status-badge status-cancelled">Insufficient</span>
+                {% endif %}
+              </td>
+              <td class="action-cell">
+                {% if ingredient %}
+                  <a href="{{ path('admin_dish_recipe_edit', {id: dish.id, ingredientId: ingredient.id}) }}" class="mini-action">Edit</a>
+                  <form method="post" action="{{ path('admin_dish_recipe_delete', {id: dish.id, ingredientId: ingredient.id}) }}" onsubmit="return confirm('Remove this recipe line?');" style="display:inline-block;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_recipe' ~ dish.id ~ '_' ~ ingredient.id) }}">
+                    <button class="mini-action mini-action-danger">Delete</button>
+                  </form>
+                {% else %}
+                  <span style="color:var(--text-3)">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+{% endblock %}

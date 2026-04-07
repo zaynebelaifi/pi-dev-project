@@ -3,9 +3,12 @@
 namespace App\Controller;
  
 use App\Entity\Dish;
+use App\Entity\DishIngredient;
 use App\Form\DishType;
 use App\Repository\DishRepository;
+use App\Repository\IngredientRepository;
 use App\Repository\MenuRepository;
+use App\Service\DishAvailabilityService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,7 +19,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class AdminDishController extends AbstractController
 {
     #[Route('/', name: 'admin_dish_index', methods: ['GET'])]
-    public function index(Request $request, DishRepository $dishRepository, MenuRepository $menuRepository): Response
+    public function index(Request $request, DishRepository $dishRepository, MenuRepository $menuRepository, DishAvailabilityService $availabilityService): Response
     {
         $session = $request->getSession();
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
@@ -37,17 +40,20 @@ final class AdminDishController extends AbstractController
         $sort = (string) $request->query->get('sort', 'created_at');
         $dir = (string) $request->query->get('dir', 'DESC');
 
+        $dishes = $dishRepository->findForAdminList($search, $sort, $dir, $selectedMenu);
+
         return $this->render('admin/dish/index.html.twig', [
-            'dishes' => $dishRepository->findForAdminList($search, $sort, $dir, $selectedMenu),
+            'dishes' => $dishes,
             'selectedMenu' => $selectedMenu,
             'search' => $search,
             'sort' => $sort,
             'dir' => \strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC',
+            'dishAvailability' => $availabilityService->evaluateForDishes($dishes),
         ]);
     }
  
     #[Route('/new', name: 'admin_dish_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, MenuRepository $menuRepository): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, MenuRepository $menuRepository, IngredientRepository $ingredientRepository): Response
     {
         $session = $request->getSession();
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
@@ -75,33 +81,105 @@ final class AdminDishController extends AbstractController
             'lock_menu' => null !== $lockedMenu,
         ]);
         $form->handleRequest($request);
+
+        $ingredients = $ingredientRepository->findBy([], ['name' => 'ASC']);
+        $recipeIngredientDraft = (array) $request->request->all('recipe_ingredient');
+        $recipeQuantityDraft = (array) $request->request->all('recipe_quantity');
  
         if ($form->isSubmitted() && $form->isValid()) {
             if (null !== $lockedMenu) {
                 $dish->setMenu($lockedMenu);
             }
+
+            $recipeErrors = [];
+            $recipeLines = [];
+            $seenIngredients = [];
+
+            foreach ($recipeIngredientDraft as $idx => $ingredientIdRaw) {
+                $ingredientId = (int) $ingredientIdRaw;
+                $quantityRaw = $recipeQuantityDraft[$idx] ?? null;
+                $quantity = is_numeric($quantityRaw) ? (float) $quantityRaw : 0.0;
+
+                // Allow empty rows in the dynamic UI.
+                if ($ingredientId <= 0 && $quantity <= 0) {
+                    continue;
+                }
+
+                if ($ingredientId <= 0) {
+                    $recipeErrors[] = sprintf('Recipe row %d: ingredient is required.', $idx + 1);
+                    continue;
+                }
+
+                if ($quantity <= 0) {
+                    $recipeErrors[] = sprintf('Recipe row %d: quantity must be greater than 0.', $idx + 1);
+                    continue;
+                }
+
+                if (isset($seenIngredients[$ingredientId])) {
+                    $recipeErrors[] = sprintf('Recipe row %d: duplicate ingredient selected.', $idx + 1);
+                    continue;
+                }
+
+                $ingredient = $ingredientRepository->find($ingredientId);
+                if (null === $ingredient) {
+                    $recipeErrors[] = sprintf('Recipe row %d: selected ingredient was not found.', $idx + 1);
+                    continue;
+                }
+
+                $seenIngredients[$ingredientId] = true;
+
+                $line = new DishIngredient();
+                $line->setDish($dish);
+                $line->setIngredient($ingredient);
+                $line->setQuantityRequired($quantity);
+                $recipeLines[] = $line;
+            }
+
+            if ([] === $recipeLines) {
+                $recipeErrors[] = 'Add at least one ingredient recipe line for this dish.';
+            }
+
+            if ([] !== $recipeErrors) {
+                foreach ($recipeErrors as $message) {
+                    $this->addFlash('error', $message);
+                }
+
+                return $this->render('admin/dish/new.html.twig', [
+                    'dish' => $dish,
+                    'form' => $form,
+                    'selectedMenu' => $lockedMenu,
+                    'ingredients' => $ingredients,
+                    'recipeIngredientDraft' => $recipeIngredientDraft,
+                    'recipeQuantityDraft' => $recipeQuantityDraft,
+                ]);
+            }
+
             $dish->setUpdated_at(new \DateTimeImmutable());
             $entityManager->persist($dish);
+
+            foreach ($recipeLines as $recipeLine) {
+                $entityManager->persist($recipeLine);
+            }
+
             $entityManager->flush();
  
-            $this->addFlash('success', 'Dish created successfully.');
+            $this->addFlash('success', 'Dish and recipe created successfully.');
  
-            if ($dish->getMenu()) {
-                return $this->redirectToRoute('admin_menu_show', ['id' => $dish->getMenu()->getId()]);
-            }
- 
-            return $this->redirectToRoute('admin_dish_index');
+            return $this->redirectToRoute('admin_dish_recipe_index', ['id' => $dish->getId()]);
         }
  
         return $this->render('admin/dish/new.html.twig', [
             'dish' => $dish,
             'form' => $form,
             'selectedMenu' => $lockedMenu,
+            'ingredients' => $ingredients,
+            'recipeIngredientDraft' => $recipeIngredientDraft,
+            'recipeQuantityDraft' => $recipeQuantityDraft,
         ]);
     }
  
     #[Route('/{id}', name: 'admin_dish_show', methods: ['GET'])]
-    public function show(Request $request, Dish $dish): Response
+    public function show(Request $request, Dish $dish, DishAvailabilityService $availabilityService): Response
     {
         $session = $request->getSession();
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
@@ -110,6 +188,7 @@ final class AdminDishController extends AbstractController
  
         return $this->render('admin/dish/show.html.twig', [
             'dish' => $dish,
+            'availability' => $availabilityService->evaluateDish($dish),
         ]);
     }
  

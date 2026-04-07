@@ -13,6 +13,11 @@ use App\Repository\DishRepository;
 #[ORM\Table(name: 'dish')]
 class Dish
 {
+    public function __construct()
+    {
+        $this->recipeLines = new ArrayCollection();
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -197,6 +202,12 @@ class Dish
     #[ORM\Column(type: 'datetime', nullable: false)]
     private ?\DateTimeInterface $updated_at = null;
 
+    /**
+     * @var Collection<int, DishIngredient>
+     */
+    #[ORM\OneToMany(mappedBy: 'dish', targetEntity: DishIngredient::class, orphanRemoval: true)]
+    private Collection $recipeLines;
+
     public function getUpdated_at(): ?\DateTimeInterface
     {
         return $this->updated_at;
@@ -205,6 +216,33 @@ class Dish
     public function setUpdated_at(\DateTimeInterface $updated_at): self
     {
         $this->updated_at = $updated_at;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DishIngredient>
+     */
+    public function getRecipeLines(): Collection
+    {
+        return $this->recipeLines;
+    }
+
+    public function addRecipeLine(DishIngredient $recipeLine): self
+    {
+        if (!$this->recipeLines->contains($recipeLine)) {
+            $this->recipeLines->add($recipeLine);
+            $recipeLine->setDish($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecipeLine(DishIngredient $recipeLine): self
+    {
+        if ($this->recipeLines->removeElement($recipeLine) && $recipeLine->getDish() === $this) {
+            $recipeLine->setDish(null);
+        }
+
         return $this;
     }
 

@@ -1,0 +1,16 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}New Ingredient{% endblock %}
+{% block topbar_title %}Ingredient Stock{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Create Ingredient</h2>
+      <p class="sec-sub">Add a stock item used by recipes and waste tracking.</p>
+    </div>
+    <a href="{{ path('admin_ingredient_index') }}" class="t-btn">Back to Inventory</a>
+  </div>
+
+  {% include 'admin/inventory/ingredient/_form.html.twig' with {form: form, submitLabel: 'Create Ingredient'} %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Edit Waste Record{% endblock %}
+{% block topbar_title %}Waste Tracker{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Edit Waste Record #{{ record.id }}</h2>
+      <p class="sec-sub">Updating this record will rebalance ingredient stock automatically.</p>
+    </div>
+    <a href="{{ path('admin_waste_index') }}" class="t-btn">Back to Waste Logs</a>
+  </div>
+
+  {% include 'admin/inventory/waste/_form.html.twig' with {form: form, submitLabel: 'Save Changes'} %}
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Ingredients · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Ingredient Stock{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Ingredient Inventory</h2>
+      <p class="sec-sub">Manage stock, costs, expiry and low-stock risks.</p>
+    </div>
+    <div style="display:flex; gap:.7rem;">
+      <a href="{{ path('admin_waste_index') }}" class="t-btn">Waste Logs</a>
+      <a href="{{ path('admin_ingredient_new') }}" class="t-btn primary">+ New Ingredient</a>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="margin-bottom:1.2rem;">
+    <div class="kpi"><div class="kpi-lbl">Total Ingredients</div><div class="kpi-val">{{ stats.total }}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Low Stock</div><div class="kpi-val">{{ stats.lowStock }}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Expired</div><div class="kpi-val">{{ stats.expired }}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Inventory Value</div><div class="kpi-val">{{ stats.inventoryValue|number_format(2, '.', ' ') }} <span style="font-size:1rem; color:var(--text-3)">TND</span></div></div>
+  </div>
+
+  <form method="get" class="list-filters" style="margin-bottom:1rem; display:flex; gap:.5rem;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search ingredient or unit" style="min-width:280px; padding:.65rem .8rem; border:1px solid var(--border-2); border-radius:8px;">
+    <button type="submit" class="t-btn">Search</button>
+    {% if search %}<a href="{{ path('admin_ingredient_index') }}" class="t-btn">Reset</a>{% endif %}
+  </form>
+
+  <div class="delivery-table-card">
+    <div class="table-header">
+      <div class="table-title">Stock List</div>
+      <div class="table-count">{{ ingredients|length }} rows</div>
+    </div>
+
+    {% if ingredients is empty %}
+      <div class="no-results">No ingredients found.</div>
+    {% else %}
+      <table class="delivery-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Stock</th>
+            <th>Min</th>
+            <th>Unit</th>
+            <th>Unit Cost</th>
+            <th>Expiry</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ingredient in ingredients %}
+            {% set lowStock = ingredient.quantityInStock <= ingredient.minStockLevel %}
+            {% set expired = ingredient.expiryDate and ingredient.expiryDate|date('Y-m-d') < today|date('Y-m-d') %}
+            <tr class="{{ lowStock or expired ? 'warn-row' : '' }}">
+              <td>{{ ingredient.name }}</td>
+              <td>{{ ingredient.quantityInStock|number_format(2, '.', ' ') }}</td>
+              <td>{{ ingredient.minStockLevel|number_format(2, '.', ' ') }}</td>
+              <td>{{ ingredient.unit }}</td>
+              <td>{{ ingredient.unitCost|number_format(2, '.', ' ') }} TND</td>
+              <td>{{ ingredient.expiryDate ? ingredient.expiryDate|date('Y-m-d') : '—' }}</td>
+              <td>
+                {% if expired %}
+                  <span class="status-badge status-cancelled">Expired</span>
+                {% elseif lowStock %}
+                  <span class="status-badge status-pending">Low Stock</span>
+                {% else %}
+                  <span class="status-badge status-completed">Healthy</span>
+                {% endif %}
+              </td>
+              <td class="action-cell">
+                <a href="{{ path('admin_ingredient_edit', {id: ingredient.id}) }}" class="mini-action">Edit</a>
+                <form method="post" action="{{ path('admin_ingredient_delete', {id: ingredient.id}) }}" onsubmit="return confirm('Delete this ingredient?');" style="display:inline-block;">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete_ingredient' ~ ingredient.id) }}">
+                  <button class="mini-action mini-action-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <style>
+    .warn-row {
+      background: #fff7ef;
+    }
+    .action-cell {
+      display:flex;
+      gap:.45rem;
+      flex-wrap:wrap;
+    }
+    .mini-action {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:.35rem .6rem;
+      border-radius:7px;
+      border:1px solid var(--border-2);
+      background:#fff;
+      color:var(--espresso);
+      text-decoration:none;
+      font-size:.78rem;
+      font-weight:600;
+      line-height:1;
+      cursor:pointer;
+    }
+    .mini-action-danger {
+      border-color:#dfb6b1;
+      color:#8f1f1f;
+      background:#fff7f6;
+    }
+  </style>
+{% endblock %}
