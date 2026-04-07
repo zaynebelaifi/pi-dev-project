@@ -1,70 +1,37 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 
-{% block title %}DeliveryMan{% endblock %}
+{% block title %}Delivery Man #{{ delivery_man.deliveryManId }} - BIG 4 Admin{% endblock %}
 
 {% block body %}
-    <h1>DeliveryMan</h1>
+    <div class="admin-header">
+        <h1>Delivery Man Details</h1>
+        <p style="color: var(--text-2);">Personnel #{{ delivery_man.delivery_man_id }}</p>
+    </div>
 
-    <table class="table">
-        <tbody>
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
             <tr>
-                <th>Delivery_man_id</th>
-                <td>{{ delivery_man.deliveryManId }}</td>
+                <th style="width: 30%;">Field</th>
+                <th>Value</th>
             </tr>
-            <tr>
-                <th>Name</th>
-                <td>{{ delivery_man.name }}</td>
-            </tr>
-            <tr>
-                <th>Phone</th>
-                <td>{{ delivery_man.phone }}</td>
-            </tr>
-            <tr>
-                <th>Email</th>
-                <td>{{ delivery_man.email }}</td>
-            </tr>
-            <tr>
-                <th>Vehicle_type</th>
-                <td>{{ delivery_man.vehicleType }}</td>
-            </tr>
-            <tr>
-                <th>Vehicle_number</th>
-                <td>{{ delivery_man.vehicleNumber }}</td>
-            </tr>
-            <tr>
-                <th>Status</th>
-                <td>{{ delivery_man.status }}</td>
-            </tr>
-            <tr>
-                <th>Address</th>
-                <td>{{ delivery_man.address }}</td>
-            </tr>
-            <tr>
-                <th>Salary</th>
-                <td>{{ delivery_man.salary }}</td>
-            </tr>
-            <tr>
-                <th>Date_of_joining</th>
-                <td>{{ delivery_man.dateOfJoining ? delivery_man.dateOfJoining|date('Y-m-d') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Rating</th>
-                <td>{{ delivery_man.rating }}</td>
-            </tr>
-            <tr>
-                <th>Created_at</th>
-                <td>{{ delivery_man.createdAt ? delivery_man.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Updated_at</th>
-                <td>{{ delivery_man.updatedAt ? delivery_man.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-        </tbody>
-    </table>
+            <tr><td>ID</td><td>{{ delivery_man.delivery_man_id }}</td></tr>
+            <tr><td>Name</td><td>{{ delivery_man.name }}</td></tr>
+            <tr><td>Phone</td><td>{{ delivery_man.phone }}</td></tr>
+            <tr><td>Email</td><td>{{ delivery_man.email }}</td></tr>
+            <tr><td>Vehicle Type</td><td>{{ delivery_man.vehicle_type }}</td></tr>
+            <tr><td>Vehicle Number</td><td>{{ delivery_man.vehicle_number }}</td></tr>
+            <tr><td>Status</td><td><strong style="color: var(--gold);">{{ delivery_man.status }}</strong></td></tr>
+            <tr><td>Address</td><td>{{ delivery_man.address }}</td></tr>
+            <tr><td>Salary</td><td>${{ delivery_man.salary }}</td></tr>
+            <tr><td>Date of Joining</td><td>{{ delivery_man.date_of_joining ? delivery_man.date_of_joining|date('Y-m-d') : '-' }}</td></tr>
+            <tr><td>Rating</td><td>{{ delivery_man.rating }}/5</td></tr>
+            <tr><td>Created At</td><td>{{ delivery_man.created_at ? delivery_man.created_at|date('Y-m-d H:i:s') : '-' }}</td></tr>
+            <tr><td>Updated At</td><td>{{ delivery_man.updated_at ? delivery_man.updated_at|date('Y-m-d H:i:s') : '-' }}</td></tr>
+        </table>
+    </div>
 
-    <a href="{{ path('app_delivery_man_index') }}">back to list</a>
-
-    <a href="{{ path('app_delivery_man_edit', {'delivery_man_id': delivery_man.delivery_man_id}) }}">edit</a>
-
-    {{ include('delivery_man/_delete_form.html.twig') }}
+    <div class="admin-actions" style="margin-top: 2rem;">
+        <a href="{{ path('app_delivery_man_edit', {'id': delivery_man.delivery_man_id}) }}" class="admin-btn">Edit</a>
+        <a href="{{ path('app_delivery_man_index') }}" class="admin-btn" style="background: var(--text-2);">Back to Delivery Men</a>
+    </div>
 {% endblock %}

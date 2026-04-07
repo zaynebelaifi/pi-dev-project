@@ -779,6 +779,95 @@
     .cart-overlay.active .cart-drawer{
       transform:translateX(0);
     }
+    .checkout-overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(34,20,10,.65);
+      backdrop-filter:blur(10px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:3000;
+      opacity:0;
+      pointer-events:none;
+      transition:.35s ease;
+      padding:1rem;
+    }
+    .checkout-overlay.active{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .checkout-box{
+      width:min(600px,100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,240,228,.98));
+      border:1px solid rgba(184,135,42,.22);
+      border-radius:30px;
+      padding:2rem;
+      box-shadow:0 30px 80px rgba(44,26,14,.22);
+      transform:translateY(30px) scale(.96);
+      transition:.35s ease;
+      position:relative;
+    }
+    .checkout-overlay.active .checkout-box{
+      transform:translateY(0) scale(1);
+    }
+    .checkout-box h3{
+      font-family:'Cormorant Garamond',serif;
+      font-size:2.3rem;
+      color:var(--espresso);
+      margin-bottom:.5rem;
+    }
+    .checkout-box p{
+      color:var(--text-2);
+      margin-bottom:1rem;
+      line-height:1.8;
+    }
+    .checkout-summary{
+      display:grid;
+      gap:1rem;
+      margin-bottom:1.5rem;
+      border:1px solid rgba(184,135,42,.14);
+      border-radius:22px;
+      padding:1.5rem;
+      background:rgba(255,255,255,.85);
+    }
+    .checkout-item{
+      display:flex;
+      justify-content:space-between;
+      gap:1rem;
+      color:var(--brown);
+      font-weight:600;
+    }
+    .checkout-total{
+      display:flex;
+      justify-content:space-between;
+      gap:1rem;
+      font-size:1rem;
+      color:var(--brown);
+      font-weight:700;
+    }
+    .checkout-field{
+      display:grid;
+      gap:.75rem;
+      margin-bottom:1rem;
+    }
+    .checkout-field input,
+    .checkout-field textarea{
+      width:100%;
+      border:1px solid rgba(184,135,42,.18);
+      border-radius:18px;
+      padding:1rem 1rem;
+      font-family:'Jost',sans-serif;
+      font-size:.95rem;
+      outline:none;
+      background:rgba(255,255,255,.95);
+    }
+    .checkout-field textarea{resize:vertical;min-height:100px}
+    .checkout-field input:focus,
+    .checkout-field textarea:focus{
+      border-color:var(--gold);
+      box-shadow:0 0 0 4px rgba(184,135,42,.10);
+    }
     .cart-header{
       display:flex;
       justify-content:space-between;
@@ -1245,6 +1334,51 @@
     </div>
   </div>
 
+  <div class="checkout-overlay" id="checkoutPopup">
+    <div class="checkout-box">
+      <button class="close-popup" id="closeCheckout">&times;</button>
+      <h3>Confirm Your Order</h3>
+      <p>Review your items and complete the delivery details to place the order.</p>
+
+      <div class="checkout-summary">
+        <div id="checkoutCartItems">Your selected items will appear here.</div>
+        <div class="checkout-total">
+          <span>Order Total</span>
+          <strong id="checkoutTotal">0 TND</strong>
+        </div>
+      </div>
+
+      <form id="checkoutForm" method="post" action="{{ path('app_delivery_checkout') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('delivery-checkout') }}">
+        <input type="hidden" name="cart_items" id="cartItemsInput" value="[]">
+        <input type="hidden" name="order_total" id="cartTotalInput" value="0">
+
+        <div class="checkout-field">
+          <label for="delivery_address">Delivery Address</label>
+          <input type="text" id="delivery_address" name="delivery_address" placeholder="Enter the delivery address" required>
+        </div>
+        <div class="checkout-field">
+          <label for="recipient_name">Recipient Name</label>
+          <input type="text" id="recipient_name" name="recipient_name" placeholder="Recipient full name" required>
+        </div>
+        <div class="checkout-field">
+          <label for="recipient_phone">Phone Number</label>
+          <input type="tel" id="recipient_phone" name="recipient_phone" placeholder="Recipient phone" required>
+        </div>
+        <div class="checkout-field">
+          <label for="pickup_location">Pickup Location</label>
+          <input type="text" id="pickup_location" name="pickup_location" placeholder="Pickup address or branch" required>
+        </div>
+        <div class="checkout-field">
+          <label for="delivery_notes">Delivery Notes</label>
+          <textarea id="delivery_notes" name="delivery_notes" rows="3" placeholder="Any delivery instructions"></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width:100%">Place Order</button>
+      </form>
+    </div>
+  </div>
+
   <script>
     // NAV SCROLL
     const nav = document.getElementById('nav');
@@ -1335,6 +1469,13 @@
     const cartTotal = document.getElementById('cartTotal');
     const cartCount = document.getElementById('cartCount');
     const checkoutBtn = document.getElementById('checkoutBtn');
+    const checkoutPopup = document.getElementById('checkoutPopup');
+    const closeCheckout = document.getElementById('closeCheckout');
+    const checkoutCartItems = document.getElementById('checkoutCartItems');
+    const checkoutTotal = document.getElementById('checkoutTotal');
+    const cartItemsInput = document.getElementById('cartItemsInput');
+    const cartTotalInput = document.getElementById('cartTotalInput');
+    const checkoutForm = document.getElementById('checkoutForm');
 
     let cart = [];
 
@@ -1344,6 +1485,10 @@
     }
     function hideCart(){
       cartOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    function hideCheckout(){
+      checkoutPopup.classList.remove('active');
       document.body.style.overflow = '';
     }
 
@@ -1406,10 +1551,33 @@
         return;
       }
 
-      alert("Your luxury order has been placed successfully!");
-      cart = [];
-      updateCart();
+      const total = cart.reduce((sum, item)=> sum + item.price, 0);
+      cartItemsInput.value = JSON.stringify(cart);
+      cartTotalInput.value = total.toFixed(2);
+      checkoutTotal.textContent = `${total.toFixed(2)} TND`;
+
+      checkoutCartItems.innerHTML = cart.map(item => `
+        <div class="checkout-item">
+          <span>${item.name}</span>
+          <strong>${item.price} TND</strong>
+        </div>
+      `).join('');
+
       hideCart();
+      checkoutPopup.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+
+    closeCheckout.addEventListener('click', hideCheckout);
+
+    checkoutPopup.addEventListener('click', (e)=>{
+      if(e.target === checkoutPopup){
+        hideCheckout();
+      }
+    });
+
+    checkoutForm.addEventListener('submit', function() {
+      // let the form submit normally and redirect to the confirmation page
     });
 
     // ESC CLOSE
@@ -1418,6 +1586,7 @@
         hideBooking();
         hideCart();
         hideProfile();
+        hideCheckout();
       }
     });
   </script>

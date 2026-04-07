@@ -40,4 +40,49 @@ class DeliveryManRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    /**
+     * Find available delivery men (online and not currently in delivery)
+     */
+    public function findAvailableDeliveryMen(): array
+    {
+        return $this->createQueryBuilder('dm')
+            ->leftJoin('dm.deliverys', 'd')
+            ->andWhere('dm.status = :online')
+            ->andWhere('d.status IS NULL OR d.status NOT IN (:inDelivery)')
+            ->setParameter('online', 'ONLINE')
+            ->setParameter('inDelivery', ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'])
+            ->orderBy('dm.rating', 'DESC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function searchAndSort(?string $search, ?string $sortField, ?string $sortDirection): array
+    {
+        $allowedSorts = [
+            'delivery_man_id' => 'dm.delivery_man_id',
+            'name' => 'dm.name',
+            'status' => 'dm.status',
+            'date_of_joining' => 'dm.date_of_joining',
+            'rating' => 'dm.rating',
+        ];
+
+        $direction = strtoupper($sortDirection ?? 'DESC');
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            $direction = 'DESC';
+        }
+
+        $qb = $this->createQueryBuilder('dm');
+
+        if ($search) {
+            $qb->andWhere('dm.name LIKE :search OR dm.email LIKE :search OR dm.phone LIKE :search OR dm.vehicle_type LIKE :search OR dm.vehicle_number LIKE :search OR dm.status LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        $sort = $allowedSorts[$sortField] ?? 'dm.date_of_joining';
+        $qb->orderBy($sort, $direction);
+
+        return $qb->getQuery()->getResult();
+    }
 }

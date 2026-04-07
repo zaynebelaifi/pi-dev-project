@@ -1,82 +1,237 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 
-{% block title %}Delivery{% endblock %}
+{% block title %}Delivery Details - Order #{{ delivery.order_id }}{% endblock %}
 
 {% block body %}
-    <h1>Delivery</h1>
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Delivery Details</h1>
+        <p>Order #{{ delivery.order_id }}</p>
+    </div>
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Delivery_id</th>
-                <td>{{ delivery.deliveryId }}</td>
-            </tr>
-            <tr>
-                <th>Order_id</th>
-                <td>{{ delivery.orderId }}</td>
-            </tr>
-            <tr>
-                <th>Delivery_address</th>
-                <td>{{ delivery.deliveryAddress }}</td>
-            </tr>
-            <tr>
-                <th>Recipient_name</th>
-                <td>{{ delivery.recipientName }}</td>
-            </tr>
-            <tr>
-                <th>Recipient_phone</th>
-                <td>{{ delivery.recipientPhone }}</td>
-            </tr>
-            <tr>
-                <th>Pickup_location</th>
-                <td>{{ delivery.pickupLocation }}</td>
-            </tr>
-            <tr>
-                <th>Status</th>
-                <td>{{ delivery.status }}</td>
-            </tr>
-            <tr>
-                <th>Scheduled_date</th>
-                <td>{{ delivery.scheduledDate ? delivery.scheduledDate|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Actual_delivery_date</th>
-                <td>{{ delivery.actualDeliveryDate ? delivery.actualDeliveryDate|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Estimated_time</th>
-                <td>{{ delivery.estimatedTime }}</td>
-            </tr>
-            <tr>
-                <th>Current_latitude</th>
-                <td>{{ delivery.currentLatitude }}</td>
-            </tr>
-            <tr>
-                <th>Current_longitude</th>
-                <td>{{ delivery.currentLongitude }}</td>
-            </tr>
-            <tr>
-                <th>Delivery_notes</th>
-                <td>{{ delivery.deliveryNotes }}</td>
-            </tr>
-            <tr>
-                <th>Rating</th>
-                <td>{{ delivery.rating }}</td>
-            </tr>
-            <tr>
-                <th>Created_at</th>
-                <td>{{ delivery.createdAt ? delivery.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Updated_at</th>
-                <td>{{ delivery.updatedAt ? delivery.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="delivery-details">
+        <div class="detail-section">
+            <h3>Order Information</h3>
+            <table class="admin-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Order Number:</strong></td>
+                        <td>{{ delivery.order_id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td><span class="status-badge status-{{ delivery.status|lower }}">{{ delivery.status }}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Estimated Time:</strong></td>
+                        <td>{{ delivery.estimated_time }} minutes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Order Date:</strong></td>
+                        <td>{{ delivery.created_at ? delivery.created_at|date('M j, Y g:i A') : '-' }}</td>
+                    </tr>
+                    {% if delivery.actual_delivery_date %}
+                    <tr>
+                        <td><strong>Delivered At:</strong></td>
+                        <td>{{ delivery.actual_delivery_date|date('M j, Y g:i A') }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
 
-    <a href="{{ path('app_delivery_index') }}">back to list</a>
+        <div class="detail-section">
+            <h3>Delivery Information</h3>
+            <table class="admin-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Delivery Address:</strong></td>
+                        <td>{{ delivery.delivery_address }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Recipient:</strong></td>
+                        <td>{{ delivery.recipient_name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phone:</strong></td>
+                        <td>{{ delivery.recipient_phone }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pickup Location:</strong></td>
+                        <td>{{ delivery.pickup_location }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Order Total:</strong></td>
+                        <td>{{ delivery.order_total }} TND</td>
+                    </tr>
+                    {% if delivery.cart_items %}
+                    <tr>
+                        <td><strong>Items:</strong></td>
+                        <td><div style="white-space: pre-line;">{{ delivery.cart_items }}</div></td>
+                    </tr>
+                    {% endif %}
+                    {% if delivery.delivery_notes %}
+                    <tr>
+                        <td><strong>Notes:</strong></td>
+                        <td>{{ delivery.delivery_notes }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
 
-    <a href="{{ path('app_delivery_edit', {'delivery_id': delivery.delivery_id}) }}">edit</a>
+        {% if delivery.deliveryMan %}
+        <div class="detail-section">
+            <h3>Delivery Person</h3>
+            <table class="admin-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Name:</strong></td>
+                        <td>{{ delivery.deliveryMan.name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phone:</strong></td>
+                        <td>{{ delivery.deliveryMan.phone }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vehicle:</strong></td>
+                        <td>{{ delivery.deliveryMan.vehicle_type }} - {{ delivery.deliveryMan.vehicle_number }}</td>
+                    </tr>
+                    {% if delivery.deliveryMan.rating %}
+                    <tr>
+                        <td><strong>Rating:</strong></td>
+                        <td>{{ delivery.deliveryMan.rating }}/5 ⭐</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
 
-    {{ include('delivery/_delete_form.html.twig') }}
+        {% if delivery.rating %}
+        <div class="detail-section">
+            <h3>Your Rating</h3>
+            <div class="rating-display">
+                <span class="rating-stars">
+                    {% for i in 1..5 %}
+                        {% if i <= delivery.rating %}
+                            ⭐
+                        {% else %}
+                            ☆
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                <span class="rating-text">{{ delivery.rating }}/5</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="admin-actions">
+        <a href="{{ path('app_delivery_tracking', {'id': delivery.delivery_id}) }}" class="btn btn-primary">Track This Delivery</a>
+        <a href="{{ path('app_delivery_index') }}" class="btn btn-secondary">Back to Deliveries</a>
+    </div>
+</div>
+
+<style>
+.delivery-details {
+    display: grid;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.detail-section {
+    background: var(--ivory);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.detail-section h3 {
+    color: var(--gold);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-assigned {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-picked_up {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.status-in_transit {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-delivered {
+    background: #d4edda;
+    color: #155724;
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.rating-stars {
+    font-size: 1.5rem;
+    color: var(--gold);
+}
+
+.rating-text {
+    font-weight: bold;
+    color: var(--espresso);
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--gold);
+    color: var(--espresso);
+}
+
+.btn-primary:hover {
+    background: var(--brown);
+    color: white;
+}
+
+.btn-secondary {
+    background: var(--text-2);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: var(--espresso);
+}
+</style>
 {% endblock %}

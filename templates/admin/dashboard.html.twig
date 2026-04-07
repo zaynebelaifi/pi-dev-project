@@ -1,0 +1,103 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Admin Dashboard - BIG 4{% endblock %}
+
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block body %}
+    <div class="sec-head">
+      <div>
+        <h2>Admin Dashboard</h2>
+        <p class="sec-sub">Overview of delivery operations, assigned drivers, and active orders.</p>
+      </div>
+      <a href="{{ path('app_delivery_index') }}" class="t-btn primary">Manage Deliveries</a>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-lbl">Total Deliveries</div>
+        <div class="kpi-val">{{ deliveryCount }}</div>
+        <div class="kpi-chg up">Active monitoring</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Pending Orders</div>
+        <div class="kpi-val">{{ pendingCount }}</div>
+        <div class="kpi-chg down">Needs attention</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Assigned Deliveries</div>
+        <div class="kpi-val">{{ assignedCount }}</div>
+        <div class="kpi-chg up">In progress</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Delivery Men</div>
+        <div class="kpi-val">{{ deliveryManCount }}</div>
+        <div class="kpi-chg up">Team active</div>
+      </div>
+    </div>
+
+    <div class="mod-grid">
+      <div class="mod-card" onclick="location.href='{{ path('app_delivery_index') }}'">
+        <div class="card-top">
+          <div>
+            <p class="c-title">Deliveries</p>
+            <p class="c-desc">View and manage all current and pending delivery orders.</p>
+          </div>
+          <div class="c-icon gold">🚚</div>
+        </div>
+        <div class="c-stats">
+          <div class="cs-item">
+            <div class="cs-num">{{ deliveryCount }}</div>
+            <div class="cs-lbl">Total orders</div>
+          </div>
+          <div class="cs-item">
+            <div class="cs-num">{{ pendingCount }}</div>
+            <div class="cs-lbl">Pending</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mod-card" onclick="location.href='{{ path('app_delivery_man_index') }}'">
+        <div class="card-top">
+          <div>
+            <p class="c-title">Delivery Team</p>
+            <p class="c-desc">Manage drivers and review assignments across the fleet.</p>
+          </div>
+          <div class="c-icon green">👥</div>
+        </div>
+        <div class="c-stats">
+          <div class="cs-item">
+            <div class="cs-num">{{ deliveryManCount }}</div>
+            <div class="cs-lbl">Drivers</div>
+          </div>
+          <div class="cs-item">
+            <div class="cs-num">{{ assignedCount }}</div>
+            <div class="cs-lbl">Assigned</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mod-card">
+        <div class="card-top">
+          <div>
+            <p class="c-title">Quick Actions</p>
+            <p class="c-desc">Use quick links to access delivery creation and management controls.</p>
+          </div>
+          <div class="c-icon blue">⚡</div>
+        </div>
+        <div class="q-grid">
+          <button class="q-btn" onclick="location.href='{{ path('app_delivery_new') }}'">
+            <span class="q-icon">➕</span>
+            <span class="q-lbl">New Delivery</span>
+            <span class="q-sub">Create order manually</span>
+          </button>
+          <button class="q-btn" onclick="location.href='{{ path('app_delivery_index') }}'">
+            <span class="q-icon">📋</span>
+            <span class="q-lbl">All Deliveries</span>
+            <span class="q-sub">Review status board</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

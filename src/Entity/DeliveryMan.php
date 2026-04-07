@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\DeliveryManRepository;
 
@@ -29,6 +30,9 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Name is required.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'Name must be at least {{ limit }} characters long.', maxMessage: 'Name cannot be longer than {{ limit }} characters.')]
+    #[Assert\Regex(pattern: '/^[a-zA-Z\s\-\.\']+$/', message: 'Name can only contain letters, spaces, hyphens, dots, and apostrophes.')]
     private ?string $name = null;
 
     public function getName(): ?string
@@ -43,6 +47,9 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Phone number is required.')]
+    #[Assert\Regex(pattern: '/^[\+]?[0-9\-\(\)\s]+$/', message: 'Please enter a valid phone number.')]
+    #[Assert\Length(min: 7, max: 20, minMessage: 'Phone number must be at least {{ limit }} characters long.', maxMessage: 'Phone number cannot be longer than {{ limit }} characters.')]
     private ?string $phone = null;
 
     public function getPhone(): ?string
@@ -57,6 +64,8 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Email(message: 'Please enter a valid email address.')]
+    #[Assert\Length(max: 255, maxMessage: 'Email address cannot be longer than {{ limit }} characters.')]
     private ?string $email = null;
 
     public function getEmail(): ?string
@@ -71,6 +80,7 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Choice(choices: ['motorcycle', 'car', 'bicycle', 'scooter', 'van', 'truck', 'other'], message: 'Please select a valid vehicle type.')]
     private ?string $vehicle_type = null;
 
     public function getVehicle_type(): ?string
@@ -85,6 +95,8 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(max: 20, maxMessage: 'Vehicle number cannot be longer than {{ limit }} characters.')]
+    #[Assert\Regex(pattern: '/^[A-Z0-9\-\s]+$/i', message: 'Vehicle number can only contain letters, numbers, spaces, and hyphens.')]
     private ?string $vehicle_number = null;
 
     public function getVehicle_number(): ?string
@@ -99,6 +111,7 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Choice(choices: ['active', 'inactive', 'on_leave', 'suspended'], message: 'Please select a valid status.')]
     private ?string $status = null;
 
     public function getStatus(): ?string
@@ -113,6 +126,7 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(max: 500, maxMessage: 'Address cannot be longer than {{ limit }} characters.')]
     private ?string $address = null;
 
     public function getAddress(): ?string
@@ -127,20 +141,23 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $salary = null;
+    #[Assert\Positive(message: 'Salary must be greater than zero.')]
+    #[Assert\LessThanOrEqual(value: 999999.99, message: 'Salary cannot exceed {{ compared_value }}.')]
+    private ?string $salary = null;
 
-    public function getSalary(): ?float
+    public function getSalary(): ?string
     {
         return $this->salary;
     }
 
-    public function setSalary(?float $salary): self
+    public function setSalary(?string $salary): self
     {
         $this->salary = $salary;
         return $this;
     }
 
     #[ORM\Column(type: 'date', nullable: true)]
+    #[Assert\LessThanOrEqual(value: 'today', message: 'Date of joining cannot be in the future.')]
     private ?\DateTimeInterface $date_of_joining = null;
 
     public function getDate_of_joining(): ?\DateTimeInterface
@@ -155,9 +172,10 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $rating = null;
+    #[Assert\Range(min: 0, max: 5, notInRangeMessage: 'Rating must be between {{ min }} and {{ max }}.')]
+    private ?string $rating = null;
 
-    public function getRating(): ?float
+    public function getRating(): ?string
     {
         return $this->rating;
     }
@@ -224,4 +242,25 @@ class DeliveryMan
         return $this;
     }
 
+    // Symfony PropertyAccessor camelCase aliases for snake_case properties
+    public function getId(): ?int { return $this->getDelivery_man_id(); }
+    public function setId(int $id): self { return $this->setDelivery_man_id($id); }
+    
+    public function getDeliveryManId(): ?int { return $this->getDelivery_man_id(); }
+    public function setDeliveryManId(int $id): self { return $this->setDelivery_man_id($id); }
+    
+    public function getVehicleType(): ?string { return $this->getVehicle_type(); }
+    public function setVehicleType(?string $type): self { return $this->setVehicle_type($type); }
+    
+    public function getVehicleNumber(): ?string { return $this->getVehicle_number(); }
+    public function setVehicleNumber(?string $num): self { return $this->setVehicle_number($num); }
+    
+    public function getDateOfJoining(): ?\DateTimeInterface { return $this->getDate_of_joining(); }
+    public function setDateOfJoining(?\DateTimeInterface $date): self { return $this->setDate_of_joining($date); }
+    
+    public function getCreatedAt(): ?\DateTimeInterface { return $this->getCreated_at(); }
+    public function setCreatedAt(\DateTimeInterface $at): self { return $this->setCreated_at($at); }
+    
+    public function getUpdatedAt(): ?\DateTimeInterface { return $this->getUpdated_at(); }
+    public function setUpdatedAt(\DateTimeInterface $at): self { return $this->setUpdated_at($at); }
 }

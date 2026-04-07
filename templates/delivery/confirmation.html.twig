@@ -1,0 +1,219 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Delivery Confirmation{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="confirmation-header">
+        <h1>Delivery Order Confirmed!</h1>
+        <p>Your delivery has been successfully created and assigned.</p>
+    </div>
+
+    <div class="confirmation-actions">
+        <a href="{{ path('app_delivery_tracking', {'id': delivery.delivery_id}) }}" class="btn btn-primary">Track Your Order</a>
+        <a href="{{ path('app_home') }}" class="btn btn-secondary">Back to Home</a>
+    </div>
+
+    <div class="confirmation-details">
+        <div class="detail-card">
+            <h3>Order Details</h3>
+            <table class="confirmation-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Order Number:</strong></td>
+                        <td>{{ delivery.order_id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Estimated Delivery Time:</strong></td>
+                        <td>{{ delivery.estimated_time }} minutes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td><span class="status-badge status-{{ delivery.status|lower }}">{{ delivery.status }}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Delivery Address:</strong></td>
+                        <td>{{ delivery.delivery_address }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Recipient:</strong></td>
+                        <td>{{ delivery.recipient_name }} - {{ delivery.recipient_phone }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pickup Location:</strong></td>
+                        <td>{{ delivery.pickup_location }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Order Total:</strong></td>
+                        <td>{{ delivery.order_total }} TND</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {% if delivery.cart_items %}
+        <div class="detail-card">
+            <h3>Selected Items</h3>
+            <div class="order-items">
+                {{ delivery.cart_items|nl2br }}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if delivery.deliveryMan %>
+        <div class="detail-card">
+            <h3>Assigned Delivery Person</h3>
+            <table class="confirmation-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Name:</strong></td>
+                        <td>{{ delivery.deliveryMan.name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phone:</strong></td>
+                        <td>{{ delivery.deliveryMan.phone }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vehicle:</strong></td>
+                        <td>{{ delivery.deliveryMan.vehicle_type }} - {{ delivery.deliveryMan.vehicle_number }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rating:</strong></td>
+                        <td>{{ delivery.deliveryMan.rating }}/5 ⭐</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if delivery.delivery_notes %}
+        <div class="detail-card">
+            <h3>Delivery Notes</h3>
+            <p>{{ delivery.delivery_notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% verbatim %}
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.confirmation-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.confirmation-header h1 {
+    color: var(--gold);
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.confirmation-header p {
+    color: var(--text-2);
+    font-size: 1.1rem;
+}
+
+.confirmation-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.confirmation-details {
+    display: grid;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.detail-card {
+    background: var(--ivory);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.detail-card h3 {
+    color: var(--gold);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.confirmation-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.confirmation-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.confirmation-table td:first-child {
+    font-weight: bold;
+    width: 40%;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-assigned {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-delivered {
+    background: #d4edda;
+    color: #155724;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--gold);
+    color: var(--espresso);
+}
+
+.btn-primary:hover {
+    background: var(--brown);
+    color: white;
+}
+
+.btn-secondary {
+    background: var(--text-2);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: var(--espresso);
+}
+</style>
+{% endverbatim %}
+{% endblock %}

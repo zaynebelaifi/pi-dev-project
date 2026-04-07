@@ -1,13 +1,16 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 
-{% block title %}Edit Delivery{% endblock %}
+{% block title %}Edit Delivery - BIG 4 Admin{% endblock %}
 
 {% block body %}
-    <h1>Edit Delivery</h1>
+    <div class="admin-header">
+        <h1>Edit Delivery</h1>
+        <p style="color: var(--text-2);">Update delivery information</p>
+    </div>
 
-    {{ include('delivery/_form.html.twig', {'button_label': 'Update'}) }}
+    {{ include('delivery/_form.html.twig', {'button_label': 'Update Delivery'}) }}
 
-    <a href="{{ path('app_delivery_index') }}">back to list</a>
-
-    {{ include('delivery/_delete_form.html.twig') }}
+    <p style="margin-top: 2rem;">
+        <a href="{{ path('app_delivery_index') }}" style="color: var(--gold);">← Back to Deliveries</a>
+    </p>
 {% endblock %}

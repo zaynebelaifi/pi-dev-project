@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}BIG 4 — Admin{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+  <style>
+    .admin-container {
+      margin-top: 120px;
+      padding: 2rem 3rem;
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .admin-header {
+      margin-bottom: 2rem;
+    }
+    .admin-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.5rem;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    .admin-actions {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .admin-btn {
+      display: inline-block;
+      padding: 0.8rem 1.5rem;
+      border-radius: 40px;
+      background: linear-gradient(180deg, #e7bd63 0%, #d8a84a 50%, #b8872a 100%);
+      color: #fff;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .admin-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(184, 135, 42, 0.3);
+    }
+    .admin-table-wrapper {
+      background: rgba(250, 246, 239, 0.5);
+      border: 1px solid rgba(184, 135, 42, 0.2);
+      border-radius: 15px;
+      padding: 2rem;
+      overflow-x: auto;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .admin-table th {
+      background: linear-gradient(90deg, rgba(184, 135, 42, 0.15), rgba(184, 135, 42, 0.05));
+      padding: 1rem;
+      text-align: left;
+      color: var(--gold);
+      font-weight: 600;
+      border-bottom: 2px solid rgba(184, 135, 42, 0.2);
+    }
+    .admin-table td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(184, 135, 42, 0.1);
+      color: var(--text);
+    }
+    .admin-table tr:hover {
+      background: rgba(184, 135, 42, 0.05);
+    }
+    .admin-table a {
+      color: var(--gold);
+      text-decoration: none;
+      margin-right: 1rem;
+      font-weight: 500;
+    }
+    .admin-table a:hover {
+      text-decoration: underline;
+    }
+    .admin-form {
+      background: rgba(250, 246, 239, 0.5);
+      border: 1px solid rgba(184, 135, 42, 0.2);
+      border-radius: 15px;
+      padding: 2rem;
+      max-width: 600px;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid rgba(184, 135, 42, 0.3);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.8);
+    }
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .form-submit {
+      padding: 1rem 2rem;
+      background: linear-gradient(180deg, #e7bd63 0%, #d8a84a 50%, #b8872a 100%);
+      color: #fff;
+      border: none;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .form-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(184, 135, 42, 0.3);
+    }
+    .delete-btn {
+      background: #d9534f;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+    .delete-btn:hover {
+      background: #c9302c;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav id="nav">
+    <div class="nav-inner">
+      <a href="{{ path('app_landingpage') }}" class="brand">
+        <img src="{{ asset('images/FB_IMG_1698958536626-removebg-preview (1).png') }}" alt="BIG 4 logo" onerror="this.style.display='none'">
+        <div>
+          <h1>BIG 4</h1>
+          <span>Admin Panel</span>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="{{ path('app_delivery_index') }}">Deliveries</a></li>
+        <li><a href="{{ path('app_delivery_man_index') }}">Delivery Men</a></li>
+        <li><a href="{{ path('app_landingpage') }}">Home</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="{{ path('app_landingpage') }}" class="nav-btn">Back to Site</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-container">
+    {% block body %}{% endblock %}
+  </div>
+
+  <!-- FOOTER -->
+  <footer style="background: rgba(250, 246, 239, 0.3); padding: 2rem; text-align: center; color: var(--text-3); margin-top: 4rem;">
+    <span>© {{ "now"|date("Y") }} BIG 4 Coffee Lounge. Admin Panel.</span>
+  </footer>
+
+  <script src="{{ asset('app.js') }}"></script>
+</body>
+</html>

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+  <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=1">
 </head>
 <body>
   <!-- NAV -->
@@ -29,16 +29,43 @@
         <li><a href="#events">Events</a></li>
       </ul>
 
+      {% set user_role = app.request.session.get('user_role') %}
+      {% set user_name = app.request.session.get('user_name') %}
       <div class="nav-actions">
         <button class="cart-btn" id="openCart">
           Cart <span class="cart-badge" id="cartCount">0</span>
         </button>
         <button class="profile-btn" id="openProfile">Profile</button>
         <a href="#" class="nav-btn" id="openBooking">Book Now</a>
+        {% if user_role == 'ROLE_ADMIN' %}
+          <a href="{{ path('app_admin_dashboard') }}" class="nav-btn">Admin</a>
+          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+        {% elseif user_role == 'ROLE_DELIVERY_MAN' %}
+          <a href="{{ path('app_driver_deliveries') }}" class="nav-btn">My Deliveries</a>
+          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+        {% elseif user_role == 'ROLE_CLIENT' %}
+          <a href="{{ path('app_client_orders') }}" class="nav-btn">My Orders</a>
+          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+        {% else %}
+          <a href="{{ path('app_login') }}" class="nav-btn">Login</a>
+        {% endif %}
       </div>
     </div>
   </nav>
 
+  <!-- FLASH MESSAGES -->
+  {% for message in app.flashes('error') %}
+    <div class="flash-message flash-error">
+      {{ message }}
+    </div>
+  {% endfor %}
+  {% for message in app.flashes('success') %}
+    <div class="flash-message flash-success">
+      {{ message }}
+    </div>
+  {% endfor %}
+
+  {% block body %}
   <!-- HERO -->
   <section class="hero" id="home">
     <div class="container hero-grid">
@@ -246,6 +273,44 @@
     </div>
   </section>
 
+  {% if user_role == 'ROLE_ADMIN' %}
+  <!-- ADMIN TESTING SECTION -->
+  <section style="background: linear-gradient(135deg, rgba(184,135,42,.1), rgba(184,135,42,.05)); padding: 4rem 0; margin-bottom: 4rem;">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <small>System Management</small>
+          <h3><em>Admin Panel</em> & Testing</h3>
+        </div>
+        <p>Access the delivery management system to create, view, edit, and manage deliveries and delivery personnel.</p>
+      </div>
+
+      <div class="cards" style="margin-top: 2rem;">
+        <div class="card reveal" style="text-align: center;">
+          <div class="number">📦</div>
+          <h4>Create New Delivery</h4>
+          <p>Place a new delivery order. Order number and delivery person will be assigned automatically.</p>
+          <a href="{{ path('app_delivery_new') }}" class="btn-primary" style="display: inline-block; margin-top: 1rem;">Create Delivery</a>
+        </div>
+
+        <div class="card reveal" style="text-align: center;">
+          <div class="number">📋</div>
+          <h4>Manage Deliveries</h4>
+          <p>View all deliveries, track orders, and manage delivery information.</p>
+          <a href="{{ path('app_delivery_index') }}" class="btn-primary" style="display: inline-block; margin-top: 1rem;">View Deliveries</a>
+        </div>
+
+        <div class="card reveal" style="text-align: center;">
+          <div class="number">👤</div>
+          <h4>Manage Delivery Men</h4>
+          <p>Register delivery personnel, update their information, and track performance.</p>
+          <a href="{{ path('app_delivery_man_index') }}" class="btn-primary" style="display: inline-block; margin-top: 1rem;">View Delivery Men</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- FOOTER -->
   <footer id="profile">
     <div class="container">
@@ -361,11 +426,18 @@
           <span>Total</span>
           <strong id="cartTotal">0 TND</strong>
         </div>
-        <button class="btn-primary" style="width:100%" id="checkoutBtn">Proceed to Checkout</button>
+        <button type="button" class="btn-primary" style="width:100%" id="checkoutBtn">Proceed to Checkout</button>
       </div>
     </div>
   </div>
 
-  <script src="{{ asset('app.js') }}"></script>
+  <!-- CHECKOUT REDIRECT FORM -->
+  <form id="checkoutRedirectForm" method="get" action="{{ path('app_delivery_create') }}" style="display:none;">
+    <input type="hidden" name="cart_items" id="redirectCartItemsInput">
+    <input type="hidden" name="order_total" id="redirectCartTotalInput">
+  </form>
+
+  {% endblock %}
+  <script src="{{ asset('app.js') }}?v=1"></script>
 </body>
 </html>

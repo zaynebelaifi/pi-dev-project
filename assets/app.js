@@ -1,4 +1,5 @@
 ﻿
+document.addEventListener('DOMContentLoaded', function() {
     // NAV SCROLL
     const nav = document.getElementById('nav');
     window.addEventListener('scroll',()=>{
@@ -80,10 +81,6 @@
     });
 
     // CART SYSTEM
-    const cartOverlay = document.getElementById('cartOverlay');
-    const openCart = document.getElementById('openCart');
-    const openCart2 = document.getElementById('openCart2');
-    const closeCart = document.getElementById('closeCart');
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotal = document.getElementById('cartTotal');
     const cartCount = document.getElementById('cartCount');
@@ -146,24 +143,24 @@
       cartCount.textContent = cart.length;
     }
 
-    function removeFromCart(index){
-      cart.splice(index,1);
-      updateCart();
-    }
-
-    window.removeFromCart = removeFromCart;
-
     checkoutBtn.addEventListener('click', ()=>{
       if(cart.length === 0){
         alert("Your cart is empty.");
         return;
       }
 
-      alert("Your luxury order has been placed successfully!");
-      cart = [];
-      updateCart();
-      hideCart();
+      const total = cart.reduce((sum, item)=> sum + item.price, 0);
+      document.getElementById('redirectCartItemsInput').value = JSON.stringify(cart);
+      document.getElementById('redirectCartTotalInput').value = total.toFixed(2);
+      document.getElementById('checkoutRedirectForm').submit();
     });
+
+    function removeFromCart(index){
+      cart.splice(index,1);
+      updateCart();
+    }
+
+    window.removeFromCart = removeFromCart;
 
     // ESC CLOSE
     document.addEventListener('keydown', (e)=>{
@@ -173,4 +170,5 @@
         hideProfile();
       }
     });
-  
+});
+

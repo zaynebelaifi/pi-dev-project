@@ -1,11 +1,76 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 
-{% block title %}New Delivery{% endblock %}
+{% block title %}Create New Delivery{% endblock %}
 
 {% block body %}
-    <h1>Create new Delivery</h1>
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Create New Delivery</h1>
+        <p>Fill in the delivery details below. An order number will be automatically generated.</p>
+    </div>
+
+    <div class="delivery-info">
+        <div class="info-notice">
+            <h3>Delivery Information</h3>
+            <ul>
+                <li><strong>Estimated Delivery Time:</strong> 30 minutes</li>
+                <li><strong>Order Number:</strong> Will be generated automatically</li>
+                <li><strong>Delivery Person:</strong> Will be assigned automatically from available staff</li>
+            </ul>
+        </div>
+    </div>
 
     {{ include('delivery/_form.html.twig') }}
 
-    <a href="{{ path('app_delivery_index') }}">back to list</a>
+    <div class="admin-actions">
+        <a href="{{ path('app_delivery_index') }}" class="btn btn-secondary">← Back to Deliveries</a>
+    </div>
+</div>
+
+<style>
+.delivery-info {
+    margin-bottom: 2rem;
+}
+
+.info-notice {
+    background: var(--ivory);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.info-notice h3 {
+    color: var(--gold);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.info-notice ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-notice li {
+    margin-bottom: 0.5rem;
+    color: var(--text-2);
+}
+
+.info-notice strong {
+    color: var(--espresso);
+}
+
+.btn-secondary {
+    background: var(--text-2);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.btn-secondary:hover {
+    background: var(--espresso);
+}
+</style>
 {% endblock %}

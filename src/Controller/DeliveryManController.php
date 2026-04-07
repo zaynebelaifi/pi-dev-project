@@ -15,16 +15,31 @@ use Symfony\Component\Routing\Attribute\Route;
 final class DeliveryManController extends AbstractController
 {
     #[Route(name: 'app_delivery_man_index', methods: ['GET'])]
-    public function index(DeliveryManRepository $deliveryManRepository): Response
+    public function index(Request $request, DeliveryManRepository $deliveryManRepository): Response
     {
+        if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $search = trim((string) $request->query->get('search', ''));
+        $sort = $request->query->get('sort', 'date_of_joining');
+        $direction = $request->query->get('direction', 'DESC');
+
         return $this->render('delivery_man/index.html.twig', [
-            'delivery_men' => $deliveryManRepository->findAll(),
+            'delivery_men' => $deliveryManRepository->searchAndSort($search, $sort, $direction),
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
         ]);
     }
 
     #[Route('/new', name: 'app_delivery_man_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
+        if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
         $deliveryMan = new DeliveryMan();
         $form = $this->createForm(DeliveryManType::class, $deliveryMan);
         $form->handleRequest($request);
@@ -42,17 +57,24 @@ final class DeliveryManController extends AbstractController
         ]);
     }
 
-    #[Route('/{delivery_man_id}', name: 'app_delivery_man_show', methods: ['GET'])]
-    public function show(DeliveryMan $deliveryMan): Response
+    #[Route('/{id}', name: 'app_delivery_man_show', methods: ['GET'])]
+    public function show(Request $request, DeliveryMan $deliveryMan): Response
     {
+        if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
         return $this->render('delivery_man/show.html.twig', [
             'delivery_man' => $deliveryMan,
         ]);
     }
 
-    #[Route('/{delivery_man_id}/edit', name: 'app_delivery_man_edit', methods: ['GET', 'POST'])]
+    #[Route('/{id}/edit', name: 'app_delivery_man_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, DeliveryMan $deliveryMan, EntityManagerInterface $entityManager): Response
     {
+        if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
         $form = $this->createForm(DeliveryManType::class, $deliveryMan);
         $form->handleRequest($request);
 
@@ -68,10 +90,14 @@ final class DeliveryManController extends AbstractController
         ]);
     }
 
-    #[Route('/{delivery_man_id}', name: 'app_delivery_man_delete', methods: ['POST'])]
+    #[Route('/{id}', name: 'app_delivery_man_delete', methods: ['POST'])]
     public function delete(Request $request, DeliveryMan $deliveryMan, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$deliveryMan->getDelivery_man_id(), $request->getPayload()->getString('_token'))) {
+        if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($this->isCsrfTokenValid('delete'.$deliveryMan->getDelivery_man_id(), $request->request->get('_token'))) {
             $entityManager->remove($deliveryMan);
             $entityManager->flush();
         }

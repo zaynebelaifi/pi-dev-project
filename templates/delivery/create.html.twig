@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create Delivery Order - BIG 4{% endblock %}
+
+{% block body %}
+<div class="admin-header" style="margin-top:140px; text-align:center;">
+    <h1>Create Your Delivery Order</h1>
+    <p style="color: var(--text-2);">Review your cart and complete the delivery details to place your order.</p>
+</div>
+
+<div class="admin-form" style="margin:auto; max-width: 620px;">
+    {% if error %}
+        <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 12px; margin-bottom: 1.25rem;">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <div class="checkout-summary" style="margin-bottom: 2rem;">
+        <h4>Your Order</h4>
+        <div class="checkout-items">
+            {% for item in cart_items %}
+                <div class="checkout-item">
+                    <span>{{ item.name }}</span>
+                    <strong>{{ item.price }} TND</strong>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="checkout-total">
+            <span>Order Total</span>
+            <strong>{{ order_total }} TND</strong>
+        </div>
+    </div>
+
+    <form method="post" action="{{ path('app_delivery_create') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('delivery-create') }}">
+        <input type="hidden" name="cart_items" value="{{ cart_items|json_encode }}">
+        <input type="hidden" name="order_total" value="{{ order_total }}">
+
+        <div class="form-group">
+            <label for="delivery_address">Delivery Address</label>
+            <input type="text" id="delivery_address" name="delivery_address" placeholder="Enter the delivery address" required>
+        </div>
+        <div class="form-group">
+            <label for="recipient_name">Recipient Name</label>
+            <input type="text" id="recipient_name" name="recipient_name" placeholder="Recipient full name" required>
+        </div>
+        <div class="form-group">
+            <label for="recipient_phone">Phone Number</label>
+            <input type="tel" id="recipient_phone" name="recipient_phone" placeholder="Recipient phone" required>
+        </div>
+        <div class="form-group">
+            <label for="pickup_location">Pickup Location</label>
+            <input type="text" id="pickup_location" name="pickup_location" placeholder="Pickup address or branch" required>
+        </div>
+        <div class="form-group">
+            <label for="delivery_notes">Delivery Notes</label>
+            <textarea id="delivery_notes" name="delivery_notes" rows="3" placeholder="Any delivery instructions"></textarea>
+        </div>
+
+        <button type="submit" class="form-submit">Place Order</button>
+    </form>
+</div>
+
+<style>
+    .checkout-summary {
+        border: 1px solid rgba(184,135,42,.12);
+        border-radius: 22px;
+        padding: 1.5rem;
+        background: rgba(255,255,255,.95);
+        margin-bottom: 2rem;
+    }
+    .checkout-items {
+        margin-bottom: 1rem;
+    }
+    .checkout-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        color: var(--brown);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .checkout-total {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        font-size: 1rem;
+        color: var(--brown);
+        font-weight: 700;
+        border-top: 1px solid rgba(184,135,42,.12);
+        padding-top: 1rem;
+    }
+</style>
+{% endblock %}

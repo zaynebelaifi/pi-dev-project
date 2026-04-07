@@ -1,13 +1,16 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 
-{% block title %}Edit DeliveryMan{% endblock %}
+{% block title %}Edit Delivery Man - BIG 4 Admin{% endblock %}
 
 {% block body %}
-    <h1>Edit DeliveryMan</h1>
+    <div class="admin-header">
+        <h1>Edit Delivery Man</h1>
+        <p style="color: var(--text-2);">Update delivery personnel information</p>
+    </div>
 
-    {{ include('delivery_man/_form.html.twig', {'button_label': 'Update'}) }}
+    {{ include('delivery_man/_form.html.twig', {'button_label': 'Update Delivery Man'}) }}
 
-    <a href="{{ path('app_delivery_man_index') }}">back to list</a>
-
-    {{ include('delivery_man/_delete_form.html.twig') }}
+    <p style="margin-top: 2rem;">
+        <a href="{{ path('app_delivery_man_index') }}" style="color: var(--gold);">← Back to Delivery Men</a>
+    </p>
 {% endblock %}

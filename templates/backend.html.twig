@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIG 4 — Admin Console</title>
+<title>{% block title %}BIG 4 — Admin Console{% endblock %}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -194,6 +194,7 @@ tbody tr:hover .dots{color:var(--gold);}
 </style>
 </head>
 <body>
+{% set activeRoute = app.request.attributes.get('_route') %}
 
 <aside class="sidebar">
   <div class="sidebar-brand">
@@ -202,12 +203,12 @@ tbody tr:hover .dots{color:var(--gold);}
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Main</div>
-    <a class="nav-item active" href="#"><div class="nav-icon">🏠</div>Dashboard</a>
+    <a class="nav-item {{ activeRoute == 'app_admin_dashboard' ? 'active' : '' }}" href="{{ path('app_admin_dashboard') }}"><div class="nav-icon">🏠</div>Dashboard</a>
     <a class="nav-item" href="#"><div class="nav-icon">📊</div>Analytics</a>
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Operations</div>
-    <a class="nav-item" href="#"><div class="nav-icon">🛵</div>Delivery<span class="nav-badge red">7</span></a>
+    <a class="nav-item {{ activeRoute == 'app_delivery_index' ? 'active' : '' }}" href="{{ path('app_delivery_index') }}"><div class="nav-icon">🛵</div>Delivery<span class="nav-badge red">7</span></a>
     <a class="nav-item" href="#"><div class="nav-icon">📋</div>Menu Manager</a>
     <a class="nav-item" href="#"><div class="nav-icon">🗑️</div>Waste Tracker</a>
     <a class="nav-item" href="#"><div class="nav-icon">🎪</div>Events<span class="nav-badge">4</span></a>
@@ -215,7 +216,7 @@ tbody tr:hover .dots{color:var(--gold);}
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Management</div>
     <a class="nav-item" href="#"><div class="nav-icon">🛒</div>Orders<span class="nav-badge">23</span></a>
-    <a class="nav-item" href="#"><div class="nav-icon">👥</div>Users</a>
+    <a class="nav-item {{ activeRoute == 'app_delivery_man_index' ? 'active' : '' }}" href="{{ path('app_delivery_man_index') }}"><div class="nav-icon">👥</div>Delivery Men</a>
     <a class="nav-item" href="#"><div class="nav-icon">⚙️</div>Settings</a>
   </div>
   <div class="sidebar-footer">
@@ -232,15 +233,15 @@ tbody tr:hover .dots{color:var(--gold);}
   <header class="topbar">
     <div><div class="topbar-title">Dashboard</div><div class="topbar-bc">Big 4 · Admin · Overview</div></div>
     <div class="topbar-right">
-      <a href="big4-frontend.html" class="t-btn" target="_blank">🌐 View Homepage</a>
+      <a href="{{ path('app_home') }}" class="t-btn" target="_blank">🌐 View Homepage</a>
       <div class="t-div"></div>
       <button class="notif">🔔<div class="notif-dot"></div></button>
-      <a href="#" class="t-btn primary">+ New Order</a>
+      <a href="{{ path('app_delivery_new') }}" class="t-btn primary">+ New Delivery</a>
     </div>
   </header>
 
   <div class="content">
-
+    {% block body %}
     <!-- KPI -->
     <div class="kpi-row">
       <div class="kpi">
@@ -451,7 +452,7 @@ tbody tr:hover .dots{color:var(--gold);}
         </div>
       </div>
     </div>
-
+    {% endblock %}
   </div>
 </div>
 

@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\DeliveryRepository;
 
@@ -58,6 +59,8 @@ class Delivery
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Delivery address is required.')]
+    #[Assert\Length(min: 5, max: 500, minMessage: 'Delivery address must be at least {{ limit }} characters long.', maxMessage: 'Delivery address cannot be longer than {{ limit }} characters.')]
     private ?string $delivery_address = null;
 
     public function getDelivery_address(): ?string
@@ -72,6 +75,7 @@ class Delivery
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(max: 100, maxMessage: 'Recipient name cannot be longer than {{ limit }} characters.')]
     private ?string $recipient_name = null;
 
     public function getRecipient_name(): ?string
@@ -86,6 +90,8 @@ class Delivery
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Regex(pattern: '/^[\+]?[0-9\-\(\)\s]+$/', message: 'Please enter a valid phone number.')]
+    #[Assert\Length(max: 20, maxMessage: 'Phone number cannot be longer than {{ limit }} characters.')]
     private ?string $recipient_phone = null;
 
     public function getRecipient_phone(): ?string
@@ -100,6 +106,7 @@ class Delivery
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(max: 500, maxMessage: 'Pickup location cannot be longer than {{ limit }} characters.')]
     private ?string $pickup_location = null;
 
     public function getPickup_location(): ?string
@@ -170,34 +177,35 @@ class Delivery
     }
 
     #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $current_latitude = null;
+    private ?string $current_latitude = null;
 
-    public function getCurrent_latitude(): ?float
+    public function getCurrent_latitude(): ?string
     {
         return $this->current_latitude;
     }
 
-    public function setCurrent_latitude(?float $current_latitude): self
+    public function setCurrent_latitude(?string $current_latitude): self
     {
         $this->current_latitude = $current_latitude;
         return $this;
     }
 
     #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $current_longitude = null;
+    private ?string $current_longitude = null;
 
-    public function getCurrent_longitude(): ?float
+    public function getCurrent_longitude(): ?string
     {
         return $this->current_longitude;
     }
 
-    public function setCurrent_longitude(?float $current_longitude): self
+    public function setCurrent_longitude(?string $current_longitude): self
     {
         $this->current_longitude = $current_longitude;
         return $this;
     }
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\Length(max: 1000, maxMessage: 'Delivery notes cannot be longer than {{ limit }} characters.')]
     private ?string $delivery_notes = null;
 
     public function getDelivery_notes(): ?string
@@ -211,7 +219,38 @@ class Delivery
         return $this;
     }
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $cart_items = null;
+
+    public function getCart_items(): ?string
+    {
+        return $this->cart_items;
+    }
+
+    public function setCart_items(?string $cart_items): self
+    {
+        $this->cart_items = $cart_items;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    #[Assert\PositiveOrZero(message: 'Order total must be zero or positive.')]
+    #[Assert\LessThanOrEqual(value: 99999999.99, message: 'Order total cannot exceed {{ compared_value }}.')]
+    private ?string $order_total = null;
+
+    public function getOrder_total(): ?string
+    {
+        return $this->order_total;
+    }
+
+    public function setOrder_total(?string $order_total): self
+    {
+        $this->order_total = $order_total;
+        return $this;
+    }
+
     #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\Range(min: 1, max: 5, notInRangeMessage: 'Rating must be between {{ min }} and {{ max }}.')]
     private ?int $rating = null;
 
     public function getRating(): ?int
@@ -253,4 +292,55 @@ class Delivery
         return $this;
     }
 
+    // Symfony PropertyAccessor camelCase aliases for snake_case properties
+    public function getId(): ?int { return $this->getDelivery_id(); }
+    public function setId(int $id): self { return $this->setDelivery_id($id); }
+    
+    public function getDeliveryId(): ?int { return $this->getDelivery_id(); }
+    public function setDeliveryId(int $id): self { return $this->setDelivery_id($id); }
+    
+    public function getOrderId(): ?int { return $this->getOrder_id(); }
+    public function setOrderId(int $id): self { return $this->setOrder_id($id); }
+    
+    public function getDeliveryAddress(): ?string { return $this->getDelivery_address(); }
+    public function setDeliveryAddress(string $addr): self { return $this->setDelivery_address($addr); }
+    
+    public function getRecipientName(): ?string { return $this->getRecipient_name(); }
+    public function setRecipientName(?string $name): self { return $this->setRecipient_name($name); }
+    
+    public function getRecipientPhone(): ?string { return $this->getRecipient_phone(); }
+    public function setRecipientPhone(?string $phone): self { return $this->setRecipient_phone($phone); }
+    
+    public function getPickupLocation(): ?string { return $this->getPickup_location(); }
+    public function setPickupLocation(?string $loc): self { return $this->setPickup_location($loc); }
+    
+    public function getScheduledDate(): ?\DateTimeInterface { return $this->getScheduled_date(); }
+    public function setScheduledDate(?\DateTimeInterface $date): self { return $this->setScheduled_date($date); }
+    
+    public function getActualDeliveryDate(): ?\DateTimeInterface { return $this->getActual_delivery_date(); }
+    public function setActualDeliveryDate(?\DateTimeInterface $date): self { return $this->setActual_delivery_date($date); }
+    
+    public function getEstimatedTime(): ?int { return $this->getEstimated_time(); }
+    public function setEstimatedTime(?int $time): self { return $this->setEstimated_time($time); }
+    
+    public function getCurrentLatitude(): ?string { return $this->getCurrent_latitude(); }
+    public function setCurrentLatitude(?string $lat): self { return $this->setCurrent_latitude($lat); }
+    
+    public function getCurrentLongitude(): ?string { return $this->getCurrent_longitude(); }
+    public function setCurrentLongitude(?string $lon): self { return $this->setCurrent_longitude($lon); }
+    
+    public function getDeliveryNotes(): ?string { return $this->getDelivery_notes(); }
+    public function setDeliveryNotes(?string $notes): self { return $this->setDelivery_notes($notes); }
+
+    public function getCartItems(): ?string { return $this->getCart_items(); }
+    public function setCartItems(?string $items): self { return $this->setCart_items($items); }
+
+    public function getOrderTotal(): ?string { return $this->getOrder_total(); }
+    public function setOrderTotal(?string $total): self { return $this->setOrder_total($total); }
+    
+    public function getCreatedAt(): ?\DateTimeInterface { return $this->getCreated_at(); }
+    public function setCreatedAt(\DateTimeInterface $at): self { return $this->setCreated_at($at); }
+    
+    public function getUpdatedAt(): ?\DateTimeInterface { return $this->getUpdated_at(); }
+    public function setUpdatedAt(\DateTimeInterface $at): self { return $this->setUpdated_at($at); }
 }

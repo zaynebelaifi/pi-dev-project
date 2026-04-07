@@ -1,57 +1,354 @@
-{% extends 'base.html.twig' %}
+{% extends 'backend.html.twig' %}
 
-{% block title %}DeliveryMan index{% endblock %}
+{% block title %}Delivery Men - BIG 4 Admin{% endblock %}
+
+{% block topbar_title %}Manage Delivery Men{% endblock %}
 
 {% block body %}
-    <h1>DeliveryMan index</h1>
+    <style>
+        .delivery-header { margin-bottom: 2rem; }
+        .delivery-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: var(--espresso); margin-bottom: 0.5rem; }
+        .delivery-header p { color: var(--text-2); font-size: 0.9rem; }
+        
+        .filter-section { 
+            background: var(--ivory); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            padding: 1.5rem; 
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .filter-controls { 
+            display: flex; 
+            gap: 1rem; 
+            align-items: flex-end; 
+            flex-wrap: wrap;
+        }
+        .filter-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-label { 
+            font-size: 0.7rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em; 
+            color: var(--text-3); 
+            font-weight: 600;
+        }
+        .filter-input, .filter-select { 
+            padding: 0.8rem 1.2rem; 
+            border: 1.5px solid var(--border-2); 
+            border-radius: 8px; 
+            font-family: 'Jost', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text);
+            background: var(--ivory-2);
+            transition: all 0.2s;
+        }
+        .filter-input:focus, .filter-select:focus { 
+            outline: none;
+            border-color: var(--gold);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(184,135,42,0.1);
+        }
+        .btn-actions { 
+            display: flex; 
+            gap: 0.8rem; 
+            flex-wrap: wrap;
+        }
+        
+        .delivery-table-card {
+            background: var(--ivory);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        .table-header { 
+            padding: 1.5rem; 
+            background: linear-gradient(135deg, var(--gold-pale) 0%, var(--ivory-2) 100%);
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-title { 
+            font-family: 'Cormorant Garamond', serif; 
+            font-size: 1.2rem; 
+            font-weight: 600; 
+            color: var(--espresso);
+        }
+        .table-count {
+            font-size: 0.75rem;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .delivery-table { width: 100%; border-collapse: collapse; }
+        .delivery-table thead { background: var(--ivory-2); }
+        .delivery-table th {
+            padding: 1rem 1.2rem;
+            text-align: left;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--gold);
+            border-bottom: 2px solid var(--border);
+        }
+        .delivery-table tbody tr {
+            border-bottom: 1px solid rgba(184,135,42,0.08);
+            transition: all 0.2s;
+        }
+        .delivery-table tbody tr:hover {
+            background: var(--gold-wash);
+            box-shadow: inset 0 0 10px rgba(184,135,42,0.06);
+        }
+        .delivery-table td {
+            padding: 1.1rem 1.2rem;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+        .delivery-id {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            color: var(--gold);
+            font-size: 0.95rem;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .status-active { background: var(--green-bg); color: var(--green); }
+        .status-inactive { background: var(--red-bg); color: var(--red); }
+        .status-on-leave { background: var(--amber-bg); color: var(--amber); }
+        
+        .driver-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .driver-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gold-pale);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--gold);
+            flex-shrink: 0;
+        }
+        .driver-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .driver-name {
+            font-weight: 600;
+            color: var(--espresso);
+        }
+        .driver-phone {
+            font-size: 0.75rem;
+            color: var(--text-3);
+        }
+        
+        .rating-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: var(--amber-bg);
+            color: var(--amber);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        
+        .action-cell {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+        }
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: var(--gold-pale);
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .action-link:hover {
+            background: var(--gold);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(184,135,42,0.25);
+        }
+        .action-delete {
+            background: var(--red-bg);
+            color: var(--red);
+            border: 1px solid var(--red-bg);
+        }
+        .action-delete:hover {
+            background: var(--red);
+            color: white;
+        }
+        .no-results { 
+            padding: 3rem; 
+            text-align: center; 
+            color: var(--text-3);
+        }
+    </style>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Delivery_man_id</th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Vehicle_type</th>
-                <th>Vehicle_number</th>
-                <th>Status</th>
-                <th>Address</th>
-                <th>Salary</th>
-                <th>Date_of_joining</th>
-                <th>Rating</th>
-                <th>Created_at</th>
-                <th>Updated_at</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for delivery_man in delivery_men %}
-            <tr>
-                <td>{{ delivery_man.deliveryManId }}</td>
-                <td>{{ delivery_man.name }}</td>
-                <td>{{ delivery_man.phone }}</td>
-                <td>{{ delivery_man.email }}</td>
-                <td>{{ delivery_man.vehicleType }}</td>
-                <td>{{ delivery_man.vehicleNumber }}</td>
-                <td>{{ delivery_man.status }}</td>
-                <td>{{ delivery_man.address }}</td>
-                <td>{{ delivery_man.salary }}</td>
-                <td>{{ delivery_man.dateOfJoining ? delivery_man.dateOfJoining|date('Y-m-d') : '' }}</td>
-                <td>{{ delivery_man.rating }}</td>
-                <td>{{ delivery_man.createdAt ? delivery_man.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-                <td>{{ delivery_man.updatedAt ? delivery_man.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
-                <td>
-                    <a href="{{ path('app_delivery_man_show', {'delivery_man_id': delivery_man.delivery_man_id}) }}">show</a>
-                    <a href="{{ path('app_delivery_man_edit', {'delivery_man_id': delivery_man.delivery_man_id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="14">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="delivery-header">
+        <h2>Manage Delivery Men</h2>
+        <p>Track and manage your delivery team. Monitor ratings, assignments, and personnel status.</p>
+    </div>
 
-    <a href="{{ path('app_delivery_man_new') }}">Create new</a>
+    <div class="filter-section">
+        <form id="filterForm" method="get" action="{{ path('app_delivery_man_index') }}" class="filter-controls">
+            <div class="filter-group" style="flex: 2; min-width: 280px;">
+                <label class="filter-label">🔍 Search</label>
+                <input type="search" name="search" id="searchInput" value="{{ search }}" placeholder="Name, phone, email..." class="filter-input">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">📋 Sort by</label>
+                <select name="sort" id="sortInput" class="filter-select">
+                    <option value="date_of_joining" {% if sort == 'date_of_joining' %}selected{% endif %}>Join Date</option>
+                    <option value="name" {% if sort == 'name' %}selected{% endif %}>Name</option>
+                    <option value="status" {% if sort == 'status' %}selected{% endif %}>Status</option>
+                    <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Rating</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">📊 Order</label>
+                <select name="direction" id="directionInput" class="filter-select">
+                    <option value="DESC" {% if direction == 'DESC' %}selected{% endif %}>Newest First</option>
+                    <option value="ASC" {% if direction == 'ASC' %}selected{% endif %}>Oldest First</option>
+                </select>
+            </div>
+            <div class="btn-actions">
+                <button type="submit" class="t-btn primary">🔄 Apply Filters</button>
+                <a href="{{ path('app_delivery_man_new') }}" class="t-btn primary" style="background: var(--green); border-color: var(--green);">+ Add Driver</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="delivery-table-card">
+        <div class="table-header">
+            <div>
+                <div class="table-title">All Drivers</div>
+                <div class="table-count">{{ delivery_men|length }} team members</div>
+            </div>
+        </div>
+        <table class="delivery-table">
+            <thead>
+                <tr>
+                    <th>Driver</th>
+                    <th>Email</th>
+                    <th>Vehicle</th>
+                    <th>Status</th>
+                    <th>Rating</th>
+                    <th>Join Date</th>
+                    <th>Salary</th>
+                    <th style="text-align: center; width: 120px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for delivery_man in delivery_men %}
+                <tr>
+                    <td>
+                        <div class="driver-cell">
+                            <div class="driver-avatar">{{ delivery_man.name|first }}</div>
+                            <div class="driver-info">
+                                <div class="driver-name">{{ delivery_man.name }}</div>
+                                <div class="driver-phone">{{ delivery_man.phone }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><a href="mailto:{{ delivery_man.email }}" style="color: var(--gold); text-decoration: none;">{{ delivery_man.email }}</a></td>
+                    <td>
+                        <div style="font-weight: 600; color: var(--text);">{{ delivery_man.vehicle_type }}</div>
+                        <small style="color: var(--text-3);">{{ delivery_man.vehicle_number }}</small>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ delivery_man.status|lower }}">
+                            {% if delivery_man.status == 'ACTIVE' %}✅ Active{% elseif delivery_man.status == 'INACTIVE' %}❌ Inactive{% else %}🟡 {{ delivery_man.status }}{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if delivery_man.rating %}
+                            <div class="rating-badge">⭐ {{ delivery_man.rating }}/5</div>
+                        {% else %}
+                            <small style="color: var(--text-3);">No ratings yet</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ delivery_man.date_of_joining ? delivery_man.date_of_joining|date('M d, Y') : '-' }}</td>
+                    <td><strong class="delivery-id">${{ delivery_man.salary }}</strong></td>
+                    <td>
+                        <div class="action-cell">
+                            <a href="{{ path('app_delivery_man_show', {'id': delivery_man.delivery_man_id}) }}" class="action-link" title="View">👁️</a>
+                            <a href="{{ path('app_delivery_man_edit', {'id': delivery_man.delivery_man_id}) }}" class="action-link" title="Edit">✏️</a>
+                            <form method="post" action="{{ path('app_delivery_man_delete', {'id': delivery_man.delivery_man_id}) }}" style="display:inline;" onsubmit="return confirm('Remove this driver from the system?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ delivery_man.delivery_man_id) }}">
+                                <button type="submit" class="action-link action-delete" title="Delete" style="cursor: pointer; border: none; padding: 0; width: 32px; height: 32px;">🗑️</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="8" class="no-results">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+                        <div style="font-size: 1.1rem; color: var(--text);">No drivers found</div>
+                        <small style="color: var(--text-3);">Start by adding a new delivery driver to your team</small>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Live search with debouncing
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        const sortInput = document.getElementById('sortInput');
+        const directionInput = document.getElementById('directionInput');
+        const filterForm = document.getElementById('filterForm');
+
+        function submitForm() {
+            filterForm.submit();
+        }
+
+        // Debounced search (waits 500ms after user stops typing)
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(submitForm, 500);
+        });
+
+        // Immediate submit for sort and direction
+        sortInput.addEventListener('change', submitForm);
+        directionInput.addEventListener('change', submitForm);
+    </script>
 {% endblock %}
