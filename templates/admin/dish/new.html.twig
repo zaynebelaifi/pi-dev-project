@@ -57,6 +57,42 @@
           {{ form_row(form.available) }}
         </div>
       </div>
+
+      <div class="recipe-card">
+        <div class="recipe-head">
+          <h3>Recipe Ingredients</h3>
+          <button type="button" class="t-btn" id="addRecipeLine">+ Add Ingredient</button>
+        </div>
+        <p class="recipe-sub">Set ingredient quantity required for one serving of this dish.</p>
+
+        <div id="recipeLines">
+          {% set rowCount = recipeIngredientDraft|length > 0 ? recipeIngredientDraft|length : 1 %}
+          {% for i in 0..(rowCount - 1) %}
+            <div class="recipe-line">
+              <div class="form-group">
+                <label>Ingredient</label>
+                <select name="recipe_ingredient[]" class="recipe-select">
+                  <option value="">Select ingredient</option>
+                  {% set selectedId = recipeIngredientDraft[i] ?? '' %}
+                  {% for ingredient in ingredients %}
+                    <option value="{{ ingredient.id }}" {{ selectedId|striptags == ingredient.id ? 'selected' : '' }}>
+                      {{ ingredient.name }} ({{ ingredient.unit }})
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Quantity required</label>
+                <input type="number" name="recipe_quantity[]" value="{{ recipeQuantityDraft[i] ?? '' }}" min="0.001" step="0.001" placeholder="e.g. 0.250">
+              </div>
+              <div class="form-group recipe-remove-wrap">
+                <button type="button" class="mini-action mini-action-danger recipe-remove">Remove</button>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
       <div class="form-actions">
         <button type="submit" class="t-btn primary">Create Dish</button>
       </div>
@@ -133,9 +169,104 @@
       display: flex;
       justify-content: flex-end;
     }
+    .recipe-card {
+      margin-top: 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      background: #fffefb;
+    }
+    .recipe-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .8rem;
+      margin-bottom: .4rem;
+    }
+    .recipe-head h3 {
+      margin: 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem;
+      color: var(--espresso);
+    }
+    .recipe-sub {
+      margin-bottom: .8rem;
+      color: var(--text-2);
+      font-size: .86rem;
+    }
+    .recipe-line {
+      display: grid;
+      grid-template-columns: 1.4fr .8fr auto;
+      gap: .8rem;
+      align-items: end;
+      padding: .7rem;
+      border: 1px dashed var(--border-2);
+      border-radius: 10px;
+      margin-bottom: .65rem;
+      background: #fff;
+    }
+    .recipe-line .form-group {
+      margin: 0;
+    }
+    .recipe-line select,
+    .recipe-line input {
+      width: 100%;
+      padding: .62rem .78rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      font-size: .9rem;
+      font-family: 'Jost', sans-serif;
+    }
+    .recipe-remove-wrap {
+      display: flex;
+      align-items: end;
+      justify-content: flex-end;
+    }
     @media (max-width: 900px) {
       .menu-form-card { padding: 1.25rem 1.3rem; }
       .menu-form-grid { grid-template-columns: 1fr; }
+      .recipe-line { grid-template-columns: 1fr; }
+      .recipe-remove-wrap { justify-content: flex-start; }
     }
   </style>
+
+  <script>
+    (() => {
+      const container = document.getElementById('recipeLines');
+      const addBtn = document.getElementById('addRecipeLine');
+      if (!container || !addBtn) return;
+
+      const optionsHtml = {{ ingredients|map(i => '<option value="' ~ i.id ~ '">' ~ i.name|e('js') ~ ' (' ~ i.unit|e('js') ~ ')</option>')|join('')|json_encode|raw }};
+
+      addBtn.addEventListener('click', () => {
+        const row = document.createElement('div');
+        row.className = 'recipe-line';
+        row.innerHTML = `
+          <div class="form-group">
+            <label>Ingredient</label>
+            <select name="recipe_ingredient[]" class="recipe-select">
+              <option value="">Select ingredient</option>${JSON.parse(optionsHtml)}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Quantity required</label>
+            <input type="number" name="recipe_quantity[]" min="0.001" step="0.001" placeholder="e.g. 0.250">
+          </div>
+          <div class="form-group recipe-remove-wrap">
+            <button type="button" class="mini-action mini-action-danger recipe-remove">Remove</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      container.addEventListener('click', (event) => {
+        const btn = event.target.closest('.recipe-remove');
+        if (!btn) return;
+        const lines = container.querySelectorAll('.recipe-line');
+        if (lines.length <= 1) return;
+        btn.closest('.recipe-line')?.remove();
+      });
+    })();
+  </script>
 {% endblock %}
