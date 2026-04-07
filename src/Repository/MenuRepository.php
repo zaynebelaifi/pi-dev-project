@@ -16,28 +16,29 @@ class MenuRepository extends ServiceEntityRepository
         parent::__construct($registry, Menu::class);
     }
 
-    //    /**
-    //     * @return Menu[] Returns an array of Menu objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('m')
-    //            ->andWhere('m.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('m.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * @return Menu[]
+     */
+    public function findForAdminList(?string $search = null, string $sort = 'created_at', string $dir = 'DESC'): array
+    {
+        $allowedSorts = ['id', 'title', 'created_at', 'isActive'];
+        if (!\in_array($sort, $allowedSorts, true)) {
+            $sort = 'created_at';
+        }
 
-    //    public function findOneBySomeField($value): ?Menu
-    //    {
-    //        return $this->createQueryBuilder('m')
-    //            ->andWhere('m.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $direction = \strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC';
+
+        $qb = $this->createQueryBuilder('m');
+
+        if (null !== $search && '' !== \trim($search)) {
+            $qb
+                ->andWhere('LOWER(m.title) LIKE :q OR LOWER(m.description) LIKE :q')
+                ->setParameter('q', '%'.\mb_strtolower(\trim($search)).'%');
+        }
+
+        return $qb
+            ->orderBy('m.'.$sort, $direction)
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -209,7 +209,7 @@ tbody tr:hover .dots{color:var(--gold);}
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Operations</div>
     <a class="nav-item {{ activeRoute == 'app_delivery_index' ? 'active' : '' }}" href="{{ path('app_delivery_index') }}"><div class="nav-icon">🛵</div>Delivery<span class="nav-badge red">7</span></a>
-    <a class="nav-item" href="#"><div class="nav-icon">📋</div>Menu Manager</a>
+    <a class="nav-item {{ activeRoute starts with 'admin_menu_' or activeRoute starts with 'admin_dish_' ? 'active' : '' }}" href="{{ path('admin_menu_index') }}"><div class="nav-icon">📋</div>Menu Manager</a>
     <a class="nav-item" href="#"><div class="nav-icon">🗑️</div>Waste Tracker</a>
     <a class="nav-item" href="#"><div class="nav-icon">🎪</div>Events<span class="nav-badge">4</span></a>
   </div>
@@ -289,14 +289,14 @@ tbody tr:hover .dots{color:var(--gold);}
       <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
         <div class="card-top"><div class="c-icon blue">📋</div><span class="pill p-blue">48 Items</span></div>
         <div class="c-title">Menu Manager</div>
-        <div class="c-desc">Add, edit or archive items, manage categories, prices, availability and dietary tags.</div>
+        <div class="c-desc">Add, edit or archive menus and dishes, manage prices, availability and categories.</div>
         <div class="c-stats">
           <div class="cs-item"><div class="cs-num">48</div><div class="cs-lbl">Items</div></div>
           <div class="cs-item"><div class="cs-num">6</div><div class="cs-lbl">Categories</div></div>
           <div class="cs-item"><div class="cs-num">3</div><div class="cs-lbl">Out of Stock</div></div>
         </div>
         <div class="c-bar"><div class="c-bar-fill blue" style="width:94%"></div></div>
-        <a href="#" class="c-action">Edit Menu →</a>
+        <a href="{{ path('admin_menu_index') }}" class="c-action">Open Menu Manager →</a>
       </div>
 
       <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
