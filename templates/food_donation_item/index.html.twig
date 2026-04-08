@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}FoodDonationItem index{% endblock %}
+
+{% block body %}
+    <h1>FoodDonationItem index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Donation_event_id</th>
+                <th>Item_id</th>
+                <th>Quantity</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for food_donation_item in food_donation_items %}
+            <tr>
+                <td>{{ food_donation_item.donationEventId }}</td>
+                <td>{{ food_donation_item.itemId }}</td>
+                <td>{{ food_donation_item.quantity }}</td>
+                <td>
+                    <a href="{{ path('app_food_donation_item_show', {'donation_event_id': food_donation_item.donation_event_id}) }}">show</a>
+                    <a href="{{ path('app_food_donation_item_edit', {'donation_event_id': food_donation_item.donation_event_id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_food_donation_item_new') }}">Create new</a>
+{% endblock %}

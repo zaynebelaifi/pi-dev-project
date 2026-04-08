@@ -3,112 +3,337 @@
 {% block title %}Create Delivery Order - BIG 4{% endblock %}
 
 {% block body %}
-<div class="admin-header" style="margin-top:140px; text-align:center;">
-    <h1>Create Your Delivery Order</h1>
-    <p style="color: var(--text-2);">Review your cart and complete the delivery details to place your order.</p>
-</div>
+<div class="delivery-page">
+    <section class="page-header">
+        <div>
+            <p class="eyebrow">Order Delivery</p>
+            <h1>Create your delivery order</h1>
+            <p class="page-copy">Review your cart details, enter your delivery information, and place your order with confidence.</p>
+        </div>
+        <div class="header-badge">Fast delivery · Trusted drivers · Simple checkout</div>
+    </section>
 
-<div class="admin-form" style="margin:auto; max-width: 620px;">
-    {% for message in app.flashes('error') %}
-        <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 12px; margin-bottom: 1.25rem;">
-            {{ message }}
-        </div>
-    {% endfor %}
-    {% for message in app.flashes('success') %}
-        <div style="background: #d4edda; color: #155724; padding: 1rem; border-radius: 12px; margin-bottom: 1.25rem;">
-            {{ message }}
-        </div>
-    {% endfor %}
-    {% if error is defined and error %}
-        <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 12px; margin-bottom: 1.25rem;">
-            {{ error }}
+    {% if errors is defined and errors|length > 0 %}
+        <div class="alert-panel alert-warning card-shadow">
+            <strong>We found some issues:</strong>
+            <ul>
+                {% for message in errors %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
         </div>
     {% endif %}
 
-    <div class="checkout-summary" style="margin-bottom: 2rem;">
-        <h4>Your Order</h4>
-        <div class="checkout-items">
-            {% for item in cart_items %}
-                <div class="checkout-item">
-                    <span>{{ item.name }}</span>
-                    <strong>{{ item.price }} TND</strong>
-                </div>
-            {% endfor %}
-        </div>
-        <div class="checkout-total">
-            <span>Order Total</span>
-            <strong>{{ order_total }} TND</strong>
-        </div>
-    </div>
+    {% for message in app.flashes('error') %}
+        <div class="alert-panel alert-error card-shadow">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('success') %}
+        <div class="alert-panel alert-success card-shadow">{{ message }}</div>
+    {% endfor %}
 
-    <form method="post" action="{{ path('app_delivery_create') }}" novalidate>
-        <input type="hidden" name="_token" value="{{ csrf_token('delivery-create') }}">
-        <input type="hidden" name="cart_items" value="{{ cart_items|json_encode }}">
-        <input type="hidden" name="order_total" value="{{ order_total }}">
-
-        {% if errors is defined and errors|length > 0 %}
-            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
-                <ul style="margin: 0; padding-left: 1.2rem;">
-                    {% for message in errors %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
+    <div class="delivery-grid">
+        <aside class="order-summary card-shadow">
+            <div class="summary-header">
+                <span>Your Order</span>
+                <strong>{{ order_total }} TND</strong>
             </div>
-        {% endif %}
+            <div class="summary-items">
+                {% for item in cart_items %}
+                    <div class="summary-item">
+                        <span>{{ item.name }}</span>
+                        <span>{{ item.price }} TND</span>
+                    </div>
+                {% else %}
+                    <div class="summary-item empty-state">No items added yet.</div>
+                {% endfor %}
+            </div>
+            <div class="summary-total">
+                <span>Total</span>
+                <strong>{{ order_total }} TND</strong>
+            </div>
+        </aside>
 
-        <div class="form-group">
-            <label for="delivery_address">Delivery Address</label>
-            <input type="text" id="delivery_address" name="delivery_address" placeholder="Enter the delivery address" value="{{ form_values.delivery_address|default(app.request.request.get('delivery_address', '')) }}">
-        </div>
-        <div class="form-group">
-            <label for="recipient_name">Recipient Name</label>
-            <input type="text" id="recipient_name" name="recipient_name" placeholder="Recipient full name" value="{{ form_values.recipient_name|default(app.request.request.get('recipient_name', '')) }}">
-        </div>
-        <div class="form-group">
-            <label for="recipient_phone">Phone Number</label>
-            <input type="text" id="recipient_phone" name="recipient_phone" placeholder="Recipient phone" value="{{ form_values.recipient_phone|default(app.request.request.get('recipient_phone', '')) }}">
-        </div>
-        <div class="form-group">
-            <label for="pickup_location">Pickup Location</label>
-            <input type="text" id="pickup_location" name="pickup_location" placeholder="Pickup address or branch" value="{{ form_values.pickup_location|default(app.request.request.get('pickup_location', '')) }}">
-        </div>
-        <div class="form-group">
-            <label for="delivery_notes">Delivery Notes</label>
-            <textarea id="delivery_notes" name="delivery_notes" rows="3" placeholder="Any delivery instructions">{{ form_values.delivery_notes|default(app.request.request.get('delivery_notes', '')) }}</textarea>
-        </div>
+        <section class="order-form card-shadow">
+            <div class="section-heading">
+                <h2>Delivery details</h2>
+                <p>Fill in the information below to complete your order.</p>
+            </div>
 
-        <button type="submit" class="form-submit">Place Order</button>
-    </form>
+            <form method="post" action="{{ path('app_delivery_create') }}" novalidate>
+                <input type="hidden" name="_token" value="{{ csrf_token('delivery-create') }}">
+                <input type="hidden" name="cart_items" value="{{ cart_items|json_encode }}">
+                <input type="hidden" name="order_total" value="{{ order_total }}">
+
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label for="delivery_address">Delivery address</label>
+                        <input class="input-control" type="text" id="delivery_address" name="delivery_address" placeholder="123 Main Street, City" value="{{ form_values.delivery_address|default(app.request.request.get('delivery_address', '')) }}">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="recipient_name">Recipient name</label>
+                        <input class="input-control" type="text" id="recipient_name" name="recipient_name" placeholder="Full name" value="{{ form_values.recipient_name|default(app.request.request.get('recipient_name', '')) }}">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="recipient_phone">Phone number</label>
+                        <input class="input-control" type="text" id="recipient_phone" name="recipient_phone" placeholder="e.g. +216 20 000 000" value="{{ form_values.recipient_phone|default(app.request.request.get('recipient_phone', '')) }}">
+                    </div>
+
+                    <div class="field-group">
+                        <label for="pickup_location">Pickup location</label>
+                        <input class="input-control" type="text" id="pickup_location" name="pickup_location" placeholder="Branch or pickup address" value="{{ form_values.pickup_location|default(app.request.request.get('pickup_location', '')) }}">
+                    </div>
+                </div>
+
+                <div class="field-group full-width">
+                    <label for="delivery_notes">Delivery notes</label>
+                    <textarea class="input-control textarea-control" id="delivery_notes" name="delivery_notes" rows="4" placeholder="Any delivery instructions">{{ form_values.delivery_notes|default(app.request.request.get('delivery_notes', '')) }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Place Order</button>
+            </form>
+        </section>
+    </div>
 </div>
 
 <style>
-    .checkout-summary {
-        border: 1px solid rgba(184,135,42,.12);
-        border-radius: 22px;
-        padding: 1.5rem;
-        background: rgba(255,255,255,.95);
+    .delivery-page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 120px 24px 40px;
+    }
+
+    .page-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: flex-start;
+        padding: 1.75rem 1.5rem;
+        background: rgba(255, 250, 240, 0.95);
+        border: 1px solid rgba(184, 135, 42, 0.16);
+        border-radius: 28px;
         margin-bottom: 2rem;
     }
-    .checkout-items {
-        margin-bottom: 1rem;
+
+    .eyebrow {
+        display: inline-block;
+        margin-bottom: 0.75rem;
+        color: var(--gold);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-weight: 700;
+        font-size: 0.85rem;
     }
-    .checkout-item {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
+
+    .page-header h1 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 2.6rem);
         color: var(--brown);
-        font-weight: 600;
-        margin-bottom: 0.5rem;
     }
-    .checkout-total {
+
+    .page-copy {
+        margin: 0.75rem 0 0;
+        max-width: 680px;
+        color: var(--text-2);
+        line-height: 1.7;
+    }
+
+    .header-badge {
+        padding: 0.85rem 1.1rem;
+        border-radius: 999px;
+        background: rgba(234, 221, 185, 0.8);
+        color: var(--brown);
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .delivery-grid {
+        display: grid;
+        grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .card-shadow {
+        background: #fff;
+        border-radius: 28px;
+        border: 1px solid rgba(142, 106, 33, 0.12);
+        box-shadow: 0 30px 70px rgba(84, 58, 34, 0.08);
+    }
+
+    .order-summary,
+    .order-form {
+        padding: 1.75rem;
+    }
+
+    .summary-header,
+    .summary-total {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         gap: 1rem;
+    }
+
+    .summary-header {
+        margin-bottom: 1.5rem;
         font-size: 1rem;
         color: var(--brown);
         font-weight: 700;
-        border-top: 1px solid rgba(184,135,42,.12);
-        padding-top: 1rem;
+    }
+
+    .summary-header strong,
+    .summary-total strong {
+        font-size: 1.15rem;
+    }
+
+    .summary-items {
+        border-top: 1px solid rgba(184, 135, 42, 0.12);
+        border-bottom: 1px solid rgba(184, 135, 42, 0.12);
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.65rem 0;
+        color: var(--text-2);
+        font-weight: 600;
+    }
+
+    .empty-state {
+        color: var(--text-2);
+        font-style: italic;
+    }
+
+    .summary-total {
+        border-top: 1px solid rgba(184, 135, 42, 0.12);
+        padding-top: 0.85rem;
+        font-weight: 700;
+    }
+
+    .section-heading {
+        margin-bottom: 1.5rem;
+    }
+
+    .section-heading h2 {
+        margin: 0 0 0.5rem;
+        color: var(--brown);
+    }
+
+    .section-heading p {
+        margin: 0;
+        color: var(--text-2);
+        line-height: 1.7;
+    }
+
+    .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .field-group.full-width {
+        grid-column: span 2;
+    }
+
+    .field-group label {
+        font-weight: 700;
+        color: var(--brown);
+    }
+
+    .input-control {
+        width: 100%;
+        min-height: 48px;
+        padding: 0.95rem 1rem;
+        border-radius: 16px;
+        border: 1px solid rgba(184, 135, 42, 0.24);
+        background: #fff;
+        color: var(--espresso);
+        font-size: 0.98rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-control:focus {
+        outline: none;
+        border-color: var(--gold);
+        box-shadow: 0 0 0 4px rgba(255, 219, 149, 0.2);
+    }
+
+    .textarea-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .btn-block {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--gold);
+        color: var(--espresso);
+        border: none;
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.25s ease, transform 0.15s ease;
+    }
+
+    .btn-primary:hover {
+        background: var(--brown);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .alert-panel {
+        padding: 1rem 1.25rem;
+        border-radius: 18px;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+
+    .alert-error {
+        background: #fff0f1;
+        color: #991b1e;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-success {
+        background: #e9f7ef;
+        color: #175d28;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-warning {
+        background: #fff8e6;
+        color: #7e5624;
+        border: 1px solid rgba(255, 190, 70, 0.35);
+    }
+
+    @media (max-width: 980px) {
+        .delivery-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .field-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .field-group.full-width {
+            grid-column: span 1;
+        }
     }
 </style>
 {% endblock %}

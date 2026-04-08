@@ -308,6 +308,16 @@ class Delivery
         return $this;
     }
 
+    public function getLicensePlate(): ?string
+    {
+        return $this->getLicense_plate();
+    }
+
+    public function setLicensePlate(?string $license_plate): self
+    {
+        return $this->setLicense_plate($license_plate);
+    }
+
     #[ORM\ManyToOne(targetEntity: FleetCar::class)]
     #[ORM\JoinColumn(name: 'fleet_car_id', referencedColumnName: 'car_id', nullable: true)]
     private ?FleetCar $fleetCar = null;

@@ -181,7 +181,7 @@ class DeliveryMan
 
     public function setRating(?float $rating): self
     {
-        $this->rating = $rating;
+        $this->rating = $rating !== null ? (string) $rating : null;
         return $this;
     }
 
