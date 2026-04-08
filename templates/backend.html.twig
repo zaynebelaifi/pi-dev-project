@@ -208,7 +208,7 @@ tbody tr:hover .dots{color:var(--gold);}
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Main</div>
     <a class="nav-item {{ activeRoute == 'app_admin_dashboard' ? 'active' : '' }}" href="{{ path('app_admin_dashboard') }}"><div class="nav-icon">🏠</div>Dashboard</a>
-    <a class="nav-item" href="#"><div class="nav-icon">📊</div>Analytics</a>
+    <a class="nav-item {{ activeRoute == 'app_admin_analytics' ? 'active' : '' }}" href="{{ path('app_admin_analytics') }}"><div class="nav-icon">📊</div>Analytics</a>
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Operations</div>
@@ -236,7 +236,7 @@ tbody tr:hover .dots{color:var(--gold);}
 
 <div class="main-wrap">
   <header class="topbar">
-    <div><div class="topbar-title">Dashboard</div><div class="topbar-bc">Big 4 · Admin · Overview</div></div>
+    <div><div class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</div><div class="topbar-bc">{% block topbar_breadcrumb %}Big 4 · Admin · Overview{% endblock %}</div></div>
     <div class="topbar-right">
       <a href="{{ path('app_landingpage') }}" class="t-btn" target="_blank">🌐 View Homepage</a>
       <div class="t-div"></div>

@@ -1,0 +1,411 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Analytics - BIG 4{% endblock %}
+{% block topbar_title %}Analytics{% endblock %}
+{% block topbar_breadcrumb %}Big 4 · Admin · Insights Center{% endblock %}
+
+{% block body %}
+{% set totalStatus = statusDistribution.PENDING + statusDistribution.ASSIGNED + statusDistribution.DELIVERED + statusDistribution.OTHER %}
+{% set anglePending = totalStatus > 0 ? (statusDistribution.PENDING / totalStatus) * 360 : 0 %}
+{% set angleAssigned = totalStatus > 0 ? ((statusDistribution.PENDING + statusDistribution.ASSIGNED) / totalStatus) * 360 : 0 %}
+{% set angleDelivered = totalStatus > 0 ? ((statusDistribution.PENDING + statusDistribution.ASSIGNED + statusDistribution.DELIVERED) / totalStatus) * 360 : 0 %}
+<style>
+  .an-hero {
+    position: relative;
+    border: 1px solid rgba(184, 135, 42, 0.2);
+    border-radius: 16px;
+    padding: 1.7rem 1.8rem;
+    margin-bottom: 1.2rem;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(232, 196, 114, 0.24), transparent 35%),
+      radial-gradient(circle at 90% 80%, rgba(58, 126, 201, 0.18), transparent 32%),
+      linear-gradient(140deg, #f9f3e8 0%, #f7efdf 45%, #efe1ca 100%);
+    overflow: hidden;
+  }
+  .an-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(135deg, rgba(184, 135, 42, 0.04) 0 6px, transparent 6px 14px);
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .an-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    color: var(--espresso);
+    margin-bottom: 0.35rem;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+  }
+  .an-sub {
+    position: relative;
+    z-index: 1;
+    color: var(--text-2);
+    max-width: 720px;
+    font-size: 0.86rem;
+    line-height: 1.65;
+  }
+  .an-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .an-kpi {
+    background: var(--ivory);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 8px 28px rgba(92, 61, 30, 0.09);
+  }
+  .an-kpi-lbl {
+    font-size: 0.57rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.55rem;
+  }
+  .an-kpi-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: var(--espresso);
+  }
+  .an-kpi-note {
+    margin-top: 0.45rem;
+    font-size: 0.66rem;
+    color: var(--text-2);
+  }
+  .an-kpi-note.up { color: var(--green); }
+  .an-kpi-note.down { color: var(--red); }
+
+  .an-grid {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .an-panel {
+    background: var(--ivory);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(92, 61, 30, 0.08);
+  }
+  .an-panel-h {
+    padding: 0.95rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, rgba(184, 135, 42, 0.12), rgba(184, 135, 42, 0.02));
+  }
+  .an-panel-t {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.12rem;
+    color: var(--espresso);
+  }
+  .an-panel-s {
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .an-panel-b { padding: 1rem 1.1rem 1.2rem; }
+
+  .rev-bars {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.65rem;
+    align-items: end;
+    min-height: 220px;
+  }
+  .rev-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .rev-bar-wrap {
+    width: 100%;
+    height: 165px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(184, 135, 42, 0.08), rgba(184, 135, 42, 0.03));
+    border: 1px solid rgba(184, 135, 42, 0.14);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: end;
+  }
+  .rev-bar {
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+    background: linear-gradient(180deg, #dfb564 0%, #bc8a31 100%);
+    box-shadow: 0 8px 20px rgba(184, 135, 42, 0.3);
+    transition: height .6s ease;
+  }
+  .rev-amt {
+    font-size: 0.61rem;
+    color: var(--text-2);
+    font-weight: 600;
+  }
+  .rev-lbl {
+    font-size: 0.61rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  .status-ring {
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    margin: 0.4rem auto 1rem;
+    background:
+      conic-gradient(
+        #3A7EC9 0 {{ anglePending|number_format(2, '.', '') }}deg,
+        #2E9E6A {{ anglePending|number_format(2, '.', '') }}deg {{ angleAssigned|number_format(2, '.', '') }}deg,
+        #C87D20 {{ angleAssigned|number_format(2, '.', '') }}deg {{ angleDelivered|number_format(2, '.', '') }}deg,
+        #D94040 {{ angleDelivered|number_format(2, '.', '') }}deg 360deg
+      );
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+  .status-ring::before {
+    content: '';
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: var(--ivory);
+    border: 1px solid var(--border);
+  }
+  .status-total {
+    position: absolute;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--espresso);
+  }
+  .status-total strong { display: block; font-size: 1.7rem; line-height: 1; }
+  .status-total span { font-size: 0.63rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
+  .legend { display: grid; gap: 0.4rem; }
+  .legend-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem 0.5rem;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.45);
+    font-size: 0.7rem;
+    color: var(--text-2);
+  }
+  .legend-left { display: flex; align-items: center; gap: 0.42rem; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  .an-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .waste-list {
+    display: grid;
+    gap: 0.65rem;
+  }
+  .waste-row {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 0.6rem 0.7rem;
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .waste-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.74rem;
+  }
+  .waste-name { color: var(--espresso); font-weight: 600; }
+  .waste-qty { color: var(--text-2); font-size: 0.68rem; }
+  .waste-track {
+    height: 7px;
+    border-radius: 99px;
+    background: rgba(184, 135, 42, 0.16);
+    overflow: hidden;
+  }
+  .waste-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #c98728, #d9503f);
+  }
+
+  .roles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+  }
+  .role-card {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 0.7rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .role-name {
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.28rem;
+  }
+  .role-count {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    color: var(--espresso);
+    line-height: 1;
+  }
+  .role-share {
+    margin-top: 0.28rem;
+    font-size: 0.66rem;
+    color: var(--text-2);
+  }
+
+  @media (max-width: 1200px) {
+    .an-kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .an-grid { grid-template-columns: 1fr; }
+    .an-grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    .an-kpi-row { grid-template-columns: 1fr; }
+    .roles-grid { grid-template-columns: 1fr; }
+    .rev-bars { gap: 0.4rem; }
+  }
+</style>
+
+<div class="an-hero">
+  <h2 class="an-title">Operations Analytics</h2>
+  <p class="an-sub">A live command view of delivery throughput, revenue rhythm, inventory pressure, and waste concentration. The goal is fast decisions with zero dashboard clutter.</p>
+</div>
+
+<div class="an-kpi-row">
+  <div class="an-kpi">
+    <div class="an-kpi-lbl">Total Revenue</div>
+    <div class="an-kpi-val">{{ summary.totalRevenue|number_format(2, '.', ' ') }} <span style="font-size:.85rem;color:var(--text-3)">TND</span></div>
+    <div class="an-kpi-note {{ revenueDeltaPct >= 0 ? 'up' : 'down' }}">{{ revenueDeltaPct >= 0 ? '+' : '' }}{{ revenueDeltaPct|number_format(1) }}% vs previous 7 days</div>
+  </div>
+  <div class="an-kpi">
+    <div class="an-kpi-lbl">Today Revenue</div>
+    <div class="an-kpi-val">{{ summary.todayRevenue|number_format(2, '.', ' ') }} <span style="font-size:.85rem;color:var(--text-3)">TND</span></div>
+    <div class="an-kpi-note">Live from delivery records</div>
+  </div>
+  <div class="an-kpi">
+    <div class="an-kpi-lbl">Avg Ticket</div>
+    <div class="an-kpi-val">{{ summary.avgOrder|number_format(2, '.', ' ') }} <span style="font-size:.85rem;color:var(--text-3)">TND</span></div>
+    <div class="an-kpi-note">Average order value</div>
+  </div>
+  <div class="an-kpi">
+    <div class="an-kpi-lbl">Total Deliveries</div>
+    <div class="an-kpi-val">{{ summary.totalDeliveries }}</div>
+    <div class="an-kpi-note">Current historical volume</div>
+  </div>
+</div>
+
+<div class="an-grid">
+  <section class="an-panel">
+    <div class="an-panel-h">
+      <div class="an-panel-t">7-Day Revenue Rhythm</div>
+      <div class="an-panel-s">Last 7 days</div>
+    </div>
+    <div class="an-panel-b">
+      <div class="rev-bars">
+        {% for day in dailySeries %}
+          {% set pct = maxDailyRevenue > 0 ? ((day.revenue / maxDailyRevenue) * 100) : 0 %}
+          <div class="rev-day">
+            <div class="rev-amt">{{ day.revenue|number_format(0, '.', ' ') }} TND</div>
+            <div class="rev-bar-wrap" title="{{ day.fullDate }} - {{ day.deliveries }} deliveries">
+              <div class="rev-bar" style="height: {{ pct|number_format(2, '.', '') }}%;"></div>
+            </div>
+            <div class="rev-lbl">{{ day.label }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="an-panel">
+    <div class="an-panel-h">
+      <div class="an-panel-t">Delivery Status Mix</div>
+      <div class="an-panel-s">Realtime split</div>
+    </div>
+    <div class="an-panel-b">
+      <div class="status-ring">
+        <div class="status-total"><strong>{{ totalStatus }}</strong><span>Orders</span></div>
+      </div>
+      <div class="legend">
+        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#3A7EC9"></span>Pending</span><strong>{{ statusDistribution.PENDING }}</strong></div>
+        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#2E9E6A"></span>Assigned</span><strong>{{ statusDistribution.ASSIGNED }}</strong></div>
+        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#C87D20"></span>Delivered</span><strong>{{ statusDistribution.DELIVERED }}</strong></div>
+        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#D94040"></span>Other</span><strong>{{ statusDistribution.OTHER }}</strong></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="an-grid-2">
+  <section class="an-panel">
+    <div class="an-panel-h">
+      <div class="an-panel-t">Waste Hotspots</div>
+      <div class="an-panel-s">Top ingredients by wasted qty</div>
+    </div>
+    <div class="an-panel-b">
+      <div class="waste-list">
+        {% if topWaste is empty %}
+          <div style="font-size:.76rem;color:var(--text-2)">No waste records yet.</div>
+        {% else %}
+          {% for item in topWaste %}
+            {% set p = maxWaste > 0 ? ((item.quantity / maxWaste) * 100) : 0 %}
+            <div class="waste-row">
+              <div class="waste-top">
+                <span class="waste-name">{{ item.ingredient }}</span>
+                <span class="waste-qty">{{ item.quantity|number_format(2, '.', ' ') }} units</span>
+              </div>
+              <div class="waste-track"><div class="waste-fill" style="width: {{ p|number_format(2, '.', '') }}%;"></div></div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <div style="margin-top:.9rem;font-size:.68rem;color:var(--text-2)">Total wasted quantity: <strong style="color:var(--espresso)">{{ ingredientHealth.totalWaste|number_format(2, '.', ' ') }}</strong></div>
+    </div>
+  </section>
+
+  <section class="an-panel">
+    <div class="an-panel-h">
+      <div class="an-panel-t">People & Inventory Pulse</div>
+      <div class="an-panel-s">Users + stock health</div>
+    </div>
+    <div class="an-panel-b">
+      <div class="roles-grid">
+        {% for role, value in roleDistribution %}
+          <div class="role-card">
+            <div class="role-name">{{ role }}</div>
+            <div class="role-count">{{ value }}</div>
+            <div class="role-share">{{ totalUsers > 0 ? ((value / totalUsers) * 100)|number_format(1) : '0.0' }}%</div>
+          </div>
+        {% else %}
+          <div class="role-card" style="grid-column:1/-1">No users found.</div>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top:1rem;display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;">
+        <div class="role-card"><div class="role-name">Ingredients</div><div class="role-count">{{ ingredientHealth.total }}</div></div>
+        <div class="role-card"><div class="role-name">Low Stock</div><div class="role-count">{{ ingredientHealth.lowStock }}</div></div>
+        <div class="role-card"><div class="role-name">Expired</div><div class="role-count">{{ ingredientHealth.expired }}</div></div>
+        <div class="role-card"><div class="role-name">Inventory Value</div><div class="role-count" style="font-size:1.1rem">{{ ingredientHealth.inventoryValue|number_format(2, '.', ' ') }} TND</div></div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
