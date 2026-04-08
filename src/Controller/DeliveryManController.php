@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\DeliveryMan;
 use App\Form\DeliveryManType;
 use App\Repository\DeliveryManRepository;
+use App\Repository\DeliveryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,6 +46,8 @@ final class DeliveryManController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $deliveryMan->setCreated_at(new \DateTime());
+            $deliveryMan->setUpdated_at(new \DateTime());
             $entityManager->persist($deliveryMan);
             $entityManager->flush();
 
@@ -79,6 +82,7 @@ final class DeliveryManController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $deliveryMan->setUpdated_at(new \DateTime());
             $entityManager->flush();
 
             return $this->redirectToRoute('app_delivery_man_index', [], Response::HTTP_SEE_OTHER);
@@ -91,13 +95,22 @@ final class DeliveryManController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_delivery_man_delete', methods: ['POST'])]
-    public function delete(Request $request, DeliveryMan $deliveryMan, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, DeliveryMan $deliveryMan, EntityManagerInterface $entityManager, DeliveryRepository $deliveryRepository): Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
             return $this->redirectToRoute('app_login');
         }
 
         if ($this->isCsrfTokenValid('delete'.$deliveryMan->getDelivery_man_id(), $request->request->get('_token'))) {
+            // First, unassign this delivery man from all deliveries
+            $deliveries = $deliveryRepository->findByDeliveryManId($deliveryMan->getDelivery_man_id());
+            foreach ($deliveries as $delivery) {
+                $delivery->setDeliveryMan(null);
+                $delivery->setStatus('PENDING'); // Reset status since delivery man is removed
+            }
+            $entityManager->flush(); // Commit the NULL updates
+
+            // Now safe to delete the delivery man
             $entityManager->remove($deliveryMan);
             $entityManager->flush();
         }
