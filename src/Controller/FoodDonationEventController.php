@@ -15,10 +15,19 @@ use Symfony\Component\Routing\Attribute\Route;
 final class FoodDonationEventController extends AbstractController
 {
     #[Route(name: 'app_food_donation_event_index', methods: ['GET'])]
-    public function index(FoodDonationEventRepository $foodDonationEventRepository): Response
+    public function index(Request $request, FoodDonationEventRepository $foodDonationEventRepository): Response
     {
-        return $this->render('food_donation_event/index.html.twig', [
-            'food_donation_events' => $foodDonationEventRepository->findAll(),
+        $search = trim((string) $request->query->get('q', ''));
+        $status = $request->query->get('status', '');
+        $sort = $request->query->get('sort', 'event_date');
+        $direction = $request->query->get('direction', 'asc');
+
+        return $this->render('admin/food_donation_event/index.html.twig', [
+            'food_donation_events' => $foodDonationEventRepository->findFilteredEvents($search, $status, $sort, $direction),
+            'search' => $search,
+            'status' => $status,
+            'sort' => $sort,
+            'direction' => $direction,
         ]);
     }
 
@@ -29,14 +38,21 @@ final class FoodDonationEventController extends AbstractController
         $form = $this->createForm(FoodDonationEventType::class, $foodDonationEvent);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted()) {
+            $now = new \DateTimeImmutable();
+            $foodDonationEvent->setCreated_at($now);
+            $foodDonationEvent->setUpdated_at($now);
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($foodDonationEvent);
             $entityManager->flush();
 
+            $this->addFlash('success', 'Donation event created successfully.');
             return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('food_donation_event/new.html.twig', [
+        return $this->render('admin/food_donation_event/new.html.twig', [
             'food_donation_event' => $foodDonationEvent,
             'form' => $form,
         ]);
@@ -45,7 +61,7 @@ final class FoodDonationEventController extends AbstractController
     #[Route('/{donation_event_id}', name: 'app_food_donation_event_show', methods: ['GET'])]
     public function show(FoodDonationEvent $foodDonationEvent): Response
     {
-        return $this->render('food_donation_event/show.html.twig', [
+        return $this->render('admin/food_donation_event/show.html.twig', [
             'food_donation_event' => $foodDonationEvent,
         ]);
     }
@@ -57,12 +73,14 @@ final class FoodDonationEventController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $foodDonationEvent->setUpdated_at(new \DateTimeImmutable());
             $entityManager->flush();
 
+            $this->addFlash('success', 'Donation event updated successfully.');
             return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('food_donation_event/edit.html.twig', [
+        return $this->render('admin/food_donation_event/edit.html.twig', [
             'food_donation_event' => $foodDonationEvent,
             'form' => $form,
         ]);
@@ -71,9 +89,10 @@ final class FoodDonationEventController extends AbstractController
     #[Route('/{donation_event_id}', name: 'app_food_donation_event_delete', methods: ['POST'])]
     public function delete(Request $request, FoodDonationEvent $foodDonationEvent, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $request->request->get('_token'))) {
             $entityManager->remove($foodDonationEvent);
             $entityManager->flush();
+            $this->addFlash('success', 'Donation event deleted successfully.');
         }
 
         return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);

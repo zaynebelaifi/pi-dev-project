@@ -1,0 +1,58 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Donation Items · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Donation Items{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Donation Items</h2>
+      <p>Manage items assigned to donation events, quantities, and reference IDs.</p>
+    </div>
+    <a href="{{ path('app_food_donation_item_new') }}" class="t-btn primary">+ Add Item</a>
+  </div>
+
+  <form method="get" class="list-filters live-filter-form" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search donation items" class="search-input" data-live-search-input style="flex:1;min-width:240px;padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);">
+  </form>
+
+  <div class="tbl-card">
+    <div class="tbl-head">
+      <div class="tbl-title">All Donation Items</div>
+      <div>{{ food_donation_items|length }} items</div>
+    </div>
+    <table data-live-table>
+      <thead>
+        <tr>
+          <th><a href="#" class="sort-trigger" data-sort-key="donationEventId" data-sort-type="number" data-sort-direction="asc">Donation Event</a></th>
+          <th><a href="#" class="sort-trigger" data-sort-key="itemId" data-sort-type="number" data-sort-direction="asc">Item ID</a></th>
+          <th><a href="#" class="sort-trigger" data-sort-key="itemName" data-sort-type="text" data-sort-direction="asc">Item Name</a></th>
+          <th><a href="#" class="sort-trigger" data-sort-key="quantity" data-sort-type="number" data-sort-direction="asc">Quantity</a></th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in food_donation_items %}
+          <tr data-search="{{ item.donation_event_id }} {{ item.item_id }} {{ dish_names[item.item_id] ?? 'Unknown' }} {{ item.quantity }}">
+            <td>{{ item.donation_event_id }}</td>
+            <td>{{ item.item_id }}</td>
+            <td data-sort-value="{{ dish_names[item.item_id] ?? 'Unknown' }}">{{ dish_names[item.item_id] ?? 'Unknown' }}</td>
+            <td data-sort-value="{{ item.quantity }}">{{ item.quantity }}</td>
+            <td class="table-actions">
+              <a class="mini-action" href="{{ path('app_food_donation_item_edit', {donation_event_id: item.donation_event_id, item_id: item.item_id}) }}">Edit</a>
+              <a class="mini-action" href="{{ path('app_food_donation_item_show', {donation_event_id: item.donation_event_id, item_id: item.item_id}) }}">View</a>
+              <form method="post" action="{{ path('app_food_donation_item_delete', {donation_event_id: item.donation_event_id, item_id: item.item_id}) }}" onsubmit="return confirm('Delete this donation item?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ item.donation_event_id ~ '_' ~ item.item_id) }}">
+                <button class="mini-action mini-action-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr class="no-results-row">
+            <td colspan="4" class="no-results">No donation items found. Add an item to link it to a donation event.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

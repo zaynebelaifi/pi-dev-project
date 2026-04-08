@@ -1,0 +1,39 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Edit Donation Item · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Donation Items{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Edit Donation Item</h2>
+      <p>Update the item assignment or quantity for this donation event.</p>
+    </div>
+  </div>
+
+  <div class="menu-form-card">
+    {{ form_start(form, {'attr': {'class': 'admin-form', 'novalidate': 'novalidate'}}) }}
+      {{ form_errors(form) }}
+      <div class="menu-form-grid">
+        <div class="form-group">
+          {{ form_label(form.donation_event_id) }}
+          {{ form_widget(form.donation_event_id) }}
+          {{ form_errors(form.donation_event_id) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.item_id) }}
+          {{ form_widget(form.item_id) }}
+          {{ form_errors(form.item_id) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.quantity) }}
+          {{ form_widget(form.quantity) }}
+          {{ form_errors(form.quantity) }}
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="t-btn primary">Save Changes</button>
+      </div>
+    {{ form_end(form) }}
+  </div>
+{% endblock %}

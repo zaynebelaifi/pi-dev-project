@@ -56,6 +56,9 @@
               <td>{{ record.reason }}</td>
               <td class="action-cell">
                 <a href="{{ path('admin_waste_edit', {id: record.id}) }}" class="mini-action">Edit</a>
+              {% if record.ingredient %}
+                <a href="{{ path('app_food_donation_item_new', {ingredient_id: record.ingredient.id}) }}" class="mini-action">Add to Event</a>
+              {% endif %}
                 <form method="post" action="{{ path('admin_waste_delete', {id: record.id}) }}" onsubmit="return confirm('Delete this waste record? Stock will be restored.');" style="display:inline-block;">
                   <input type="hidden" name="_token" value="{{ csrf_token('delete_waste' ~ record.id) }}">
                   <button class="mini-action mini-action-danger">Delete</button>

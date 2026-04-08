@@ -68,7 +68,7 @@ class Menu
         return $this;
     }
 
-    #[ORM\Column(type: 'boolean', nullable: false)]
+    #[ORM\Column(name: 'isActive', type: 'boolean', nullable: false)]
     private ?bool $isActive = null;
 
     public function isIsActive(): ?bool

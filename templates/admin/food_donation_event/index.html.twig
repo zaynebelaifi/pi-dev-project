@@ -1,0 +1,73 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Food Donation Events · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Food Donation Events{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Food Donation Events</h2>
+      <p>Manage donation events, assign delivery references and track quantities for charities.</p>
+    </div>
+    <a href="{{ path('app_food_donation_event_new') }}" class="t-btn primary">+ Create Event</a>
+  </div>
+
+  <form method="get" class="list-filters live-filter-form" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search donation events" class="search-input" data-live-search-input style="flex:1;min-width:240px;padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);">
+    <select name="status" class="status-filter" data-live-status-filter style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;min-width:190px;background:var(--ivory);color:var(--text);">
+      <option value="">All statuses</option>
+      <option value="PENDING" {{ status == 'PENDING' ? 'selected' : '' }}>Pending</option>
+      <option value="SCHEDULED" {{ status == 'SCHEDULED' ? 'selected' : '' }}>Scheduled</option>
+      <option value="COMPLETED" {{ status == 'COMPLETED' ? 'selected' : '' }}>Completed</option>
+      <option value="CANCELLED" {{ status == 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
+    </select>
+  </form>
+
+  <div class="tbl-card">
+    <div class="tbl-head">
+      <div class="tbl-title">All Donation Events</div>
+      <div>{{ food_donation_events|length }} events</div>
+    </div>
+    <table data-live-table>
+      <thead>
+        <tr>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'donation_event_id', direction: sort == 'donation_event_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="donationEventId" data-sort-type="number">ID{% if sort == 'donation_event_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'event_date', direction: sort == 'event_date' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="eventDate">Date{% if sort == 'event_date' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'total_quantity', direction: sort == 'total_quantity' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="totalQuantity" data-sort-type="number">Quantity{% if sort == 'total_quantity' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'charity_name', direction: sort == 'charity_name' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="charityName">Charity{% if sort == 'charity_name' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'status', direction: sort == 'status' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="status">Status{% if sort == 'status' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th>Delivery ID</th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'updated_at', direction: sort == 'updated_at' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="updatedAt">Updated At{% if sort == 'updated_at' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in food_donation_events %}
+          <tr data-status="{{ event.status }}" data-search="{{ event.donationEventId }} {{ event.eventDate ? event.eventDate|date('Y-m-d') : '' }} {{ event.totalQuantity }} {{ event.charityName }} {{ event.status }} {{ event.deliveryId }}">
+            <td class="ord-id">#{{ event.donationEventId }}</td>
+            <td>{{ event.eventDate ? event.eventDate|date('Y-m-d') : '—' }}</td>
+            <td>{{ event.totalQuantity }}</td>
+            <td>{{ event.charityName }}</td>
+            <td>
+              <span class="sbadge {{ event.status == 'CANCELLED' ? 's-cancelled' : event.status == 'COMPLETED' ? 's-delivered' : event.status == 'PENDING' ? 's-pending' : 's-preparing' }}">{{ event.status ?: 'Unknown' }}</span>
+            </td>
+            <td>{{ event.deliveryId ?: 'NULL' }}</td>
+            <td>{{ event.updatedAt ? event.updatedAt|date('Y-m-d H:i') : '—' }}</td>
+            <td class="table-actions">
+              <a class="mini-action" href="{{ path('app_food_donation_event_edit', {donation_event_id: event.donationEventId}) }}">Edit</a>
+              <a class="mini-action" href="{{ path('app_food_donation_event_show', {donation_event_id: event.donationEventId}) }}">View</a>
+              <form method="post" action="{{ path('app_food_donation_event_delete', {donation_event_id: event.donationEventId}) }}" onsubmit="return confirm('Delete this event?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.donationEventId) }}">
+                <button class="mini-action mini-action-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr class="no-results-row">
+            <td colspan="8" class="no-results">No donation events found. Create the first event to start tracking donations.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
