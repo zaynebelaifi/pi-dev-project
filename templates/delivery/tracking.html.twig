@@ -134,34 +134,42 @@
 
         {% if delivery.status == 'DELIVERED' %}
         <div class="rating-section">
-            <h3>Rate Your Delivery</h3>
-            {% if app.flashes('success') %}
-                <div class="alert alert-success">
-                    {{ app.flashes('success')[0] }}
-                </div>
-            {% endif %}
+            <h3>Rate Your Delivery Experience</h3>
+            {% for label in ['success', 'error'] %}
+                {% for msg in app.flashes(label) %}
+                    <div class="alert alert-{{ label }}">{{ msg }}</div>
+                {% endfor %}
+            {% endfor %}
 
-            {% if not delivery.rating %}
             <form method="post" class="rating-form">
-                <div class="rating-stars">
-                    <input type="radio" id="star5" name="rating" value="5" required>
-                    <label for="star5">⭐</label>
-                    <input type="radio" id="star4" name="rating" value="4">
-                    <label for="star4">⭐</label>
-                    <input type="radio" id="star3" name="rating" value="3">
-                    <label for="star3">⭐</label>
-                    <input type="radio" id="star2" name="rating" value="2">
-                    <label for="star2">⭐</label>
-                    <input type="radio" id="star1" name="rating" value="1">
-                    <label for="star1">⭐</label>
+                <div class="rating-block">
+                    <h4>Rate your delivery man</h4>
+                    <div class="rating-stars" role="group" aria-label="Delivery man rating">
+                        {% for value in 5..1 %}
+                        <input type="radio" id="dm-star{{ value }}" name="delivery_man_rating" value="{{ value }}" {% if delivery.rating == value %}checked{% endif %}>
+                        <label for="dm-star{{ value }}">★</label>
+                        {% endfor %}
+                    </div>
+                    {% if delivery.rating %}
+                        <p class="current-rating">Your rating: <strong>{{ delivery.rating }}/5</strong></p>
+                    {% endif %}
                 </div>
-                <button type="submit" class="btn btn-primary">Submit Rating</button>
+
+                <div class="rating-block">
+                    <h4>Rate the restaurant &amp; order</h4>
+                    <div class="rating-stars" role="group" aria-label="Restaurant rating">
+                        {% for value in 5..1 %}
+                        <input type="radio" id="rest-star{{ value }}" name="restaurant_rating" value="{{ value }}" {% if delivery.restaurant_rating == value %}checked{% endif %}>
+                        <label for="rest-star{{ value }}">★</label>
+                        {% endfor %}
+                    </div>
+                    {% if delivery.restaurant_rating %}
+                        <p class="current-rating">Your rating: <strong>{{ delivery.restaurant_rating }}/5</strong></p>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit Ratings</button>
             </form>
-            {% else %}
-            <div class="current-rating">
-                <p>You rated this delivery: <strong>{{ delivery.rating }}/5 ⭐</strong></p>
-            </div>
-            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -282,16 +290,39 @@
 }
 
 .rating-stars label {
-    font-size: 2rem;
+    font-size: 2.4rem;
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: color 0.2s ease;
     color: var(--text-3);
+    margin: 0 0.15rem;
 }
 
-.rating-stars input[type="radio"]:checked ~ label,
+.rating-stars input[type="radio"]:checked + label,
+.rating-stars input[type="radio"]:checked + label ~ label,
 .rating-stars label:hover,
 .rating-stars label:hover ~ label {
     color: var(--gold);
+}
+
+.rating-block {
+    margin-bottom: 1.75rem;
+}
+
+.rating-block h4 {
+    margin-bottom: 1rem;
+    color: var(--espresso);
+    font-size: 1rem;
+}
+
+.rating-stars {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.current-rating {
+    margin-top: 0.75rem;
+    color: var(--text-2);
 }
 
 .current-rating {

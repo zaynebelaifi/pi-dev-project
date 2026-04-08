@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Profile - BIG 4{% endblock %}
+
+{% block body %}
+<div class="admin-header" style="margin-top:140px; text-align:center;">
+    <h1>Edit Profile</h1>
+</div>
+
+<div class="admin-form" style="margin:auto; max-width: 520px;">
+    {{ form_start(form) }}
+        {{ form_row(form.firstName) }}
+        {{ form_row(form.lastName) }}
+        {{ form_row(form.email) }}
+        {{ form_row(form.phone) }}
+        {{ form_row(form.address) }}
+
+        <button type="submit" class="form-submit">Save Changes</button>
+    {{ form_end(form) }}
+
+    <a href="{{ path('app_profile') }}" style="display: block; text-align: center; margin-top: 1rem;">Back to Profile</a>
+</div>
+{% endblock %}

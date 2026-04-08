@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Delivery;
+use App\Entity\DeliveryMan;
 use App\Form\DeliveryType;
 use App\Repository\DeliveryRepository;
 use App\Repository\DeliveryManRepository;
@@ -12,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
-
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route('/delivery')]
 final class DeliveryController extends AbstractController
 {
@@ -42,10 +43,6 @@ final class DeliveryController extends AbstractController
         $form = $this->createForm(DeliveryType::class, $delivery);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
-        }
-
         if ($form->isSubmitted() && $form->isValid()) {
             // Auto-generate order ID
             $delivery->setOrder_id(random_int(100000, 999999));
@@ -58,12 +55,14 @@ final class DeliveryController extends AbstractController
 
             // Set created_at timestamp
             $delivery->setCreated_at(new \DateTime());
+            $delivery->setUpdated_at(new \DateTime());
 
             // Find available delivery man
             $availableDeliveryMen = $deliveryManRepository->findAvailableDeliveryMen();
             if (!empty($availableDeliveryMen)) {
                 // Assign the first available delivery man (highest rated)
                 $delivery->setDeliveryMan($availableDeliveryMen[0]);
+                $delivery->setStatus('ASSIGNED');
             }
 
             $entityManager->persist($delivery);
@@ -99,7 +98,7 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/checkout', name: 'app_delivery_checkout', methods: ['POST'])]
-    public function checkout(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session): Response
+    public function checkout(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session, ValidatorInterface $validator): Response
     {
         try {
             if (!$this->isCsrfTokenValid('delivery-checkout', $request->request->get('_token'))) {
@@ -115,11 +114,6 @@ final class DeliveryController extends AbstractController
             $pickupLocation = $request->request->get('pickup_location');
             $deliveryNotes = $request->request->get('delivery_notes');
 
-            if (!$deliveryAddress || !$recipientName || !$recipientPhone || !$pickupLocation) {
-                $this->addFlash('error', 'Please complete all required delivery details.');
-                return $this->redirectToRoute('app_home');
-            }
-
             $items = json_decode($rawCartItems, true);
             if (!is_array($items)) {
                 $items = [];
@@ -131,11 +125,11 @@ final class DeliveryController extends AbstractController
 
             $delivery = new Delivery();
             $delivery->setOrder_id(random_int(100000, 999999));
-            $delivery->setDelivery_address($deliveryAddress);
-            $delivery->setRecipient_name($recipientName);
-            $delivery->setRecipient_phone($recipientPhone);
-            $delivery->setPickup_location($pickupLocation);
-            $delivery->setDelivery_notes($deliveryNotes);
+            $delivery->setDelivery_address(trim((string) $deliveryAddress));
+            $delivery->setRecipient_name(trim((string) $recipientName));
+            $delivery->setRecipient_phone(trim((string) $recipientPhone));
+            $delivery->setPickup_location(trim((string) $pickupLocation));
+            $delivery->setDelivery_notes(trim((string) $deliveryNotes));
             $delivery->setCart_items(implode("\n", $cartSummary));
             $delivery->setOrder_total((string) number_format((float) $orderTotal, 2, '.', ''));
             $delivery->setEstimated_time(30);
@@ -143,22 +137,21 @@ final class DeliveryController extends AbstractController
             $delivery->setCreated_at(new \DateTime());
             $delivery->setUpdated_at(new \DateTime());
 
-            $availableDeliveryMen = $deliveryManRepository->findAvailableDeliveryMen();
-            if (!empty($availableDeliveryMen)) {
-                $delivery->setDeliveryMan($availableDeliveryMen[0]);
+            $errors = $this->validateDelivery($delivery, $validator);
+            if (!empty($errors)) {
+                foreach ($errors as $message) {
+                    $this->addFlash('error', $message);
+                }
+                return $this->redirectToRoute('app_home');
             }
+
+            $this->assignDeliveryMan($delivery, $deliveryManRepository);
 
             $entityManager->persist($delivery);
             $entityManager->flush();
 
             $session->set('client_phone', $recipientPhone);
             $session->set('client_name', $recipientName);
-
-            // Debug: Check if delivery was created
-            if (!$delivery->getDelivery_id()) {
-                $this->addFlash('error', 'Failed to create delivery order.');
-                return $this->redirectToRoute('app_home');
-            }
 
             $this->addFlash('success', 'Your delivery order has been created successfully.');
 
@@ -193,7 +186,7 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/create', name: 'app_delivery_create', methods: ['GET', 'POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session): Response
+    public function create(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session, ValidatorInterface $validator): Response
     {
         if ($session->get('user_role') !== 'ROLE_CLIENT') {
             return $this->redirectToRoute('app_home');
@@ -205,16 +198,11 @@ final class DeliveryController extends AbstractController
         if ($request->isMethod('POST')) {
             $rawCartItems = $request->request->get('cart_items', '[]');
             $orderTotal = $request->request->get('order_total', '0');
-            $deliveryAddress = trim((string) $request->request->get('delivery_address', ''));
-            $recipientName = trim((string) $request->request->get('recipient_name', ''));
-            $recipientPhone = trim((string) $request->request->get('recipient_phone', ''));
-            $pickupLocation = trim((string) $request->request->get('pickup_location', ''));
-            $deliveryNotes = trim((string) $request->request->get('delivery_notes', ''));
-
-            if ($deliveryAddress === '' || $recipientName === '' || $recipientPhone === '' || $pickupLocation === '') {
-                $this->addFlash('error', 'Please complete all required delivery details.');
-                return $this->redirectToRoute('app_delivery_create', ['cart_items' => $rawCartItems, 'order_total' => $orderTotal]);
-            }
+            $deliveryAddress = $request->request->get('delivery_address');
+            $recipientName = $request->request->get('recipient_name');
+            $recipientPhone = $request->request->get('recipient_phone');
+            $pickupLocation = $request->request->get('pickup_location');
+            $deliveryNotes = $request->request->get('delivery_notes');
 
             $items = json_decode($rawCartItems, true);
             if (!is_array($items)) {
@@ -227,11 +215,11 @@ final class DeliveryController extends AbstractController
 
             $delivery = new Delivery();
             $delivery->setOrder_id(random_int(100000, 999999));
-            $delivery->setDelivery_address($deliveryAddress);
-            $delivery->setRecipient_name($recipientName);
-            $delivery->setRecipient_phone($recipientPhone);
-            $delivery->setPickup_location($pickupLocation);
-            $delivery->setDelivery_notes($deliveryNotes);
+            $delivery->setDelivery_address(trim((string) $deliveryAddress));
+            $delivery->setRecipient_name(trim((string) $recipientName));
+            $delivery->setRecipient_phone(trim((string) $recipientPhone));
+            $delivery->setPickup_location(trim((string) $pickupLocation));
+            $delivery->setDelivery_notes(trim((string) $deliveryNotes));
             $delivery->setCart_items(implode("\n", $cartSummary));
             $delivery->setOrder_total((string) number_format((float) $orderTotal, 2, '.', ''));
             $delivery->setEstimated_time(30);
@@ -239,10 +227,23 @@ final class DeliveryController extends AbstractController
             $delivery->setCreated_at(new \DateTime());
             $delivery->setUpdated_at(new \DateTime());
 
-            $availableDeliveryMen = $deliveryManRepository->findAvailableDeliveryMen();
-            if (!empty($availableDeliveryMen)) {
-                $delivery->setDeliveryMan($availableDeliveryMen[0]);
+            $errors = $this->validateDelivery($delivery, $validator);
+            if (!empty($errors)) {
+                return $this->render('delivery/create.html.twig', [
+                    'cart_items' => $items,
+                    'order_total' => $orderTotal,
+                    'form_values' => [
+                        'delivery_address' => $deliveryAddress,
+                        'recipient_name' => $recipientName,
+                        'recipient_phone' => $recipientPhone,
+                        'pickup_location' => $pickupLocation,
+                        'delivery_notes' => $deliveryNotes,
+                    ],
+                    'errors' => $errors,
+                ]);
             }
+
+            $this->assignDeliveryMan($delivery, $deliveryManRepository);
 
             $entityManager->persist($delivery);
             $entityManager->flush();
@@ -262,29 +263,67 @@ final class DeliveryController extends AbstractController
     #[Route('/track/{id}', name: 'app_delivery_tracking', methods: ['GET', 'POST'])]
     public function track(Request $request, Delivery $delivery, EntityManagerInterface $entityManager): Response
     {
-        $session = $request->getSession();
-        if ($session->get('user_role') !== 'ROLE_CLIENT' || $session->get('client_phone') !== $delivery->getRecipient_phone()) {
-            return $this->redirectToRoute('app_home');
-        }
-
+        // Handle rating submission if delivered
         if ($request->isMethod('POST') && $delivery->getStatus() === 'DELIVERED') {
-            if ($delivery->getRating() !== null) {
-                $this->addFlash('error', 'This delivery has already been rated.');
-            } else {
-                $rating = $request->request->get('rating');
-                if (!in_array($rating, ['1', '2', '3', '4', '5'], true)) {
-                    $this->addFlash('error', 'Please select a valid rating between 1 and 5.');
-                } else {
-                    $delivery->setRating((int)$rating);
-                    $entityManager->flush();
-                    $this->addFlash('success', 'Thank you for rating your delivery!');
+            $deliveryManRating = $request->request->get('delivery_man_rating');
+            $restaurantRating = $request->request->get('restaurant_rating');
+            $hasUpdate = false;
+
+            if ($deliveryManRating) {
+                $delivery->setRating((int) $deliveryManRating);
+                if ($delivery->getDeliveryMan()) {
+                    $this->refreshDeliveryManRating($delivery->getDeliveryMan(), (int) $deliveryManRating);
                 }
+                $hasUpdate = true;
+            }
+            if ($restaurantRating) {
+                $delivery->setRestaurant_rating((int) $restaurantRating);
+                $hasUpdate = true;
+            }
+
+            if ($hasUpdate) {
+                $entityManager->flush();
+                $this->addFlash('success', 'Thank you for submitting your ratings!');
             }
         }
 
         return $this->render('delivery/tracking.html.twig', [
             'delivery' => $delivery,
         ]);
+    }
+
+    private function refreshDeliveryManRating(DeliveryMan $deliveryMan, int $newRating): void
+    {
+        $currentRating = (float) $deliveryMan->getRating();
+        if ($currentRating > 0) {
+            $deliveryMan->setRating(round(($currentRating + $newRating) / 2, 1));
+        } else {
+            $deliveryMan->setRating($newRating);
+        }
+    }
+
+    private function assignDeliveryMan(Delivery $delivery, DeliveryManRepository $deliveryManRepository): ?DeliveryMan
+    {
+        $availableDeliveryMen = $deliveryManRepository->findAvailableDeliveryMen();
+        if (!empty($availableDeliveryMen)) {
+            $delivery->setDeliveryMan($availableDeliveryMen[0]);
+            $delivery->setStatus('ASSIGNED');
+            return $availableDeliveryMen[0];
+        }
+
+        return null;
+    }
+
+    private function validateDelivery(Delivery $delivery, ValidatorInterface $validator): array
+    {
+        $violations = $validator->validate($delivery);
+        $errors = [];
+
+        foreach ($violations as $violation) {
+            $errors[] = $violation->getMessage();
+        }
+
+        return $errors;
     }
 
     #[Route('/{id}/edit', name: 'app_delivery_edit', methods: ['GET', 'POST'])]
@@ -296,10 +335,6 @@ final class DeliveryController extends AbstractController
 
         $form = $this->createForm(DeliveryType::class, $delivery);
         $form->handleRequest($request);
-
-        if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
-        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
@@ -321,12 +356,13 @@ final class DeliveryController extends AbstractController
         }
 
         $deliveryManId = $request->getSession()->get('delivery_man_id');
-        if (!$deliveryManId) {
-            return $this->redirectToRoute('app_login');
+        $deliveries = [];
+        if ($deliveryManId) {
+            $deliveries = $deliveryRepository->findByDeliveryManId($deliveryManId);
         }
 
         return $this->render('delivery/driver_deliveries.html.twig', [
-            'deliveries' => $deliveryRepository->findByDeliveryManId($deliveryManId),
+            'deliveries' => $deliveries,
         ]);
     }
 

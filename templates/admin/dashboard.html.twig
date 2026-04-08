@@ -103,6 +103,38 @@
         </div>
       </div>
 
+      <div class="mod-card" onclick="location.href='{{ path('app_admin_vehicles') }}'">
+        <div class="card-top">
+          <div>
+            <p class="c-title">Fleet Vehicles</p>
+            <p class="c-desc">Manage vehicles and assign drivers to the fleet.</p>
+          </div>
+          <div class="c-icon blue">🚙</div>
+        </div>
+        <div class="c-stats">
+          <div class="cs-item">
+            <div class="cs-num">{{ vehicleCount }}</div>
+            <div class="cs-lbl">Vehicles</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mod-card" onclick="location.href='{{ path('app_admin_users') }}'">
+        <div class="card-top">
+          <div>
+            <p class="c-title">Users Management</p>
+            <p class="c-desc">Manage clients, delivery men, and admin accounts.</p>
+          </div>
+          <div class="c-icon red">👤</div>
+        </div>
+        <div class="c-stats">
+          <div class="cs-item">
+            <div class="cs-num">Users</div>
+            <div class="cs-lbl">Management</div>
+          </div>
+        </div>
+      </div>
+
       <div class="mod-card">
         <div class="card-top">
           <div>

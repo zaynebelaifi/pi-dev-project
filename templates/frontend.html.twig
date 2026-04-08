@@ -1348,26 +1348,26 @@
         </div>
       </div>
 
-      <form id="checkoutForm" method="post" action="{{ path('app_delivery_checkout') }}">
+      <form id="checkoutForm" method="post" action="{{ path('app_delivery_checkout') }}" novalidate>
         <input type="hidden" name="_token" value="{{ csrf_token('delivery-checkout') }}">
         <input type="hidden" name="cart_items" id="cartItemsInput" value="[]">
         <input type="hidden" name="order_total" id="cartTotalInput" value="0">
 
         <div class="checkout-field">
           <label for="delivery_address">Delivery Address</label>
-          <input type="text" id="delivery_address" name="delivery_address" placeholder="Enter the delivery address" required>
+          <input type="text" id="delivery_address" name="delivery_address" placeholder="Enter the delivery address">
         </div>
         <div class="checkout-field">
           <label for="recipient_name">Recipient Name</label>
-          <input type="text" id="recipient_name" name="recipient_name" placeholder="Recipient full name" required>
+          <input type="text" id="recipient_name" name="recipient_name" placeholder="Recipient full name">
         </div>
         <div class="checkout-field">
           <label for="recipient_phone">Phone Number</label>
-          <input type="tel" id="recipient_phone" name="recipient_phone" placeholder="Recipient phone" required>
+          <input type="tel" id="recipient_phone" name="recipient_phone" placeholder="Recipient phone">
         </div>
         <div class="checkout-field">
           <label for="pickup_location">Pickup Location</label>
-          <input type="text" id="pickup_location" name="pickup_location" placeholder="Pickup address or branch" required>
+          <input type="text" id="pickup_location" name="pickup_location" placeholder="Pickup address or branch">
         </div>
         <div class="checkout-field">
           <label for="delivery_notes">Delivery Notes</label>

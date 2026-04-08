@@ -7,6 +7,9 @@ use App\Repository\WasterecordRepository;
 use App\Repository\DeliveryManRepository;
 use App\Repository\DeliveryRepository;
 use App\Service\ExpiredIngredientWasteService;
+use App\Repository\UserRepository;
+use App\Repository\FleetCarRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +23,7 @@ final class AdminController extends AbstractController
         Request $request,
         DeliveryRepository $deliveryRepository,
         DeliveryManRepository $deliveryManRepository,
+        FleetCarRepository $fleetCarRepository,
         IngredientRepository $ingredientRepository,
         WasterecordRepository $wasterecordRepository,
         ExpiredIngredientWasteService $expiredWasteService,
@@ -46,6 +50,210 @@ final class AdminController extends AbstractController
             'inventoryValue' => $ingredientRepository->sumInventoryValue(),
             'totalWasteQuantity' => $wasterecordRepository->totalWastedQuantity(),
             'autoWasteMoved' => $autoMoved,
+            'vehicleCount' => $fleetCarRepository->count([]),
         ]);
+    }
+
+    #[Route('/users', name: 'app_admin_users', methods: ['GET'])]
+    public function users(Request $request, UserRepository $userRepository): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $users = $userRepository->findAll();
+
+        return $this->render('admin/users.html.twig', [
+            'users' => $users,
+        ]);
+    }
+
+    #[Route('/users/{id}/ban', name: 'app_admin_user_ban', methods: ['POST'])]
+    public function banUser(int $id, Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $user = $userRepository->find($id);
+        if ($user) {
+            $user->setBanned(!$user->isBanned());
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_admin_users');
+    }
+
+    #[Route('/users/{id}/delete', name: 'app_admin_user_delete', methods: ['POST'])]
+    public function deleteUser(int $id, Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $user = $userRepository->find($id);
+        if ($user) {
+            $entityManager->remove($user);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_admin_users');
+    }
+
+    #[Route('/deliveries', name: 'app_admin_deliveries', methods: ['GET'])]
+    public function deliveries(Request $request, DeliveryRepository $deliveryRepository): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $search = trim((string) $request->query->get('search', ''));
+        $sort = $request->query->get('sort', 'created_at');
+        $direction = $request->query->get('direction', 'DESC');
+
+        return $this->render('admin/deliveries.html.twig', [
+            'deliveries' => $deliveryRepository->searchAndSort($search, $sort, $direction),
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+        ]);
+    }
+
+    #[Route('/deliveries/{id}/assign-car', name: 'app_admin_assign_car', methods: ['POST'])]
+    public function assignCar(int $id, Request $request, DeliveryRepository $deliveryRepository, FleetCarRepository $fleetCarRepository, EntityManagerInterface $entityManager): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $delivery = $deliveryRepository->find($id);
+        if ($delivery) {
+            $carId = $request->request->get('car_id');
+            if ($carId) {
+                $car = $fleetCarRepository->find($carId);
+                if ($car) {
+                    $delivery->setFleetCar($car);
+                    $entityManager->flush();
+                    $this->addFlash('success', 'Car assigned successfully!');
+                }
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_deliveries');
+    }
+
+    #[Route('/deliveries/{id}/remove-car', name: 'app_admin_remove_car', methods: ['POST'])]
+    public function removeCar(int $id, Request $request, DeliveryRepository $deliveryRepository, EntityManagerInterface $entityManager): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $delivery = $deliveryRepository->find($id);
+        if ($delivery) {
+            $delivery->setFleetCar(null);
+            $entityManager->flush();
+            $this->addFlash('success', 'Car unassigned successfully!');
+        }
+
+        return $this->redirectToRoute('app_admin_deliveries');
+    }
+
+    #[Route('/vehicles', name: 'app_admin_vehicles', methods: ['GET'])]
+    public function vehicles(Request $request, FleetCarRepository $fleetCarRepository, DeliveryManRepository $deliveryManRepository): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $search = trim((string) $request->query->get('search', ''));
+        
+        $queryBuilder = $fleetCarRepository->createQueryBuilder('c');
+        if ($search) {
+            $queryBuilder
+                ->where('c.make LIKE :search OR c.model LIKE :search OR c.license_plate LIKE :search OR c.vehicle_type LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+        $vehicles = $queryBuilder->orderBy('c.car_id', 'DESC')->getQuery()->getResult();
+
+        return $this->render('admin/vehicles.html.twig', [
+            'vehicles' => $vehicles,
+            'deliveryMen' => $deliveryManRepository->findAll(),
+            'search' => $search,
+        ]);
+    }
+
+    #[Route('/vehicles/{id}/assign-driver', name: 'app_admin_assign_driver', methods: ['POST'])]
+    public function assignDriver(int $id, Request $request, FleetCarRepository $fleetCarRepository, DeliveryManRepository $deliveryManRepository, EntityManagerInterface $entityManager): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $vehicle = $fleetCarRepository->find($id);
+        if ($vehicle) {
+            $driverId = $request->request->get('driver_id');
+            if ($driverId) {
+                $driver = $deliveryManRepository->find($driverId);
+                if ($driver) {
+                    $oldDriverId = $vehicle->getDelivery_man_id();
+                    if ($oldDriverId && $oldDriverId !== $driverId) {
+                        $oldDriver = $deliveryManRepository->find($oldDriverId);
+                        if ($oldDriver && $oldDriver->getVehicle_number() === $vehicle->getLicense_plate()) {
+                            $oldDriver->setVehicle_type(null);
+                            $oldDriver->setVehicle_number(null);
+                        }
+                    }
+
+                    $vehicle->setDelivery_man_id($driverId);
+                    $driver->setVehicle_type($vehicle->getVehicle_type());
+                    $driver->setVehicle_number($vehicle->getLicense_plate());
+
+                    $entityManager->flush();
+                    $this->addFlash('success', sprintf('Vehicle assigned to %s successfully!', $driver->getName()));
+                } else {
+                    $this->addFlash('error', 'Driver not found.');
+                }
+            } else {
+                $this->addFlash('error', 'Please select a driver.');
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_vehicles');
+    }
+
+    #[Route('/vehicles/{id}/unassign-driver', name: 'app_admin_unassign_driver', methods: ['POST'])]
+    public function unassignDriver(int $id, Request $request, FleetCarRepository $fleetCarRepository, DeliveryManRepository $deliveryManRepository, EntityManagerInterface $entityManager): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $vehicle = $fleetCarRepository->find($id);
+        if ($vehicle) {
+            $oldDriverId = $vehicle->getDelivery_man_id();
+            if ($oldDriverId) {
+                $oldDriver = $deliveryManRepository->find($oldDriverId);
+                if ($oldDriver && $oldDriver->getVehicle_number() === $vehicle->getLicense_plate()) {
+                    $oldDriver->setVehicle_type(null);
+                    $oldDriver->setVehicle_number(null);
+                }
+            }
+
+            $vehicle->setDelivery_man_id(null);
+            $entityManager->flush();
+            $this->addFlash('success', 'Vehicle unassigned successfully!');
+        }
+
+        return $this->redirectToRoute('app_admin_vehicles');
     }
 }

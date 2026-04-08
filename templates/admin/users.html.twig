@@ -1,0 +1,44 @@
+{% extends 'admin_base.html.twig' %}
+
+{% block title %}Users Management - Admin{% endblock %}
+
+{% block body %}
+<div class="admin-header">
+    <h1>Users Management</h1>
+    <p>Manage clients and delivery men.</p>
+</div>
+
+<div class="admin-content">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Banned</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.firstName }} {{ user.lastName }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>{{ user.banned ? 'Yes' : 'No' }}</td>
+                    <td>
+                        <form method="post" action="{{ path('app_admin_user_ban', {id: user.id}) }}" style="display: inline;">
+                            <button type="submit" class="btn-small">{{ user.banned ? 'Unban' : 'Ban' }}</button>
+                        </form>
+                        <form method="post" action="{{ path('app_admin_user_delete', {id: user.id}) }}" style="display: inline;" onsubmit="return confirm('Are you sure?')">
+                            <button type="submit" class="btn-small btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

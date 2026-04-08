@@ -1,0 +1,272 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Manage Deliveries - BIG 4 Admin{% endblock %}
+
+{% block topbar_title %}Manage Deliveries{% endblock %}
+
+{% block body %}
+<style>
+    .deliveries-header { margin-bottom: 2rem; }
+    .deliveries-header h2 { family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: var(--espresso); margin-bottom: 0.5rem; }
+    .deliveries-header p { color: var(--text-2); font-size: 0.9rem; }
+    
+    .filter-section { 
+        background: var(--ivory); 
+        border: 1px solid var(--border); 
+        border-radius: 12px; 
+        padding: 1.5rem; 
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+    .filter-controls { 
+        display: flex; 
+        gap: 1rem; 
+        align-items: flex-end; 
+        flex-wrap: wrap;
+    }
+    .filter-group { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 0.5rem;
+        flex: 1;
+        min-width: 200px;
+    }
+    .filter-label { 
+        font-size: 0.7rem; 
+        text-transform: uppercase; 
+        letter-spacing: 0.1em; 
+        color: var(--text-3); 
+        font-weight: 600;
+    }
+    .filter-input, .filter-select { 
+        padding: 0.8rem 1.2rem; 
+        border: 1.5px solid var(--border-2); 
+        border-radius: 8px; 
+        font-family: 'Jost', sans-serif;
+        font-size: 0.85rem;
+        color: var(--text);
+        background: var(--ivory-2);
+        transition: all 0.2s;
+    }
+    .filter-btn {
+        padding: 0.8rem 2rem;
+        background: var(--gold);
+        border: none;
+        border-radius: 8px;
+        color: var(--ivory);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .filter-btn:hover {
+        background: var(--gold-dark);
+    }
+    
+    .table-wrapper {
+        overflow-x: auto;
+        background: var(--ivory);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    th {
+        background: var(--espresso);
+        color: var(--ivory);
+        padding: 1.2rem;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border);
+    }
+    td {
+        padding: 1.2rem;
+        border-bottom: 1px solid var(--border);
+    }
+    tr:hover {
+        background: rgba(218, 174, 105, 0.1);
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-assigned { background: #d1ecf1; color: #0c5460; }
+    .status-in-transit { background: #d4edda; color: #155724; }
+    .status-delivered { background: #d4edda; color: #155724; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .btn-small {
+        padding: 0.4rem 0.8rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-assign {
+        background: var(--gold);
+        color: var(--ivory);
+        font-weight: 600;
+    }
+    .btn-assign:hover {
+        background: var(--gold-dark);
+    }
+    .btn-remove {
+        background: #dc3545;
+        color: white;
+    }
+    .btn-remove:hover {
+        background: #c82333;
+    }
+    
+    .flash-message {
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    .flash-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .flash-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+
+<div class="deliveries-header">
+    <h2>Delivery Management</h2>
+    <p>Manage deliveries, assign cars, and track status</p>
+</div>
+
+{% if flash_messages %}
+    {% for type, messages in flashes %}
+        {% for message in messages %}
+            <div class="flash-message flash-{{ type }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endif %}
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <form method="GET" class="filter-controls">
+        <div class="filter-group">
+            <label class="filter-label">Search</label>
+            <input type="text" name="search" class="filter-input" placeholder="Order ID, Address, Phone..." value="{{ search }}">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Sort By</label>
+            <select name="sort" class="filter-select">
+                <option value="created_at" {% if sort == 'created_at' %}selected{% endif %}>Created Date</option>
+                <option value="order_id" {% if sort == 'order_id' %}selected{% endif %}>Order ID</option>
+                <option value="status" {% if sort == 'status' %}selected{% endif %}>Status</option>
+                <option value="delivery_address" {% if sort == 'delivery_address' %}selected{% endif %}>Address</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Direction</label>
+            <select name="direction" class="filter-select">
+                <option value="DESC" {% if direction == 'DESC' %}selected{% endif %}>Newest First</option>
+                <option value="ASC" {% if direction == 'ASC' %}selected{% endif %}>Oldest First</option>
+            </select>
+        </div>
+        <button type="submit" class="filter-btn">Filter</button>
+    </form>
+</div>
+
+<!-- Deliveries Table -->
+{% if deliveries|length > 0 %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Recipient</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Assigned Car</th>
+                <th>License Plate</th>
+                <th>Driver</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for delivery in deliveries %}
+            <tr>
+                <td><strong>#{{ delivery.order_id }}</strong></td>
+                <td>{{ delivery.recipient_name }}</td>
+                <td>{{ delivery.delivery_address|truncate(30) }}</td>
+                <td>
+                    <span class="status-badge status-{{ delivery.status|lower }}">
+                        {{ delivery.status|replace({'_': ' '}) }}
+                    </span>
+                </td>
+                <td>
+                    {% if delivery.fleetCar %}
+                        {{ delivery.fleetCar.make }} {{ delivery.fleetCar.model }}
+                    {% else %}
+                        <em style="color: var(--text-3);">Unassigned</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if delivery.license_plate %}
+                        <code>{{ delivery.license_plate }}</code>
+                    {% else %}
+                        <em style="color: var(--text-3);">—</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if delivery.deliveryMan %}
+                        {{ delivery.deliveryMan.name }}
+                    {% else %}
+                        <em style="color: var(--text-3);">Unassigned</em>
+                    {% endif %}
+                </td>
+                <td>{{ delivery.created_at|date('M d, Y') }}</td>
+                <td>
+                    <div class="action-buttons">
+                        {% if not delivery.fleetCar %}
+                        <form method="POST" action="{{ path('app_admin_assign_car', {'id': delivery.delivery_id}) }}" style="display: inline;">
+                            <select name="car_id" class="filter-select" style="padding: 0.4rem; font-size: 0.75rem;" required>
+                                <option value="">Select Car</option>
+                                <!-- Add available cars here from controller -->
+                            </select>
+                            <button type="submit" class="btn-small btn-assign">Assign</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ path('app_admin_remove_car', {'id': delivery.delivery_id}) }}" style="display: inline;">
+                            <button type="submit" class="btn-small btn-remove" onclick="return confirm('Remove car assignment?');">Remove Car</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="text-align: center; padding: 3rem; background: var(--ivory); border-radius: 12px; color: var(--text-3);">
+    <p>No deliveries found.</p>
+</div>
+{% endif %}
+
+{% endblock %}

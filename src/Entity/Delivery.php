@@ -68,13 +68,13 @@ class Delivery
         return $this->delivery_address;
     }
 
-    public function setDelivery_address(?string $delivery_address): self
+    public function setDelivery_address(string $delivery_address): self
     {
         $this->delivery_address = $delivery_address;
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
+    #[ORM\Column(type: 'string', nullable: true)]
     #[Assert\NotBlank(message: 'Recipient name is required.')]
     #[Assert\Length(max: 100, maxMessage: 'Recipient name cannot be longer than {{ limit }} characters.')]
     private ?string $recipient_name = null;
@@ -90,9 +90,10 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
-    #[Assert\NotBlank(message: 'Recipient phone is required.')]
-    #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Phone number must be exactly 8 digits.')]
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'Recipient phone number is required.')]
+    #[Assert\Regex(pattern: '/^[\+]?[0-9\-\(\)\s]+$/', message: 'Please enter a valid phone number.')]
+    #[Assert\Length(max: 20, maxMessage: 'Phone number cannot be longer than {{ limit }} characters.')]
     private ?string $recipient_phone = null;
 
     public function getRecipient_phone(): ?string
@@ -106,7 +107,7 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
+    #[ORM\Column(type: 'string', nullable: true)]
     #[Assert\NotBlank(message: 'Pickup location is required.')]
     #[Assert\Length(max: 500, maxMessage: 'Pickup location cannot be longer than {{ limit }} characters.')]
     private ?string $pickup_location = null;
@@ -266,6 +267,62 @@ class Delivery
         return $this;
     }
 
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\Range(min: 1, max: 5, notInRangeMessage: 'Rating must be between {{ min }} and {{ max }}.')]
+    private ?int $restaurant_rating = null;
+
+    public function getRestaurant_rating(): ?int
+    {
+        return $this->restaurant_rating;
+    }
+
+    public function setRestaurant_rating(?int $restaurant_rating): self
+    {
+        $this->restaurant_rating = $restaurant_rating;
+        return $this;
+    }
+
+    public function getRestaurantRating(): ?int
+    {
+        return $this->restaurant_rating;
+    }
+
+    public function setRestaurantRating(?int $restaurant_rating): self
+    {
+        return $this->setRestaurant_rating($restaurant_rating);
+    }
+
+    #[ORM\Column(type: 'string', nullable: true, unique: true)]
+    #[Assert\Regex(pattern: '/^[0-9]{1,6}[A-Z]{2}[0-9]{1,3}$/', message: 'License plate must match Tunisian format (e.g., 123456AB789).')]
+    #[Assert\Length(max: 20, maxMessage: 'License plate cannot be longer than {{ limit }} characters.')]
+    private ?string $license_plate = null;
+
+    public function getLicense_plate(): ?string
+    {
+        return $this->license_plate;
+    }
+
+    public function setLicense_plate(?string $license_plate): self
+    {
+        $this->license_plate = $license_plate;
+        return $this;
+    }
+
+    #[ORM\ManyToOne(targetEntity: FleetCar::class)]
+    #[ORM\JoinColumn(name: 'fleet_car_id', referencedColumnName: 'car_id', nullable: true)]
+    private ?FleetCar $fleetCar = null;
+
+    public function getFleetCar(): ?FleetCar
+    {
+        return $this->fleetCar;
+    }
+
+    public function setFleetCar(?FleetCar $fleetCar): self
+    {
+        $this->fleetCar = $fleetCar;
+        return $this;
+    }
+
     #[ORM\Column(type: 'datetime', nullable: false)]
     private ?\DateTimeInterface $created_at = null;
 
@@ -305,7 +362,7 @@ class Delivery
     public function setOrderId(int $id): self { return $this->setOrder_id($id); }
     
     public function getDeliveryAddress(): ?string { return $this->getDelivery_address(); }
-    public function setDeliveryAddress(?string $addr): self { return $this->setDelivery_address($addr); }
+    public function setDeliveryAddress(string $addr): self { return $this->setDelivery_address($addr); }
     
     public function getRecipientName(): ?string { return $this->getRecipient_name(); }
     public function setRecipientName(?string $name): self { return $this->setRecipient_name($name); }

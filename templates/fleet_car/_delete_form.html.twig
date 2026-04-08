@@ -1,0 +1,4 @@
+<form method="post" action="{{ path('app_fleet_car_delete', {'car_id': fleet_car.car_id}) }}" onsubmit="return confirm('Are you sure you want to delete this vehicle? This action cannot be undone.');">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ fleet_car.car_id) }}">
+    <button class="btn-delete" type="submit">Delete Vehicle</button>
+</form>

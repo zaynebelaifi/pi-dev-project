@@ -16,7 +16,15 @@ final class Version20260407120000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE delivery ADD cart_items LONGTEXT DEFAULT NULL, ADD order_total NUMERIC(10, 2) DEFAULT NULL');
+        $deliveryTable = $schema->getTable('delivery');
+        
+        if (!$deliveryTable->hasColumn('cart_items')) {
+            $this->addSql('ALTER TABLE delivery ADD cart_items LONGTEXT DEFAULT NULL');
+        }
+        
+        if (!$deliveryTable->hasColumn('order_total')) {
+            $this->addSql('ALTER TABLE delivery ADD order_total NUMERIC(10, 2) DEFAULT NULL');
+        }
     }
 
     public function down(Schema $schema): void
