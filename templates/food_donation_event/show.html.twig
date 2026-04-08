@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}FoodDonationEvent{% endblock %}
+
+{% block body %}
+    <h1>FoodDonationEvent</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Donation_event_id</th>
+                <td>{{ food_donation_event.donationEventId }}</td>
+            </tr>
+            <tr>
+                <th>Event_date</th>
+                <td>{{ food_donation_event.eventDate ? food_donation_event.eventDate|date('Y-m-d') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Total_quantity</th>
+                <td>{{ food_donation_event.totalQuantity }}</td>
+            </tr>
+            <tr>
+                <th>Charity_name</th>
+                <td>{{ food_donation_event.charityName }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{ food_donation_event.status }}</td>
+            </tr>
+            <tr>
+                <th>Delivery_id</th>
+                <td>{{ food_donation_event.deliveryId }}</td>
+            </tr>
+            <tr>
+                <th>Calendar_event_id</th>
+                <td>{{ food_donation_event.calendarEventId }}</td>
+            </tr>
+            <tr>
+                <th>Created_at</th>
+                <td>{{ food_donation_event.createdAt ? food_donation_event.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Updated_at</th>
+                <td>{{ food_donation_event.updatedAt ? food_donation_event.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_food_donation_event_index') }}">back to list</a>
+
+    <a href="{{ path('app_food_donation_event_edit', {'donation_event_id': food_donation_event.donation_event_id}) }}">edit</a>
+
+    {{ include('food_donation_event/_delete_form.html.twig') }}
+{% endblock %}

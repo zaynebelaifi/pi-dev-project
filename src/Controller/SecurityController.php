@@ -97,6 +97,12 @@ final class SecurityController extends AbstractController
                     }
                 }
 
+                if ($user->getRole() === 'ROLE_CLIENT') {
+                    $clientPhone = $this->normalizePhone($user->getPhone());
+                    $session->set('client_phone', $clientPhone);
+                    $session->set('client_name', trim($user->getFirstName() . ' ' . $user->getLastName()));
+                }
+
                 if ($user->getRole() === 'ROLE_ADMIN') {
                     return $this->redirectToRoute('app_admin_dashboard');
                 }
@@ -123,5 +129,19 @@ final class SecurityController extends AbstractController
         $session->clear();
 
         return $this->redirectToRoute('app_home');
+    }
+
+    private function normalizePhone(?string $phone): ?string
+    {
+        if (!$phone) {
+            return null;
+        }
+
+        $normalized = preg_replace('/[^0-9+]/', '', $phone);
+        if ($normalized === false) {
+            return null;
+        }
+
+        return $normalized;
     }
 }

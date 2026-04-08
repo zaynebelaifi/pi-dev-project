@@ -46,7 +46,7 @@ class DeliveryRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('d')
             ->andWhere('d.recipient_phone = :phone')
             ->andWhere('d.status != :delivered')
-            ->setParameter('phone', $phone)
+            ->setParameter('phone', preg_replace('/[^0-9+]/', '', $phone))
             ->setParameter('delivered', 'DELIVERED')
             ->orderBy('d.created_at', 'DESC')
             ->getQuery()
@@ -59,11 +59,23 @@ class DeliveryRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('d')
             ->andWhere('d.recipient_phone = :phone')
             ->andWhere('d.status = :delivered')
-            ->setParameter('phone', $phone)
+            ->setParameter('phone', preg_replace('/[^0-9+]/', '', $phone))
             ->setParameter('delivered', 'DELIVERED')
             ->orderBy('d.created_at', 'DESC')
             ->getQuery()
             ->getResult()
+        ;
+    }
+
+    public function findLatestByRecipientName(string $recipientName): ?Delivery
+    {
+        return $this->createQueryBuilder('d')
+            ->andWhere('LOWER(d.recipient_name) = :name')
+            ->setParameter('name', mb_strtolower($recipientName))
+            ->orderBy('d.created_at', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult()
         ;
     }
 

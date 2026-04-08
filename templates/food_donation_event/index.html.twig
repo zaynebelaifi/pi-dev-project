@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}FoodDonationEvent index{% endblock %}
+
+{% block body %}
+    <h1>FoodDonationEvent index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Donation_event_id</th>
+                <th>Event_date</th>
+                <th>Total_quantity</th>
+                <th>Charity_name</th>
+                <th>Status</th>
+                <th>Delivery_id</th>
+                <th>Calendar_event_id</th>
+                <th>Created_at</th>
+                <th>Updated_at</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for food_donation_event in food_donation_events %}
+            <tr>
+                <td>{{ food_donation_event.donationEventId }}</td>
+                <td>{{ food_donation_event.eventDate ? food_donation_event.eventDate|date('Y-m-d') : '' }}</td>
+                <td>{{ food_donation_event.totalQuantity }}</td>
+                <td>{{ food_donation_event.charityName }}</td>
+                <td>{{ food_donation_event.status }}</td>
+                <td>{{ food_donation_event.deliveryId }}</td>
+                <td>{{ food_donation_event.calendarEventId }}</td>
+                <td>{{ food_donation_event.createdAt ? food_donation_event.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ food_donation_event.updatedAt ? food_donation_event.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_food_donation_event_show', {'donation_event_id': food_donation_event.donation_event_id}) }}">show</a>
+                    <a href="{{ path('app_food_donation_event_edit', {'donation_event_id': food_donation_event.donation_event_id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="10">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_food_donation_event_new') }}">Create new</a>
+{% endblock %}

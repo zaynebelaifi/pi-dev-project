@@ -7,6 +7,7 @@ use App\Entity\DeliveryMan;
 use App\Form\DeliveryType;
 use App\Repository\DeliveryRepository;
 use App\Repository\DeliveryManRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -98,7 +99,7 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/checkout', name: 'app_delivery_checkout', methods: ['POST'])]
-    public function checkout(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session, ValidatorInterface $validator): Response
+    public function checkout(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session, ValidatorInterface $validator, UserRepository $userRepository): Response
     {
         try {
             if (!$this->isCsrfTokenValid('delivery-checkout', $request->request->get('_token'))) {
@@ -114,6 +115,21 @@ final class DeliveryController extends AbstractController
             $pickupLocation = $request->request->get('pickup_location');
             $deliveryNotes = $request->request->get('delivery_notes');
 
+            $clientUser = null;
+            if ($session->get('user_role') === 'ROLE_CLIENT') {
+                $userId = $session->get('user_id');
+                if ($userId) {
+                    $clientUser = $userRepository->find($userId);
+                }
+            }
+
+            if (!$recipientPhone && $clientUser && $clientUser->getPhone()) {
+                $recipientPhone = $clientUser->getPhone();
+            }
+            if (!$recipientName && $clientUser) {
+                $recipientName = trim($clientUser->getFirstName() . ' ' . $clientUser->getLastName());
+            }
+
             $items = json_decode($rawCartItems, true);
             if (!is_array($items)) {
                 $items = [];
@@ -127,7 +143,8 @@ final class DeliveryController extends AbstractController
             $delivery->setOrder_id(random_int(100000, 999999));
             $delivery->setDelivery_address(trim((string) $deliveryAddress));
             $delivery->setRecipient_name(trim((string) $recipientName));
-            $delivery->setRecipient_phone(trim((string) $recipientPhone));
+            $normalizedPhone = $this->normalizePhone(trim((string) $recipientPhone));
+            $delivery->setRecipient_phone($normalizedPhone);
             $delivery->setPickup_location(trim((string) $pickupLocation));
             $delivery->setDelivery_notes(trim((string) $deliveryNotes));
             $delivery->setCart_items(implode("\n", $cartSummary));
@@ -148,9 +165,12 @@ final class DeliveryController extends AbstractController
             $this->assignDeliveryMan($delivery, $deliveryManRepository);
 
             $entityManager->persist($delivery);
+
+            $this->syncClientPhoneWithProfile($session, $userRepository, $recipientPhone);
+
             $entityManager->flush();
 
-            $session->set('client_phone', $recipientPhone);
+            $session->set('client_phone', $this->normalizePhone($recipientPhone));
             $session->set('client_name', $recipientName);
 
             $this->addFlash('success', 'Your delivery order has been created successfully.');
@@ -163,11 +183,40 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/client-orders', name: 'app_client_orders', methods: ['GET'])]
-    public function clientOrders(Request $request, DeliveryRepository $deliveryRepository): Response
+    public function clientOrders(Request $request, DeliveryRepository $deliveryRepository, UserRepository $userRepository): Response
     {
         $session = $request->getSession();
-        $recipientPhone = $session->get('client_phone');
+
+        if ($session->get('user_role') !== 'ROLE_CLIENT') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $recipientPhone = $this->normalizePhone($session->get('client_phone'));
         $recipientName = $session->get('client_name');
+
+        if (!$recipientPhone) {
+            $userId = $session->get('user_id');
+            if ($userId) {
+                $user = $userRepository->find($userId);
+                if ($user) {
+                    if ($user->getPhone()) {
+                        $recipientPhone = $this->normalizePhone($user->getPhone());
+                        $session->set('client_phone', $recipientPhone);
+                    }
+                    if (!$recipientName) {
+                        $recipientName = trim($user->getFirstName() . ' ' . $user->getLastName());
+                        $session->set('client_name', $recipientName);
+                    }
+                    if (!$recipientPhone && $recipientName) {
+                        $recentOrder = $deliveryRepository->findLatestByRecipientName($recipientName);
+                        if ($recentOrder) {
+                            $recipientPhone = $this->normalizePhone($recentOrder->getRecipient_phone());
+                            $session->set('client_phone', $recipientPhone);
+                        }
+                    }
+                }
+            }
+        }
 
         $liveOrders = [];
         $historyOrders = [];
@@ -186,7 +235,7 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/create', name: 'app_delivery_create', methods: ['GET', 'POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session, ValidatorInterface $validator): Response
+    public function create(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session, ValidatorInterface $validator, UserRepository $userRepository): Response
     {
         if ($session->get('user_role') !== 'ROLE_CLIENT') {
             return $this->redirectToRoute('app_home');
@@ -204,6 +253,21 @@ final class DeliveryController extends AbstractController
             $pickupLocation = $request->request->get('pickup_location');
             $deliveryNotes = $request->request->get('delivery_notes');
 
+            $clientUser = null;
+            if ($session->get('user_role') === 'ROLE_CLIENT') {
+                $userId = $session->get('user_id');
+                if ($userId) {
+                    $clientUser = $userRepository->find($userId);
+                }
+            }
+
+            if (!$recipientPhone && $clientUser && $clientUser->getPhone()) {
+                $recipientPhone = $clientUser->getPhone();
+            }
+            if (!$recipientName && $clientUser) {
+                $recipientName = trim($clientUser->getFirstName() . ' ' . $clientUser->getLastName());
+            }
+
             $items = json_decode($rawCartItems, true);
             if (!is_array($items)) {
                 $items = [];
@@ -217,7 +281,8 @@ final class DeliveryController extends AbstractController
             $delivery->setOrder_id(random_int(100000, 999999));
             $delivery->setDelivery_address(trim((string) $deliveryAddress));
             $delivery->setRecipient_name(trim((string) $recipientName));
-            $delivery->setRecipient_phone(trim((string) $recipientPhone));
+            $normalizedPhone = $this->normalizePhone(trim((string) $recipientPhone));
+            $delivery->setRecipient_phone($normalizedPhone);
             $delivery->setPickup_location(trim((string) $pickupLocation));
             $delivery->setDelivery_notes(trim((string) $deliveryNotes));
             $delivery->setCart_items(implode("\n", $cartSummary));
@@ -246,17 +311,39 @@ final class DeliveryController extends AbstractController
             $this->assignDeliveryMan($delivery, $deliveryManRepository);
 
             $entityManager->persist($delivery);
+            $this->syncClientPhoneWithProfile($session, $userRepository, $recipientPhone);
             $entityManager->flush();
 
-            $session->set('client_phone', $recipientPhone);
+            $session->set('client_phone', $this->normalizePhone($recipientPhone));
             $session->set('client_name', $recipientName);
 
             return $this->redirectToRoute('app_delivery_confirmation', ['id' => $delivery->getDelivery_id()]);
         }
 
+        $formValues = [
+            'recipient_name' => '',
+            'recipient_phone' => '',
+        ];
+        if ($session->get('user_role') === 'ROLE_CLIENT') {
+            $formValues['recipient_name'] = $session->get('client_name') ?? '';
+            $formValues['recipient_phone'] = $this->normalizePhone($session->get('client_phone')) ?? '';
+
+            $userId = $session->get('user_id');
+            $clientUser = $userId ? $userRepository->find($userId) : null;
+            if ($clientUser) {
+                if (!$formValues['recipient_name']) {
+                    $formValues['recipient_name'] = trim($clientUser->getFirstName() . ' ' . $clientUser->getLastName());
+                }
+                if (!$formValues['recipient_phone']) {
+                    $formValues['recipient_phone'] = $this->normalizePhone($clientUser->getPhone()) ?? '';
+                }
+            }
+        }
+
         return $this->render('delivery/create.html.twig', [
             'cart_items' => $cartItems,
             'order_total' => $orderTotal,
+            'form_values' => $formValues,
         ]);
     }
 
@@ -312,6 +399,50 @@ final class DeliveryController extends AbstractController
         }
 
         return null;
+    }
+
+    private function syncClientPhoneWithProfile(SessionInterface $session, UserRepository $userRepository, ?string $phone): void
+    {
+        if (!$phone || !$session->get('user_role') || $session->get('user_role') !== 'ROLE_CLIENT') {
+            return;
+        }
+
+        $userId = $session->get('user_id');
+        if (!$userId) {
+            return;
+        }
+
+        $user = $userRepository->find($userId);
+        if (!$user) {
+            return;
+        }
+
+        if ($phone) {
+            $normalized = $this->normalizePhone($phone);
+            $existingPhone = $this->normalizePhone($user->getPhone());
+            if ($normalized && $normalized !== $existingPhone) {
+                $user->setPhone($normalized);
+            }
+            $session->set('client_phone', $normalized);
+        }
+
+        if (!$session->get('client_name')) {
+            $session->set('client_name', trim($user->getFirstName() . ' ' . $user->getLastName()));
+        }
+    }
+
+    private function normalizePhone(?string $phone): ?string
+    {
+        if (!$phone) {
+            return null;
+        }
+
+        $normalized = preg_replace('/[^0-9+]/', '', $phone);
+        if ($normalized === false) {
+            return null;
+        }
+
+        return $normalized;
     }
 
     private function validateDelivery(Delivery $delivery, ValidatorInterface $validator): array

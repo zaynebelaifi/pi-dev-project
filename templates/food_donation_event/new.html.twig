@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New FoodDonationEvent{% endblock %}
+
+{% block body %}
+    <h1>Create new FoodDonationEvent</h1>
+
+    {{ include('food_donation_event/_form.html.twig') }}
+
+    <a href="{{ path('app_food_donation_event_index') }}">back to list</a>
+{% endblock %}

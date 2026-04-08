@@ -3,21 +3,119 @@
 {% block title %}Edit Profile - BIG 4{% endblock %}
 
 {% block body %}
-<div class="admin-header" style="margin-top:140px; text-align:center;">
-    <h1>Edit Profile</h1>
+<div class="auth-page profile-edit-page">
+    <div class="auth-card profile-card">
+        <div class="auth-intro">
+            <span class="auth-tag">BIG 4 Coffee Lounge</span>
+            <h1>Edit Profile</h1>
+            <p>Update your contact details so your orders, reservations, and loyalty rewards stay current.</p>
+        </div>
+
+        <div class="profile-form-wrapper">
+            {{ form_start(form) }}
+                <div class="form-grid">
+                    <div class="form-row">{{ form_row(form.firstName) }}</div>
+                    <div class="form-row">{{ form_row(form.lastName) }}</div>
+                </div>
+                <div class="form-row">{{ form_row(form.email) }}</div>
+                <div class="form-row">{{ form_row(form.phone) }}</div>
+                <div class="form-row">{{ form_row(form.address) }}</div>
+
+                <button type="submit" class="btn btn-primary">Save Profile</button>
+            {{ form_end(form) }}
+
+            <a href="{{ path('app_profile') }}" class="btn btn-secondary" style="text-align:center;">Back to Profile</a>
+        </div>
+    </div>
 </div>
 
-<div class="admin-form" style="margin:auto; max-width: 520px;">
-    {{ form_start(form) }}
-        {{ form_row(form.firstName) }}
-        {{ form_row(form.lastName) }}
-        {{ form_row(form.email) }}
-        {{ form_row(form.phone) }}
-        {{ form_row(form.address) }}
-
-        <button type="submit" class="form-submit">Save Changes</button>
-    {{ form_end(form) }}
-
-    <a href="{{ path('app_profile') }}" style="display: block; text-align: center; margin-top: 1rem;">Back to Profile</a>
-</div>
+<style>
+.profile-edit-page {
+    min-height: calc(100vh - 120px);
+    padding: 2.5rem 1rem;
+    background: linear-gradient(180deg, rgba(249,245,236,0.9) 0%, rgba(255,254,250,1) 100%);
+}
+.profile-card {
+    max-width: 720px;
+    margin: 0 auto;
+    border-radius: 32px;
+    background: white;
+    border: 1px solid rgba(209,184,120,0.18);
+    box-shadow: 0 40px 120px rgba(141,109,57,0.08);
+    overflow: hidden;
+}
+.auth-intro {
+    padding: 2.5rem 2rem 1.75rem;
+    background: linear-gradient(135deg, rgba(255,243,205,0.95), rgba(255,244,222,0.9));
+    border-bottom: 1px solid rgba(209,184,120,0.22);
+}
+.auth-intro h1 {
+    margin: 0;
+    font-size: clamp(2rem, 3vw, 2.4rem);
+    color: var(--brown);
+}
+.auth-intro p {
+    margin: 1rem 0 0;
+    color: var(--text-2);
+    line-height: 1.6;
+}
+.profile-form-wrapper {
+    padding: 2rem;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.form-row {
+    margin-bottom: 1.2rem;
+}
+.form-row label {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--brown);
+    font-weight: 700;
+}
+.form-row input,
+.form-row textarea,
+.form-row select {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.95rem 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(184,135,42,0.22);
+    background: #fff;
+    color: var(--espresso);
+    font-size: 1rem;
+}
+.form-row input:focus,
+.form-row textarea:focus,
+.form-row select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(255, 222, 143, 0.22);
+}
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 180px;
+    padding: 1rem 1.2rem;
+    border-radius: 18px;
+    border: 1px solid rgba(184,135,42,0.22);
+    color: var(--brown);
+    background: #fff;
+    text-decoration: none;
+    font-weight: 700;
+}
+.btn-secondary:hover {
+    background: #fff7eb;
+}
+@media (max-width: 700px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 {% endblock %}

@@ -44,6 +44,7 @@
           <a href="{{ path('app_driver_deliveries') }}" class="nav-btn">My Deliveries</a>
           <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
         {% elseif user_role == 'ROLE_CLIENT' %}
+          <a href="{{ path('app_profile') }}" class="nav-btn">My Profile</a>
           <a href="{{ path('app_client_orders') }}" class="nav-btn">My Orders</a>
           <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
         {% else %}
