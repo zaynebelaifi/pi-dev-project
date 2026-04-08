@@ -14,8 +14,35 @@ ALTER TABLE delivery
 ALTER TABLE menu
   ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1;
 
+ALTER TABLE `user`
+  ADD COLUMN IF NOT EXISTS first_name VARCHAR(255) DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS last_name VARCHAR(255) DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS banned TINYINT(1) NOT NULL DEFAULT 0;
+
 -- Keep menu flags aligned when both columns exist
 UPDATE menu SET is_active = isActive WHERE is_active <> isActive;
+
+-- Backfill split names from legacy full_name when possible
+UPDATE `user`
+SET
+  first_name = CASE
+    WHEN (first_name IS NULL OR first_name = '')
+      AND full_name IS NOT NULL
+      AND TRIM(full_name) <> ''
+    THEN SUBSTRING_INDEX(TRIM(full_name), ' ', 1)
+    ELSE first_name
+  END,
+  last_name = CASE
+    WHEN (last_name IS NULL OR last_name = '')
+      AND full_name IS NOT NULL
+      AND TRIM(full_name) <> ''
+    THEN CASE
+      WHEN LOCATE(' ', TRIM(full_name)) > 0
+      THEN TRIM(SUBSTRING(TRIM(full_name), LOCATE(' ', TRIM(full_name)) + 1))
+      ELSE NULL
+    END
+    ELSE last_name
+  END;
 
 -- 2) New tables from the new schema (created only if missing)
 CREATE TABLE IF NOT EXISTS author (

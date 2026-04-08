@@ -46,16 +46,16 @@ class DishIngredient
     #[ORM\Column(name: 'quantity_required', type: 'decimal', nullable: false)]
     #[Assert\NotNull(message: 'Quantity required is mandatory.')]
     #[Assert\Positive(message: 'Quantity required must be greater than 0.')]
-    private ?float $quantityRequired = null;
+    private ?string $quantityRequired = null;
 
     public function getQuantityRequired(): ?float
     {
-        return $this->quantityRequired;
+        return $this->quantityRequired !== null ? (float) $this->quantityRequired : null;
     }
 
     public function setQuantityRequired(?float $quantityRequired): self
     {
-        $this->quantityRequired = $quantityRequired;
+        $this->quantityRequired = $quantityRequired !== null ? (string) $quantityRequired : null;
         return $this;
     }
 

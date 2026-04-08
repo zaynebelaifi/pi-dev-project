@@ -93,27 +93,27 @@ class Dish
     #[Assert\NotNull(message: 'Base price is required.')]
     #[Assert\PositiveOrZero(message: 'Base price must be 0 or greater.')]
     #[Assert\LessThanOrEqual(value: 9999.99, message: 'Base price is too high.')]
-    private ?float $base_price = null;
+    private ?string $base_price = null;
 
     public function getBase_price(): ?float
     {
-        return $this->base_price;
+        return $this->base_price !== null ? (float) $this->base_price : null;
     }
 
     public function getBasePrice(): ?float
     {
-        return $this->base_price;
+        return $this->base_price !== null ? (float) $this->base_price : null;
     }
 
     public function setBase_price(?float $base_price): self
     {
-        $this->base_price = $base_price;
+        $this->base_price = $base_price !== null ? (string) $base_price : null;
         return $this;
     }
 
     public function setBasePrice(?float $basePrice): self
     {
-        $this->base_price = $basePrice;
+        $this->base_price = $basePrice !== null ? (string) $basePrice : null;
         return $this;
     }
 

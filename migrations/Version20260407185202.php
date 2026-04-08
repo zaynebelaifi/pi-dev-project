@@ -14,18 +14,18 @@ final class Version20260407185202 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Add optional restaurant rating to delivery in an idempotent way';
     }
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE delivery ADD restaurant_rating INT DEFAULT NULL');
+        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on MySQL.');
+        $this->addSql('ALTER TABLE delivery ADD COLUMN IF NOT EXISTS restaurant_rating INT DEFAULT NULL');
     }
 
     public function down(Schema $schema): void
     {
-        // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE delivery DROP restaurant_rating');
+        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on MySQL.');
+        $this->addSql('ALTER TABLE delivery DROP COLUMN IF EXISTS restaurant_rating');
     }
 }

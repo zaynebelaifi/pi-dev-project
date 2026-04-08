@@ -48,16 +48,16 @@ class Ingredient
     #[ORM\Column(name: 'quantityInStock', type: 'decimal', nullable: false)]
     #[Assert\NotNull(message: 'Quantity in stock is required.')]
     #[Assert\PositiveOrZero(message: 'Quantity in stock must be 0 or greater.')]
-    private ?float $quantityInStock = null;
+    private ?string $quantityInStock = null;
 
     public function getQuantityInStock(): ?float
     {
-        return $this->quantityInStock;
+        return $this->quantityInStock !== null ? (float) $this->quantityInStock : null;
     }
 
     public function setQuantityInStock(?float $quantityInStock): self
     {
-        $this->quantityInStock = $quantityInStock;
+        $this->quantityInStock = $quantityInStock !== null ? (string) $quantityInStock : null;
         return $this;
     }
 
@@ -94,32 +94,32 @@ class Ingredient
     #[ORM\Column(name: 'minStockLevel', type: 'decimal', nullable: false)]
     #[Assert\NotNull(message: 'Minimum stock level is required.')]
     #[Assert\PositiveOrZero(message: 'Minimum stock level must be 0 or greater.')]
-    private ?float $minStockLevel = null;
+    private ?string $minStockLevel = null;
 
     public function getMinStockLevel(): ?float
     {
-        return $this->minStockLevel;
+        return $this->minStockLevel !== null ? (float) $this->minStockLevel : null;
     }
 
     public function setMinStockLevel(?float $minStockLevel): self
     {
-        $this->minStockLevel = $minStockLevel;
+        $this->minStockLevel = $minStockLevel !== null ? (string) $minStockLevel : null;
         return $this;
     }
 
     #[ORM\Column(name: 'unitCost', type: 'decimal', nullable: false)]
     #[Assert\NotNull(message: 'Unit cost is required.')]
     #[Assert\PositiveOrZero(message: 'Unit cost must be 0 or greater.')]
-    private ?float $unitCost = null;
+    private ?string $unitCost = null;
 
     public function getUnitCost(): ?float
     {
-        return $this->unitCost;
+        return $this->unitCost !== null ? (float) $this->unitCost : null;
     }
 
     public function setUnitCost(?float $unitCost): self
     {
-        $this->unitCost = $unitCost;
+        $this->unitCost = $unitCost !== null ? (string) $unitCost : null;
         return $this;
     }
 

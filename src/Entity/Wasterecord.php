@@ -51,16 +51,16 @@ class Wasterecord
     #[ORM\Column(name: 'quantityWasted', type: 'decimal', nullable: false)]
     #[Assert\NotNull(message: 'Wasted quantity is required.')]
     #[Assert\Positive(message: 'Wasted quantity must be greater than 0.')]
-    private ?float $quantityWasted = null;
+    private ?string $quantityWasted = null;
 
     public function getQuantityWasted(): ?float
     {
-        return $this->quantityWasted;
+        return $this->quantityWasted !== null ? (float) $this->quantityWasted : null;
     }
 
     public function setQuantityWasted(?float $quantityWasted): self
     {
-        $this->quantityWasted = $quantityWasted;
+        $this->quantityWasted = $quantityWasted !== null ? (string) $quantityWasted : null;
         return $this;
     }
 

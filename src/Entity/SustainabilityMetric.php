@@ -71,30 +71,30 @@ class SustainabilityMetric
     }
 
     #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $co2_saved_kg = null;
+    private ?string $co2_saved_kg = null;
 
     public function getCo2_saved_kg(): ?float
     {
-        return $this->co2_saved_kg;
+        return $this->co2_saved_kg !== null ? (float) $this->co2_saved_kg : null;
     }
 
     public function setCo2_saved_kg(float $co2_saved_kg): self
     {
-        $this->co2_saved_kg = $co2_saved_kg;
+        $this->co2_saved_kg = (string) $co2_saved_kg;
         return $this;
     }
 
     #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $cost_saved = null;
+    private ?string $cost_saved = null;
 
     public function getCost_saved(): ?float
     {
-        return $this->cost_saved;
+        return $this->cost_saved !== null ? (float) $this->cost_saved : null;
     }
 
     public function setCost_saved(?float $cost_saved): self
     {
-        $this->cost_saved = $cost_saved;
+        $this->cost_saved = $cost_saved !== null ? (string) $cost_saved : null;
         return $this;
     }
 
