@@ -1,6 +1,13 @@
 {{ form_start(form, {'attr': {'class': 'delivery-form', 'novalidate': 'novalidate'}}) }}
+    {% if delivery and delivery.order_id %}
+        <div class="delivery-summary">
+            <div><strong>Order #:</strong> #{{ delivery.order_id }}</div>
+            <div><strong>Status:</strong> {{ delivery.status|default('PENDING')|replace({'_': ' '}) }}</div>
+        </div>
+    {% endif %}
+
     <div class="form-grid">
-        <div class="form-group">
+        <div class="form-group full-width">
             {{ form_label(form.delivery_address, 'Delivery Address *') }}
             {{ form_widget(form.delivery_address, {
                 'attr': {
@@ -42,6 +49,38 @@
                 }
             }) }}
             {{ form_errors(form.pickup_location) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.order_total, 'Order Total') }}
+            {{ form_widget(form.order_total, {
+                'attr': {
+                    'class': 'form-control',
+                    'placeholder': 'Enter the order total amount'
+                }
+            }) }}
+            {{ form_errors(form.order_total) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.license_plate, 'License Plate') }}
+            {{ form_widget(form.license_plate, {
+                'attr': {
+                    'class': 'form-control',
+                    'placeholder': 'Enter license plate, e.g. 123456AB789'
+                }
+            }) }}
+            {{ form_errors(form.license_plate) }}
+        </div>
+
+        <div class="form-group full-width">
+            {{ form_label(form.fleetCar, 'Assigned Fleet Car') }}
+            {{ form_widget(form.fleetCar, {
+                'attr': {
+                    'class': 'form-control'
+                }
+            }) }}
+            {{ form_errors(form.fleetCar) }}
         </div>
 
         <div class="form-group full-width">

@@ -213,7 +213,13 @@
             <tr>
                 <td><strong>#{{ delivery.order_id }}</strong></td>
                 <td>{{ delivery.recipient_name }}</td>
-                <td>{{ delivery.delivery_address|truncate(30) }}</td>
+                <td>
+                    {% if delivery.delivery_address is not empty and delivery.delivery_address|length > 30 %}
+                        {{ delivery.delivery_address|slice(0, 30) }}...
+                    {% else %}
+                        {{ delivery.delivery_address }}
+                    {% endif %}
+                </td>
                 <td>
                     <span class="status-badge status-{{ delivery.status|lower }}">
                         {{ delivery.status|replace({'_': ' '}) }}
