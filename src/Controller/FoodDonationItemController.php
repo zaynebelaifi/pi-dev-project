@@ -21,6 +21,10 @@ final class FoodDonationItemController extends AbstractController
     #[Route(name: 'app_food_donation_item_index', methods: ['GET'])]
     public function index(Request $request, FoodDonationItemRepository $foodDonationItemRepository, DishRepository $dishRepository): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         $search = trim((string) $request->query->get('q', ''));
         $sort = $request->query->get('sort', 'donation_event_id');
         $direction = $request->query->get('direction', 'asc');
@@ -42,6 +46,10 @@ final class FoodDonationItemController extends AbstractController
     #[Route('/new', name: 'app_food_donation_item_new', methods: ['GET', 'POST'])]
     public function new(Request $request, FoodDonationEventRepository $eventRepository, DishRepository $dishRepository, IngredientRepository $ingredientRepository, EntityManagerInterface $entityManager): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         $ingredientId = $request->query->getInt('ingredient_id');
         $ingredient = $ingredientId ? $ingredientRepository->find($ingredientId) : null;
 
@@ -89,8 +97,12 @@ final class FoodDonationItemController extends AbstractController
     }
 
     #[Route('/{donation_event_id}/{item_id}', name: 'app_food_donation_item_show', methods: ['GET'])]
-    public function show(FoodDonationItem $foodDonationItem): Response
+    public function show(Request $request, FoodDonationItem $foodDonationItem): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         return $this->render('admin/food_donation_item/show.html.twig', [
             'food_donation_item' => $foodDonationItem,
         ]);
@@ -99,6 +111,10 @@ final class FoodDonationItemController extends AbstractController
     #[Route('/{donation_event_id}/{item_id}/edit', name: 'app_food_donation_item_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, FoodDonationItem $foodDonationItem, FoodDonationEventRepository $eventRepository, DishRepository $dishRepository, EntityManagerInterface $entityManager): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         $eventChoices = [];
         foreach ($eventRepository->findAll() as $event) {
             $eventChoices[$event->getCharityName() . ' (#' . $event->getDonationEventId() . ')'] = $event->getDonationEventId();
@@ -131,6 +147,10 @@ final class FoodDonationItemController extends AbstractController
     #[Route('/{donation_event_id}/{item_id}', name: 'app_food_donation_item_delete', methods: ['POST'])]
     public function delete(Request $request, FoodDonationItem $foodDonationItem, EntityManagerInterface $entityManager): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         if ($this->isCsrfTokenValid('delete'.$foodDonationItem->getDonation_event_id().'_'.$foodDonationItem->getItem_id(), $request->request->get('_token'))) {
             $entityManager->remove($foodDonationItem);
             $entityManager->flush();
@@ -138,5 +158,14 @@ final class FoodDonationItemController extends AbstractController
         }
 
         return $this->redirectToRoute('app_food_donation_item_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    private function denyUnlessAdmin(Request $request): ?Response
+    {
+        if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        return null;
     }
 }

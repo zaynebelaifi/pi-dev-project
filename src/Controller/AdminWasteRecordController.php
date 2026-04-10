@@ -26,10 +26,46 @@ final class AdminWasteRecordController extends AbstractController
         }
 
         $search = trim((string) $request->query->get('q', ''));
+        $sort = (string) $request->query->get('sort', 'date');
+        $dir = strtoupper((string) $request->query->get('dir', 'DESC'));
+        $wasteType = trim((string) $request->query->get('waste_type', ''));
+        $dateFromRaw = trim((string) $request->query->get('date_from', ''));
+        $dateToRaw = trim((string) $request->query->get('date_to', ''));
+
+        $dateFrom = null;
+        if ('' !== $dateFromRaw) {
+            $parsedFrom = \DateTimeImmutable::createFromFormat('Y-m-d', $dateFromRaw);
+            if ($parsedFrom instanceof \DateTimeImmutable) {
+                $dateFrom = $parsedFrom;
+            }
+        }
+
+        $dateTo = null;
+        if ('' !== $dateToRaw) {
+            $parsedTo = \DateTimeImmutable::createFromFormat('Y-m-d', $dateToRaw);
+            if ($parsedTo instanceof \DateTimeImmutable) {
+                $dateTo = $parsedTo;
+            }
+        }
+
+        $records = $wasterecordRepository->findForAdminList(
+            $search,
+            $sort,
+            $dir,
+            '' === $wasteType ? null : $wasteType,
+            $dateFrom,
+            $dateTo
+        );
 
         return $this->render('admin/inventory/waste/index.html.twig', [
-            'records' => $wasterecordRepository->findForAdminList($search),
+            'records' => $records,
             'search' => $search,
+            'sort' => $sort,
+            'dir' => 'ASC' === $dir ? 'ASC' : 'DESC',
+            'wasteType' => $wasteType,
+            'wasteTypes' => $wasterecordRepository->findDistinctWasteTypes(),
+            'dateFrom' => $dateFromRaw,
+            'dateTo' => $dateToRaw,
             'totalWasted' => $wasterecordRepository->totalWastedQuantity(),
         ]);
     }

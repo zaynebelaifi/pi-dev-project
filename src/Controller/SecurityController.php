@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\DeliveryMan;
 use App\Entity\User;
 use App\Form\LoginType;
 use App\Form\RegistrationType;
@@ -103,19 +104,17 @@ final class SecurityController extends AbstractController
                 $session->set('user_role', $normalizedRole);
 
                 if ($normalizedRole === 'ROLE_DELIVERY_MAN') {
-                    $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
-                        ->andWhere('LOWER(dm.email) = :email')
-                        ->setParameter('email', $email)
-                        ->setMaxResults(1)
-                        ->getQuery()
-                        ->getOneOrNullResult();
+                    $deliveryMan = $this->resolveOrCreateDeliveryManProfile($user, $email, $deliveryManRepository, $entityManager);
 
-                    if ($deliveryMan) {
+                    if ($deliveryMan && $deliveryMan->getDelivery_man_id()) {
+                        if ($user->getReference_id() !== $deliveryMan->getDelivery_man_id()) {
+                            $user->setReference_id($deliveryMan->getDelivery_man_id());
+                            $entityManager->flush();
+                        }
+
                         $session->set('delivery_man_id', $deliveryMan->getDelivery_man_id());
-                    } elseif ($user->getReference_id()) {
-                        $session->set('delivery_man_id', $user->getReference_id());
                     } else {
-                        $session->set('delivery_man_id', null);
+                        $session->set('delivery_man_id', $user->getReference_id());
                     }
                 }
 
@@ -163,6 +162,81 @@ final class SecurityController extends AbstractController
         $legacyHash = base64_encode(hash('sha256', $plainPassword, true));
 
         return hash_equals($stored, $legacyHash);
+    }
+
+    private function resolveOrCreateDeliveryManProfile(User $user, string $email, DeliveryManRepository $deliveryManRepository, EntityManagerInterface $entityManager): ?DeliveryMan
+    {
+        $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
+            ->andWhere('LOWER(dm.email) = :email')
+            ->setParameter('email', strtolower($email))
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (!$deliveryMan && $user->getReference_id()) {
+            $deliveryMan = $deliveryManRepository->find($user->getReference_id());
+        }
+
+        if ($deliveryMan) {
+            if (!$deliveryMan->getEmail()) {
+                $deliveryMan->setEmail(strtolower($email));
+            }
+            if (!$deliveryMan->getStatus()) {
+                $deliveryMan->setStatus('active');
+            }
+            if (!$deliveryMan->getUpdated_at()) {
+                $deliveryMan->setUpdated_at(new \DateTimeImmutable());
+            }
+            $entityManager->flush();
+
+            return $deliveryMan;
+        }
+
+        $displayName = trim((string) $user->getFirstName() . ' ' . (string) $user->getLastName());
+        if ($displayName === '') {
+            $displayName = strtok(strtolower($email), '@') ?: 'Delivery Driver';
+        }
+
+        $phone = $this->buildUniqueDeliveryManPhone($user->getPhone(), (int) ($user->getId() ?? 0), $deliveryManRepository);
+        $now = new \DateTimeImmutable();
+
+        $deliveryMan = new DeliveryMan();
+        $deliveryMan->setName($displayName);
+        $deliveryMan->setPhone($phone);
+        $deliveryMan->setEmail(strtolower($email));
+        $deliveryMan->setStatus('active');
+        $deliveryMan->setDate_of_joining(new \DateTimeImmutable('today'));
+        $deliveryMan->setRating(0.0);
+        $deliveryMan->setCreated_at($now);
+        $deliveryMan->setUpdated_at($now);
+
+        $entityManager->persist($deliveryMan);
+        $entityManager->flush();
+
+        return $deliveryMan;
+    }
+
+    private function buildUniqueDeliveryManPhone(?string $phone, int $userId, DeliveryManRepository $deliveryManRepository): string
+    {
+        $digits = preg_replace('/\D/', '', (string) $phone);
+        if ($digits === false) {
+            $digits = '';
+        }
+
+        if (strlen($digits) >= 8) {
+            $candidate = substr($digits, -8);
+        } else {
+            $candidate = str_pad((string) max(1, $userId), 8, '0', STR_PAD_LEFT);
+        }
+
+        $base = (int) $candidate;
+        $attempt = 0;
+        while ($deliveryManRepository->findOneBy(['phone' => $candidate])) {
+            $attempt++;
+            $candidate = str_pad((string) (($base + $attempt) % 100000000), 8, '0', STR_PAD_LEFT);
+        }
+
+        return $candidate;
     }
 
     private function normalizeRole(?string $role): string

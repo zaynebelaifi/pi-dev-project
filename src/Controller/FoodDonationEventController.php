@@ -17,6 +17,10 @@ final class FoodDonationEventController extends AbstractController
     #[Route(name: 'app_food_donation_event_index', methods: ['GET'])]
     public function index(Request $request, FoodDonationEventRepository $foodDonationEventRepository): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         $search = trim((string) $request->query->get('q', ''));
         $status = $request->query->get('status', '');
         $sort = $request->query->get('sort', 'event_date');
@@ -34,6 +38,10 @@ final class FoodDonationEventController extends AbstractController
     #[Route('/new', name: 'app_food_donation_event_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         $foodDonationEvent = new FoodDonationEvent();
         $form = $this->createForm(FoodDonationEventType::class, $foodDonationEvent);
         $form->handleRequest($request);
@@ -59,8 +67,12 @@ final class FoodDonationEventController extends AbstractController
     }
 
     #[Route('/{donation_event_id}', name: 'app_food_donation_event_show', methods: ['GET'])]
-    public function show(FoodDonationEvent $foodDonationEvent): Response
+    public function show(Request $request, FoodDonationEvent $foodDonationEvent): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         return $this->render('admin/food_donation_event/show.html.twig', [
             'food_donation_event' => $foodDonationEvent,
         ]);
@@ -69,6 +81,10 @@ final class FoodDonationEventController extends AbstractController
     #[Route('/{donation_event_id}/edit', name: 'app_food_donation_event_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, FoodDonationEvent $foodDonationEvent, EntityManagerInterface $entityManager): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         $form = $this->createForm(FoodDonationEventType::class, $foodDonationEvent);
         $form->handleRequest($request);
 
@@ -89,6 +105,10 @@ final class FoodDonationEventController extends AbstractController
     #[Route('/{donation_event_id}', name: 'app_food_donation_event_delete', methods: ['POST'])]
     public function delete(Request $request, FoodDonationEvent $foodDonationEvent, EntityManagerInterface $entityManager): Response
     {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         if ($this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $request->request->get('_token'))) {
             $entityManager->remove($foodDonationEvent);
             $entityManager->flush();
@@ -96,5 +116,14 @@ final class FoodDonationEventController extends AbstractController
         }
 
         return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    private function denyUnlessAdmin(Request $request): ?Response
+    {
+        if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        return null;
     }
 }

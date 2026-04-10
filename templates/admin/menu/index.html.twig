@@ -14,6 +14,7 @@
       <a href="{{ path('admin_menu_new') }}" class="t-btn primary">+ New Menu</a>
       <a href="{{ path('admin_dish_index') }}" class="t-btn">Manage Dishes</a>
     </div>
+    {% set hasFilters = search or sort != 'created_at' or dir != 'DESC' %}
     <form method="get" class="list-filters" data-live-search="true">
       <input type="text" name="q" value="{{ search|default('') }}" placeholder="Search menu title/description">
       <select name="sort">
@@ -26,7 +27,7 @@
         <option value="DESC" {{ dir == 'DESC' ? 'selected' : '' }}>Desc</option>
         <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
       </select>
-      {% if search %}
+      {% if hasFilters %}
         <a href="{{ path('admin_menu_index') }}" class="t-btn">Reset</a>
       {% endif %}
     </form>
@@ -158,25 +159,4 @@
       background: #fdeeee;
     }
   </style>
-  <script>
-    (() => {
-      const form = document.querySelector('.list-filters[data-live-search="true"]');
-      if (!form) return;
-
-      const input = form.querySelector('input[name="q"]');
-      const sort = form.querySelector('select[name="sort"]');
-      const dir = form.querySelector('select[name="dir"]');
-      let timer = null;
-
-      if (input) {
-        input.addEventListener('input', () => {
-          clearTimeout(timer);
-          timer = setTimeout(() => form.submit(), 300);
-        });
-      }
-
-      if (sort) sort.addEventListener('change', () => form.submit());
-      if (dir) dir.addEventListener('change', () => form.submit());
-    })();
-  </script>
 {% endblock %}

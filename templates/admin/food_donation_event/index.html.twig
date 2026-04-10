@@ -2,8 +2,150 @@
 
 {% block title %}Food Donation Events · BIG 4 Admin{% endblock %}
 {% block topbar_title %}Food Donation Events{% endblock %}
+{% block topbar_breadcrumb %}Big 4 · Admin · Donations · Events{% endblock %}
 
 {% block body %}
+  {% set totalDonationQty = 0 %}
+  {% for event in food_donation_events %}
+    {% set totalDonationQty = totalDonationQty + (event.totalQuantity ?? 0) %}
+  {% endfor %}
+
+  <style>
+    .don-card {
+      background: var(--ivory);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 6px 20px rgba(92, 61, 30, 0.08);
+    }
+    .don-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .8rem;
+      margin-bottom: 1rem;
+    }
+    .don-stat {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .9rem 1rem;
+      background: linear-gradient(145deg, rgba(250,246,239,.95), rgba(244,237,224,.85));
+    }
+    .don-stat-lbl {
+      font-size: .58rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: .35rem;
+    }
+    .don-stat-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      line-height: 1;
+      color: var(--espresso);
+    }
+    .list-filters .search-input,
+    .list-filters .status-filter {
+      box-shadow: inset 0 1px 3px rgba(92, 61, 30, .06);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .list-filters .search-input:focus,
+    .list-filters .status-filter:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(184, 135, 42, .12);
+      outline: none;
+    }
+    .tbl-card table tbody tr td {
+      vertical-align: middle;
+    }
+    .event-id {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      color: var(--gold);
+      font-size: 1rem;
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: .62rem;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .status-chip::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .status-pending {
+      background: rgba(58,126,201,.14);
+      color: #2363ac;
+      border-color: rgba(58,126,201,.24);
+    }
+    .status-scheduled {
+      background: rgba(124,79,196,.14);
+      color: #7043b8;
+      border-color: rgba(124,79,196,.24);
+    }
+    .status-completed {
+      background: rgba(46,158,106,.14);
+      color: #228657;
+      border-color: rgba(46,158,106,.24);
+    }
+    .status-cancelled {
+      background: rgba(217,64,64,.12);
+      color: #b83131;
+      border-color: rgba(217,64,64,.23);
+    }
+    .status-unknown {
+      background: rgba(168,140,110,.15);
+      color: #70533a;
+      border-color: rgba(168,140,110,.26);
+    }
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(250, 246, 239, .9);
+      font-size: .64rem;
+      color: var(--text-2);
+      font-weight: 600;
+    }
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+    .mini-action {
+      text-decoration: none;
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+      padding: .28rem .65rem;
+      border-radius: 8px;
+      font-size: .63rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      background: rgba(255,255,255,.6);
+      transition: all .2s;
+    }
+    .mini-action:hover {
+      color: var(--gold);
+      border-color: var(--gold);
+      background: var(--gold-wash);
+    }
+    @media (max-width: 1100px) {
+      .don-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
   <div class="sec-head">
     <div>
       <h2>Food Donation Events</h2>
@@ -12,15 +154,44 @@
     <a href="{{ path('app_food_donation_event_new') }}" class="t-btn primary">+ Create Event</a>
   </div>
 
-  <form method="get" class="list-filters live-filter-form" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search donation events" class="search-input" data-live-search-input style="flex:1;min-width:240px;padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);">
-    <select name="status" class="status-filter" data-live-status-filter style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;min-width:190px;background:var(--ivory);color:var(--text);">
+  <div class="don-grid">
+    <div class="don-stat">
+      <div class="don-stat-lbl">Total Events</div>
+      <div class="don-stat-val">{{ food_donation_events|length }}</div>
+    </div>
+    <div class="don-stat">
+      <div class="don-stat-lbl">Total Quantity Planned</div>
+      <div class="don-stat-val">{{ totalDonationQty }}</div>
+    </div>
+    <div class="don-stat">
+      <div class="don-stat-lbl">Active Status Filter</div>
+      <div class="don-stat-val" style="font-size:1.15rem;line-height:1.2">{{ status ?: 'All statuses' }}</div>
+    </div>
+  </div>
+
+  {% set hasFilters = search or status or sort != 'event_date' or direction != 'asc' %}
+  <form method="get" class="list-filters don-card" data-live-search="true" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search donation events" class="search-input" style="flex:1;min-width:240px;padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);">
+    <select name="status" class="status-filter" style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;min-width:190px;background:var(--ivory);color:var(--text);">
       <option value="">All statuses</option>
       <option value="PENDING" {{ status == 'PENDING' ? 'selected' : '' }}>Pending</option>
       <option value="SCHEDULED" {{ status == 'SCHEDULED' ? 'selected' : '' }}>Scheduled</option>
       <option value="COMPLETED" {{ status == 'COMPLETED' ? 'selected' : '' }}>Completed</option>
       <option value="CANCELLED" {{ status == 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
     </select>
+    <select name="sort" style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);color:var(--text);">
+      <option value="event_date" {{ sort == 'event_date' ? 'selected' : '' }}>Sort: Date</option>
+      <option value="donation_event_id" {{ sort == 'donation_event_id' ? 'selected' : '' }}>Sort: ID</option>
+      <option value="total_quantity" {{ sort == 'total_quantity' ? 'selected' : '' }}>Sort: Quantity</option>
+      <option value="charity_name" {{ sort == 'charity_name' ? 'selected' : '' }}>Sort: Charity</option>
+      <option value="status" {{ sort == 'status' ? 'selected' : '' }}>Sort: Status</option>
+      <option value="updated_at" {{ sort == 'updated_at' ? 'selected' : '' }}>Sort: Updated</option>
+    </select>
+    <select name="direction" style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);color:var(--text);">
+      <option value="asc" {{ direction == 'asc' ? 'selected' : '' }}>Asc</option>
+      <option value="desc" {{ direction == 'desc' ? 'selected' : '' }}>Desc</option>
+    </select>
+    {% if hasFilters %}<a href="{{ path('app_food_donation_event_index') }}" class="t-btn">Reset</a>{% endif %}
   </form>
 
   <div class="tbl-card">
@@ -28,38 +199,35 @@
       <div class="tbl-title">All Donation Events</div>
       <div>{{ food_donation_events|length }} events</div>
     </div>
-    <table data-live-table>
+    <table>
       <thead>
         <tr>
-          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'donation_event_id', direction: sort == 'donation_event_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="donationEventId" data-sort-type="number">ID{% if sort == 'donation_event_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
-          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'event_date', direction: sort == 'event_date' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="eventDate">Date{% if sort == 'event_date' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
-          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'total_quantity', direction: sort == 'total_quantity' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="totalQuantity" data-sort-type="number">Quantity{% if sort == 'total_quantity' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
-          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'charity_name', direction: sort == 'charity_name' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="charityName">Charity{% if sort == 'charity_name' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
-          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'status', direction: sort == 'status' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="status">Status{% if sort == 'status' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'donation_event_id', direction: sort == 'donation_event_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-link">ID{% if sort == 'donation_event_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'event_date', direction: sort == 'event_date' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-link">Date{% if sort == 'event_date' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'total_quantity', direction: sort == 'total_quantity' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-link">Quantity{% if sort == 'total_quantity' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'charity_name', direction: sort == 'charity_name' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-link">Charity{% if sort == 'charity_name' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'status', direction: sort == 'status' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-link">Status{% if sort == 'status' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
           <th>Delivery ID</th>
-          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'updated_at', direction: sort == 'updated_at' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="updatedAt">Updated At{% if sort == 'updated_at' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'updated_at', direction: sort == 'updated_at' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-link">Updated At{% if sort == 'updated_at' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for event in food_donation_events %}
-          <tr data-status="{{ event.status }}" data-search="{{ event.donationEventId }} {{ event.eventDate ? event.eventDate|date('Y-m-d') : '' }} {{ event.totalQuantity }} {{ event.charityName }} {{ event.status }} {{ event.deliveryId }}">
-            <td class="ord-id">#{{ event.donationEventId }}</td>
+          <tr>
+            <td class="event-id">#{{ event.donationEventId }}</td>
             <td>{{ event.eventDate ? event.eventDate|date('Y-m-d') : '—' }}</td>
             <td>{{ event.totalQuantity }}</td>
             <td>{{ event.charityName }}</td>
             <td>
-              <span class="sbadge {{ event.status == 'CANCELLED' ? 's-cancelled' : event.status == 'COMPLETED' ? 's-delivered' : event.status == 'PENDING' ? 's-pending' : 's-preparing' }}">{{ event.status ?: 'Unknown' }}</span>
+              {% set normalized = (event.status ?: 'UNKNOWN')|upper %}
+              <span class="status-chip {{ normalized == 'PENDING' ? 'status-pending' : normalized == 'SCHEDULED' ? 'status-scheduled' : normalized == 'COMPLETED' ? 'status-completed' : normalized == 'CANCELLED' ? 'status-cancelled' : 'status-unknown' }}">{{ normalized }}</span>
             </td>
-            <td>{{ event.deliveryId ?: 'NULL' }}</td>
+            <td>{% if event.deliveryId %}<span class="meta-pill">#{{ event.deliveryId }}</span>{% else %}<span class="meta-pill">Not linked</span>{% endif %}</td>
             <td>{{ event.updatedAt ? event.updatedAt|date('Y-m-d H:i') : '—' }}</td>
             <td class="table-actions">
               <a class="mini-action" href="{{ path('app_food_donation_event_edit', {donation_event_id: event.donationEventId}) }}">Edit</a>
               <a class="mini-action" href="{{ path('app_food_donation_event_show', {donation_event_id: event.donationEventId}) }}">View</a>
-              <form method="post" action="{{ path('app_food_donation_event_delete', {donation_event_id: event.donationEventId}) }}" onsubmit="return confirm('Delete this event?');">
-                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.donationEventId) }}">
-                <button class="mini-action mini-action-danger" type="submit">Delete</button>
-              </form>
             </td>
           </tr>
         {% else %}

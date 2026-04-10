@@ -555,15 +555,34 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/driver', name: 'app_driver_deliveries', methods: ['GET'])]
-    public function driverDeliveries(Request $request, DeliveryRepository $deliveryRepository): Response
+    public function driverDeliveries(Request $request, DeliveryRepository $deliveryRepository, DeliveryManRepository $deliveryManRepository): Response
     {
-        if ($request->getSession()->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+        $session = $request->getSession();
+
+        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
             return $this->redirectToRoute('app_login');
         }
 
-        $deliveryManId = $request->getSession()->get('delivery_man_id');
+        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+        if ($deliveryManId <= 0) {
+            $driverEmail = strtolower(trim((string) $session->get('user_email', '')));
+            if ($driverEmail !== '') {
+                $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
+                    ->andWhere('LOWER(dm.email) = :email')
+                    ->setParameter('email', $driverEmail)
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+
+                if ($deliveryMan && $deliveryMan->getDelivery_man_id()) {
+                    $deliveryManId = $deliveryMan->getDelivery_man_id();
+                    $session->set('delivery_man_id', $deliveryManId);
+                }
+            }
+        }
+
         $deliveries = [];
-        if ($deliveryManId) {
+        if ($deliveryManId > 0) {
             $deliveries = $deliveryRepository->findByDeliveryManId($deliveryManId);
         }
 

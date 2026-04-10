@@ -28,10 +28,28 @@ final class AdminDishRecipeController extends AbstractController
             return $redirect;
         }
 
+        $search = trim((string) $request->query->get('q', ''));
+        $status = trim((string) $request->query->get('status', ''));
+        $sort = (string) $request->query->get('sort', 'ingredient');
+        $dir = strtoupper((string) $request->query->get('dir', 'ASC'));
+        $today = new \DateTimeImmutable('today');
+
         return $this->render('admin/dish/recipe.html.twig', [
             'dish' => $dish,
-            'recipeLines' => $dishIngredientRepository->findByDishWithIngredient($dish),
+            'recipeLines' => $dishIngredientRepository->findByDishWithIngredient(
+                $dish,
+                '' === $search ? null : $search,
+                '' === $status ? null : $status,
+                $sort,
+                $dir,
+                $today
+            ),
             'availability' => $availabilityService->evaluateDish($dish),
+            'search' => $search,
+            'status' => $status,
+            'sort' => $sort,
+            'dir' => 'DESC' === $dir ? 'DESC' : 'ASC',
+            'today' => $today,
         ]);
     }
 

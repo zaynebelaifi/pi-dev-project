@@ -26,10 +26,40 @@
     <div class="kpi"><div class="kpi-lbl">Inventory Value</div><div class="kpi-val">{{ stats.inventoryValue|number_format(2, '.', ' ') }} <span style="font-size:1rem; color:var(--text-3)">TND</span></div></div>
   </div>
 
-  <form method="get" class="list-filters" style="margin-bottom:1rem; display:flex; gap:.5rem;">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search ingredient or unit" style="min-width:280px; padding:.65rem .8rem; border:1px solid var(--border-2); border-radius:8px;">
-    <button type="submit" class="t-btn">Search</button>
-    {% if search %}<a href="{{ path('admin_ingredient_index') }}" class="t-btn">Reset</a>{% endif %}
+  {% set hasFilters = search or status or unit or sort != 'name' or dir != 'ASC' %}
+  <form method="get" class="list-filters" data-live-search="true" style="margin-bottom:1rem; display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search ingredient or unit" style="min-width:240px; padding:.65rem .8rem; border:1px solid var(--border-2); border-radius:8px;">
+
+    <select name="status" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="" {{ status == '' ? 'selected' : '' }}>All Status</option>
+      <option value="healthy" {{ status == 'healthy' ? 'selected' : '' }}>Healthy</option>
+      <option value="low" {{ status == 'low' ? 'selected' : '' }}>Low Stock</option>
+      <option value="expired" {{ status == 'expired' ? 'selected' : '' }}>Expired</option>
+    </select>
+
+    <select name="unit" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="" {{ unit == '' ? 'selected' : '' }}>All Units</option>
+      {% for unitOption in units %}
+        <option value="{{ unitOption }}" {{ unitOption == unit ? 'selected' : '' }}>{{ unitOption }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="sort" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="name" {{ sort == 'name' ? 'selected' : '' }}>Sort: Name</option>
+      <option value="quantityInStock" {{ sort == 'quantityInStock' ? 'selected' : '' }}>Sort: Stock</option>
+      <option value="minStockLevel" {{ sort == 'minStockLevel' ? 'selected' : '' }}>Sort: Min Level</option>
+      <option value="unit" {{ sort == 'unit' ? 'selected' : '' }}>Sort: Unit</option>
+      <option value="unitCost" {{ sort == 'unitCost' ? 'selected' : '' }}>Sort: Unit Cost</option>
+      <option value="expiryDate" {{ sort == 'expiryDate' ? 'selected' : '' }}>Sort: Expiry</option>
+      <option value="createdAt" {{ sort == 'createdAt' ? 'selected' : '' }}>Sort: Created</option>
+    </select>
+
+    <select name="dir" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
+      <option value="DESC" {{ dir == 'DESC' ? 'selected' : '' }}>Desc</option>
+    </select>
+
+    {% if hasFilters %}<a href="{{ path('admin_ingredient_index') }}" class="t-btn">Reset</a>{% endif %}
   </form>
 
   <div class="delivery-table-card">

@@ -26,13 +26,29 @@ final class AdminIngredientController extends AbstractController
         }
 
         $search = trim((string) $request->query->get('q', ''));
-        $ingredients = $ingredientRepository->findForAdminList($search);
+        $sort = (string) $request->query->get('sort', 'name');
+        $dir = strtoupper((string) $request->query->get('dir', 'ASC'));
+        $stockStatus = trim((string) $request->query->get('status', ''));
+        $unit = trim((string) $request->query->get('unit', ''));
 
         $today = new \DateTimeImmutable('today');
+        $ingredients = $ingredientRepository->findForAdminList(
+            $search,
+            $sort,
+            $dir,
+            '' === $stockStatus ? null : $stockStatus,
+            '' === $unit ? null : $unit,
+            $today
+        );
 
         return $this->render('admin/inventory/ingredient/index.html.twig', [
             'ingredients' => $ingredients,
             'search' => $search,
+            'sort' => $sort,
+            'dir' => 'DESC' === $dir ? 'DESC' : 'ASC',
+            'status' => $stockStatus,
+            'unit' => $unit,
+            'units' => $ingredientRepository->findDistinctUnits(),
             'stats' => [
                 'total' => count($ingredients),
                 'lowStock' => $ingredientRepository->countLowStock(),

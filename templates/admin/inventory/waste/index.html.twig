@@ -20,10 +20,35 @@
     <div class="kpi"><div class="kpi-lbl">Total Wasted Quantity</div><div class="kpi-val">{{ totalWasted|number_format(2, '.', ' ') }}</div></div>
   </div>
 
-  <form method="get" class="list-filters" style="margin-bottom:1rem; display:flex; gap:.5rem;">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search ingredient/type/reason" style="min-width:280px; padding:.65rem .8rem; border:1px solid var(--border-2); border-radius:8px;">
-    <button type="submit" class="t-btn">Search</button>
-    {% if search %}<a href="{{ path('admin_waste_index') }}" class="t-btn">Reset</a>{% endif %}
+  {% set hasFilters = search or wasteType or dateFrom or dateTo or sort != 'date' or dir != 'DESC' %}
+  <form method="get" class="list-filters" data-live-search="true" style="margin-bottom:1rem; display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search ingredient/type/reason" style="min-width:220px; padding:.65rem .8rem; border:1px solid var(--border-2); border-radius:8px;">
+
+    <select name="waste_type" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="" {{ wasteType == '' ? 'selected' : '' }}>All Types</option>
+      {% for option in wasteTypes %}
+        <option value="{{ option }}" {{ option == wasteType ? 'selected' : '' }}>{{ option }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="date" name="date_from" value="{{ dateFrom }}" title="From date" style="padding:.55rem .7rem; border:1px solid var(--border-2); border-radius:8px;">
+    <input type="date" name="date_to" value="{{ dateTo }}" title="To date" style="padding:.55rem .7rem; border:1px solid var(--border-2); border-radius:8px;">
+
+    <select name="sort" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="date" {{ sort == 'date' ? 'selected' : '' }}>Sort: Date</option>
+      <option value="ingredient" {{ sort == 'ingredient' ? 'selected' : '' }}>Sort: Ingredient</option>
+      <option value="quantityWasted" {{ sort == 'quantityWasted' ? 'selected' : '' }}>Sort: Quantity</option>
+      <option value="wasteType" {{ sort == 'wasteType' ? 'selected' : '' }}>Sort: Type</option>
+      <option value="reason" {{ sort == 'reason' ? 'selected' : '' }}>Sort: Reason</option>
+      <option value="id" {{ sort == 'id' ? 'selected' : '' }}>Sort: ID</option>
+    </select>
+
+    <select name="dir" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="DESC" {{ dir == 'DESC' ? 'selected' : '' }}>Desc</option>
+      <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
+    </select>
+
+    {% if hasFilters %}<a href="{{ path('admin_waste_index') }}" class="t-btn">Reset</a>{% endif %}
   </form>
 
   <div class="delivery-table-card">

@@ -22,6 +22,7 @@
         {{ selectedMenu ? 'Back to Menu' : 'Back to Menus' }}
       </a>
     </div>
+    {% set hasFilters = search or sort != 'created_at' or dir != 'DESC' %}
     <form method="get" class="list-filters" data-live-search="true">
       {% if selectedMenu %}
         <input type="hidden" name="menu" value="{{ selectedMenu.id }}">
@@ -39,7 +40,7 @@
         <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
       </select>
       {% set resetParams = selectedMenu ? {menu: selectedMenu.id} : {} %}
-      {% if search %}
+      {% if hasFilters %}
         <a href="{{ path('admin_dish_index', resetParams) }}" class="t-btn">Reset</a>
       {% endif %}
     </form>
@@ -181,25 +182,4 @@
       background: #fdeeee;
     }
   </style>
-  <script>
-    (() => {
-      const form = document.querySelector('.list-filters[data-live-search="true"]');
-      if (!form) return;
-
-      const input = form.querySelector('input[name="q"]');
-      const sort = form.querySelector('select[name="sort"]');
-      const dir = form.querySelector('select[name="dir"]');
-      let timer = null;
-
-      if (input) {
-        input.addEventListener('input', () => {
-          clearTimeout(timer);
-          timer = setTimeout(() => form.submit(), 300);
-        });
-      }
-
-      if (sort) sort.addEventListener('change', () => form.submit());
-      if (dir) dir.addEventListener('change', () => form.submit());
-    })();
-  </script>
 {% endblock %}
