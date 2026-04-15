@@ -6,11 +6,14 @@ use App\Repository\IngredientRepository;
 use App\Repository\WasterecordRepository;
 use App\Repository\DeliveryManRepository;
 use App\Repository\DeliveryRepository;
+use App\Service\AdminAnalyticsService;
 use App\Service\ExpiredIngredientWasteService;
+use App\Utils\AiStockInsightService;
 use App\Repository\UserRepository;
 use App\Repository\FleetCarRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -260,9 +263,7 @@ final class AdminController extends AbstractController
     #[Route('/analytics', name: 'app_admin_analytics', methods: ['GET'])]
     public function analytics(
         Request $request,
-        EntityManagerInterface $entityManager,
-        IngredientRepository $ingredientRepository,
-        WasterecordRepository $wasterecordRepository,
+        AdminAnalyticsService $adminAnalyticsService,
     ): Response
     {
         $session = $request->getSession();
@@ -270,170 +271,43 @@ final class AdminController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $conn = $entityManager->getConnection();
-        $today = new \DateTimeImmutable('today');
-        $from = $today->sub(new \DateInterval('P6D'));
-        $previousFrom = $from->sub(new \DateInterval('P7D'));
-
-        $summary = $conn->fetchAssociative(
-            'SELECT
-                COUNT(*) AS total_deliveries,
-                COALESCE(SUM(order_total), 0) AS total_revenue,
-                COALESCE(AVG(order_total), 0) AS avg_order,
-                COALESCE(SUM(CASE WHEN DATE(created_at) = CURDATE() THEN order_total ELSE 0 END), 0) AS today_revenue
-             FROM delivery'
-        ) ?: [];
-
-        $statusRows = $conn->fetchAllAssociative(
-            'SELECT UPPER(COALESCE(status, "UNKNOWN")) AS status_name, COUNT(*) AS total
-             FROM delivery
-             GROUP BY UPPER(COALESCE(status, "UNKNOWN"))'
+        $viewData = $adminAnalyticsService->buildAnalyticsViewData(
+            (string) $request->query->get('waste_period', 'Month'),
+            (string) $request->query->get('revenue_period', 'Month'),
+            trim((string) $request->query->get('revenue_from', '')),
+            trim((string) $request->query->get('revenue_to', '')),
+            (string) $request->query->get('revenue_sort', 'revenue_desc')
         );
 
-        $currentRangeRevenue = (float) ($conn->fetchOne(
-            'SELECT COALESCE(SUM(order_total), 0)
-             FROM delivery
-             WHERE created_at >= :fromDate AND created_at < :toDate',
-            [
-                'fromDate' => $from->format('Y-m-d 00:00:00'),
-                'toDate' => $today->modify('+1 day')->format('Y-m-d 00:00:00'),
-            ]
-        ) ?: 0);
+        return $this->render('admin/analytics.html.twig', $viewData);
+    }
 
-        $previousRangeRevenue = (float) ($conn->fetchOne(
-            'SELECT COALESCE(SUM(order_total), 0)
-             FROM delivery
-             WHERE created_at >= :fromDate AND created_at < :toDate',
-            [
-                'fromDate' => $previousFrom->format('Y-m-d 00:00:00'),
-                'toDate' => $from->format('Y-m-d 00:00:00'),
-            ]
-        ) ?: 0);
-
-        $trendRows = $conn->fetchAllAssociative(
-            'SELECT DATE(created_at) AS day_key,
-                    COUNT(*) AS deliveries,
-                    COALESCE(SUM(order_total), 0) AS revenue
-             FROM delivery
-             WHERE created_at >= :fromDate
-             GROUP BY DATE(created_at)
-             ORDER BY day_key ASC',
-            ['fromDate' => $from->format('Y-m-d 00:00:00')]
-        );
-
-        $trendMap = [];
-        foreach ($trendRows as $row) {
-            $trendMap[(string) $row['day_key']] = [
-                'deliveries' => (int) $row['deliveries'],
-                'revenue' => (float) $row['revenue'],
-            ];
+    #[Route('/analytics/stock-chat', name: 'app_admin_stock_chat', methods: ['POST'])]
+    public function stockChat(
+        Request $request,
+        AdminAnalyticsService $adminAnalyticsService,
+        AiStockInsightService $aiStockInsightService,
+    ): JsonResponse
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return new JsonResponse(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
 
-        $dailySeries = [];
-        $maxDailyRevenue = 0.0;
-        for ($i = 0; $i < 7; $i++) {
-            $day = $from->modify('+' . $i . ' day');
-            $key = $day->format('Y-m-d');
-            $point = $trendMap[$key] ?? ['deliveries' => 0, 'revenue' => 0.0];
-            $maxDailyRevenue = max($maxDailyRevenue, (float) $point['revenue']);
-            $dailySeries[] = [
-                'label' => $day->format('D'),
-                'fullDate' => $day->format('d M'),
-                'deliveries' => (int) $point['deliveries'],
-                'revenue' => (float) $point['revenue'],
-            ];
+        $payload = json_decode((string) $request->getContent(), true);
+        $question = trim((string) ($payload['question'] ?? ''));
+
+        if ('' === $question) {
+            return new JsonResponse(['message' => 'Question is required.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $topWasteRows = $conn->fetchAllAssociative(
-            'SELECT COALESCE(i.name, "Unknown") AS ingredient,
-                    COALESCE(SUM(w.quantityWasted), 0) AS quantity
-             FROM wasterecord w
-             LEFT JOIN ingredient i ON i.id = w.ingredientId
-             GROUP BY w.ingredientId, i.name
-             ORDER BY quantity DESC
-             LIMIT 5'
-        );
+        $context = $adminAnalyticsService->buildChatContext();
+        $result = $aiStockInsightService->answerQuestion($question, $context);
 
-        $topWaste = array_map(static fn (array $row): array => [
-            'ingredient' => (string) $row['ingredient'],
-            'quantity' => (float) $row['quantity'],
-        ], $topWasteRows);
-
-        $maxWaste = 0.0;
-        foreach ($topWaste as $item) {
-            $maxWaste = max($maxWaste, $item['quantity']);
-        }
-
-        $roleRows = $conn->fetchAllAssociative(
-            'SELECT UPPER(COALESCE(role, "UNKNOWN")) AS role_name, COUNT(*) AS total
-             FROM `user`
-             GROUP BY UPPER(COALESCE(role, "UNKNOWN"))'
-        );
-
-        $roleLabels = [
-            'ROLE_ADMIN' => 'Admin',
-            'ADMIN' => 'Admin',
-            'ROLE_CLIENT' => 'Client',
-            'CLIENT' => 'Client',
-            'ROLE_DELIVERY_MAN' => 'Delivery',
-            'DELIVERY_MAN' => 'Delivery',
-            'DELIVERY' => 'Delivery',
-        ];
-
-        $roleDistribution = [];
-        foreach ($roleRows as $row) {
-            $raw = (string) $row['role_name'];
-            $label = $roleLabels[$raw] ?? $raw;
-            if (!isset($roleDistribution[$label])) {
-                $roleDistribution[$label] = 0;
-            }
-            $roleDistribution[$label] += (int) $row['total'];
-        }
-
-        $totalUsers = array_sum($roleDistribution);
-
-        $statusDistribution = [
-            'PENDING' => 0,
-            'ASSIGNED' => 0,
-            'DELIVERED' => 0,
-            'OTHER' => 0,
-        ];
-        foreach ($statusRows as $row) {
-            $status = (string) $row['status_name'];
-            $count = (int) $row['total'];
-            if (isset($statusDistribution[$status])) {
-                $statusDistribution[$status] += $count;
-            } else {
-                $statusDistribution['OTHER'] += $count;
-            }
-        }
-
-        $revenueDeltaPct = $previousRangeRevenue > 0
-            ? (($currentRangeRevenue - $previousRangeRevenue) / $previousRangeRevenue) * 100
-            : ($currentRangeRevenue > 0 ? 100.0 : 0.0);
-
-        return $this->render('admin/analytics.html.twig', [
-            'summary' => [
-                'totalDeliveries' => (int) ($summary['total_deliveries'] ?? 0),
-                'totalRevenue' => (float) ($summary['total_revenue'] ?? 0),
-                'avgOrder' => (float) ($summary['avg_order'] ?? 0),
-                'todayRevenue' => (float) ($summary['today_revenue'] ?? 0),
-            ],
-            'statusDistribution' => $statusDistribution,
-            'dailySeries' => $dailySeries,
-            'maxDailyRevenue' => $maxDailyRevenue,
-            'topWaste' => $topWaste,
-            'maxWaste' => $maxWaste,
-            'ingredientHealth' => [
-                'total' => $ingredientRepository->count([]),
-                'lowStock' => $ingredientRepository->countLowStock(),
-                'expired' => $ingredientRepository->countExpired($today),
-                'inventoryValue' => $ingredientRepository->sumInventoryValue(),
-                'totalWaste' => $wasterecordRepository->totalWastedQuantity(),
-            ],
-            'roleDistribution' => $roleDistribution,
-            'totalUsers' => $totalUsers,
-            'revenueDeltaPct' => $revenueDeltaPct,
+        return new JsonResponse([
+            'answer' => (string) ($result['answer'] ?? ''),
+            'usedFallback' => (bool) ($result['usedFallback'] ?? false),
+            'fallbackReason' => (string) ($result['reason'] ?? ''),
         ]);
     }
 }

@@ -11,6 +11,7 @@
     </div>
     <div style="display:flex; gap:.7rem;">
       <a href="{{ path('admin_ingredient_index') }}" class="t-btn">Ingredients</a>
+      <a href="{{ path('admin_waste_export_pdf', app.request.query.all) }}" class="t-btn">Export PDF</a>
       <a href="{{ path('admin_waste_new') }}" class="t-btn primary">+ Log Waste</a>
     </div>
   </div>

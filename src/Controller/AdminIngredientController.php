@@ -5,9 +5,11 @@ namespace App\Controller;
 use App\Entity\Ingredient;
 use App\Form\IngredientType;
 use App\Repository\IngredientRepository;
+use App\Service\IngredientCsvImportService;
 use App\Service\IngredientInventorySyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -57,6 +59,56 @@ final class AdminIngredientController extends AbstractController
             ],
             'today' => $today,
         ]);
+    }
+
+    #[Route('/import-csv', name: 'admin_ingredient_import_csv', methods: ['POST'])]
+    public function importCsv(Request $request, IngredientCsvImportService $ingredientCsvImportService): Response
+    {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
+        if (!$this->isCsrfTokenValid('import_ingredients_csv', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid token.');
+
+            return $this->redirectToRoute('admin_ingredient_index');
+        }
+
+        $csvFile = $request->files->get('csv_file');
+        if (!$csvFile instanceof UploadedFile || !$csvFile->isValid()) {
+            $this->addFlash('error', 'Please upload a valid CSV file.');
+
+            return $this->redirectToRoute('admin_ingredient_index');
+        }
+
+        $extension = strtolower((string) $csvFile->getClientOriginalExtension());
+        if ('csv' !== $extension && 'text/csv' !== $csvFile->getMimeType()) {
+            $this->addFlash('error', 'Invalid file type. Upload a .csv file.');
+
+            return $this->redirectToRoute('admin_ingredient_index');
+        }
+
+        $result = $ingredientCsvImportService->import($csvFile);
+
+        $this->addFlash(
+            'success',
+            sprintf(
+                'CSV import complete: %d created, %d updated, %d skipped, %d processed. Header detected: %s. Delimiter: %s.',
+                (int) ($result['created'] ?? 0),
+                (int) ($result['updated'] ?? 0),
+                (int) ($result['skipped'] ?? 0),
+                (int) ($result['processed'] ?? 0),
+                !empty($result['headerDetected']) ? 'yes' : 'no',
+                (string) ($result['delimiter'] ?? ',')
+            )
+        );
+
+        $errors = array_slice($result['errors'] ?? [], 0, 8);
+        foreach ($errors as $error) {
+            $this->addFlash('error', (string) $error);
+        }
+
+        return $this->redirectToRoute('admin_ingredient_index');
     }
 
     #[Route('/new', name: 'admin_ingredient_new', methods: ['GET', 'POST'])]
