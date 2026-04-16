@@ -1,0 +1,145 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Tables — BIG 4{% endblock %}
+{% block topbar_title %}Restaurant Tables{% endblock %}
+
+{% block body %}
+
+<div class="sec-head">
+  <div>
+    <h2>Restaurant Tables</h2>
+    <p class="sec-sub">Manage seating capacity and table availability.</p>
+  </div>
+  <a href="{{ path('table_new') }}" class="t-btn primary">+ Add Table</a>
+</div>
+
+<!-- KPI -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-lbl">Total Tables</div>
+    <div class="kpi-val">{{ total }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Available</div>
+    <div class="kpi-val">{{ available }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Occupied</div>
+    <div class="kpi-val">{{ occupied }}</div>
+  </div>
+</div>
+
+<!-- Flash messages -->
+{% for msg in app.flashes('success') %}
+  <div style="margin-bottom:1rem;padding:.75rem 1rem;border:1px solid rgba(46,158,106,.25);border-radius:8px;background:rgba(46,158,106,.08);color:var(--green);">
+    {{ msg }}
+  </div>
+{% endfor %}
+
+<div class="panel">
+
+  <!-- Search + Sort -->
+  <form method="get" style="display:flex;gap:.6rem;margin-bottom:1.2rem;align-items:center;">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search by status or capacity…"
+      style="flex:1;padding:.45rem .75rem;border:1px solid var(--border-2);border-radius:6px;font-size:.78rem;background:var(--ivory);color:var(--text);">
+
+    <select name="sort" style="padding:.4rem;border-radius:6px;border:1px solid var(--border-2);font-size:.75rem;">
+      <option value="table_id" {{ sort == 'table_id' ? 'selected' }}>ID</option>
+      <option value="capacity" {{ sort == 'capacity' ? 'selected' }}>Capacity</option>
+      <option value="status"   {{ sort == 'status'   ? 'selected' }}>Status</option>
+    </select>
+
+    <select name="direction" style="padding:.4rem;border-radius:6px;border:1px solid var(--border-2);font-size:.75rem;">
+      <option value="ASC"  {{ direction == 'ASC'  ? 'selected' }}>ASC</option>
+      <option value="DESC" {{ direction == 'DESC' ? 'selected' }}>DESC</option>
+    </select>
+
+    <button type="submit" class="t-btn primary" style="padding:.4rem .9rem;">Apply</button>
+
+    {% if search %}
+      <a href="{{ path('table_index') }}" class="t-btn">Clear</a>
+    {% endif %}
+  </form>
+
+  <!-- Table -->
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>
+          <a href="{{ path('table_index', {sort: 'table_id', direction: sort == 'table_id' and direction == 'ASC' ? 'DESC' : 'ASC', search: search}) }}"
+             style="display:flex;align-items:center;gap:.3rem;">
+            #
+            {% if sort == 'table_id' %}<span>{{ direction == 'ASC' ? '↑' : '↓' }}</span>{% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="{{ path('table_index', {sort: 'capacity', direction: sort == 'capacity' and direction == 'ASC' ? 'DESC' : 'ASC', search: search}) }}"
+             style="display:flex;align-items:center;gap:.3rem;">
+            Capacity
+            {% if sort == 'capacity' %}<span>{{ direction == 'ASC' ? '↑' : '↓' }}</span>{% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="{{ path('table_index', {sort: 'status', direction: sort == 'status' and direction == 'ASC' ? 'DESC' : 'ASC', search: search}) }}"
+             style="display:flex;align-items:center;gap:.3rem;">
+            Status
+            {% if sort == 'status' %}<span>{{ direction == 'ASC' ? '↑' : '↓' }}</span>{% endif %}
+          </a>
+        </th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    {% for t in tables %}
+      <tr>
+        <td style="color:var(--text-3);font-size:.72rem;">#{{ t.tableId }}</td>          {# ✅ #}
+
+        <td>
+          <span style="font-weight:500;">{{ t.capacity }}</span>
+          <span style="font-size:.7rem;color:var(--text-3);"> seats</span>
+        </td>
+
+        <td>
+          {% if t.status == 'AVAILABLE' %}
+            <span class="badge green" style="color:#111 !important;">Available</span>
+          {% else %}
+            <span class="badge amber" style="color:#111 !important;">Reserved</span>
+          {% endif %}
+        </td>
+
+        <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
+
+          <a href="{{ path('table_edit', {id: t.tableId}) }}"                            {# ✅ #}
+             class="t-btn" style="font-size:.68rem;">Edit</a>
+
+          <form method="post" action="{{ path('table_toggle', {id: t.tableId}) }}">       {# ✅ #}
+            <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ t.tableId) }}">  {# ✅ #}
+            <button class="t-btn" style="font-size:.68rem;color:var(--blue);border-color:var(--blue);">
+              {{ t.status == 'AVAILABLE' ? '→ Reserve' : '→ Free Up' }}
+            </button>
+          </form>
+
+          <form method="post" action="{{ path('table_delete', {id: t.tableId}) }}">       {# ✅ #}
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ t.tableId) }}">  {# ✅ #}
+            <button class="t-btn" style="font-size:.68rem;color:var(--red);border-color:var(--red);"
+              onclick="return confirm('Delete Table #{{ t.tableId }}?')">                 {# ✅ #}
+              Delete
+            </button>
+          </form>
+
+        </td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="4" style="text-align:center;padding:2rem;color:var(--text-3);">
+          No tables found. Add your first table.
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+
+{% endblock %}

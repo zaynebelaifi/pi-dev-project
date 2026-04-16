@@ -1,0 +1,156 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Ingredients · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Ingredient Stock{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Ingredient Inventory</h2>
+      <p class="sec-sub">Manage stock, costs, expiry and low-stock risks.</p>
+    </div>
+    <div style="display:flex; gap:.7rem;">
+      <a href="{{ path('admin_waste_index') }}" class="t-btn">Waste Logs</a>
+      <form method="post" action="{{ path('admin_ingredient_import_csv') }}" enctype="multipart/form-data" style="display:flex; gap:.45rem; align-items:center;">
+        <input type="hidden" name="_token" value="{{ csrf_token('import_ingredients_csv') }}">
+        <input type="file" name="csv_file" accept=".csv,text/csv" required style="max-width:220px; font-size:.72rem;">
+        <button type="submit" class="t-btn">Import CSV</button>
+      </form>
+      <form method="post" action="{{ path('admin_ingredient_sync_all') }}" style="display:inline-block;">
+        <input type="hidden" name="_token" value="{{ csrf_token('sync_ingredients') }}">
+        <button type="submit" class="t-btn" onclick="return confirm('Run full inventory sync? This will move expired stock to waste and merge duplicate ingredients.');">Fix Inventory</button>
+      </form>
+      <a href="{{ path('admin_ingredient_new') }}" class="t-btn primary">+ New Ingredient</a>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="margin-bottom:1.2rem;">
+    <div class="kpi"><div class="kpi-lbl">Total Ingredients</div><div class="kpi-val">{{ stats.total }}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Low Stock</div><div class="kpi-val">{{ stats.lowStock }}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Expired</div><div class="kpi-val">{{ stats.expired }}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Inventory Value</div><div class="kpi-val">{{ stats.inventoryValue|number_format(2, '.', ' ') }} <span style="font-size:1rem; color:var(--text-3)">TND</span></div></div>
+  </div>
+
+  {% set hasFilters = search or status or unit or sort != 'name' or dir != 'ASC' %}
+  <form method="get" class="list-filters" data-live-search="true" style="margin-bottom:1rem; display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search ingredient or unit" style="min-width:240px; padding:.65rem .8rem; border:1px solid var(--border-2); border-radius:8px;">
+
+    <select name="status" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="" {{ status == '' ? 'selected' : '' }}>All Status</option>
+      <option value="healthy" {{ status == 'healthy' ? 'selected' : '' }}>Healthy</option>
+      <option value="low" {{ status == 'low' ? 'selected' : '' }}>Low Stock</option>
+      <option value="expired" {{ status == 'expired' ? 'selected' : '' }}>Expired</option>
+    </select>
+
+    <select name="unit" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="" {{ unit == '' ? 'selected' : '' }}>All Units</option>
+      {% for unitOption in units %}
+        <option value="{{ unitOption }}" {{ unitOption == unit ? 'selected' : '' }}>{{ unitOption }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="sort" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="name" {{ sort == 'name' ? 'selected' : '' }}>Sort: Name</option>
+      <option value="quantityInStock" {{ sort == 'quantityInStock' ? 'selected' : '' }}>Sort: Stock</option>
+      <option value="minStockLevel" {{ sort == 'minStockLevel' ? 'selected' : '' }}>Sort: Min Level</option>
+      <option value="unit" {{ sort == 'unit' ? 'selected' : '' }}>Sort: Unit</option>
+      <option value="unitCost" {{ sort == 'unitCost' ? 'selected' : '' }}>Sort: Unit Cost</option>
+      <option value="expiryDate" {{ sort == 'expiryDate' ? 'selected' : '' }}>Sort: Expiry</option>
+      <option value="createdAt" {{ sort == 'createdAt' ? 'selected' : '' }}>Sort: Created</option>
+    </select>
+
+    <select name="dir" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
+      <option value="DESC" {{ dir == 'DESC' ? 'selected' : '' }}>Desc</option>
+    </select>
+
+    {% if hasFilters %}<a href="{{ path('admin_ingredient_index') }}" class="t-btn">Reset</a>{% endif %}
+  </form>
+
+  <div class="delivery-table-card">
+    <div class="table-header">
+      <div class="table-title">Stock List</div>
+      <div class="table-count">{{ ingredients|length }} rows</div>
+    </div>
+
+    {% if ingredients is empty %}
+      <div class="no-results">No ingredients found.</div>
+    {% else %}
+      <table class="delivery-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Stock</th>
+            <th>Min</th>
+            <th>Unit</th>
+            <th>Unit Cost</th>
+            <th>Expiry</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ingredient in ingredients %}
+            {% set lowStock = ingredient.quantityInStock <= ingredient.minStockLevel %}
+            {% set expired = ingredient.expiryDate and ingredient.expiryDate|date('Y-m-d') < today|date('Y-m-d') %}
+            <tr class="{{ lowStock or expired ? 'warn-row' : '' }}">
+              <td>{{ ingredient.name }}</td>
+              <td>{{ ingredient.quantityInStock|number_format(2, '.', ' ') }}</td>
+              <td>{{ ingredient.minStockLevel|number_format(2, '.', ' ') }}</td>
+              <td>{{ ingredient.unit }}</td>
+              <td>{{ ingredient.unitCost|number_format(2, '.', ' ') }} TND</td>
+              <td>{{ ingredient.expiryDate ? ingredient.expiryDate|date('Y-m-d') : '—' }}</td>
+              <td>
+                {% if expired %}
+                  <span class="status-badge status-cancelled">Expired</span>
+                {% elseif lowStock %}
+                  <span class="status-badge status-pending">Low Stock</span>
+                {% else %}
+                  <span class="status-badge status-completed">Healthy</span>
+                {% endif %}
+              </td>
+              <td class="action-cell">
+                <a href="{{ path('admin_ingredient_edit', {id: ingredient.id}) }}" class="mini-action">Edit</a>
+                <form method="post" action="{{ path('admin_ingredient_delete', {id: ingredient.id}) }}" onsubmit="return confirm('Delete this ingredient?');" style="display:inline-block;">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete_ingredient' ~ ingredient.id) }}">
+                  <button class="mini-action mini-action-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <style>
+    .warn-row {
+      background: #fff7ef;
+    }
+    .action-cell {
+      display:flex;
+      gap:.45rem;
+      flex-wrap:wrap;
+    }
+    .mini-action {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:.35rem .6rem;
+      border-radius:7px;
+      border:1px solid var(--border-2);
+      background:#fff;
+      color:var(--espresso);
+      text-decoration:none;
+      font-size:.78rem;
+      font-weight:600;
+      line-height:1;
+      cursor:pointer;
+    }
+    .mini-action-danger {
+      border-color:#dfb6b1;
+      color:#8f1f1f;
+      background:#fff7f6;
+    }
+  </style>
+{% endblock %}

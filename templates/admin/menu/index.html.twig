@@ -1,0 +1,162 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Menu Manager · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Menu Manager{% endblock %}
+
+{% block body %}
+  <div class="delivery-header">
+    <h2>Menu Manager</h2>
+    <p>Manage high-level menus used to group dishes on the BIG 4 menu.</p>
+  </div>
+
+  <div class="filter-section" style="margin-bottom:1.5rem;">
+    <div class="btn-actions">
+      <a href="{{ path('admin_menu_new') }}" class="t-btn primary">+ New Menu</a>
+      <a href="{{ path('admin_dish_index') }}" class="t-btn">Manage Dishes</a>
+    </div>
+    {% set hasFilters = search or sort != 'created_at' or dir != 'DESC' %}
+    <form method="get" class="list-filters" data-live-search="true">
+      <input type="text" name="q" value="{{ search|default('') }}" placeholder="Search menu title/description">
+      <select name="sort">
+        <option value="created_at" {{ sort == 'created_at' ? 'selected' : '' }}>Sort: Created</option>
+        <option value="title" {{ sort == 'title' ? 'selected' : '' }}>Sort: Title</option>
+        <option value="id" {{ sort == 'id' ? 'selected' : '' }}>Sort: ID</option>
+        <option value="isActive" {{ sort == 'isActive' ? 'selected' : '' }}>Sort: Status</option>
+      </select>
+      <select name="dir">
+        <option value="DESC" {{ dir == 'DESC' ? 'selected' : '' }}>Desc</option>
+        <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
+      </select>
+      {% if hasFilters %}
+        <a href="{{ path('admin_menu_index') }}" class="t-btn">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="delivery-table-card">
+    <div class="table-header">
+      <div class="table-title">Menus</div>
+      <div class="table-count">{{ menus|length }} total</div>
+    </div>
+
+    {% if menus is empty %}
+      <div class="no-results">No menus yet. Create your first menu to start adding dishes.</div>
+    {% else %}
+      <table class="delivery-table">
+        <thead>
+        <tr>
+          <th>
+            <a class="sort-link" href="{{ path('admin_menu_index', {q: search, sort: 'id', dir: sort == 'id' and dir == 'ASC' ? 'DESC' : 'ASC'}) }}">
+              ID{% if sort == 'id' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
+            </a>
+          </th>
+          <th>
+            <a class="sort-link" href="{{ path('admin_menu_index', {q: search, sort: 'title', dir: sort == 'title' and dir == 'ASC' ? 'DESC' : 'ASC'}) }}">
+              Title{% if sort == 'title' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
+            </a>
+          </th>
+          <th>Description</th>
+          <th>
+            <a class="sort-link" href="{{ path('admin_menu_index', {q: search, sort: 'isActive', dir: sort == 'isActive' and dir == 'ASC' ? 'DESC' : 'ASC'}) }}">
+              Active{% if sort == 'isActive' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
+            </a>
+          </th>
+          <th>
+            <a class="sort-link" href="{{ path('admin_menu_index', {q: search, sort: 'created_at', dir: sort == 'created_at' and dir == 'ASC' ? 'DESC' : 'ASC'}) }}">
+              Created{% if sort == 'created_at' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
+            </a>
+          </th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for menu in menus %}
+          <tr>
+            <td class="delivery-id">#{{ menu.id }}</td>
+            <td>{{ menu.title }}</td>
+            <td>{{ menu.description ?: '—' }}</td>
+            <td>
+              {% if menu.isIsActive() %}
+                <span class="status-badge status-completed">Active</span>
+              {% else %}
+                <span class="status-badge status-cancelled">Hidden</span>
+              {% endif %}
+            </td>
+            <td>{{ menu.created_at ? menu.created_at|date('Y-m-d H:i') : '—' }}</td>
+            <td class="action-cell">
+              <a href="{{ path('admin_menu_show', {id: menu.id}) }}" class="mini-action">Manage Menu</a>
+              <a href="{{ path('admin_menu_edit', {id: menu.id}) }}" class="mini-action">Edit</a>
+              <form method="post" action="{{ path('admin_menu_delete', {id: menu.id}) }}" onsubmit="return confirm('Delete this menu?');" style="display:inline-block;">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ menu.id) }}">
+                <button class="mini-action mini-action-danger" title="Delete">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <style>
+    .list-filters {
+      margin-top: .8rem;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .list-filters input[type="text"] {
+      min-width: 280px;
+      padding: .65rem .8rem;
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+    }
+    .list-filters select {
+      padding: .6rem .75rem;
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+      background: #fff;
+    }
+    .sort-link {
+      color: inherit;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .sort-link:hover { text-decoration: underline; }
+    .action-cell {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+    .mini-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .35rem .6rem;
+      border-radius: 7px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      color: var(--espresso);
+      text-decoration: none;
+      font-size: .78rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .mini-action:hover {
+      background: #f5f2ea;
+    }
+    .mini-action-danger {
+      border-color: #dfb6b1;
+      color: #8f1f1f;
+      background: #fff7f6;
+    }
+    .mini-action-danger:hover {
+      background: #fdeeee;
+    }
+  </style>
+{% endblock %}

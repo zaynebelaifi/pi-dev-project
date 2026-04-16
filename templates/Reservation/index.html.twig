@@ -1,0 +1,96 @@
+{% extends 'backend.html.twig' %}
+{% block title %}Reservations — BIG 4{% endblock %}
+{% block topbar_title %}Reservations{% endblock %}
+
+{% block body %}
+<div class="sec-head">
+  <div>
+    <h2>Reservations</h2>
+    <p class="sec-sub">Manage all table reservations for the restaurant.</p>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-lbl">Total</div>
+    <div class="kpi-val">{{ reservations|length }}</div>
+    <div class="kpi-chg up">All reservations</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Confirmed</div>
+    <div class="kpi-val">{{ confirmed }}</div>
+    <div class="kpi-chg up">Active bookings</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Cancelled</div>
+    <div class="kpi-val">{{ cancelled }}</div>
+    <div class="kpi-chg down">Cancelled bookings</div>
+  </div>
+</div>
+
+{% for msg in app.flashes('success') %}
+  <div style="margin-bottom:1rem;padding:.75rem 1rem;border:1px solid rgba(46,158,106,.25);border-radius:8px;background:rgba(46,158,106,.08);color:var(--green);">{{ msg }}</div>
+{% endfor %}
+
+<div class="panel">
+  <form method="get" style="display:flex;gap:.6rem;margin-bottom:1.2rem;align-items:center;">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search by status or client ID…"
+      style="flex:1;padding:.4rem .75rem;border:1px solid var(--border-2);border-radius:4px;font-size:.78rem;background:var(--ivory);color:var(--text);">
+    <button type="submit" class="t-btn primary" style="padding:.4rem .9rem;">Search</button>
+    {% if search %}<a href="{{ path('app_reservation_index') }}" class="t-btn">Clear</a>{% endif %}
+  </form>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th><a href="?sort=reservationDate&direction={{ sort == 'reservationDate' and direction == 'ASC' ? 'DESC' : 'ASC' }}&search={{ search }}">#</a></th>
+        <th><a href="?sort=clientId&direction={{ sort == 'clientId' and direction == 'ASC' ? 'DESC' : 'ASC' }}&search={{ search }}">Client ID</a></th>
+        <th>Table</th>
+        <th><a href="?sort=reservationDate&direction={{ sort == 'reservationDate' and direction == 'ASC' ? 'DESC' : 'ASC' }}&search={{ search }}">Date</a></th>
+        <th><a href="?sort=reservationTime&direction={{ sort == 'reservationTime' and direction == 'ASC' ? 'DESC' : 'ASC' }}&search={{ search }}">Time</a></th>
+        <th><a href="?sort=numberOfGuests&direction={{ sort == 'numberOfGuests' and direction == 'ASC' ? 'DESC' : 'ASC' }}&search={{ search }}">Guests</a></th>
+        <th><a href="?sort=status&direction={{ sort == 'status' and direction == 'ASC' ? 'DESC' : 'ASC' }}&search={{ search }}">Status</a></th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in reservations %}
+      <tr>
+        <td style="color:var(--text-3);font-size:.72rem;">#{{ r.reservationId }}</td>          {# ✅ #}
+        <td>{{ r.clientId }}</td>
+        <td>{{ r.tableId }}</td>
+        <td>{{ r.reservationDate|date('Y-m-d') }}</td>
+        <td>{{ r.reservationTime|date('H:i') }}</td>
+        <td>{{ r.numberOfGuests }}</td>
+        <td>
+          {% if r.status == 'CONFIRMED' %}
+            <span class="badge green" style="color:#111 !important;">Confirmed</span>
+          {% else %}
+            <span class="badge amber" style="color:#111 !important;">Cancelled</span>
+          {% endif %}
+        </td>
+        <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
+          <a href="{{ path('app_reservation_edit', {id: r.reservationId}) }}" class="t-btn" style="font-size:.68rem;padding:.28rem .6rem;">Edit</a>  {# ✅ #}
+
+          {% if r.status == 'CONFIRMED' %}
+          <form method="post" action="{{ path('app_reservation_cancel', {id: r.reservationId}) }}" style="display:inline;">  {# ✅ #}
+            <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ r.reservationId) }}">  {# ✅ #}
+            <button class="t-btn" style="font-size:.68rem;padding:.28rem .6rem;color:var(--amber,#d8a84a);border-color:var(--amber,#d8a84a);"
+              onclick="return confirm('Cancel this reservation?')">Cancel</button>
+          </form>
+          {% endif %}
+
+          <form method="post" action="{{ path('app_reservation_delete', {id: r.reservationId}) }}" style="display:inline;">  {# ✅ #}
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ r.reservationId) }}">  {# ✅ #}
+            <button class="t-btn" style="font-size:.68rem;padding:.28rem .6rem;color:var(--red);border-color:var(--red);"
+              onclick="return confirm('Delete reservation #{{ r.reservationId }}?')">Delete</button>  {# ✅ #}
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:2rem;">No reservations found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -30,11 +30,17 @@
         <div class="kpi-chg up">In progress</div>
       </div>
       <div class="kpi">
-        <div class="kpi-lbl">Delivery Men</div>
-        <div class="kpi-val">{{ deliveryManCount }}</div>
-        <div class="kpi-chg up">Team active</div>
+        <div class="kpi-lbl">Ingredients</div>
+        <div class="kpi-val">{{ ingredientCount }}</div>
+        <div class="kpi-chg {{ lowStockCount > 0 ? 'down' : 'up' }}">{{ lowStockCount }} low-stock items</div>
       </div>
     </div>
+
+    {% if autoWasteMoved > 0 %}
+      <div style="margin-bottom:1rem; padding:.75rem 1rem; border:1px solid rgba(184,135,42,.25); border-radius:8px; background:#fff8eb; color:var(--brown);">
+        Automation moved {{ autoWasteMoved }} expired ingredient stocks to waste records.
+      </div>
+    {% endif %}
 
     <div class="mod-grid">
       <div class="mod-card" onclick="location.href='{{ path('app_delivery_index') }}'">
@@ -73,6 +79,26 @@
           <div class="cs-item">
             <div class="cs-num">{{ assignedCount }}</div>
             <div class="cs-lbl">Assigned</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mod-card" onclick="location.href='{{ path('admin_ingredient_index') }}'">
+        <div class="card-top">
+          <div>
+            <p class="c-title">Ingredient Stock</p>
+            <p class="c-desc">Track stock levels, low-stock alerts and expiry-driven waste reduction.</p>
+          </div>
+          <div class="c-icon amber">🥬</div>
+        </div>
+        <div class="c-stats">
+          <div class="cs-item">
+            <div class="cs-num">{{ lowStockCount }}</div>
+            <div class="cs-lbl">Low Stock</div>
+          </div>
+          <div class="cs-item">
+            <div class="cs-num">{{ expiredCount }}</div>
+            <div class="cs-lbl">Expired</div>
           </div>
         </div>
       </div>
@@ -127,6 +153,16 @@
             <span class="q-icon">📋</span>
             <span class="q-lbl">All Deliveries</span>
             <span class="q-sub">Review status board</span>
+          </button>
+          <button class="q-btn" onclick="location.href='{{ path('admin_waste_new') }}'">
+            <span class="q-icon">🗑️</span>
+            <span class="q-lbl">Log Waste</span>
+            <span class="q-sub">Adjust stock instantly</span>
+          </button>
+          <button class="q-btn" onclick="location.href='{{ path('admin_ingredient_new') }}'">
+            <span class="q-icon">➕</span>
+            <span class="q-lbl">New Ingredient</span>
+            <span class="q-sub">Update recipe stock base</span>
           </button>
         </div>
       </div>

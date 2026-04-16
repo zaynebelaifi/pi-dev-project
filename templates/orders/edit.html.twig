@@ -1,0 +1,153 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Edit Order #{{ order.orderId }} - BIG 4 Admin{% endblock %}
+
+{% block topbar_title %}Edit Order #{{ order.orderId }}{% endblock %}
+
+{% block body %}
+<style>
+    .form-card {
+        background: var(--ivory);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px var(--shadow);
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    .form-card h2 {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.6rem;
+        color: var(--espresso);
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .form-row {
+        margin-bottom: 1.2rem;
+    }
+    .form-row label {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-3);
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+    }
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+        width: 100%;
+        padding: 0.8rem 1.2rem;
+        border: 1.5px solid var(--border-2);
+        border-radius: 8px;
+        font-family: 'Jost', sans-serif;
+        font-size: 0.9rem;
+        color: var(--text);
+        background: var(--ivory-2);
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+    }
+    .form-row input:focus,
+    .form-row select:focus,
+    .form-row textarea:focus {
+        outline: none;
+        border-color: var(--gold);
+    }
+    .form-errors {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.3rem;
+        list-style: none;
+        padding: 0;
+    }
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+    }
+    .btn-save {
+        padding: 0.8rem 2rem;
+        background: var(--gold);
+        border: none;
+        border-radius: 8px;
+        color: var(--ivory);
+        font-weight: 600;
+        font-family: 'Jost', sans-serif;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-save:hover { background: var(--gold-dark); }
+    .btn-cancel {
+        padding: 0.8rem 2rem;
+        background: transparent;
+        border: 1.5px solid var(--border-2);
+        border-radius: 8px;
+        color: var(--text-2);
+        font-family: 'Jost', sans-serif;
+        font-size: 0.9rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.2s;
+    }
+    .btn-cancel:hover {
+        border-color: var(--espresso);
+        color: var(--espresso);
+    }
+</style>
+
+<div class="form-card">
+    <h2>✏️ Edit Order #{{ order.orderId }}</h2>
+
+    {{ form_start(form) }}
+
+        <div class="form-row">
+            {{ form_label(form.clientId) }}
+            {{ form_widget(form.clientId) }}
+            {{ form_errors(form.clientId) }}
+        </div>
+
+        <div class="form-row">
+            {{ form_label(form.orderType) }}
+            {{ form_widget(form.orderType) }}
+            {{ form_errors(form.orderType) }}
+        </div>
+
+        <div class="form-row">
+            {{ form_label(form.reservation) }}
+            {{ form_widget(form.reservation) }}
+            {{ form_errors(form.reservation) }}
+        </div>
+
+        <div class="form-row">
+            {{ form_label(form.deliveryAddress) }}
+            {{ form_widget(form.deliveryAddress) }}
+            {{ form_errors(form.deliveryAddress) }}
+        </div>
+
+        <div class="form-row">
+            {{ form_label(form.totalAmount) }}
+            {{ form_widget(form.totalAmount) }}
+            {{ form_errors(form.totalAmount) }}
+        </div>
+
+        <div class="form-row">
+            {{ form_label(form.status) }}
+            {{ form_widget(form.status) }}
+            {{ form_errors(form.status) }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-save">💾 Save Changes</button>
+            <a href="{{ path('app_order_index') }}" class="btn-cancel">Cancel</a>
+        </div>
+
+    {{ form_end(form) }}
+</div>
+
+{% endblock %}

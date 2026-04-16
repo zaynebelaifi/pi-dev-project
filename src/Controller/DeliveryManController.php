@@ -45,6 +45,10 @@ final class DeliveryManController extends AbstractController
         $form = $this->createForm(DeliveryManType::class, $deliveryMan);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $deliveryMan->setCreated_at(new \DateTime());
             $deliveryMan->setUpdated_at(new \DateTime());
@@ -80,6 +84,10 @@ final class DeliveryManController extends AbstractController
         }
         $form = $this->createForm(DeliveryManType::class, $deliveryMan);
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $deliveryMan->setUpdated_at(new \DateTime());

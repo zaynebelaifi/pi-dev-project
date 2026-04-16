@@ -1,0 +1,323 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}New Dish · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Dish Manager{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Create Dish</h2>
+      <p class="sec-sub">
+        {% if selectedMenu %}
+          Adding a dish to <strong>{{ selectedMenu.title }}</strong>. Menu is locked for this action.
+        {% else %}
+          Add a new dish and assign it to a menu.
+        {% endif %}
+      </p>
+    </div>
+    {% if selectedMenu %}
+      <a href="{{ path('admin_menu_show', {id: selectedMenu.id}) }}" class="t-btn">Back to Menu</a>
+    {% endif %}
+  </div>
+
+  <div class="menu-form-card">
+    {{ form_start(form, {'attr': {'class': 'admin-form', 'novalidate': 'novalidate'}}) }}
+      <div class="menu-form-grid">
+        <div class="form-group">
+          {{ form_label(form.name) }}
+          {{ form_widget(form.name) }}
+          {{ form_errors(form.name) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.menu) }}
+          {{ form_widget(form.menu) }}
+          {{ form_errors(form.menu) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.description) }}
+          {{ form_widget(form.description) }}
+          {{ form_errors(form.description) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.base_price) }}
+          {{ form_widget(form.base_price) }}
+          {{ form_errors(form.base_price) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.stock_quantity) }}
+          {{ form_widget(form.stock_quantity) }}
+          {{ form_errors(form.stock_quantity) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.image_url) }}
+          {{ form_widget(form.image_url) }}
+          {{ form_errors(form.image_url) }}
+        </div>
+        <div class="form-group toggle-group">
+          {{ form_row(form.available) }}
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <div class="recipe-head">
+          <h3>Recipe Ingredients</h3>
+          <button type="button" class="t-btn" id="addRecipeLine">+ Add Ingredient</button>
+        </div>
+        <p class="recipe-sub">Set ingredient quantity required for one serving of this dish. Duplicates are flagged automatically.</p>
+
+        <div id="recipeLines">
+          {% set rowCount = recipeIngredientDraft|length > 0 ? recipeIngredientDraft|length : 1 %}
+          {% for i in 0..(rowCount - 1) %}
+            <div class="recipe-line">
+              <div class="form-group">
+                <label>Ingredient</label>
+                <select name="recipe_ingredient[]" class="recipe-select">
+                  <option value="">Select ingredient</option>
+                  {% set selectedId = recipeIngredientDraft[i] ?? '' %}
+                  {% for ingredient in ingredients %}
+                    <option value="{{ ingredient.id }}" {{ selectedId|striptags == ingredient.id ? 'selected' : '' }}>
+                      {{ ingredient.name }} ({{ ingredient.unit }}) - stock {{ ingredient.quantityInStock|number_format(2, '.', ' ') }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <small class="recipe-hint">Pick one ingredient per row.</small>
+              </div>
+              <div class="form-group">
+                <label>Quantity required</label>
+                <input type="number" name="recipe_quantity[]" value="{{ recipeQuantityDraft[i] ?? '' }}" min="0.001" step="0.001" placeholder="e.g. 0.250">
+                <small class="recipe-hint">For one dish serving.</small>
+              </div>
+              <div class="form-group recipe-remove-wrap">
+                <button type="button" class="mini-action mini-action-danger recipe-remove">Remove</button>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <template id="recipeLineTemplate">
+          <div class="recipe-line">
+            <div class="form-group">
+              <label>Ingredient</label>
+              <select name="recipe_ingredient[]" class="recipe-select">
+                <option value="">Select ingredient</option>
+                {% for ingredient in ingredients %}
+                  <option value="{{ ingredient.id }}">{{ ingredient.name }} ({{ ingredient.unit }}) - stock {{ ingredient.quantityInStock|number_format(2, '.', ' ') }}</option>
+                {% endfor %}
+              </select>
+              <small class="recipe-hint">Pick one ingredient per row.</small>
+            </div>
+            <div class="form-group">
+              <label>Quantity required</label>
+              <input type="number" name="recipe_quantity[]" min="0.001" step="0.001" placeholder="e.g. 0.250">
+              <small class="recipe-hint">For one dish serving.</small>
+            </div>
+            <div class="form-group recipe-remove-wrap">
+              <button type="button" class="mini-action mini-action-danger recipe-remove">Remove</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="t-btn primary">Create Dish</button>
+      </div>
+    {{ form_end(form) }}
+  </div>
+
+  <style>
+    .menu-form-card {
+      margin-top: 1.5rem;
+      background: var(--ivory);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 2rem;
+      box-shadow: 0 4px 16px var(--shadow);
+      max-width: 860px;
+    }
+    .menu-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.1rem 1.5rem;
+      align-items: flex-start;
+    }
+    .menu-form-card .form-group label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--text-3);
+      margin-bottom: .4rem;
+    }
+    .menu-form-card .form-group textarea,
+    .menu-form-card .form-group input[type="text"],
+    .menu-form-card .form-group input[type="url"],
+    .menu-form-card .form-group input[type="number"],
+    .menu-form-card .form-group input[type="text"][inputmode="decimal"],
+    .menu-form-card .form-group input[type="text"][inputmode="numeric"],
+    .menu-form-card .form-group select {
+      width: 100%;
+      padding: .7rem .9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      font-size: .9rem;
+      font-family: 'Jost', sans-serif;
+    }
+    .menu-form-card .form-group textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    .menu-form-card .toggle-group {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-top: .3rem;
+    }
+    .menu-form-card .toggle-group label {
+      margin: 0;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+    .menu-form-card .form-group ul {
+      margin: .45rem 0 0;
+      padding-left: 1rem;
+      color: #b3261e;
+      font-size: .82rem;
+      list-style: disc;
+    }
+    .menu-form-card .form-actions {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .recipe-card {
+      margin-top: 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      background: #fffefb;
+    }
+    .recipe-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .8rem;
+      margin-bottom: .4rem;
+    }
+    .recipe-head h3 {
+      margin: 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem;
+      color: var(--espresso);
+    }
+    .recipe-sub {
+      margin-bottom: .8rem;
+      color: var(--text-2);
+      font-size: .86rem;
+    }
+    .recipe-line {
+      display: grid;
+      grid-template-columns: 1.4fr .8fr auto;
+      gap: .8rem;
+      align-items: end;
+      padding: .7rem;
+      border: 1px dashed var(--border-2);
+      border-radius: 10px;
+      margin-bottom: .65rem;
+      background: #fff;
+    }
+    .recipe-line .form-group {
+      margin: 0;
+    }
+    .recipe-line select,
+    .recipe-line input {
+      width: 100%;
+      padding: .62rem .78rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      font-size: .9rem;
+      font-family: 'Jost', sans-serif;
+    }
+    .recipe-line.duplicate-row {
+      border-color: #d99b9b;
+      background: #fff6f6;
+    }
+    .recipe-hint {
+      margin-top: .35rem;
+      display: block;
+      font-size: .72rem;
+      color: var(--text-3);
+    }
+    .recipe-remove-wrap {
+      display: flex;
+      align-items: end;
+      justify-content: flex-end;
+    }
+    @media (max-width: 900px) {
+      .menu-form-card { padding: 1.25rem 1.3rem; }
+      .menu-form-grid { grid-template-columns: 1fr; }
+      .recipe-line { grid-template-columns: 1fr; }
+      .recipe-remove-wrap { justify-content: flex-start; }
+    }
+  </style>
+
+  <script>
+    (() => {
+      const container = document.getElementById('recipeLines');
+      const addBtn = document.getElementById('addRecipeLine');
+      const template = document.getElementById('recipeLineTemplate');
+      if (!container || !addBtn) return;
+
+      function refreshDuplicateState() {
+        const selects = Array.from(container.querySelectorAll('.recipe-select'));
+        const seen = new Map();
+        selects.forEach((select) => {
+          const row = select.closest('.recipe-line');
+          row?.classList.remove('duplicate-row');
+        });
+
+        selects.forEach((select) => {
+          const value = select.value;
+          if (!value) return;
+          if (!seen.has(value)) {
+            seen.set(value, [select]);
+            return;
+          }
+          seen.get(value).push(select);
+        });
+
+        seen.forEach((list) => {
+          if (list.length < 2) return;
+          list.forEach((select) => select.closest('.recipe-line')?.classList.add('duplicate-row'));
+        });
+      }
+
+      addBtn.addEventListener('click', () => {
+        const content = template.content.cloneNode(true);
+        container.appendChild(content);
+        refreshDuplicateState();
+      });
+
+      container.addEventListener('click', (event) => {
+        const btn = event.target.closest('.recipe-remove');
+        if (!btn) return;
+        const lines = container.querySelectorAll('.recipe-line');
+        if (lines.length <= 1) return;
+        btn.closest('.recipe-line')?.remove();
+        refreshDuplicateState();
+      });
+
+      container.addEventListener('change', (event) => {
+        if (!event.target.classList.contains('recipe-select')) return;
+        refreshDuplicateState();
+      });
+
+      refreshDuplicateState();
+    })();
+  </script>
+{% endblock %}

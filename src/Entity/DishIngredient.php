@@ -3,8 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\DishIngredientRepository;
 
@@ -13,46 +12,50 @@ use App\Repository\DishIngredientRepository;
 class DishIngredient
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $dish_id = null;
+    #[ORM\ManyToOne(targetEntity: Dish::class, inversedBy: 'recipeLines')]
+    #[ORM\JoinColumn(name: 'dish_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    private ?Dish $dish = null;
 
-    public function getDish_id(): ?int
+    public function getDish(): ?Dish
     {
-        return $this->dish_id;
+        return $this->dish;
     }
 
-    public function setDish_id(int $dish_id): self
+    public function setDish(?Dish $dish): self
     {
-        $this->dish_id = $dish_id;
+        $this->dish = $dish;
         return $this;
     }
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $ingredient_id = null;
+    #[ORM\Id]
+    #[ORM\ManyToOne(targetEntity: Ingredient::class, inversedBy: 'dishIngredients')]
+    #[ORM\JoinColumn(name: 'ingredient_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    private ?Ingredient $ingredient = null;
 
-    public function getIngredient_id(): ?int
+    public function getIngredient(): ?Ingredient
     {
-        return $this->ingredient_id;
+        return $this->ingredient;
     }
 
-    public function setIngredient_id(int $ingredient_id): self
+    public function setIngredient(?Ingredient $ingredient): self
     {
-        $this->ingredient_id = $ingredient_id;
+        $this->ingredient = $ingredient;
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $quantity_required = null;
+    #[ORM\Column(name: 'quantity_required', type: 'decimal', nullable: false)]
+    #[Assert\NotNull(message: 'Quantity required is mandatory.')]
+    #[Assert\Positive(message: 'Quantity required must be greater than 0.')]
+    private ?string $quantityRequired = null;
 
-    public function getQuantity_required(): ?float
+    public function getQuantityRequired(): ?float
     {
-        return $this->quantity_required;
+        return $this->quantityRequired !== null ? (float) $this->quantityRequired : null;
     }
 
-    public function setQuantity_required(float $quantity_required): self
+    public function setQuantityRequired(?float $quantityRequired): self
     {
-        $this->quantity_required = $quantity_required;
+        $this->quantityRequired = $quantityRequired !== null ? (string) $quantityRequired : null;
         return $this;
     }
 

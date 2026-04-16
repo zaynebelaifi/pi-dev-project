@@ -1,0 +1,78 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Menu Details · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Menu Manager{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Menu: {{ menu.title }}</h2>
+      <p class="sec-sub">{{ menu.description ?: 'No description provided.' }}</p>
+    </div>
+    <a href="{{ path('admin_menu_edit', {id: menu.id}) }}" class="t-btn">Edit Menu</a>
+  </div>
+
+  <div class="admin-table-wrapper" style="margin-bottom: 2rem;">
+    <table class="admin-table">
+      <tr><th>ID</th><td>{{ menu.id }}</td></tr>
+      <tr><th>Title</th><td>{{ menu.title }}</td></tr>
+      <tr><th>Description</th><td>{{ menu.description ?: '—' }}</td></tr>
+      <tr><th>Active</th><td>{{ menu.isIsActive() ? 'Yes' : 'No' }}</td></tr>
+      <tr><th>Created at</th><td>{{ menu.created_at ? menu.created_at|date('Y-m-d H:i') : '—' }}</td></tr>
+      <tr><th>Updated at</th><td>{{ menu.updated_at ? menu.updated_at|date('Y-m-d H:i') : '—' }}</td></tr>
+    </table>
+  </div>
+
+  <div class="sec-head" style="margin-top:0;">
+    <div>
+      <h3>Dishes in this menu</h3>
+      <p class="sec-sub">Manage only dishes that belong to {{ menu.title }}.</p>
+    </div>
+    <div style="display:flex; gap:.75rem;">
+      <a href="{{ path('admin_dish_new', {menu: menu.id}) }}" class="t-btn primary">+ Add Dish</a>
+      <a href="{{ path('admin_dish_index', {menu: menu.id}) }}" class="t-btn">Manage Dishes</a>
+    </div>
+  </div>
+
+  <div class="delivery-table-card">
+    {% if dishes is empty %}
+      <div class="no-results">No dishes are assigned to this menu yet.</div>
+    {% else %}
+      <table class="delivery-table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Available</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for dish in dishes %}
+          <tr>
+            <td class="delivery-id">#{{ dish.id }}</td>
+            <td>{{ dish.name }}</td>
+            <td>{{ dish.basePrice|number_format(2, '.', ' ') }} TND</td>
+            <td>
+              {% if dish.available %}
+                <span class="status-badge status-completed">Available</span>
+              {% else %}
+                <span class="status-badge status-cancelled">Unavailable</span>
+              {% endif %}
+            </td>
+            <td class="action-cell">
+              <a href="{{ path('admin_dish_show', {id: dish.id}) }}" class="action-link" title="View">👁</a>
+              <a href="{{ path('admin_dish_edit', {id: dish.id}) }}" class="action-link" title="Edit">✏️</a>
+              <form method="post" action="{{ path('admin_dish_delete', {id: dish.id}) }}" onsubmit="return confirm('Delete this dish?');" style="display:inline-block;">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ dish.id) }}">
+                <button class="action-link action-delete" title="Delete">🗑</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+{% endblock %}

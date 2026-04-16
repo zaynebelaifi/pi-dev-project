@@ -1,0 +1,287 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Manage Orders - BIG 4 Admin{% endblock %}
+
+{% block topbar_title %}Manage Orders{% endblock %}
+
+{% block body %}
+<style>
+    .orders-header { margin-bottom: 2rem; }
+    .orders-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: var(--espresso); margin-bottom: 0.5rem; }
+    .orders-header p { color: var(--text-2); font-size: 0.9rem; }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: var(--ivory);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+    .stat-card h4 {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-3);
+        margin: 0 0 0.5rem;
+    }
+    .stat-value {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2rem;
+        color: var(--gold);
+        font-weight: 600;
+    }
+    
+    .filter-section { 
+        background: var(--ivory); 
+        border: 1px solid var(--border); 
+        border-radius: 12px; 
+        padding: 1.5rem; 
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+    .filter-controls { 
+        display: flex; 
+        gap: 1rem; 
+        align-items: flex-end; 
+        flex-wrap: wrap;
+    }
+    .filter-group { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 0.5rem;
+        flex: 1;
+        min-width: 200px;
+    }
+    .filter-label { 
+        font-size: 0.7rem; 
+        text-transform: uppercase; 
+        letter-spacing: 0.1em; 
+        color: var(--text-3); 
+        font-weight: 600;
+    }
+    .filter-input, .filter-select { 
+        padding: 0.8rem 1.2rem; 
+        border: 1.5px solid var(--border-2); 
+        border-radius: 8px; 
+        font-family: 'Jost', sans-serif;
+        font-size: 0.85rem;
+        color: var(--text);
+        background: var(--ivory-2);
+        transition: all 0.2s;
+    }
+    .filter-btn {
+        padding: 0.8rem 2rem;
+        background: var(--gold);
+        border: none;
+        border-radius: 8px;
+        color: var(--ivory);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .filter-btn:hover { background: var(--gold-dark); }
+    
+    .table-wrapper {
+        overflow-x: auto;
+        background: var(--ivory);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+        background: var(--espresso);
+        color: var(--ivory);
+        padding: 1.2rem;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border);
+    }
+    td { padding: 1.2rem; border-bottom: 1px solid var(--border); }
+    tr:hover { background: rgba(218, 174, 105, 0.1); }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-prepared { background: #d1ecf1; color: #0c5460; }
+    .status-delivered { background: #d4edda; color: #155724; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+    
+    .type-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .type-dine_in { background: rgba(218, 174, 105, 0.2); color: var(--gold-dark); }
+    .type-delivery { background: rgba(76, 175, 80, 0.2); color: #2e7d32; }
+    
+    .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-small {
+        padding: 0.4rem 0.8rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    .btn-view { background: var(--gold); color: var(--ivory); font-weight: 600; }
+    .btn-view:hover { background: var(--gold-dark); }
+    .btn-edit { background: #17a2b8; color: white; }
+    .btn-edit:hover { background: #138496; }
+    .btn-delete { background: #dc3545; color: white; }
+    .btn-delete:hover { background: #c82333; }
+    
+    .empty-state { text-align: center; padding: 3rem; color: var(--text-3); }
+    .empty-state h3 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-2); }
+</style>
+
+<div class="orders-header">
+    <h2>Order Management</h2>
+    <p>View, manage, and track all customer orders</p>
+</div>
+
+<!-- Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h4>Pending Orders</h4>
+        <div class="stat-value">{{ pending }}</div>
+    </div>
+    <div class="stat-card">
+        <h4>Prepared Orders</h4>
+        <div class="stat-value">{{ prepared }}</div>
+    </div>
+    <div class="stat-card">
+        <h4>Delivered Orders</h4>
+        <div class="stat-value">{{ delivered }}</div>
+    </div>
+    <div class="stat-card">
+        <h4>Total Revenue</h4>
+        <div class="stat-value">{{ revenue|number_format(2) }} TND</div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <form method="GET" class="filter-controls">
+        <div class="filter-group">
+            <label class="filter-label">Search</label>
+            <input type="text" name="search" class="filter-input" placeholder="Status, Type, Client ID, Address..." value="{{ search }}">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Sort By</label>
+            <select name="sort" class="filter-select">
+                <option value="order_date" {% if sort == 'order_date' %}selected{% endif %}>Order Date</option>
+                <option value="total_amount" {% if sort == 'total_amount' %}selected{% endif %}>Amount</option>
+                <option value="status" {% if sort == 'status' %}selected{% endif %}>Status</option>
+                <option value="order_type" {% if sort == 'order_type' %}selected{% endif %}>Type</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Direction</label>
+            <select name="direction" class="filter-select">
+                <option value="DESC" {% if direction == 'DESC' %}selected{% endif %}>Newest First</option>
+                <option value="ASC" {% if direction == 'ASC' %}selected{% endif %}>Oldest First</option>
+            </select>
+        </div>
+        <button type="submit" class="filter-btn">Filter</button>
+    </form>
+</div>
+
+<!-- Orders Table -->
+{% if orders|length > 0 %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Client ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Amount</th>
+                <th>Address / Delivery Info</th>
+                <th>Order Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td><strong>#{{ order.orderId }}</strong></td>                          {# ✅ #}
+                <td>{{ order.clientId }}</td>                                            {# ✅ #}
+                <td>
+                    <span class="type-badge type-{{ order.orderType|lower }}">          {# ✅ #}
+                        {{ order.orderType|replace({'_': ' '}) }}                       {# ✅ #}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge status-{{ order.status|lower }}">
+                        {{ order.status|replace({'_': ' '}) }}
+                    </span>
+                </td>
+                <td>{{ order.totalAmount|number_format(2) }} TND</td>                   {# ✅ #}
+                <td>
+                    {% if order.orderType == 'DELIVERY' %}                              {# ✅ #}
+                        {% set delivery = deliveries[order.orderId]|default(null) %}    {# ✅ #}
+                        <div style="font-size: 0.85rem; line-height: 1.4;">
+                            {% if delivery %}
+                                <strong>👤 {{ delivery.recipientName }}</strong><br>    {# ✅ #}
+                                <span style="color: var(--text-3);">📞 {{ delivery.recipientPhone }}</span><br>  {# ✅ #}
+                                <span style="color: var(--text-3);">📍 
+                                    {% if delivery.deliveryAddress|length > 25 %}       {# ✅ #}
+                                        {{ delivery.deliveryAddress|slice(0, 25) }}...  {# ✅ #}
+                                    {% else %}
+                                        {{ delivery.deliveryAddress }}                  {# ✅ #}
+                                    {% endif %}
+                                </span><br>
+                                <span style="color: var(--text-3); font-size: 0.8rem;">📌 Lat: {{ delivery.currentLatitude }}, Lng: {{ delivery.currentLongitude }}</span>  {# ✅ #}
+                            {% else %}
+                                <em style="color: var(--text-3);">Delivery info pending...</em>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div style="color: var(--text-3); font-style: italic;">🍽️ Dine In Order</div>
+                    {% endif %}
+                </td>
+                <td>{{ order.orderDate|date('M d, Y') }}</td>                          {# ✅ #}
+                <td>
+                    <div class="action-buttons">
+                        <a href="{{ path('app_order_edit', {'id': order.orderId}) }}" class="btn-small btn-view">Edit</a>  {# ✅ #}
+                        <form method="POST" action="{{ path('app_order_delete', {'id': order.orderId}) }}" style="display: inline;" onsubmit="return confirm('Are you sure?');">  {# ✅ #}
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ order.orderId) }}">  {# ✅ #}
+                            <button type="submit" class="btn-small btn-delete">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="table-wrapper">
+    <div class="empty-state">
+        <h3>No Orders Found</h3>
+        <p>There are currently no orders matching your search criteria.</p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

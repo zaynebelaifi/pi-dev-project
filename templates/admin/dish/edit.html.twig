@@ -1,0 +1,184 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Edit Dish · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Dish Manager{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Edit Dish #{{ dish.id }}</h2>
+      <p class="sec-sub">
+        {% if selectedMenu %}
+          Updating dish inside <strong>{{ selectedMenu.title }}</strong>. Menu is locked.
+        {% else %}
+          Update dish information, price and availability.
+        {% endif %}
+      </p>
+    </div>
+    {% if selectedMenu %}
+      <a href="{{ path('admin_dish_index', {menu: selectedMenu.id}) }}" class="t-btn">Back to Dishes</a>
+    {% endif %}
+  </div>
+
+  <div class="menu-form-card">
+    {{ form_start(form, {'attr': {'class': 'admin-form', 'novalidate': 'novalidate'}}) }}
+      <div class="menu-form-grid">
+        <div class="form-group">
+          {{ form_label(form.name) }}
+          {{ form_widget(form.name) }}
+          {{ form_errors(form.name) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.menu) }}
+          {{ form_widget(form.menu) }}
+          {{ form_errors(form.menu) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.description) }}
+          {{ form_widget(form.description) }}
+          {{ form_errors(form.description) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.base_price) }}
+          {{ form_widget(form.base_price) }}
+          {{ form_errors(form.base_price) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.stock_quantity) }}
+          {{ form_widget(form.stock_quantity) }}
+          {{ form_errors(form.stock_quantity) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.image_url) }}
+          {{ form_widget(form.image_url) }}
+          {{ form_errors(form.image_url) }}
+        </div>
+        <div class="form-group toggle-group">
+          {{ form_row(form.available) }}
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="t-btn primary">Save Changes</button>
+      </div>
+    {{ form_end(form) }}
+  </div>
+
+  <div class="recipe-shortcut-card">
+    <div>
+      <h3>Recipe & Availability</h3>
+      <p>Manage ingredients and required quantities for this dish to compute real availability and possible servings from stock.</p>
+    </div>
+    <div class="recipe-shortcut-actions">
+      <a href="{{ path('admin_dish_recipe_index', {id: dish.id}) }}" class="t-btn primary">Open Recipe Manager</a>
+      <a href="{{ path('admin_dish_show', {id: dish.id}) }}" class="t-btn">View Availability Details</a>
+    </div>
+  </div>
+
+  <style>
+    .menu-form-card {
+      margin-top: 1.5rem;
+      background: var(--ivory);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 2rem;
+      box-shadow: 0 4px 16px var(--shadow);
+      max-width: 860px;
+    }
+    .menu-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.1rem 1.5rem;
+      align-items: flex-start;
+    }
+    .menu-form-card .form-group label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--text-3);
+      margin-bottom: .4rem;
+    }
+    .menu-form-card .form-group textarea,
+    .menu-form-card .form-group input[type="text"],
+    .menu-form-card .form-group input[type="url"],
+    .menu-form-card .form-group input[type="number"],
+    .menu-form-card .form-group input[type="text"][inputmode="decimal"],
+    .menu-form-card .form-group input[type="text"][inputmode="numeric"],
+    .menu-form-card .form-group select {
+      width: 100%;
+      padding: .7rem .9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      font-size: .9rem;
+      font-family: 'Jost', sans-serif;
+    }
+    .menu-form-card .form-group textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    .menu-form-card .toggle-group {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-top: .3rem;
+    }
+    .menu-form-card .toggle-group label {
+      margin: 0;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+    .menu-form-card .form-group ul {
+      margin: .45rem 0 0;
+      padding-left: 1rem;
+      color: #b3261e;
+      font-size: .82rem;
+      list-style: disc;
+    }
+    .menu-form-card .form-actions {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .recipe-shortcut-card {
+      margin-top: 1.2rem;
+      max-width: 860px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fffefb;
+      padding: 1.1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .recipe-shortcut-card h3 {
+      margin: 0 0 .3rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      color: var(--espresso);
+    }
+    .recipe-shortcut-card p {
+      margin: 0;
+      color: var(--text-2);
+      font-size: .86rem;
+      max-width: 560px;
+    }
+    .recipe-shortcut-actions {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    @media (max-width: 900px) {
+      .menu-form-card { padding: 1.25rem 1.3rem; }
+      .menu-form-grid { grid-template-columns: 1fr; }
+      .recipe-shortcut-card { flex-direction: column; align-items: flex-start; }
+      .recipe-shortcut-actions { justify-content: flex-start; }
+    }
+  </style>
+{% endblock %}

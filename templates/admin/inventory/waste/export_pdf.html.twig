@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      margin: 24px 28px;
+    }
+
+    body {
+      font-family: DejaVu Sans, sans-serif;
+      font-size: 11px;
+      color: #1f2937;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      color: #7c5a21;
+    }
+
+    .meta {
+      margin-top: 8px;
+      margin-bottom: 14px;
+      font-size: 10px;
+      color: #5b6470;
+    }
+
+    .filter-line {
+      margin-bottom: 3px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      border: 1px solid #cbd5e1;
+      padding: 5px 6px;
+      word-wrap: break-word;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #0f172a;
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      text-align: left;
+    }
+
+    .w-date { width: 13%; }
+    .w-ingredient { width: 19%; }
+    .w-qty { width: 13%; }
+    .w-type { width: 16%; }
+    .w-reason { width: 39%; }
+
+    .footer {
+      margin-top: 8px;
+      text-align: right;
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .page-break {
+      page-break-after: always;
+    }
+  </style>
+</head>
+<body>
+  {% set chunks = records|batch(24) %}
+  {% set totalPages = chunks|length %}
+
+  {% for rows in chunks %}
+    <h1>Waste Records Export</h1>
+    <div class="meta">
+      <div class="filter-line">Generated at: {{ generatedAt|date('Y-m-d H:i') }}</div>
+      <div class="filter-line">Search: {{ filters.search ?: 'None' }}</div>
+      <div class="filter-line">Waste type: {{ filters.wasteType }}</div>
+      <div class="filter-line">Date range: {{ filters.dateFrom }} → {{ filters.dateTo }}</div>
+      <div class="filter-line">Sort: {{ filters.sort }} ({{ filters.dir }})</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="w-date">Date</th>
+          <th class="w-ingredient">Ingredient</th>
+          <th class="w-qty">Quantity</th>
+          <th class="w-type">Type</th>
+          <th class="w-reason">Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in rows %}
+          {% if record %}
+            <tr>
+              <td>{{ record.date ? record.date|date('Y-m-d') : '—' }}</td>
+              <td>{{ record.ingredient ? record.ingredient.name : '—' }}</td>
+              <td>{{ record.quantityWasted|number_format(2, '.', ' ') }} {{ record.ingredient ? record.ingredient.unit : '' }}</td>
+              <td>{{ record.wasteType }}</td>
+              <td>{{ record.reason }}</td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="footer">Page {{ loop.index }} / {{ totalPages }}</div>
+
+    {% if not loop.last %}
+      <div class="page-break"></div>
+    {% endif %}
+  {% endfor %}
+</body>
+</html>

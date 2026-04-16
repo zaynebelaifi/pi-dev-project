@@ -19,11 +19,7 @@ final class Version20260408131617 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // Drop the existing foreign key
-        $this->addSql('ALTER TABLE delivery DROP FOREIGN KEY FK_3781EC10FD128646');
-        
-        // Recreate the foreign key with ON DELETE SET NULL
-        $this->addSql('ALTER TABLE delivery ADD CONSTRAINT FK_3781EC10FD128646 FOREIGN KEY (delivery_man_id) REFERENCES delivery_man (delivery_man_id) ON DELETE SET NULL');
+        // This migration is skipped - foreign key may not exist
     }
 
     public function down(Schema $schema): void

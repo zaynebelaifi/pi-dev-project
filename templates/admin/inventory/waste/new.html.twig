@@ -1,0 +1,16 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}New Waste Record{% endblock %}
+{% block topbar_title %}Waste Tracker{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Log Waste</h2>
+      <p class="sec-sub">Create a waste entry and automatically decrease stock.</p>
+    </div>
+    <a href="{{ path('admin_waste_index') }}" class="t-btn">Back to Waste Logs</a>
+  </div>
+
+  {% include 'admin/inventory/waste/_form.html.twig' with {form: form, submitLabel: 'Create Waste Record'} %}
+{% endblock %}

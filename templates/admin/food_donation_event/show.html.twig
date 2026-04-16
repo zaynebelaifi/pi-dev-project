@@ -1,0 +1,53 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Donation Event Details · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Food Donation Events{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Donation Event Details</h2>
+      <p>Review donation event information including date, charity, quantity and delivery reference.</p>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table class="listing-table">
+      <tbody>
+        <tr>
+          <th>ID</th>
+          <td>{{ food_donation_event.donationEventId }}</td>
+        </tr>
+        <tr>
+          <th>Date</th>
+          <td>{{ food_donation_event.eventDate ? food_donation_event.eventDate|date('Y-m-d') : '—' }}</td>
+        </tr>
+        <tr>
+          <th>Charity</th>
+          <td>{{ food_donation_event.charityName }}</td>
+        </tr>
+        <tr>
+          <th>Total Quantity</th>
+          <td>{{ food_donation_event.totalQuantity }}</td>
+        </tr>
+        <tr>
+          <th>Status</th>
+          <td>{{ food_donation_event.status ?: '—' }}</td>
+        </tr>
+        <tr>
+          <th>Delivery ID</th>
+          <td>{{ food_donation_event.deliveryId ?: '—' }}</td>
+        </tr>
+        <tr>
+          <th>Calendar Event ID</th>
+          <td>{{ food_donation_event.calendarEventId ?: '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="form-actions">
+      <a href="{{ path('app_food_donation_event_index') }}" class="t-btn secondary">Back to events</a>
+      <a href="{{ path('app_food_donation_event_edit', {'donation_event_id': food_donation_event.donationEventId}) }}" class="t-btn primary">Edit</a>
+    </div>
+  </div>
+{% endblock %}

@@ -3,8 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\WasterecordRepository;
 
@@ -28,35 +27,46 @@ class Wasterecord
         return $this;
     }
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $ingredientId = null;
+    #[ORM\ManyToOne(targetEntity: Ingredient::class, inversedBy: 'wasteRecords')]
+    #[ORM\JoinColumn(name: 'ingredientId', referencedColumnName: 'id', nullable: false)]
+    #[Assert\NotNull(message: 'Ingredient is required.')]
+    private ?Ingredient $ingredient = null;
+
+    public function getIngredient(): ?Ingredient
+    {
+        return $this->ingredient;
+    }
+
+    public function setIngredient(?Ingredient $ingredient): self
+    {
+        $this->ingredient = $ingredient;
+        return $this;
+    }
 
     public function getIngredientId(): ?int
     {
-        return $this->ingredientId;
+        return $this->ingredient?->getId();
     }
 
-    public function setIngredientId(int $ingredientId): self
-    {
-        $this->ingredientId = $ingredientId;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $quantityWasted = null;
+    #[ORM\Column(name: 'quantityWasted', type: 'decimal', nullable: false)]
+    #[Assert\NotNull(message: 'Wasted quantity is required.')]
+    #[Assert\Positive(message: 'Wasted quantity must be greater than 0.')]
+    private ?string $quantityWasted = null;
 
     public function getQuantityWasted(): ?float
     {
-        return $this->quantityWasted;
+        return $this->quantityWasted !== null ? (float) $this->quantityWasted : null;
     }
 
-    public function setQuantityWasted(float $quantityWasted): self
+    public function setQuantityWasted(?float $quantityWasted): self
     {
-        $this->quantityWasted = $quantityWasted;
+        $this->quantityWasted = $quantityWasted !== null ? (string) $quantityWasted : null;
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
+    #[ORM\Column(name: 'wasteType', type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Waste type is required.')]
+    #[Assert\Length(max: 255, maxMessage: 'Waste type cannot exceed {{ limit }} characters.')]
     private ?string $wasteType = null;
 
     public function getWasteType(): ?string
@@ -64,13 +74,14 @@ class Wasterecord
         return $this->wasteType;
     }
 
-    public function setWasteType(string $wasteType): self
+    public function setWasteType(?string $wasteType): self
     {
         $this->wasteType = $wasteType;
         return $this;
     }
 
     #[ORM\Column(type: 'date', nullable: false)]
+    #[Assert\NotNull(message: 'Waste date is required.')]
     private ?\DateTimeInterface $date = null;
 
     public function getDate(): ?\DateTimeInterface
@@ -78,13 +89,15 @@ class Wasterecord
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setDate(?\DateTimeInterface $date): self
     {
         $this->date = $date;
         return $this;
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Reason is required.')]
+    #[Assert\Length(max: 255, maxMessage: 'Reason cannot exceed {{ limit }} characters.')]
     private ?string $reason = null;
 
     public function getReason(): ?string
@@ -92,7 +105,7 @@ class Wasterecord
         return $this->reason;
     }
 
-    public function setReason(string $reason): self
+    public function setReason(?string $reason): self
     {
         $this->reason = $reason;
         return $this;

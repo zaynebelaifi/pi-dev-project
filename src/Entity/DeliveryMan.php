@@ -40,7 +40,7 @@ class DeliveryMan
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName(?string $name): self
     {
         $this->name = $name;
         return $this;
@@ -48,8 +48,7 @@ class DeliveryMan
 
     #[ORM\Column(type: 'string', nullable: false)]
     #[Assert\NotBlank(message: 'Phone number is required.')]
-    #[Assert\Regex(pattern: '/^[\+]?[0-9\-\(\)\s]+$/', message: 'Please enter a valid phone number.')]
-    #[Assert\Length(min: 7, max: 20, minMessage: 'Phone number must be at least {{ limit }} characters long.', maxMessage: 'Phone number cannot be longer than {{ limit }} characters.')]
+    #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Phone number must be exactly 8 digits.')]
     private ?string $phone = null;
 
     public function getPhone(): ?string
@@ -57,7 +56,7 @@ class DeliveryMan
         return $this->phone;
     }
 
-    public function setPhone(string $phone): self
+    public function setPhone(?string $phone): self
     {
         $this->phone = $phone;
         return $this;

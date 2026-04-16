@@ -1,0 +1,46 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Dish Details · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Dish Manager{% endblock %}
+
+{% block body %}
+  <div class="admin-header">
+    <h2>Dish: {{ dish.name }}</h2>
+    <p>{{ dish.description ?: 'No description provided.' }}</p>
+  </div>
+
+  <div class="admin-table-wrapper">
+    <table class="admin-table">
+      <tr><th>ID</th><td>{{ dish.id }}</td></tr>
+      <tr><th>Name</th><td>{{ dish.name }}</td></tr>
+      <tr><th>Menu</th><td>{{ dish.menu ? dish.menu.title : '—' }}</td></tr>
+      <tr><th>Price</th><td>{{ dish.base_price|number_format(2, '.', ' ') }} TND</td></tr>
+      <tr><th>Available (computed)</th><td>{{ availability.is_available ? 'Yes' : 'No' }}</td></tr>
+      <tr><th>Possible servings</th><td>{{ availability.has_recipe ? availability.possible_servings : 'No recipe configured' }}</td></tr>
+      <tr>
+        <th>Availability notes</th>
+        <td>
+          {% if availability.reasons is empty %}
+            Stock and recipe are valid.
+          {% else %}
+            <ul style="margin:0; padding-left:1.2rem;">
+              {% for reason in availability.reasons %}
+                <li>{{ reason }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </td>
+      </tr>
+      <tr><th>Stock quantity</th><td>{{ dish.stock_quantity ?? '—' }}</td></tr>
+      <tr><th>Image</th><td>{{ dish.image_url ?: '—' }}</td></tr>
+      <tr><th>Created at</th><td>{{ dish.created_at ? dish.created_at|date('Y-m-d H:i') : '—' }}</td></tr>
+      <tr><th>Updated at</th><td>{{ dish.updated_at ? dish.updated_at|date('Y-m-d H:i') : '—' }}</td></tr>
+    </table>
+  </div>
+
+  <div class="admin-actions" style="margin-top:1.5rem;">
+    <a href="{{ path('admin_dish_recipe_index', {id: dish.id}) }}" class="admin-btn">Manage Recipe</a>
+    <a href="{{ path('admin_dish_edit', {id: dish.id}) }}" class="admin-btn">Edit</a>
+    <a href="{{ path('admin_dish_index') }}" class="admin-btn" style="background:#eee;color:var(--espresso);">Back to list</a>
+  </div>
+{% endblock %}

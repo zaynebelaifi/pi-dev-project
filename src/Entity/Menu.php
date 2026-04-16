@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\MenuRepository;
 
@@ -29,6 +30,13 @@ class Menu
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Menu title is required.')]
+    #[Assert\Length(
+        min: 2,
+        max: 100,
+        minMessage: 'Menu title must be at least {{ limit }} characters.',
+        maxMessage: 'Menu title cannot exceed {{ limit }} characters.'
+    )]
     private ?string $title = null;
 
     public function getTitle(): ?string
@@ -36,13 +44,17 @@ class Menu
         return $this->title;
     }
 
-    public function setTitle(string $title): self
+    public function setTitle(?string $title): self
     {
         $this->title = $title;
         return $this;
     }
 
     #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(
+        max: 500,
+        maxMessage: 'Description cannot exceed {{ limit }} characters.'
+    )]
     private ?string $description = null;
 
     public function getDescription(): ?string
@@ -56,7 +68,7 @@ class Menu
         return $this;
     }
 
-    #[ORM\Column(type: 'boolean', nullable: false)]
+    #[ORM\Column(name: 'isActive', type: 'boolean', nullable: false)]
     private ?bool $isActive = null;
 
     public function isIsActive(): ?bool

@@ -1,0 +1,104 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Edit Donation Event · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Food Donation Events{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Edit Donation Event</h2>
+      <p>Update the donation event details and save your changes.</p>
+    </div>
+  </div>
+
+  <div class="menu-form-card">
+    {{ form_start(form, {'attr': {'class': 'admin-form', 'novalidate': 'novalidate'}}) }}
+      {{ form_errors(form) }}
+      <div class="menu-form-grid">
+        <div class="form-group">
+          {{ form_label(form.event_date) }}
+          {{ form_widget(form.event_date) }}
+          {{ form_errors(form.event_date) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.charity_name) }}
+          {{ form_widget(form.charity_name) }}
+          {{ form_errors(form.charity_name) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.total_quantity) }}
+          {{ form_widget(form.total_quantity) }}
+          {{ form_errors(form.total_quantity) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.status) }}
+          {{ form_widget(form.status) }}
+          {{ form_errors(form.status) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.delivery_id) }}
+          {{ form_widget(form.delivery_id) }}
+          {{ form_errors(form.delivery_id) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.calendar_event_id) }}
+          {{ form_widget(form.calendar_event_id) }}
+          {{ form_errors(form.calendar_event_id) }}
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="t-btn primary">Save Changes</button>
+      </div>
+    {{ form_end(form) }}
+  </div>
+
+  <style>
+    .menu-form-card {
+      margin-top: 1.5rem;
+      background: var(--ivory);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 2rem;
+      box-shadow: 0 4px 16px var(--shadow);
+      max-width: 900px;
+    }
+    .menu-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem 2rem;
+      align-items: flex-start;
+    }
+    .menu-form-card .form-group label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--text-3);
+      margin-bottom: .4rem;
+    }
+    .menu-form-card .form-group input,
+    .menu-form-card .form-group textarea,
+    .menu-form-card .form-group select {
+      width: 100%;
+      padding: .75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      font-size: .95rem;
+      font-family: 'Jost', sans-serif;
+    }
+    .menu-form-card .form-group input[type="date"] {
+      min-height: 48px;
+    }
+    .menu-form-card .form-actions {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+    @media (max-width: 900px) {
+      .menu-form-grid { grid-template-columns: 1fr; }
+      .menu-form-card { padding: 1.25rem 1.3rem; }
+    }
+  </style>
+{% endblock %}

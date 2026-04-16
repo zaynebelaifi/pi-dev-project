@@ -1,0 +1,54 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}New Ingredient{% endblock %}
+{% block topbar_title %}Ingredient Stock{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Create Ingredient</h2>
+      <p class="sec-sub">Create a brand-new ingredient or select an existing one to increase stock.</p>
+    </div>
+    <a href="{{ path('admin_ingredient_index') }}" class="t-btn">Back to Inventory</a>
+  </div>
+
+  <div class="menu-form-card" style="margin-top:0; margin-bottom:1rem;">
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:.35rem;color:var(--espresso);">Add Stock To Existing Ingredient</h3>
+    <p style="margin:0 0 1rem;color:var(--text-2);font-size:.9rem;">Select an existing ingredient to increase its quantity and optionally update expiry date.</p>
+
+    <form method="post" class="admin-form" novalidate="novalidate">
+      <input type="hidden" name="stock_mode" value="existing">
+      <input type="hidden" name="_token" value="{{ csrf_token('add_existing_ingredient_stock') }}">
+
+      <div class="menu-form-grid">
+        <div class="form-group" style="grid-column:1 / -1;">
+          <label for="existing_ingredient_id">Existing ingredient</label>
+          <select id="existing_ingredient_id" name="existing_ingredient_id" required>
+            <option value="">Select ingredient</option>
+            {% for existing in existingIngredients %}
+              <option value="{{ existing.id }}" {{ stockDraft.ingredient_id is defined and stockDraft.ingredient_id == existing.id ? 'selected' : '' }}>
+                {{ existing.name }} ({{ existing.unit }}) - Stock: {{ existing.quantityInStock|number_format(2, '.', ' ') }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="add_quantity">Quantity to add</label>
+          <input id="add_quantity" type="number" name="add_quantity" min="0.01" step="0.01" inputmode="decimal" required value="{{ stockDraft.quantity|default('') }}">
+        </div>
+
+        <div class="form-group">
+          <label for="new_expiry_date">New expiry date (optional)</label>
+          <input id="new_expiry_date" type="date" name="new_expiry_date" min="{{ 'now'|date('Y-m-d') }}" value="{{ stockDraft.expiry_date|default('') }}">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="t-btn">Update Existing Stock</button>
+      </div>
+    </form>
+  </div>
+
+  {% include 'admin/inventory/ingredient/_form.html.twig' with {form: form, submitLabel: 'Create Ingredient'} %}
+{% endblock %}

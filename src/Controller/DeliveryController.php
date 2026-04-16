@@ -12,6 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -347,6 +348,80 @@ final class DeliveryController extends AbstractController
         ]);
     }
 
+    #[Route('/save', name: 'app_delivery_save', methods: ['POST'])]
+    public function save(Request $request, EntityManagerInterface $entityManager, DeliveryRepository $deliveryRepository, DeliveryManRepository $deliveryManRepository, ValidatorInterface $validator, UserRepository $userRepository, SessionInterface $session): JsonResponse
+    {
+        if (!$this->isCsrfTokenValid('delivery-save', $request->request->get('_token'))) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Invalid CSRF token.'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $orderId = $request->request->get('order_id');
+        if (!$orderId || !is_numeric($orderId)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Invalid order ID.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $deliveryAddress = $request->request->get('delivery_address');
+        $recipientName = $request->request->get('recipient_name');
+        $recipientPhone = $request->request->get('recipient_phone');
+        $pickupLocation = $request->request->get('pickup_location');
+        $deliveryNotes = $request->request->get('delivery_notes');
+        $latitude = $request->request->get('current_latitude');
+        $longitude = $request->request->get('current_longitude');
+
+        $delivery = $deliveryRepository->findOneBy(['order_id' => (int) $orderId]);
+        $isNew = false;
+        if (!$delivery) {
+            $delivery = new Delivery();
+            $delivery->setOrder_id((int) $orderId);
+            $delivery->setCreated_at(new \DateTime());
+            $isNew = true;
+        }
+
+        $delivery->setDelivery_address(trim((string) $deliveryAddress));
+        $delivery->setRecipient_name(trim((string) $recipientName));
+        $normalizedPhone = $this->normalizePhone(trim((string) $recipientPhone));
+        $delivery->setRecipient_phone($normalizedPhone);
+        $delivery->setPickup_location(trim((string) $pickupLocation));
+        $delivery->setDelivery_notes(trim((string) $deliveryNotes));
+        $delivery->setCurrent_latitude(trim((string) $latitude));
+        $delivery->setCurrent_longitude(trim((string) $longitude));
+        $delivery->setEstimated_time(30);
+        $delivery->setStatus('PENDING');
+        $delivery->setUpdated_at(new \DateTime());
+
+        $errors = $this->validateDelivery($delivery, $validator);
+        if (!empty($errors)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => implode(' ', $errors),
+                'errors' => $errors,
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($isNew) {
+            $this->assignDeliveryMan($delivery, $deliveryManRepository);
+            $entityManager->persist($delivery);
+        } else {
+            if (!$delivery->getDeliveryMan()) {
+                $this->assignDeliveryMan($delivery, $deliveryManRepository);
+            }
+        }
+
+        $this->syncClientPhoneWithProfile($session, $userRepository, $recipientPhone);
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'delivery_id' => $delivery->getDelivery_id(),
+        ]);
+    }
+
     #[Route('/track/{id}', name: 'app_delivery_tracking', methods: ['GET', 'POST'])]
     public function track(Request $request, Delivery $delivery, EntityManagerInterface $entityManager): Response
     {
@@ -480,15 +555,34 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/driver', name: 'app_driver_deliveries', methods: ['GET'])]
-    public function driverDeliveries(Request $request, DeliveryRepository $deliveryRepository): Response
+    public function driverDeliveries(Request $request, DeliveryRepository $deliveryRepository, DeliveryManRepository $deliveryManRepository): Response
     {
-        if ($request->getSession()->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+        $session = $request->getSession();
+
+        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
             return $this->redirectToRoute('app_login');
         }
 
-        $deliveryManId = $request->getSession()->get('delivery_man_id');
+        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+        if ($deliveryManId <= 0) {
+            $driverEmail = strtolower(trim((string) $session->get('user_email', '')));
+            if ($driverEmail !== '') {
+                $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
+                    ->andWhere('LOWER(dm.email) = :email')
+                    ->setParameter('email', $driverEmail)
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+
+                if ($deliveryMan && $deliveryMan->getDelivery_man_id()) {
+                    $deliveryManId = $deliveryMan->getDelivery_man_id();
+                    $session->set('delivery_man_id', $deliveryManId);
+                }
+            }
+        }
+
         $deliveries = [];
-        if ($deliveryManId) {
+        if ($deliveryManId > 0) {
             $deliveries = $deliveryRepository->findByDeliveryManId($deliveryManId);
         }
 

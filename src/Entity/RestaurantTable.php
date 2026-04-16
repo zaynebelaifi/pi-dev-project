@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: \App\Repository\RestaurantTableRepository::class)]
 #[ORM\Table(name: 'restaurant_table')]
 class RestaurantTable
 {
@@ -15,12 +15,14 @@ class RestaurantTable
     #[ORM\Column(type: 'integer', nullable: false)]
     private ?int $table_id = null;
 
-    public function getTable_id(): ?int
+    // ✅ camelCase — was getTable_id()
+    public function getTableId(): ?int
     {
         return $this->table_id;
     }
 
-    public function setTable_id(int $table_id): self
+    // ✅ camelCase — was setTable_id()
+    public function setTableId(int $table_id): self
     {
         $this->table_id = $table_id;
         return $this;
@@ -53,5 +55,4 @@ class RestaurantTable
         $this->status = $status;
         return $this;
     }
-
 }

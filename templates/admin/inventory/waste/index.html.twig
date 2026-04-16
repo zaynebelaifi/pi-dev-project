@@ -1,0 +1,127 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Waste Records · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Waste Tracker{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Waste Records</h2>
+      <p class="sec-sub">Track ingredient losses and keep stock synchronized.</p>
+    </div>
+    <div style="display:flex; gap:.7rem;">
+      <a href="{{ path('admin_ingredient_index') }}" class="t-btn">Ingredients</a>
+      <a href="{{ path('admin_waste_export_pdf', app.request.query.all) }}" class="t-btn">Export PDF</a>
+      <a href="{{ path('admin_waste_new') }}" class="t-btn primary">+ Log Waste</a>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="margin-bottom:1.2rem; grid-template-columns:repeat(2,1fr);">
+    <div class="kpi"><div class="kpi-lbl">Total Records</div><div class="kpi-val">{{ records|length }}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Total Wasted Quantity</div><div class="kpi-val">{{ totalWasted|number_format(2, '.', ' ') }}</div></div>
+  </div>
+
+  {% set hasFilters = search or wasteType or dateFrom or dateTo or sort != 'date' or dir != 'DESC' %}
+  <form method="get" class="list-filters" data-live-search="true" style="margin-bottom:1rem; display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search ingredient/type/reason" style="min-width:220px; padding:.65rem .8rem; border:1px solid var(--border-2); border-radius:8px;">
+
+    <select name="waste_type" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="" {{ wasteType == '' ? 'selected' : '' }}>All Types</option>
+      {% for option in wasteTypes %}
+        <option value="{{ option }}" {{ option == wasteType ? 'selected' : '' }}>{{ option }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="date" name="date_from" value="{{ dateFrom }}" title="From date" style="padding:.55rem .7rem; border:1px solid var(--border-2); border-radius:8px;">
+    <input type="date" name="date_to" value="{{ dateTo }}" title="To date" style="padding:.55rem .7rem; border:1px solid var(--border-2); border-radius:8px;">
+
+    <select name="sort" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="date" {{ sort == 'date' ? 'selected' : '' }}>Sort: Date</option>
+      <option value="ingredient" {{ sort == 'ingredient' ? 'selected' : '' }}>Sort: Ingredient</option>
+      <option value="quantityWasted" {{ sort == 'quantityWasted' ? 'selected' : '' }}>Sort: Quantity</option>
+      <option value="wasteType" {{ sort == 'wasteType' ? 'selected' : '' }}>Sort: Type</option>
+      <option value="reason" {{ sort == 'reason' ? 'selected' : '' }}>Sort: Reason</option>
+      <option value="id" {{ sort == 'id' ? 'selected' : '' }}>Sort: ID</option>
+    </select>
+
+    <select name="dir" style="padding:.6rem .75rem; border:1px solid var(--border-2); border-radius:8px; background:#fff;">
+      <option value="DESC" {{ dir == 'DESC' ? 'selected' : '' }}>Desc</option>
+      <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
+    </select>
+
+    {% if hasFilters %}<a href="{{ path('admin_waste_index') }}" class="t-btn">Reset</a>{% endif %}
+  </form>
+
+  <div class="delivery-table-card">
+    <div class="table-header">
+      <div class="table-title">Waste Log</div>
+      <div class="table-count">{{ records|length }} rows</div>
+    </div>
+
+    {% if records is empty %}
+      <div class="no-results">No waste records found.</div>
+    {% else %}
+      <table class="delivery-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Ingredient</th>
+            <th>Quantity</th>
+            <th>Type</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in records %}
+            <tr>
+              <td>{{ record.date ? record.date|date('Y-m-d') : '—' }}</td>
+              <td>{{ record.ingredient ? record.ingredient.name : '—' }}</td>
+              <td>{{ record.quantityWasted|number_format(2, '.', ' ') }} {{ record.ingredient ? record.ingredient.unit : '' }}</td>
+              <td>{{ record.wasteType }}</td>
+              <td>{{ record.reason }}</td>
+              <td class="action-cell">
+                <a href="{{ path('admin_waste_edit', {id: record.id}) }}" class="mini-action">Edit</a>
+              {% if record.ingredient %}
+                <a href="{{ path('app_food_donation_item_new', {ingredient_id: record.ingredient.id}) }}" class="mini-action">Add to Event</a>
+              {% endif %}
+                <form method="post" action="{{ path('admin_waste_delete', {id: record.id}) }}" onsubmit="return confirm('Delete this waste record? Stock will be restored.');" style="display:inline-block;">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete_waste' ~ record.id) }}">
+                  <button class="mini-action mini-action-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <style>
+    .action-cell {
+      display:flex;
+      gap:.45rem;
+      flex-wrap:wrap;
+    }
+    .mini-action {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:.35rem .6rem;
+      border-radius:7px;
+      border:1px solid var(--border-2);
+      background:#fff;
+      color:var(--espresso);
+      text-decoration:none;
+      font-size:.78rem;
+      font-weight:600;
+      line-height:1;
+      cursor:pointer;
+    }
+    .mini-action-danger {
+      border-color:#dfb6b1;
+      color:#8f1f1f;
+      background:#fff7f6;
+    }
+  </style>
+{% endblock %}

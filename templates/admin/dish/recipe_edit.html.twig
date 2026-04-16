@@ -1,0 +1,79 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}{{ isEdit ? 'Edit Recipe Line' : 'Add Recipe Line' }}{% endblock %}
+{% block topbar_title %}Dish Recipe{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>{{ isEdit ? 'Edit' : 'Add' }} Recipe Line · {{ dish.name }}</h2>
+      <p class="sec-sub">Set the quantity required for this ingredient in one serving.</p>
+    </div>
+    <a href="{{ path('admin_dish_recipe_index', {id: dish.id}) }}" class="t-btn">Back to Recipe</a>
+  </div>
+
+  <div class="menu-form-card">
+    {{ form_start(form, {'attr': {'class': 'admin-form', 'novalidate': 'novalidate'}}) }}
+      <div class="menu-form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group">
+          {{ form_label(form.ingredient) }}
+          {{ form_widget(form.ingredient) }}
+          {{ form_errors(form.ingredient) }}
+        </div>
+        <div class="form-group">
+          {{ form_label(form.quantityRequired) }}
+          {{ form_widget(form.quantityRequired) }}
+          {{ form_errors(form.quantityRequired) }}
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="t-btn primary">{{ isEdit ? 'Save Changes' : 'Add Line' }}</button>
+      </div>
+    {{ form_end(form) }}
+  </div>
+
+  <style>
+    .menu-form-card {
+      margin-top: 1.2rem;
+      background: var(--ivory);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 760px;
+    }
+    .menu-form-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: .4rem;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-size: .76rem;
+      font-weight: 600;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: .68rem .85rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      font-family: 'Jost', sans-serif;
+    }
+    .form-group ul {
+      margin: .45rem 0 0;
+      padding-left: 1rem;
+      color: #b3261e;
+      font-size: .82rem;
+      list-style: disc;
+    }
+    .form-actions {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+  </style>
+{% endblock %}

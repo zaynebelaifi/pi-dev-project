@@ -8,10 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
-
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=1">
 </head>
 <body>
+
   <!-- NAV -->
   <nav id="nav">
     <div class="nav-inner">
@@ -56,17 +57,14 @@
 
   <!-- FLASH MESSAGES -->
   {% for message in app.flashes('error') %}
-    <div class="flash-message flash-error">
-      {{ message }}
-    </div>
+    <div class="flash-message flash-error">{{ message }}</div>
   {% endfor %}
   {% for message in app.flashes('success') %}
-    <div class="flash-message flash-success">
-      {{ message }}
-    </div>
+    <div class="flash-message flash-success">{{ message }}</div>
   {% endfor %}
 
   {% block body %}
+
   <!-- HERO -->
   <section class="hero" id="home">
     <div class="container hero-grid">
@@ -124,7 +122,6 @@
         </div>
         <p>Every service is designed to feel polished, elevated, and indulgent — whether you're dining in, reserving for a special night, or ordering from home.</p>
       </div>
-
       <div class="cards">
         <div class="card reveal">
           <div class="number">01</div>
@@ -156,49 +153,42 @@
         <p>A polished menu designed for coffee lovers, brunch guests, and elegant dining moments.</p>
       </div>
 
-      <div class="menu-grid">
-
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80" alt="Espresso">
-          <div class="menu-card-content">
-            <h4>Espresso</h4>
-            <p>Rich espresso, cappuccino, flat white, and handcrafted coffee selections with a refined finish.</p>
-            <span class="price">6 TND</span>
-            <button class="add-cart-btn" data-name="Espresso" data-price="6">Add to Cart</button>
+      {% if menuSections is defined and menuSections is not empty %}
+        {% for section in menuSections %}
+          <div style="margin:1.2rem 0 .7rem;">
+            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">
+              {{ section.menu.title }}
+            </h4>
+            {% if section.menu.description %}
+              <p style="margin:.25rem 0 0;color:var(--text-2);">{{ section.menu.description }}</p>
+            {% endif %}
+          </div>
+          <div class="menu-grid">
+            {% for dish in section.dishes %}
+              {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
+              <div class="menu-card reveal">
+                <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
+                <div class="menu-card-content">
+                  <h4>{{ dish.name }}</h4>
+                  <p>{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
+                  <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
+                  <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="menu-grid">
+          <div class="menu-card reveal">
+            <div class="menu-card-content">
+              <h4>Menu Coming Soon</h4>
+              <p>Our dishes are being updated right now. Please check back shortly.</p>
+              <span class="price">--</span>
+            </div>
           </div>
         </div>
-
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1000&q=80" alt="Desserts">
-          <div class="menu-card-content">
-            <h4>Desserts</h4>
-            <p>Luxury cakes, pistachio pastries, chocolate creations, and elegant dessert presentations.</p>
-            <span class="price">12 TND</span>
-            <button class="add-cart-btn" data-name="Desserts" data-price="12">Add to Cart</button>
-          </div>
-        </div>
-
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1000&q=80" alt="Brunch">
-          <div class="menu-card-content">
-            <h4>Brunch</h4>
-            <p>Curated brunch plates with eggs, artisan breads, gourmet toppings, and fresh seasonal sides.</p>
-            <span class="price">22 TND</span>
-            <button class="add-cart-btn" data-name="Brunch" data-price="22">Add to Cart</button>
-          </div>
-        </div>
-
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" alt="Signature Dishes">
-          <div class="menu-card-content">
-            <h4>Signature Dishes</h4>
-            <p>Chef-inspired plates crafted for dinner, lounge evenings, and unforgettable dining experiences.</p>
-            <span class="price">28 TND</span>
-            <button class="add-cart-btn" data-name="Signature Dishes" data-price="28">Add to Cart</button>
-          </div>
-        </div>
-
-      </div>
+      {% endif %}
     </div>
   </section>
 
@@ -233,7 +223,6 @@
         </div>
         <p>Enjoy BIG 4 from the comfort of your home with premium packaging, stylish presentation, and carefully delivered orders.</p>
       </div>
-
       <div class="cards">
         <div class="card reveal"><div class="number">01</div><h4>Fast Arrival</h4><p>Freshly prepared items delivered promptly while preserving temperature, presentation, and taste.</p></div>
         <div class="card reveal"><div class="number">02</div><h4>Premium Packaging</h4><p>Luxury-inspired packaging designed to keep your order elegant and intact from our lounge to your table.</p></div>
@@ -253,7 +242,7 @@
         <p>Transform ordinary evenings into memorable occasions with curated live experiences, themed dinners, and social lounge nights.</p>
       </div>
       <div class="event-list">
-        <div class="event reveal"><div class="date"><strong>12</strong><span>Apr</span></div><div><h5>Barista Signature Night</h5><p>Live coffee artistry, tasting sessions, and a showcase of BIG 4’s signature creations.</p></div><div class="badge">Featured</div></div>
+        <div class="event reveal"><div class="date"><strong>12</strong><span>Apr</span></div><div><h5>Barista Signature Night</h5><p>Live coffee artistry, tasting sessions, and a showcase of BIG 4's signature creations.</p></div><div class="badge">Featured</div></div>
         <div class="event reveal"><div class="date"><strong>19</strong><span>Apr</span></div><div><h5>Jazz Dinner Evening</h5><p>A warm candlelit atmosphere with soft live music, curated drinks, and a refined dinner service.</p></div><div class="badge">Live Music</div></div>
         <div class="event reveal"><div class="date"><strong>26</strong><span>Apr</span></div><div><h5>Origin Coffee Masterclass</h5><p>An immersive tasting journey through exceptional beans, roast profiles, and brewing rituals.</p></div><div class="badge">Masterclass</div></div>
       </div>
@@ -314,39 +303,106 @@
   </footer>
 
   <!-- BOOKING POPUP -->
-  <div class="popup-overlay" id="bookingPopup">
-    <div class="popup-box">
-      <button class="close-popup" id="closeBooking">&times;</button>
-      <h3>Reserve Your Table</h3>
-      <p>Book your luxury dining moment at BIG 4. Select your preferred date, time, and guest count.</p>
+<div class="popup-overlay" id="bookingPopup">
+  <div class="popup-box booking-popup-box">
+    <button class="close-popup" id="closeBooking">&times;</button>
+    <h3>Reserve Your Table</h3>
+    <p>Book your luxury dining moment at BIG 4. Choose your table, arrival window, and party size with smarter guidance built into the form.</p>
 
-      <form class="booking-form" id="bookingForm">
-        <div class="full">
-          <input type="text" placeholder="Full Name" required>
-        </div>
-        <div>
-          <input type="date" required>
-        </div>
-        <div>
-          <input type="time" required>
-        </div>
-        <div class="full">
-          <select required>
-            <option value="">Select Guests</option>
-            <option>1 Guest</option>
-            <option>2 Guests</option>
-            <option>3 Guests</option>
-            <option>4 Guests</option>
-            <option>5 Guests</option>
-            <option>6+ Guests</option>
-          </select>
-        </div>
-        <div class="full">
-          <button type="submit" class="btn-primary" style="width:100%">Confirm Booking</button>
-        </div>
-      </form>
+    <div class="booking-insight-strip">
+      <div class="booking-insight-card">
+        <span class="booking-insight-label">Service Hours</span>
+        <strong>08:00 - 23:30</strong>
+      </div>
+      <div class="booking-insight-card">
+        <span class="booking-insight-label">Smart Match</span>
+        <strong id="bookingTableHint">Choose guests to get a best-fit table.</strong>
+      </div>
     </div>
+
+    <form class="booking-form" id="bookingForm" novalidate>
+      <div class="full booking-field">
+        <label for="booking_table">Preferred Table</label>
+        <select id="booking_table" name="table_id" required>
+          <option value="">-- Select a Table --</option>
+          {% if availableTables is defined and availableTables|length > 0 %}
+            {% for table in availableTables %}
+              <option value="{{ table.tableId }}" data-capacity="{{ table.capacity }}">
+                Table #{{ table.tableId }} &mdash; {{ table.capacity }} seats
+              </option>
+            {% endfor %}
+          {% else %}
+            <option value="" disabled>No tables available at the moment</option>
+          {% endif %}
+        </select>
+        <small class="booking-help" id="bookingCapacityHint">Select a table to see its seating capacity.</small>
+      </div>
+
+      <div class="booking-field">
+        <label for="booking_date">Reservation Date</label>
+        <input type="date" id="booking_date" name="date" required min="{{ 'now'|date('Y-m-d') }}">
+        <small class="booking-help">Bookings start from today onward.</small>
+      </div>
+
+      <div class="booking-field">
+        <label for="booking_time">Arrival Time</label>
+        <input type="time" id="booking_time" name="time" required min="08:00" max="23:30" step="1800">
+        <small class="booking-help">30-minute slots between 08:00 and 23:30.</small>
+      </div>
+
+      <div class="full booking-slot-picker">
+        <span class="booking-slot-label">Quick Time Picks</span>
+        <div class="booking-slot-list">
+          <button type="button" class="booking-slot-btn" data-time="08:30">Breakfast</button>
+          <button type="button" class="booking-slot-btn" data-time="13:00">Lunch</button>
+          <button type="button" class="booking-slot-btn" data-time="16:30">Coffee Break</button>
+          <button type="button" class="booking-slot-btn" data-time="20:00">Dinner</button>
+          <button type="button" class="booking-slot-btn" data-time="22:30">Late Night</button>
+        </div>
+      </div>
+
+      <div class="full booking-field">
+        {% set maxCapacity = 0 %}
+        {% for table in availableTables %}
+          {% if table.capacity > maxCapacity %}
+            {% set maxCapacity = table.capacity %}
+          {% endif %}
+        {% endfor %}
+        <label for="booking_guests">Party Size</label>
+        <select id="booking_guests" name="guests" required>
+          <option value="">Number of Guests</option>
+          {% for i in 1..maxCapacity %}
+            <option value="{{ i }}">{{ i }} Guest{{ i > 1 ? 's' : '' }}</option>
+          {% endfor %}
+        </select>
+        <small class="booking-help">We will recommend the smallest comfortable table for your group.</small>
+      </div>
+
+      <div class="full booking-summary" id="bookingSummary" aria-live="polite">
+        <div class="booking-summary-row">
+          <span>Selected table</span>
+          <strong id="bookingSummaryTable">Not selected</strong>
+        </div>
+        <div class="booking-summary-row">
+          <span>Date</span>
+          <strong id="bookingSummaryDate">Choose a date</strong>
+        </div>
+        <div class="booking-summary-row">
+          <span>Arrival time</span>
+          <strong id="bookingSummaryTime">Choose a time</strong>
+        </div>
+        <div class="booking-summary-row">
+          <span>Guests</span>
+          <strong id="bookingSummaryGuests">Choose guests</strong>
+        </div>
+      </div>
+
+      <div class="full">
+        <button type="submit" class="btn-primary" style="width:100%" id="bookingSubmitBtn">Confirm Booking</button>
+      </div>
+    </form>
   </div>
+</div>
 
   <!-- PROFILE POPUP -->
   <div class="profile-overlay" id="profilePopup">
@@ -354,7 +410,6 @@
       <button class="close-popup" id="closeProfile">&times;</button>
       <h3>Your Profile</h3>
       <p>Welcome to BIG 4 Lounge. Your profile can be used for future reservations, loyalty rewards, and personalized dining experiences.</p>
-
       <form class="booking-form" id="profileForm">
         <div class="full">
           <input type="text" placeholder="Full Name">
@@ -379,28 +434,979 @@
         <h3>Your Cart</h3>
         <button class="close-popup" id="closeCart">&times;</button>
       </div>
-
       <div class="cart-items" id="cartItems">
         <div class="empty-cart">Your luxury cart is currently empty.</div>
       </div>
-
       <div class="cart-footer">
         <div class="cart-total">
           <span>Total</span>
           <strong id="cartTotal">0 TND</strong>
         </div>
-        <button type="button" class="btn-primary" style="width:100%" id="checkoutBtn">Proceed to Checkout</button>
+        <button type="button" class="btn-primary" style="width:100%" id="checkoutBtn">Confirm Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER TYPE SELECTION MODAL -->
+  <div id="orderTypeModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; padding:2rem; border-radius:12px; min-width:300px; max-width:500px; box-shadow:0 10px 40px rgba(0,0,0,0.3); text-align:center;">
+      <h2 style="margin-bottom:1rem; font-family:'Cormorant Garamond', serif; font-size:2rem;">Choose Order Type</h2>
+      <p style="margin-bottom:2rem; color:#666;">How would you like to receive your order?</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <button id="dineInBtn" type="button" style="padding:1rem; background:#D4AF37; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">🍽️ Dine In</button>
+        <button id="deliveryBtn" type="button" style="padding:1rem; background:#D4AF37; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">🛵 Delivery</button>
+      </div>
+      <button id="closeOrderType" type="button" style="margin-top:1rem; padding:0.5rem 1rem; background:#ccc; border:none; border-radius:6px; cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- DELIVERY FORM MODAL -->
+  <style>
+    .delivery-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 28px 18px;
+      background:
+        radial-gradient(circle at top, rgba(212, 175, 55, 0.16), transparent 35%),
+        rgba(17, 12, 9, 0.76);
+      backdrop-filter: blur(8px);
+    }
+
+    .delivery-modal-card {
+      width: min(100%, 640px);
+      margin: auto;
+      background: linear-gradient(180deg, #fffdf9 0%, #fff7ea 100%);
+      border: 1px solid rgba(155, 114, 29, 0.18);
+      border-radius: 28px;
+      box-shadow: 0 32px 90px rgba(25, 16, 10, 0.32);
+      overflow: hidden;
+    }
+
+    .delivery-modal-header {
+      padding: 2rem 2rem 1.25rem;
+      background:
+        linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(255, 255, 255, 0)),
+        linear-gradient(180deg, rgba(94, 62, 25, 0.98), rgba(58, 36, 11, 0.94));
+      color: #fff8ec;
+    }
+
+    .delivery-modal-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.45rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(255, 248, 236, 0.12);
+      border: 1px solid rgba(255, 248, 236, 0.18);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+    }
+
+    .delivery-modal-title {
+      margin: 1rem 0 0.45rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.1rem, 4vw, 2.9rem);
+      line-height: 1;
+    }
+
+    .delivery-modal-copy {
+      margin: 0;
+      max-width: 40rem;
+      color: rgba(255, 248, 236, 0.82);
+      line-height: 1.6;
+      font-size: 0.98rem;
+    }
+
+    .delivery-modal-body {
+      padding: 1.6rem 2rem 2rem;
+    }
+
+    .delivery-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .delivery-form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .delivery-form-field-full {
+      grid-column: 1 / -1;
+    }
+
+    .delivery-form-label {
+      font-size: 0.83rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #6f5224;
+      font-weight: 800;
+    }
+
+    .delivery-form-input {
+      width: 100%;
+      min-height: 54px;
+      padding: 0.95rem 1rem;
+      border-radius: 18px;
+      border: 1px solid rgba(177, 138, 73, 0.24);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+      color: #2c1d0f;
+      font-size: 0.98rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .delivery-form-input:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .delivery-form-input::placeholder {
+      color: #a69072;
+    }
+
+    .delivery-form-textarea {
+      min-height: 112px;
+      resize: vertical;
+    }
+
+    .delivery-location-panel {
+      margin-top: 1.1rem;
+      padding: 1.2rem;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 250, 240, 0.95), rgba(249, 239, 217, 0.9));
+      border: 1px solid rgba(212, 175, 55, 0.2);
+    }
+
+    .delivery-location-heading {
+      margin: 0 0 0.35rem;
+      color: #6b4b1a;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .delivery-location-copy {
+      margin: 0 0 1rem;
+      color: #7f6642;
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
+    .delivery-location-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .delivery-location-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .delivery-locate-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.8rem 1.1rem;
+      background: linear-gradient(135deg, #285943, #1e4332);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 12px 26px rgba(30, 67, 50, 0.22);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .delivery-locate-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(30, 67, 50, 0.28);
+    }
+
+    .delivery-location-help {
+      color: #7f6642;
+      font-size: 0.88rem;
+    }
+
+    .delivery-modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .delivery-modal-btn {
+      min-height: 54px;
+      border-radius: 18px;
+      border: none;
+      font-size: 0.98rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .delivery-modal-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .delivery-modal-btn-primary {
+      background: linear-gradient(135deg, #d4af37, #b6851b);
+      color: #fffdf7;
+      box-shadow: 0 16px 30px rgba(182, 133, 27, 0.26);
+    }
+
+    .delivery-modal-btn-secondary {
+      background: rgba(108, 84, 47, 0.08);
+      color: #5c431f;
+      border: 1px solid rgba(108, 84, 47, 0.12);
+    }
+
+    @media (max-width: 640px) {
+      .delivery-modal-header,
+      .delivery-modal-body {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+      }
+
+      .delivery-form-grid,
+      .delivery-location-grid,
+      .delivery-modal-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <div id="deliveryFormModal" class="delivery-modal-overlay">
+    <div class="delivery-modal-card">
+      <div class="delivery-modal-header">
+        <div class="delivery-modal-tag">Premium Delivery Checkout</div>
+        <h2 class="delivery-modal-title">Delivery Details</h2>
+        <p class="delivery-modal-copy">Share where the order should go and how we can reach you, then we'll take care of the rest.</p>
+      </div>
+      
+      <div class="delivery-modal-body">
+        <form id="deliveryForm">
+          <div class="delivery-form-grid">
+            <div class="delivery-form-field">
+              <label class="delivery-form-label" for="recipientName">Your Name *</label>
+              <input class="delivery-form-input" type="text" id="recipientName" name="recipient_name" placeholder="Enter your full name" required>
+            </div>
+        
+            <div class="delivery-form-field">
+              <label class="delivery-form-label" for="recipientPhone">Phone Number *</label>
+              <input class="delivery-form-input" type="tel" id="recipientPhone" name="recipient_phone" placeholder="e.g., +216 12 345 678" required>
+            </div>
+        
+            <div class="delivery-form-field delivery-form-field-full">
+              <label class="delivery-form-label" for="deliveryAddress">Delivery Address *</label>
+              <textarea class="delivery-form-input delivery-form-textarea" id="deliveryAddress" name="delivery_address" placeholder="Enter your complete delivery address" required></textarea>
+            </div>
+        
+            <div class="delivery-form-field delivery-form-field-full">
+              <label class="delivery-form-label" for="pickupLocation">Pickup Location</label>
+              <input class="delivery-form-input" type="text" id="pickupLocation" name="pickup_location" placeholder="e.g., BIG 4 Downtown Branch">
+            </div>
+          </div>
+          <input type="hidden" id="deliveryOrderId" name="order_id" value="">
+          <input type="hidden" id="deliverySaveToken" name="_token" value="{{ csrf_token('delivery-save') }}">
+        
+          <div class="delivery-location-panel">
+            <h4 class="delivery-location-heading">Location Coordinates</h4>
+            <p class="delivery-location-copy">Use your current coordinates for more accurate routing and a smoother handoff.</p>
+          
+            <div class="delivery-location-grid">
+              <div class="delivery-form-field">
+                <label class="delivery-form-label" for="deliveryLatitude">Latitude *</label>
+                <input class="delivery-form-input" type="number" id="deliveryLatitude" name="current_latitude" step="any" placeholder="e.g., 36.8065" required>
+              </div>
+            
+              <div class="delivery-form-field">
+                <label class="delivery-form-label" for="deliveryLongitude">Longitude *</label>
+                <input class="delivery-form-input" type="number" id="deliveryLongitude" name="current_longitude" step="any" placeholder="e.g., 10.1815" required>
+              </div>
+            </div>
+          
+            <div class="delivery-location-actions">
+              <button type="button" id="getCurrentLocation" class="delivery-locate-btn">Use Current Location</button>
+              <span class="delivery-location-help">Allow location access to fill these fields automatically.</span>
+            </div>
+          </div>
+        </form>
+      
+        <div class="delivery-modal-actions">
+          <button id="confirmDeliveryBtn" type="button" class="delivery-modal-btn delivery-modal-btn-primary">Confirm Delivery</button>
+          <button id="closeDeliveryForm" type="button" class="delivery-modal-btn delivery-modal-btn-secondary">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- CHECKOUT REDIRECT FORM -->
-  <form id="checkoutRedirectForm" method="get" action="{{ path('app_delivery_create') }}" style="display:none;">
+  <form id="checkoutRedirectForm" method="get" action="{{ path('app_order_create_from_cart') }}" style="display:none;">
     <input type="hidden" name="cart_items" id="redirectCartItemsInput">
     <input type="hidden" name="order_total" id="redirectCartTotalInput">
+    <input type="hidden" name="order_type" id="orderTypeInput">
+    <input type="hidden" name="order_id" id="deliverySavedOrderIdInput">
   </form>
 
   {% endblock %}
-  <script src="{{ asset('app.js') }}?v=1"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  // ── BOOKING POPUP ──────────────────────────────────────────
+  const bookingPopup = document.getElementById('bookingPopup');
+
+  function openBookingPopup(e) { e.preventDefault(); bookingPopup.classList.add('active'); document.body.style.overflow='hidden'; }
+  function closeBookingPopup() { bookingPopup.classList.remove('active'); document.body.style.overflow=''; document.getElementById('bookingMsg')?.remove(); }
+
+  document.getElementById('openBooking').addEventListener('click', openBookingPopup);
+  document.getElementById('openBooking2').addEventListener('click', openBookingPopup);
+  document.getElementById('closeBooking').addEventListener('click', closeBookingPopup);
+  bookingPopup.addEventListener('click', e => { if(e.target === bookingPopup) closeBookingPopup(); });
+
+  const bookingForm = document.getElementById('bookingForm');
+  const bookingTable = document.getElementById('booking_table');
+  const bookingDate = document.getElementById('booking_date');
+  const bookingTime = document.getElementById('booking_time');
+  const bookingGuests = document.getElementById('booking_guests');
+  const bookingSubmitBtn = document.getElementById('bookingSubmitBtn');
+  const bookingCapacityHint = document.getElementById('bookingCapacityHint');
+  const bookingTableHint = document.getElementById('bookingTableHint');
+  const bookingSummaryTable = document.getElementById('bookingSummaryTable');
+  const bookingSummaryDate = document.getElementById('bookingSummaryDate');
+  const bookingSummaryTime = document.getElementById('bookingSummaryTime');
+  const bookingSummaryGuests = document.getElementById('bookingSummaryGuests');
+  const bookingSlotButtons = Array.from(document.querySelectorAll('.booking-slot-btn'));
+
+  function getSelectedTableCapacity() {
+    return parseInt(bookingTable.selectedOptions[0]?.dataset.capacity || 0, 10);
+  }
+
+  function formatBookingDate(value) {
+    if (!value) {
+      return 'Choose a date';
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  function roundTimeToNextSlot(date) {
+    const next = new Date(date.getTime());
+    next.setSeconds(0, 0);
+
+    const minutes = next.getMinutes();
+    const remainder = minutes % 30;
+
+    if (remainder !== 0) {
+      next.setMinutes(minutes + (30 - remainder));
+    }
+
+    if (next < date) {
+      next.setMinutes(next.getMinutes() + 30);
+    }
+
+    return `${String(next.getHours()).padStart(2, '0')}:${String(next.getMinutes()).padStart(2, '0')}`;
+  }
+
+  function syncGuestOptions() {
+    const capacity = getSelectedTableCapacity();
+    const currentGuests = parseInt(bookingGuests.value || '0', 10);
+
+    Array.from(bookingGuests.options).forEach(opt => {
+      if (!opt.value) {
+        return;
+      }
+
+      const tooMany = capacity > 0 && parseInt(opt.value, 10) > capacity;
+      opt.disabled = tooMany;
+      opt.style.color = tooMany ? '#bbb' : '';
+    });
+
+    if (capacity > 0) {
+      bookingCapacityHint.textContent = `This table seats up to ${capacity} guest${capacity > 1 ? 's' : ''}.`;
+      if (currentGuests > capacity) {
+        bookingGuests.value = '';
+      }
+    } else {
+      bookingCapacityHint.textContent = 'Select a table to see its seating capacity.';
+    }
+  }
+
+  function suggestBestFitTable() {
+    const guests = parseInt(bookingGuests.value || '0', 10);
+    const options = Array.from(bookingTable.options)
+      .filter(opt => opt.value)
+      .map(opt => ({
+        value: opt.value,
+        label: opt.textContent.trim(),
+        capacity: parseInt(opt.dataset.capacity || '0', 10),
+      }))
+      .filter(opt => opt.capacity > 0)
+      .sort((a, b) => a.capacity - b.capacity);
+
+    if (!guests) {
+      bookingTableHint.textContent = 'Choose guests to get a best-fit table.';
+      return;
+    }
+
+    const bestFit = options.find(opt => opt.capacity >= guests);
+    if (!bestFit) {
+      bookingTableHint.textContent = 'No table currently fits that party size.';
+      return;
+    }
+
+    const selectedCapacity = getSelectedTableCapacity();
+    if (!bookingTable.value || (selectedCapacity > 0 && selectedCapacity < guests)) {
+      bookingTable.value = bestFit.value;
+    }
+
+    bookingTableHint.textContent = `Best fit: ${bestFit.label}`;
+  }
+
+  function syncTimeConstraints() {
+    const today = new Date();
+    const selectedDate = bookingDate.value;
+    const todayString = today.toISOString().split('T')[0];
+    const openingTime = '08:00';
+    const closingTime = '23:30';
+
+    bookingTime.min = openingTime;
+    bookingTime.max = closingTime;
+
+    if (selectedDate === todayString) {
+      const nextAvailable = roundTimeToNextSlot(today);
+      bookingTime.min = nextAvailable > openingTime ? nextAvailable : openingTime;
+      if (bookingTime.value && bookingTime.value < bookingTime.min) {
+        bookingTime.value = bookingTime.min <= closingTime ? bookingTime.min : '';
+      }
+    }
+  }
+
+  function syncTimeSlotState() {
+    bookingSlotButtons.forEach(button => {
+      button.classList.toggle('active', button.dataset.time === bookingTime.value);
+      button.disabled = Boolean(bookingTime.min && button.dataset.time < bookingTime.min);
+    });
+  }
+
+  function updateBookingSummary() {
+    const selectedTableText = bookingTable.selectedOptions[0]?.textContent?.trim() || 'Not selected';
+    const guests = bookingGuests.value ? `${bookingGuests.value} guest${bookingGuests.value === '1' ? '' : 's'}` : 'Choose guests';
+
+    bookingSummaryTable.textContent = selectedTableText;
+    bookingSummaryDate.textContent = formatBookingDate(bookingDate.value);
+    bookingSummaryTime.textContent = bookingTime.value || 'Choose a time';
+    bookingSummaryGuests.textContent = guests;
+  }
+
+  bookingTable.addEventListener('change', function() {
+    syncGuestOptions();
+    updateBookingSummary();
+  });
+
+  bookingGuests.addEventListener('change', function() {
+    suggestBestFitTable();
+    syncGuestOptions();
+    updateBookingSummary();
+  });
+
+  bookingDate.addEventListener('change', function() {
+    syncTimeConstraints();
+    syncTimeSlotState();
+    updateBookingSummary();
+  });
+
+  bookingTime.addEventListener('input', function() {
+    syncTimeSlotState();
+    updateBookingSummary();
+  });
+
+  bookingSlotButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      if (this.disabled) {
+        return;
+      }
+
+      bookingTime.value = this.dataset.time;
+      syncTimeSlotState();
+      updateBookingSummary();
+    });
+  });
+
+  syncTimeConstraints();
+  syncGuestOptions();
+  syncTimeSlotState();
+  updateBookingSummary();
+
+  function showBookingMsg(form, text, isError) {
+    document.getElementById('bookingMsg')?.remove();
+    const msg = document.createElement('div');
+    msg.id = 'bookingMsg';
+    msg.style.cssText = 'margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;font-size:.9rem;';
+    if (isError) {
+      msg.style.background = 'rgba(220,53,69,.08)';
+      msg.style.color = '#dc3545';
+      msg.style.border = '1px solid rgba(220,53,69,.2)';
+    } else {
+      msg.style.background = 'rgba(46,158,106,.10)';
+      msg.style.color = '#2e9e6a';
+      msg.style.border = '1px solid rgba(46,158,106,.25)';
+    }
+    msg.textContent = text;
+    form.insertAdjacentElement('beforebegin', msg);
+  }
+
+  bookingForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const capacity = getSelectedTableCapacity();
+    const guests = parseInt(bookingGuests.value || '0', 10);
+    const selectedDateTime = bookingDate.value && bookingTime.value
+      ? new Date(`${bookingDate.value}T${bookingTime.value}:00`)
+      : null;
+
+    // Client-side capacity guard
+    if (capacity && guests > capacity) {
+      showBookingMsg(this, `This table only seats ${capacity} guest(s). Please select fewer guests or a larger table.`, true);
+      return;
+    }
+
+    if (selectedDateTime && selectedDateTime < new Date()) {
+      showBookingMsg(this, 'Please choose a reservation time in the future.', true);
+      return;
+    }
+
+    if (bookingTime.value && (bookingTime.value < '08:00' || bookingTime.value > '23:30')) {
+      showBookingMsg(this, 'Please choose a time between 08:00 and 23:30.', true);
+      return;
+    }
+
+    bookingSubmitBtn.textContent = 'Processing...';
+    bookingSubmitBtn.disabled = true;
+
+    const payload = {
+      table_id: bookingTable.value,
+      date: bookingDate.value,
+      time: bookingTime.value,
+      guests: guests,
+    };
+
+    try {
+      const res  = await fetch('{{ path("app_reservation_book") }}', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showBookingMsg(this, 'Your reservation is confirmed! We look forward to welcoming you.', false);
+        this.reset();
+        // Re-enable all guest options after reset
+        document.querySelectorAll('#booking_guests option').forEach(o => { o.disabled = false; o.style.color = ''; });
+        bookingTableHint.textContent = 'Choose guests to get a best-fit table.';
+        bookingCapacityHint.textContent = 'Select a table to see its seating capacity.';
+        syncTimeConstraints();
+        syncTimeSlotState();
+        updateBookingSummary();
+        setTimeout(closeBookingPopup, 2500);
+      } else {
+        showBookingMsg(this, data.error || 'Something went wrong. Please try again.', true);
+      }
+    } catch(err) {
+      showBookingMsg(this, 'Network error. Please try again.', true);
+    }
+
+    bookingSubmitBtn.textContent = 'Confirm Booking';
+    bookingSubmitBtn.disabled = false;
+  });
+
+  // ── PROFILE POPUP ──────────────────────────────────────────
+  const profilePopup = document.getElementById('profilePopup');
+  function closeProfilePopup() { profilePopup.classList.remove('active'); document.body.style.overflow=''; }
+  document.getElementById('openProfile').addEventListener('click', () => { profilePopup.classList.add('active'); document.body.style.overflow='hidden'; });
+  document.getElementById('closeProfile').addEventListener('click', closeProfilePopup);
+  profilePopup.addEventListener('click', e => { if(e.target === profilePopup) closeProfilePopup(); });
+  document.getElementById('profileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    alert('Your profile has been saved successfully!');
+    this.reset();
+    closeProfilePopup();
+  });
+
+  // ── CART DRAWER ────────────────────────────────────────────
+  const cartOverlay = document.getElementById('cartOverlay');
+  function openCart()  { cartOverlay.classList.add('active');    document.body.style.overflow='hidden'; }
+  function closeCart() { cartOverlay.classList.remove('active'); document.body.style.overflow=''; }
+  document.getElementById('openCart').addEventListener('click', openCart);
+  document.getElementById('openCart2').addEventListener('click', openCart);
+  document.getElementById('closeCart').addEventListener('click', closeCart);
+  cartOverlay.addEventListener('click', e => { if(e.target === cartOverlay) closeCart(); });
+
+  let cart = [];
+  let pendingDeliveryOrderId = null;
+
+  document.querySelectorAll('.add-cart-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cart.push({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) });
+      updateCart();
+      btn.textContent = 'Added';
+      setTimeout(() => btn.textContent = 'Add to Cart', 1200);
+    });
+  });
+
+  function updateCart() {
+    const container = document.getElementById('cartItems');
+    container.innerHTML = cart.length === 0
+      ? '<div class="empty-cart">Your luxury cart is currently empty.</div>'
+      : cart.map((item, i) => `
+          <div class="cart-item">
+            <div><h4>${item.name}</h4><p>${item.price.toFixed(2)} TND</p></div>
+            <button class="remove-btn" onclick="removeFromCart(${i})">Remove</button>
+          </div>`).join('');
+    const total = cart.reduce((s, i) => s + i.price, 0);
+    document.getElementById('cartTotal').textContent  = total.toFixed(2) + ' TND';
+    document.getElementById('cartCount').textContent  = cart.length;
+  }
+
+  function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
+  window.removeFromCart = removeFromCart;
+
+  // ── ORDER TYPE MODAL ───────────────────────────────────────
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  const orderTypeModal = document.getElementById('orderTypeModal');
+  const dineInBtn = document.getElementById('dineInBtn');
+  const deliveryBtn = document.getElementById('deliveryBtn');
+  const closeOrderTypeBtn = document.getElementById('closeOrderType');
+
+  if(checkoutBtn) {
+    checkoutBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if(cart.length === 0){
+        alert("Your cart is empty.");
+        return;
+      }
+
+      const total = cart.reduce((sum, item) => sum + item.price, 0);
+      document.getElementById('redirectCartItemsInput').value = JSON.stringify(cart);
+      document.getElementById('redirectCartTotalInput').value = total.toFixed(2);
+      
+      closeCart();
+      
+      if(orderTypeModal){
+        orderTypeModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    });
+  }
+
+  if(dineInBtn) {
+    dineInBtn.addEventListener('click', function() {
+      const cartItemsInput = document.getElementById('redirectCartItemsInput');
+      const orderTotalInput = document.getElementById('redirectCartTotalInput');
+      
+      const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
+      url.searchParams.append('cart_items', cartItemsInput.value);
+      url.searchParams.append('order_total', orderTotalInput.value);
+      url.searchParams.append('order_type', 'DINE_IN');
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if(data.success) {
+            // Close modal
+            if(orderTypeModal){
+              orderTypeModal.style.display = 'none';
+              document.body.style.overflow = '';
+            }
+            
+            // Clear cart display
+            const cartContainer = document.getElementById('cartItems');
+            if(cartContainer) {
+              cartContainer.innerHTML = '<div class="empty-cart">Your luxury cart is currently empty.</div>';
+            }
+            document.getElementById('cartCount').textContent = '0';
+            document.getElementById('cartTotal').textContent = '0 TND';
+            
+            // Show success notification
+            alert('✅ Your Dine In order has been placed successfully!\nOrder ID: #' + data.order_id);
+          } else {
+            alert('❌ Error: ' + (data.message || 'Failed to place order'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('❌ Error placing order. Please try again.');
+        });
+    });
+  }
+
+  if(deliveryBtn) {
+    deliveryBtn.addEventListener('click', async function() {
+      if(cart.length === 0) {
+        alert('Your cart is empty. Add items before selecting delivery.');
+        return;
+      }
+
+      if (!pendingDeliveryOrderId) {
+        const cartItemsInput = document.getElementById('redirectCartItemsInput');
+        const orderTotalInput = document.getElementById('redirectCartTotalInput');
+        const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
+
+        url.searchParams.append('cart_items', cartItemsInput.value);
+        url.searchParams.append('order_total', orderTotalInput.value);
+        url.searchParams.append('order_type', 'DELIVERY');
+
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+
+          if (!data.success) {
+            alert('❌ Error: ' + (data.message || 'Failed to create delivery order')); 
+            return;
+          }
+
+          pendingDeliveryOrderId = data.order_id;
+          document.getElementById('deliveryOrderId').value = pendingDeliveryOrderId;
+          document.getElementById('deliverySavedOrderIdInput').value = pendingDeliveryOrderId;
+          alert('✅ Delivery order saved automatically. Please confirm delivery details. Order ID: #' + pendingDeliveryOrderId);
+        } catch (error) {
+          console.error('Error creating delivery order:', error);
+          alert('❌ Error creating delivery order. Please try again.');
+          return;
+        }
+      }
+
+      if(orderTypeModal){
+        orderTypeModal.style.display = 'none';
+      }
+      const deliveryFormModal = document.getElementById('deliveryFormModal');
+      if(deliveryFormModal){
+        deliveryFormModal.style.display = 'flex';
+      }
+    });
+  }
+
+  // Handle confirm delivery button
+  const confirmDeliveryBtn = document.getElementById('confirmDeliveryBtn');
+  if(confirmDeliveryBtn) {
+    confirmDeliveryBtn.addEventListener('click', async function() {
+      const orderId = document.getElementById('deliveryOrderId').value.trim() || pendingDeliveryOrderId;
+      const recipientName = document.getElementById('recipientName').value.trim();
+      const recipientPhone = document.getElementById('recipientPhone').value.trim();
+      const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+      const pickupLocation = document.getElementById('pickupLocation').value.trim();
+      const latitude = document.getElementById('deliveryLatitude').value.trim();
+      const longitude = document.getElementById('deliveryLongitude').value.trim();
+      const token = document.getElementById('deliverySaveToken').value;
+
+      if (!orderId) {
+        alert('❌ No delivery order has been created yet. Please select Delivery again.');
+        return;
+      }
+
+      if (!recipientName || !recipientPhone || !deliveryAddress || !latitude || !longitude) {
+        alert('❌ Please fill in all required fields (Name, Phone, Address, Latitude, Longitude)');
+        return;
+      }
+
+      const payload = new URLSearchParams();
+      payload.append('order_id', orderId);
+      payload.append('recipient_name', recipientName);
+      payload.append('recipient_phone', recipientPhone);
+      payload.append('delivery_address', deliveryAddress);
+      payload.append('pickup_location', pickupLocation);
+      payload.append('current_latitude', latitude);
+      payload.append('current_longitude', longitude);
+      payload.append('_token', token);
+
+      try {
+        const response = await fetch('{{ path("app_delivery_save") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: payload.toString(),
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          const deliveryFormModal = document.getElementById('deliveryFormModal');
+          if(deliveryFormModal){
+            deliveryFormModal.style.display = 'none';
+          }
+          if(orderTypeModal){
+            orderTypeModal.style.display = 'none';
+            document.body.style.overflow = '';
+          }
+
+          cart = [];
+          updateCart();
+
+          document.getElementById('deliveryForm').reset();
+          pendingDeliveryOrderId = null;
+          document.getElementById('deliveryOrderId').value = '';
+          document.getElementById('deliverySavedOrderIdInput').value = '';
+
+          alert('✅ Your delivery details have been saved successfully!\nOrder ID: #' + orderId + '\nDelivery ID: #' + data.delivery_id);
+        } else {
+          alert('❌ Error: ' + (data.message || 'Failed to save delivery details'));
+        }
+      } catch (error) {
+        console.error('Error saving delivery:', error);
+        alert('❌ Error saving delivery details. Please try again.');
+      }
+    });
+  }
+
+  // Handle get current location button
+  const getCurrentLocationBtn = document.getElementById('getCurrentLocation');
+  if(getCurrentLocationBtn) {
+    getCurrentLocationBtn.addEventListener('click', function() {
+      const latitudeInput = document.getElementById('deliveryLatitude');
+      const longitudeInput = document.getElementById('deliveryLongitude');
+      
+      if (navigator.geolocation) {
+        getCurrentLocationBtn.textContent = '📍 Getting location...';
+        getCurrentLocationBtn.disabled = true;
+        
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            const latitude = position.coords.latitude.toFixed(6);
+            const longitude = position.coords.longitude.toFixed(6);
+            
+            latitudeInput.value = latitude;
+            longitudeInput.value = longitude;
+            
+            getCurrentLocationBtn.textContent = '📍 Location updated!';
+            getCurrentLocationBtn.style.background = '#28a745';
+            
+            setTimeout(() => {
+              getCurrentLocationBtn.textContent = '📍 Get Current Location';
+              getCurrentLocationBtn.style.background = '#28a745';
+              getCurrentLocationBtn.disabled = false;
+            }, 2000);
+          },
+          function(error) {
+            let errorMessage = 'Unable to get your location.';
+            switch(error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location access denied. Please enable location services.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information is unavailable.';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out.';
+                break;
+            }
+            
+            alert('❌ ' + errorMessage);
+            getCurrentLocationBtn.textContent = '📍 Get Current Location';
+            getCurrentLocationBtn.disabled = false;
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+          }
+        );
+      } else {
+        alert('❌ Geolocation is not supported by this browser.');
+      }
+    });
+  }
+
+  if(closeOrderTypeBtn) {
+    closeOrderTypeBtn.addEventListener('click', function() {
+      if(orderTypeModal){
+        orderTypeModal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // Handle close delivery form button
+  const closeDeliveryFormBtn = document.getElementById('closeDeliveryForm');
+  const deliveryFormModal = document.getElementById('deliveryFormModal');
+  if(closeDeliveryFormBtn) {
+    closeDeliveryFormBtn.addEventListener('click', function() {
+      if(deliveryFormModal){
+        deliveryFormModal.style.display = 'none';
+      }
+      // Show order type modal again
+      if(orderTypeModal){
+        orderTypeModal.style.display = 'flex';
+      }
+      // Reset the form
+      document.getElementById('deliveryForm').reset();
+    });
+  }
+
+  // Close delivery form by clicking outside
+  if(deliveryFormModal) {
+    deliveryFormModal.addEventListener('click', function(e) {
+      if(e.target === deliveryFormModal) {
+        deliveryFormModal.style.display = 'none';
+        // Show order type modal again
+        if(orderTypeModal){
+          orderTypeModal.style.display = 'flex';
+        }
+        // Reset the form
+        document.getElementById('deliveryForm').reset();
+      }
+    });
+  }
+
+  if(orderTypeModal) {
+    orderTypeModal.addEventListener('click', function(e) {
+      if(e.target === orderTypeModal) {
+        orderTypeModal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // ── ESC KEY ────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { 
+      closeBookingPopup(); 
+      closeCart(); 
+      closeProfilePopup();
+      if(orderTypeModal) orderTypeModal.style.display = 'none';
+    }
+  });
+
+  // ── SCROLL REVEAL ──────────────────────────────────────────
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('show'); observer.unobserve(entry.target); }});
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
+
+  // ── NAV SCROLL ─────────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
+  });
+  </script>
+
 </body>
 </html>

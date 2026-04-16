@@ -1,0 +1,246 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Recipe · {{ dish.name }}{% endblock %}
+{% block topbar_title %}Dish Recipe{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Recipe: {{ dish.name }}</h2>
+      <p class="sec-sub">Manage dish ingredients and required quantities.</p>
+    </div>
+    <div class="recipe-head-actions">
+      <a href="{{ path('admin_dish_recipe_new', {id: dish.id}) }}" class="recipe-btn recipe-btn-primary">+ Add Ingredient</a>
+      <a href="{{ path('admin_dish_show', {id: dish.id}) }}" class="recipe-btn recipe-btn-muted">Back to Dish</a>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="margin-bottom:1.2rem;">
+    <div class="kpi">
+      <div class="kpi-lbl">Availability</div>
+      <div class="kpi-val" style="font-size:1.6rem;">{{ availability.is_available ? 'Available' : 'Blocked' }}</div>
+      <div class="kpi-chg {{ availability.is_available ? 'up' : 'down' }}">Recipe-based status</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Possible Servings</div>
+      <div class="kpi-val" style="font-size:1.6rem;">{{ availability.possible_servings }}</div>
+      <div class="kpi-chg up">Computed from stock and ratios</div>
+    </div>
+  </div>
+
+  {% if availability.reasons is not empty %}
+    <div class="delivery-table-card" style="margin-bottom:1rem;">
+      <div class="table-header"><div class="table-title">Blocking Reasons</div></div>
+      <div style="padding:1rem 1.5rem;">
+        <ul style="margin:0; padding-left:1.2rem;">
+          {% for reason in availability.reasons %}
+            <li>{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+  {% set hasFilters = search or status or sort != 'ingredient' or dir != 'ASC' %}
+  <form method="get" class="recipe-filter-form" data-live-search="true">
+    <input type="text" name="q" value="{{ search|default('') }}" placeholder="Search ingredient or unit" class="recipe-search-input">
+
+    <select name="status" class="recipe-select">
+      <option value="" {{ status == '' ? 'selected' : '' }}>All Statuses</option>
+      <option value="ok" {{ status == 'ok' ? 'selected' : '' }}>OK</option>
+      <option value="insufficient" {{ status == 'insufficient' ? 'selected' : '' }}>Insufficient</option>
+      <option value="expired" {{ status == 'expired' ? 'selected' : '' }}>Expired</option>
+    </select>
+
+    <select name="sort" class="recipe-select">
+      <option value="ingredient" {{ sort == 'ingredient' ? 'selected' : '' }}>Sort: Ingredient</option>
+      <option value="required" {{ sort == 'required' ? 'selected' : '' }}>Sort: Required</option>
+      <option value="stock" {{ sort == 'stock' ? 'selected' : '' }}>Sort: Stock</option>
+      <option value="unit" {{ sort == 'unit' ? 'selected' : '' }}>Sort: Unit</option>
+      <option value="expiry" {{ sort == 'expiry' ? 'selected' : '' }}>Sort: Expiry</option>
+    </select>
+
+    <select name="dir" class="recipe-select">
+      <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
+      <option value="DESC" {{ dir == 'DESC' ? 'selected' : '' }}>Desc</option>
+    </select>
+
+    {% if hasFilters %}
+      <a href="{{ path('admin_dish_recipe_index', {id: dish.id}) }}" class="recipe-btn recipe-btn-muted">Reset</a>
+    {% endif %}
+  </form>
+
+  <div class="delivery-table-card">
+    <div class="table-header">
+      <div class="table-title">Recipe Lines</div>
+      <div class="table-count">{{ recipeLines|length }} total</div>
+    </div>
+
+    {% if recipeLines is empty %}
+      <div class="no-results">No ingredients linked yet. Add recipe lines to compute availability.</div>
+    {% else %}
+      <table class="delivery-table">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>Required</th>
+            <th>Stock</th>
+            <th>Unit</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in recipeLines %}
+            {% set ingredient = line.ingredient %}
+            {% set required = line.quantityRequired|default(0) %}
+            {% set stock = ingredient ? ingredient.quantityInStock|default(0) : 0 %}
+            {% set expired = ingredient and ingredient.expiryDate and ingredient.expiryDate|date('Y-m-d') < today|date('Y-m-d') %}
+            {% set enough = ingredient and stock >= required %}
+            <tr>
+              <td>{{ ingredient ? ingredient.name : 'Missing ingredient' }}</td>
+              <td>{{ required|number_format(3, '.', ' ') }}</td>
+              <td>{{ stock|number_format(2, '.', ' ') }}</td>
+              <td>{{ ingredient ? ingredient.unit : '—' }}</td>
+              <td>
+                {% if expired %}
+                  <span class="status-badge status-cancelled">Expired</span>
+                {% elseif enough %}
+                  <span class="status-badge status-completed">OK</span>
+                {% else %}
+                  <span class="status-badge status-cancelled">Insufficient</span>
+                {% endif %}
+              </td>
+              <td class="action-cell">
+                {% if ingredient %}
+                  <a href="{{ path('admin_dish_recipe_edit', {id: dish.id, ingredientId: ingredient.id}) }}" class="mini-action">Edit</a>
+                  <form method="post" action="{{ path('admin_dish_recipe_delete', {id: dish.id, ingredientId: ingredient.id}) }}" onsubmit="return confirm('Remove this recipe line?');" style="display:inline-block;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_recipe' ~ dish.id ~ '_' ~ ingredient.id) }}">
+                    <button class="mini-action mini-action-danger">Delete</button>
+                  </form>
+                {% else %}
+                  <span style="color:var(--text-3)">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <style>
+    .recipe-head-actions {
+      display: flex;
+      gap: .65rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .recipe-filter-form {
+      margin: 0 0 1rem;
+      padding: .9rem;
+      border: 1px solid var(--border);
+      background: linear-gradient(155deg, rgba(250,246,239,.95), rgba(245,238,226,.85));
+      border-radius: 14px;
+      display: flex;
+      gap: .55rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .recipe-search-input,
+    .recipe-select {
+      border: 1px solid var(--border-2);
+      background: #fff;
+      border-radius: 9px;
+      padding: .62rem .8rem;
+      font-family: 'Jost', sans-serif;
+      color: var(--text);
+    }
+    .recipe-search-input {
+      min-width: 240px;
+      flex: 1;
+    }
+    .recipe-select {
+      min-width: 145px;
+    }
+    .recipe-search-input:focus,
+    .recipe-select:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(184, 135, 42, .14);
+    }
+    .recipe-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .35rem;
+      text-decoration: none;
+      padding: .62rem .95rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-weight: 700;
+      letter-spacing: .02em;
+      font-size: .83rem;
+      line-height: 1;
+      transition: all .18s ease;
+      cursor: pointer;
+    }
+    .recipe-btn-primary {
+      background: var(--gold);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(184, 135, 42, .2);
+    }
+    .recipe-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(184, 135, 42, .25);
+    }
+    .recipe-btn-muted {
+      background: #fff;
+      color: var(--espresso);
+      border-color: var(--border-2);
+    }
+    .recipe-btn-muted:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: #fffdfa;
+    }
+    .action-cell {
+      display: flex;
+      gap: .45rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .mini-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .38rem .72rem;
+      border-radius: 9px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      color: var(--espresso);
+      text-decoration: none;
+      font-size: .77rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      transition: all .16s ease;
+    }
+    .mini-action:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: #fffdfa;
+      transform: translateY(-1px);
+    }
+    .mini-action-danger {
+      border-color: #dfb6b1;
+      color: #8f1f1f;
+      background: #fff7f6;
+    }
+    .mini-action-danger:hover {
+      border-color: #d98282;
+      color: #b3261e;
+      background: #fff0ef;
+    }
+  </style>
+{% endblock %}

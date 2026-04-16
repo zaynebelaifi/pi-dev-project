@@ -1,0 +1,37 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Donation Item Details · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Donation Items{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Donation Item Details</h2>
+      <p>Review the donation item assigned to a donation event.</p>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table class="listing-table">
+      <tbody>
+        <tr>
+          <th>Donation Event ID</th>
+          <td>{{ food_donation_item.donationEventId }}</td>
+        </tr>
+        <tr>
+          <th>Item ID</th>
+          <td>{{ food_donation_item.itemId }}</td>
+        </tr>
+        <tr>
+          <th>Quantity</th>
+          <td>{{ food_donation_item.quantity }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="form-actions">
+      <a href="{{ path('app_food_donation_item_index') }}" class="t-btn secondary">Back to items</a>
+      <a href="{{ path('app_food_donation_item_edit', {'donation_event_id': food_donation_item.donationEventId, 'item_id': food_donation_item.itemId}) }}" class="t-btn primary">Edit</a>
+    </div>
+  </div>
+{% endblock %}

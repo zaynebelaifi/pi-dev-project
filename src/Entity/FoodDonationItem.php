@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\FoodDonationItemRepository;
 
@@ -13,7 +14,6 @@ use App\Repository\FoodDonationItemRepository;
 class FoodDonationItem
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $donation_event_id = null;
 
@@ -28,7 +28,20 @@ class FoodDonationItem
         return $this;
     }
 
+    public function getDonationEventId(): ?int
+    {
+        return $this->getDonation_event_id();
+    }
+
+    public function setDonationEventId(int $donationEventId): self
+    {
+        return $this->setDonation_event_id($donationEventId);
+    }
+
+    #[ORM\Id]
     #[ORM\Column(type: 'integer', nullable: false)]
+    #[Assert\NotNull(message: 'Dish ID is required.')]
+    #[Assert\Positive(message: 'Dish ID must be a positive number.')]
     private ?int $item_id = null;
 
     public function getItem_id(): ?int
@@ -42,7 +55,20 @@ class FoodDonationItem
         return $this;
     }
 
+    public function getItemId(): ?int
+    {
+        return $this->item_id;
+    }
+
+    public function setItemId(int $itemId): self
+    {
+        $this->item_id = $itemId;
+        return $this;
+    }
+
     #[ORM\Column(type: 'integer', nullable: false)]
+    #[Assert\NotNull(message: 'Quantity is required.')]
+    #[Assert\Positive(message: 'Quantity must be greater than zero.')]
     private ?int $quantity = null;
 
     public function getQuantity(): ?int

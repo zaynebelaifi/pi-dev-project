@@ -1,0 +1,185 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Dishes · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Dish Manager{% endblock %}
+
+{% block body %}
+  <div class="delivery-header">
+    <h2>{% if selectedMenu %}Dish Manager · {{ selectedMenu.title }}{% else %}Dish Manager{% endif %}</h2>
+    <p>
+      {% if selectedMenu %}
+        Managing dishes for the selected menu only.
+      {% else %}
+        Manage individual dishes, pricing, availability and menu assignment.
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="filter-section" style="margin-bottom:1.5rem;">
+    <div class="btn-actions">
+      <a href="{{ selectedMenu ? path('admin_dish_new', {menu: selectedMenu.id}) : path('admin_dish_new') }}" class="t-btn primary">+ New Dish</a>
+      <a href="{{ selectedMenu ? path('admin_menu_show', {id: selectedMenu.id}) : path('admin_menu_index') }}" class="t-btn">
+        {{ selectedMenu ? 'Back to Menu' : 'Back to Menus' }}
+      </a>
+    </div>
+    {% set hasFilters = search or sort != 'created_at' or dir != 'DESC' %}
+    <form method="get" class="list-filters" data-live-search="true">
+      {% if selectedMenu %}
+        <input type="hidden" name="menu" value="{{ selectedMenu.id }}">
+      {% endif %}
+      <input type="text" name="q" value="{{ search|default('') }}" placeholder="Search dish/menu">
+      <select name="sort">
+        <option value="created_at" {{ sort == 'created_at' ? 'selected' : '' }}>Sort: Created</option>
+        <option value="name" {{ sort == 'name' ? 'selected' : '' }}>Sort: Name</option>
+        <option value="base_price" {{ sort == 'base_price' ? 'selected' : '' }}>Sort: Price</option>
+        <option value="available" {{ sort == 'available' ? 'selected' : '' }}>Sort: Availability</option>
+        <option value="id" {{ sort == 'id' ? 'selected' : '' }}>Sort: ID</option>
+      </select>
+      <select name="dir">
+        <option value="DESC" {{ dir == 'DESC' ? 'selected' : '' }}>Desc</option>
+        <option value="ASC" {{ dir == 'ASC' ? 'selected' : '' }}>Asc</option>
+      </select>
+      {% set resetParams = selectedMenu ? {menu: selectedMenu.id} : {} %}
+      {% if hasFilters %}
+        <a href="{{ path('admin_dish_index', resetParams) }}" class="t-btn">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="delivery-table-card">
+    <div class="table-header">
+      <div class="table-title">Dishes</div>
+      <div class="table-count">{{ dishes|length }} total</div>
+    </div>
+
+    {% if dishes is empty %}
+      <div class="no-results">No dishes yet. Create a dish and assign it to a menu.</div>
+    {% else %}
+      <table class="delivery-table">
+        <thead>
+        <tr>
+          <th>
+            <a class="sort-link" href="{{ path('admin_dish_index', {menu: selectedMenu ? selectedMenu.id : null, q: search, sort: 'id', dir: sort == 'id' and dir == 'ASC' ? 'DESC' : 'ASC'}) }}">
+              ID{% if sort == 'id' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
+            </a>
+          </th>
+          <th>
+            <a class="sort-link" href="{{ path('admin_dish_index', {menu: selectedMenu ? selectedMenu.id : null, q: search, sort: 'name', dir: sort == 'name' and dir == 'ASC' ? 'DESC' : 'ASC'}) }}">
+              Name{% if sort == 'name' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
+            </a>
+          </th>
+          <th>Menu</th>
+          <th>
+            <a class="sort-link" href="{{ path('admin_dish_index', {menu: selectedMenu ? selectedMenu.id : null, q: search, sort: 'base_price', dir: sort == 'base_price' and dir == 'ASC' ? 'DESC' : 'ASC'}) }}">
+              Price{% if sort == 'base_price' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
+            </a>
+          </th>
+          <th>
+            <a class="sort-link" href="{{ path('admin_dish_index', {menu: selectedMenu ? selectedMenu.id : null, q: search, sort: 'available', dir: sort == 'available' and dir == 'ASC' ? 'DESC' : 'ASC'}) }}">
+              Available{% if sort == 'available' %} {{ dir == 'ASC' ? '↑' : '↓' }}{% endif %}
+            </a>
+          </th>
+          <th>Servings</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for dish in dishes %}
+          {% set availability = dishAvailability[dish.id] ?? null %}
+          <tr>
+            <td class="delivery-id">#{{ dish.id }}</td>
+            <td>{{ dish.name }}</td>
+            <td>{{ dish.menu ? dish.menu.title : '—' }}</td>
+            <td>{{ dish.basePrice|number_format(2, '.', ' ') }} TND</td>
+            <td>
+              {% if availability and availability.is_available %}
+                <span class="status-badge status-completed">Available</span>
+              {% else %}
+                <span class="status-badge status-cancelled">Unavailable</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if availability and availability.has_recipe %}
+                {{ availability.possible_servings }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="action-cell">
+              <a href="{{ path('admin_dish_show', {id: dish.id}) }}" class="mini-action" title="View">View</a>
+              <a href="{{ path('admin_dish_recipe_index', {id: dish.id}) }}" class="mini-action" title="Recipe">Recipe</a>
+              <a href="{{ selectedMenu ? path('admin_dish_edit', {id: dish.id, menu: selectedMenu.id}) : path('admin_dish_edit', {id: dish.id}) }}" class="mini-action" title="Edit">Edit</a>
+              <form method="post" action="{{ path('admin_dish_delete', {id: dish.id}) }}" onsubmit="return confirm('Delete this dish?');" style="display:inline-block;">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ dish.id) }}">
+                <button class="mini-action mini-action-danger" title="Delete">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <style>
+    .list-filters {
+      margin-top: .8rem;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .list-filters input[type="text"] {
+      min-width: 280px;
+      padding: .65rem .8rem;
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+    }
+    .list-filters select {
+      padding: .6rem .75rem;
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+      background: #fff;
+    }
+    .sort-link {
+      color: inherit;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .sort-link:hover { text-decoration: underline; }
+    .action-cell {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+    .mini-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .35rem .6rem;
+      border-radius: 7px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      color: var(--espresso);
+      text-decoration: none;
+      font-size: .78rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .mini-action:hover {
+      background: #f5f2ea;
+    }
+    .mini-action-danger {
+      border-color: #dfb6b1;
+      color: #8f1f1f;
+      background: #fff7f6;
+    }
+    .mini-action-danger:hover {
+      background: #fdeeee;
+    }
+  </style>
+{% endblock %}

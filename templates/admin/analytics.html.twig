@@ -1,0 +1,538 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Advanced Analytics - BIG 4{% endblock %}
+{% block topbar_title %}Advanced Analytics{% endblock %}
+{% block topbar_breadcrumb %}Big 4 · Admin · Advanced Inventory & Revenue Insights{% endblock %}
+
+{% block body %}
+<style>
+  .aa-wrap {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .aa-filter {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(130px, 1fr));
+    gap: 0.65rem;
+    padding: 0.95rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7edd9, #fff8e8);
+  }
+
+  .aa-field {
+    display: grid;
+    gap: 0.28rem;
+  }
+
+  .aa-field label {
+    font-size: 0.58rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    font-weight: 600;
+  }
+
+  .aa-field select,
+  .aa-field input {
+    height: 38px;
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    padding: 0 0.6rem;
+    background: #fff;
+    color: var(--espresso);
+    font-size: 0.75rem;
+  }
+
+  .aa-apply {
+    align-self: end;
+    height: 38px;
+  }
+
+  .aa-revenue-label {
+    font-size: 0.75rem;
+    color: var(--text-2);
+    margin: 0.2rem 0 0.2rem;
+  }
+
+  .aa-kpis {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .aa-kpi {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.8rem;
+    box-shadow: 0 8px 18px rgba(92, 61, 30, 0.08);
+  }
+
+  .aa-kpi-label {
+    font-size: 0.57rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.38rem;
+  }
+
+  .aa-kpi-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.45rem;
+    line-height: 1;
+    color: var(--espresso);
+  }
+
+  .aa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.95rem;
+  }
+
+  .aa-panel {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(92, 61, 30, 0.08);
+  }
+
+  .aa-head {
+    padding: 0.75rem 0.95rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(184, 135, 42, 0.12), rgba(184, 135, 42, 0.02));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .aa-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    color: var(--espresso);
+  }
+
+  .aa-sub {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+    text-transform: uppercase;
+  }
+
+  .aa-body {
+    padding: 0.85rem 0.95rem 1rem;
+  }
+
+  .aa-canvas-wrap {
+    min-height: 280px;
+  }
+
+  .aa-weather {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .aa-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+
+  .wx-hot { color: #991b1b; background: #fee2e2; border-color: #fecaca; }
+  .wx-warm { color: #92400e; background: #ffedd5; border-color: #fed7aa; }
+  .wx-balanced { color: #14532d; background: #dcfce7; border-color: #bbf7d0; }
+  .wx-cool { color: #1e3a8a; background: #dbeafe; border-color: #bfdbfe; }
+  .wx-cold { color: #1e40af; background: #e0e7ff; border-color: #c7d2fe; }
+  .wx-unknown { color: #334155; background: #e2e8f0; border-color: #cbd5e1; }
+
+  .aa-weather-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem;
+    background: #fffcf4;
+  }
+
+  .aa-weather-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+    margin-bottom: 0.25rem;
+  }
+
+  .aa-weather-value {
+    font-size: 0.84rem;
+    color: var(--espresso);
+    font-weight: 600;
+  }
+
+  .aa-list {
+    margin: 0;
+    padding-left: 1rem;
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.74rem;
+    color: var(--text-2);
+  }
+
+  .aa-risk-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .aa-risk-table th,
+  .aa-risk-table td {
+    border-bottom: 1px solid #f0e8d5;
+    padding: 0.5rem;
+    font-size: 0.72rem;
+    text-align: left;
+  }
+
+  .aa-risk-table th {
+    color: var(--text-3);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #fffdf8;
+  }
+
+  .risk-high { color: #b91c1c; font-weight: 700; }
+  .risk-medium { color: #c2410c; font-weight: 700; }
+  .risk-low { color: #166534; font-weight: 700; }
+
+  @media (max-width: 1200px) {
+    .aa-kpis {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .aa-filter {
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .aa-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .aa-weather {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    .aa-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .aa-filter {
+      grid-template-columns: 1fr;
+    }
+
+    .aa-weather {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="aa-wrap">
+  <form method="get" class="aa-filter" id="analyticsFilterForm">
+    <div class="aa-field">
+      <label for="wastePeriodCombo">Waste Period</label>
+      <select id="wastePeriodCombo" name="waste_period">
+        <option value="Week" {{ filters.wastePeriod == 'Week' ? 'selected' : '' }}>Week</option>
+        <option value="Month" {{ filters.wastePeriod == 'Month' ? 'selected' : '' }}>Month</option>
+        <option value="Year" {{ filters.wastePeriod == 'Year' ? 'selected' : '' }}>Year</option>
+      </select>
+    </div>
+
+    <div class="aa-field">
+      <label for="revenuePeriodCombo">Revenue Period</label>
+      <select id="revenuePeriodCombo" name="revenue_period">
+        <option value="Week" {{ filters.revenuePeriod == 'Week' ? 'selected' : '' }}>Week</option>
+        <option value="Month" {{ filters.revenuePeriod == 'Month' ? 'selected' : '' }}>Month</option>
+        <option value="Year" {{ filters.revenuePeriod == 'Year' ? 'selected' : '' }}>Year</option>
+      </select>
+    </div>
+
+    <div class="aa-field">
+      <label for="revenueFromDatePicker">Revenue From</label>
+      <input id="revenueFromDatePicker" type="date" name="revenue_from" value="{{ filters.revenueFrom }}">
+    </div>
+
+    <div class="aa-field">
+      <label for="revenueToDatePicker">Revenue To</label>
+      <input id="revenueToDatePicker" type="date" name="revenue_to" value="{{ filters.revenueTo }}">
+    </div>
+
+    <div class="aa-field">
+      <label for="revenueSortCombo">Revenue Sort</label>
+      <select id="revenueSortCombo" name="revenue_sort">
+        <option value="revenue_desc" {{ filters.revenueSort == 'revenue_desc' ? 'selected' : '' }}>Revenue Desc</option>
+        <option value="revenue_asc" {{ filters.revenueSort == 'revenue_asc' ? 'selected' : '' }}>Revenue Asc</option>
+      </select>
+    </div>
+
+    <button class="t-btn primary aa-apply" type="submit">Apply</button>
+  </form>
+
+  <div id="totalRevenuePeriodLabel" class="aa-revenue-label">{{ totalRevenuePeriodLabel }}</div>
+
+  <section class="aa-kpis">
+    <div class="aa-kpi"><div class="aa-kpi-label">Total Ingredients</div><div class="aa-kpi-value">{{ kpis.totalIngredients }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Low Stock</div><div class="aa-kpi-value">{{ kpis.lowStock }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Expired Items</div><div class="aa-kpi-value">{{ kpis.expiredItems }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Waste Records</div><div class="aa-kpi-value">{{ kpis.wasteRecords }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Inventory Value</div><div class="aa-kpi-value">{{ kpis.inventoryValue|number_format(2, '.', ' ') }} <span style="font-size:.8rem">TND</span></div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Waste Quantity</div><div class="aa-kpi-value">{{ kpis.wasteQuantity|number_format(2, '.', ' ') }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Waste Cost</div><div class="aa-kpi-value">{{ kpis.wasteCost|number_format(2, '.', ' ') }} <span style="font-size:.8rem">TND</span></div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Near Expiry</div><div class="aa-kpi-value">{{ kpis.nearExpiry }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Out of Stock</div><div class="aa-kpi-value">{{ kpis.outOfStock }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Average Unit Cost</div><div class="aa-kpi-value">{{ kpis.avgUnitCost|number_format(2, '.', ' ') }} <span style="font-size:.8rem">TND</span></div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Low Stock Rate</div><div class="aa-kpi-value">{{ kpis.lowStockRate|number_format(1, '.', ' ') }}%</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Total Revenue</div><div class="aa-kpi-value">{{ kpis.totalRevenue|number_format(2, '.', ' ') }} <span style="font-size:.8rem">TND</span></div></div>
+  </section>
+
+  <div class="aa-grid">
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Waste by Type</div><div class="aa-sub">Pie Chart</div></div>
+      <div class="aa-body aa-canvas-wrap"><canvas id="wasteByTypePieChart"></canvas></div>
+    </section>
+
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Stock Health</div><div class="aa-sub">Pie Chart</div></div>
+      <div class="aa-body aa-canvas-wrap"><canvas id="stockHealthPieChart"></canvas></div>
+    </section>
+
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Top Wasted Ingredients</div><div class="aa-sub">Bar Chart</div></div>
+      <div class="aa-body aa-canvas-wrap"><canvas id="topWastedIngredientsBarChart"></canvas></div>
+    </section>
+
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Revenue Trend</div><div class="aa-sub">Bar Chart</div></div>
+      <div class="aa-body aa-canvas-wrap"><canvas id="revenueTrendBarChart"></canvas></div>
+    </section>
+  </div>
+
+  <section class="aa-panel">
+    <div class="aa-head">
+      <div class="aa-title">Weather Impact Engine</div>
+      <div class="aa-sub"><span class="aa-pill {{ weatherImpact.statusClass|default('wx-unknown') }}">{{ weatherImpact.statusLabel }}</span></div>
+    </div>
+    <div class="aa-body">
+      <div class="aa-weather">
+        <div class="aa-weather-card">
+          <div class="aa-weather-label">Current Temp</div>
+          <div class="aa-weather-value">{{ weatherImpact.temperature is not null ? weatherImpact.temperature|number_format(1, '.', ' ') ~ '°C' : 'N/A' }}</div>
+        </div>
+        <div class="aa-weather-card">
+          <div class="aa-weather-label">Demand Multiplier</div>
+          <div class="aa-weather-value">x{{ weatherImpact.demandMultiplier|number_format(2, '.', ' ') }}</div>
+        </div>
+        <div class="aa-weather-card">
+          <div class="aa-weather-label">Expiry Acceleration</div>
+          <div class="aa-weather-value">x{{ weatherImpact.expiryAcceleration|number_format(2, '.', ' ') }}</div>
+        </div>
+        <div class="aa-weather-card">
+          <div class="aa-weather-label">Predicted Waste</div>
+          <div class="aa-weather-value">{{ predictedWaste.quantity|number_format(2, '.', ' ') }} units / {{ predictedWaste.cost|number_format(2, '.', ' ') }} TND</div>
+        </div>
+      </div>
+      <div style="margin-top:.5rem;font-size:.67rem;color:var(--text-3);">Last weather sync: {{ weatherImpact.fetchedAt }}{% if weatherImpact.isFallback %} · fallback mode{% endif %}</div>
+    </div>
+  </section>
+
+  <div class="aa-grid">
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Shortage Alerts</div><div class="aa-sub">Potential Stockouts</div></div>
+      <div class="aa-body">
+        {% if shortageAlerts is empty %}
+          <div style="font-size:.75rem;color:var(--text-2);">No immediate shortage alerts.</div>
+        {% else %}
+          <ol class="aa-list">
+            {% for alert in shortageAlerts %}
+              <li>
+                <strong style="color:var(--espresso)">{{ alert.ingredient }}</strong>
+                gap {{ alert.shortageGap|number_format(2, '.', ' ') }}
+                (need {{ alert.predictedNeed|number_format(2, '.', ' ') }})
+              </li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Expiry Alerts</div><div class="aa-sub">Weather-Adjusted</div></div>
+      <div class="aa-body">
+        {% if expiryAlerts is empty %}
+          <div style="font-size:.75rem;color:var(--text-2);">No expiry alerts right now.</div>
+        {% else %}
+          <ol class="aa-list">
+            {% for alert in expiryAlerts %}
+              <li>
+                <strong style="color:var(--espresso)">{{ alert.ingredient }}</strong>
+                expires around {{ alert.weatherAdjustedExpiryDate }}
+                {% if alert.predictedWasteQuantity > 0 %}
+                  (risk {{ alert.predictedWasteQuantity|number_format(2, '.', ' ') }} units)
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <section class="aa-panel">
+    <div class="aa-head"><div class="aa-title">Weather-Adjusted Ingredient Risk</div><div class="aa-sub">Predicted Need, Stockouts, Expiry</div></div>
+    <div class="aa-body" style="overflow:auto;">
+      <table class="aa-risk-table">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>Stock</th>
+            <th>Predicted Need</th>
+            <th>Gap</th>
+            <th>Adjusted Expiry</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in riskRows %}
+            <tr>
+              <td>{{ row.ingredient }}</td>
+              <td>{{ row.stock|number_format(2, '.', ' ') }} {{ row.unit }}</td>
+              <td>{{ row.predictedNeed|number_format(2, '.', ' ') }} {{ row.unit }}</td>
+              <td>{{ row.shortageGap|number_format(2, '.', ' ') }}</td>
+              <td>{{ row.weatherAdjustedExpiryDate }}</td>
+              <td class="{{ row.riskLevel == 'High' ? 'risk-high' : (row.riskLevel == 'Medium' ? 'risk-medium' : 'risk-low') }}">{{ row.riskLevel }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" style="text-align:center;color:var(--text-3);">No risk rows available.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  const wasteByTypeData = {{ wasteByTypeChart|json_encode|raw }};
+  const stockHealthData = {{ stockHealthChart|json_encode|raw }};
+  const topWastedData = {{ topWastedChart|json_encode|raw }};
+  const revenueTrendData = {{ revenueTrendChart|json_encode|raw }};
+
+  const renderPie = (canvasId, labels, data, colors) => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !window.Chart) {
+      return;
+    }
+
+    new Chart(canvas, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderWidth: 1,
+          borderColor: '#fff',
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 14, font: { size: 11 } },
+          },
+        },
+      },
+    });
+  };
+
+  const renderBar = (canvasId, labels, data, color, horizontal = false) => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !window.Chart) {
+      return;
+    }
+
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: color,
+          borderRadius: 6,
+          maxBarThickness: 36,
+        }],
+      },
+      options: {
+        indexAxis: horizontal ? 'y' : 'x',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true },
+        },
+        plugins: {
+          legend: { display: false },
+        },
+      },
+    });
+  };
+
+  renderPie(
+    'wasteByTypePieChart',
+    wasteByTypeData.labels || [],
+    wasteByTypeData.data || [],
+    ['#ef4444', '#f97316', '#f59e0b', '#14b8a6', '#3b82f6', '#8b5cf6', '#a855f7']
+  );
+
+  renderPie(
+    'stockHealthPieChart',
+    stockHealthData.labels || [],
+    stockHealthData.data || [],
+    ['#22c55e', '#eab308', '#f97316', '#ef4444', '#64748b']
+  );
+
+  renderBar(
+    'topWastedIngredientsBarChart',
+    topWastedData.labels || [],
+    topWastedData.data || [],
+    '#dc2626',
+    true
+  );
+
+  renderBar(
+    'revenueTrendBarChart',
+    revenueTrendData.labels || [],
+    revenueTrendData.data || [],
+    '#b8872a',
+    false
+  );
+
+  ['wastePeriodCombo', 'revenuePeriodCombo', 'revenueSortCombo', 'revenueFromDatePicker', 'revenueToDatePicker']
+    .forEach((id) => {
+      const control = document.getElementById(id);
+      if (control) {
+        control.addEventListener('change', () => {
+          document.getElementById('analyticsFilterForm').submit();
+        });
+      }
+    });
+</script>
+{% endblock %}

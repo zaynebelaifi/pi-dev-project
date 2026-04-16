@@ -143,7 +143,10 @@ document.addEventListener('DOMContentLoaded', function() {
       cartCount.textContent = cart.length;
     }
 
-    checkoutBtn.addEventListener('click', ()=>{
+    checkoutBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      
       if(cart.length === 0){
         alert("Your cart is empty.");
         return;
@@ -152,7 +155,19 @@ document.addEventListener('DOMContentLoaded', function() {
       const total = cart.reduce((sum, item)=> sum + item.price, 0);
       document.getElementById('redirectCartItemsInput').value = JSON.stringify(cart);
       document.getElementById('redirectCartTotalInput').value = total.toFixed(2);
-      document.getElementById('checkoutRedirectForm').submit();
+      
+      // Hide the cart overlay
+      const cartOverlay = document.getElementById('cartOverlay');
+      if(cartOverlay){
+        cartOverlay.classList.remove('active');
+      }
+      
+      // Show order type selection modal
+      const modal = document.getElementById('orderTypeModal');
+      if(modal){
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
     });
 
     function removeFromCart(index){
@@ -162,12 +177,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.removeFromCart = removeFromCart;
 
+    // ORDER TYPE MODAL
+    const orderTypeModal = document.getElementById('orderTypeModal');
+    const dineInBtn = document.getElementById('dineInBtn');
+    const deliveryBtn = document.getElementById('deliveryBtn');
+    const closeOrderTypeBtn = document.getElementById('closeOrderType');
+
+    function closeOrderTypeModal(){
+      if(orderTypeModal){
+        orderTypeModal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+
+    if(closeOrderTypeBtn){
+      closeOrderTypeBtn.addEventListener('click', closeOrderTypeModal);
+    }
+    
+    if(orderTypeModal){
+      orderTypeModal.addEventListener('click', (e)=>{
+        // Only close if clicking the background overlay, not the inner content
+        if(e.target === orderTypeModal) closeOrderTypeModal();
+      });
+    }
+
+    if(dineInBtn){
+      dineInBtn.addEventListener('click', ()=>{
+        document.getElementById('orderTypeInput').value = 'DINE_IN';
+        document.getElementById('checkoutRedirectForm').submit();
+      });
+    }
+
+    if(deliveryBtn){
+      deliveryBtn.addEventListener('click', ()=>{
+        document.getElementById('orderTypeInput').value = 'DELIVERY';
+        document.getElementById('checkoutRedirectForm').submit();
+      });
+    }
+
     // ESC CLOSE
     document.addEventListener('keydown', (e)=>{
       if(e.key === "Escape"){
         hideBooking();
         hideCart();
         hideProfile();
+        closeOrderTypeModal();
       }
     });
 });

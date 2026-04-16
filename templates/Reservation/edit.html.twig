@@ -1,0 +1,66 @@
+{% extends 'backend.html.twig' %}
+{% block title %}Edit Reservation{% endblock %}
+{% block topbar_title %}Edit Reservation{% endblock %}
+
+{% block body %}
+<div class="sec-head">
+  <div>
+    <h2>Edit Reservation #{{ reservation.reservationId }}</h2>
+    <p class="sec-sub">Update reservation details or change its status.</p>
+  </div>
+</div>
+
+{{ form_start(form, {'action': path('app_reservation_edit', {id: reservation.reservationId}), 'method': 'POST'}) }}
+<div class="form-card" style="max-width:520px;background:var(--white);border-radius:12px;padding:2rem;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-top:1.5rem;">
+
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Client ID</label>
+    {{ form_widget(form.clientId, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;'}}) }}
+    {{ form_errors(form.clientId) }}
+  </div>
+
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Table</label>
+    {{ form_widget(form.table, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;background:var(--white);outline:none;'}}) }}
+    {{ form_errors(form.table) }}
+  </div>
+
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Date</label>
+    {{ form_widget(form.reservationDate, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;'}}) }}
+    {{ form_errors(form.reservationDate) }}
+  </div>
+
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Time</label>
+    {{ form_widget(form.reservationTime, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;'}}) }}
+    {{ form_errors(form.reservationTime) }}
+  </div>
+
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">
+      Number of Guests <span style="color:var(--text-3);font-weight:400;font-size:.78rem;">(max 8)</span>
+    </label>
+    {{ form_widget(form.numberOfGuests, {'attr': {
+        'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;',
+        'min': 1,
+        'max': 8,
+        'placeholder': 'Enter between 1 and 8'
+    }}) }}
+    {{ form_errors(form.numberOfGuests) }}
+  </div>
+
+  <div style="margin-bottom:1.8rem;">
+    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Status</label>
+    {{ form_widget(form.status, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;background:var(--white);outline:none;'}}) }}
+    {{ form_errors(form.status) }}
+  </div>
+
+  <div style="display:flex;gap:.8rem;">
+    <button type="submit" class="t-btn primary" style="flex:1;justify-content:center;">💾 Save Changes</button>
+    <a href="{{ path('app_reservation_index') }}" class="t-btn" style="flex:1;text-align:center;">Cancel</a>
+  </div>
+
+</div>
+{{ form_end(form) }}
+{% endblock %}

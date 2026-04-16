@@ -1,0 +1,16 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Edit Ingredient{% endblock %}
+{% block topbar_title %}Ingredient Stock{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Edit Ingredient · {{ ingredient.name }}</h2>
+      <p class="sec-sub">Update stock values, costs and expiration settings.</p>
+    </div>
+    <a href="{{ path('admin_ingredient_index') }}" class="t-btn">Back to Inventory</a>
+  </div>
+
+  {% include 'admin/inventory/ingredient/_form.html.twig' with {form: form, submitLabel: 'Save Changes'} %}
+{% endblock %}

@@ -16,6 +16,29 @@ class FoodDonationItemRepository extends ServiceEntityRepository
         parent::__construct($registry, FoodDonationItem::class);
     }
 
+    public function findFilteredItems(?string $search, string $sort, string $direction): array
+    {
+        $qb = $this->createQueryBuilder('f');
+
+        if ($search !== null && trim($search) !== '') {
+            $search = trim($search);
+            if (is_numeric($search)) {
+                $qb->andWhere('f.donation_event_id = :searchInt OR f.item_id = :searchInt OR f.quantity = :searchInt')
+                    ->setParameter('searchInt', (int) $search);
+            }
+        }
+
+        $allowedSort = ['donation_event_id', 'item_id', 'quantity'];
+        if (!in_array($sort, $allowedSort, true)) {
+            $sort = 'donation_event_id';
+        }
+
+        $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+        $qb->orderBy('f.'.$sort, $direction);
+
+        return $qb->getQuery()->getResult();
+    }
+
     //    /**
     //     * @return FoodDonationItem[] Returns an array of FoodDonationItem objects
     //     */
