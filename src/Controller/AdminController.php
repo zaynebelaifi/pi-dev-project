@@ -9,6 +9,7 @@ use App\Repository\DeliveryRepository;
 use App\Service\ExpiredIngredientWasteService;
 use App\Repository\UserRepository;
 use App\Repository\FleetCarRepository;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,6 +52,58 @@ final class AdminController extends AbstractController
             'totalWasteQuantity' => $wasterecordRepository->totalWastedQuantity(),
             'autoWasteMoved' => $autoMoved,
             'vehicleCount' => $fleetCarRepository->count([]),
+        ]);
+    }
+
+    #[Route('/diagnostics', name: 'app_admin_diagnostics', methods: ['GET'])]
+    public function diagnostics(Request $request, Connection $connection): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->json(['error' => 'unauthorized'], 403);
+        }
+
+        $dsn = (string) ($_ENV['MESSENGER_TRANSPORT_DSN'] ?? '');
+        $whatsappUrl = (string) ($_ENV['WHATSAPP_API_URL'] ?? '');
+        $whatsappToken = (string) ($_ENV['WHATSAPP_API_TOKEN'] ?? '');
+        $orsKey = (string) ($_ENV['ORS_API_KEY'] ?? '');
+        $restLat = (string) ($_ENV['RESTAURANT_LAT'] ?? '');
+        $restLon = (string) ($_ENV['RESTAURANT_LON'] ?? '');
+
+        $sm = $connection->createSchemaManager();
+        $tables = array_map(fn($t) => $t->getName(), $sm->listTables());
+
+        $checks = [
+            [
+                'label' => 'Messenger DSN',
+                'ok' => $dsn !== '',
+                'detail' => $dsn ? 'Configured' : 'Missing MESSENGER_TRANSPORT_DSN',
+            ],
+            [
+                'label' => 'WhatsApp API',
+                'ok' => $whatsappUrl !== '' && $whatsappToken !== '',
+                'detail' => ($whatsappUrl && $whatsappToken) ? 'Configured' : 'Missing WHATSAPP_API_URL or WHATSAPP_API_TOKEN',
+            ],
+            [
+                'label' => 'Mapping API',
+                'ok' => $orsKey !== '',
+                'detail' => $orsKey ? 'Configured' : 'Missing ORS_API_KEY',
+            ],
+            [
+                'label' => 'Restaurant Coordinates',
+                'ok' => $restLat !== '' && $restLon !== '',
+                'detail' => ($restLat && $restLon) ? 'Configured' : 'Missing RESTAURANT_LAT/RESTAURANT_LON',
+            ],
+            [
+                'label' => 'Messenger Queue Table',
+                'ok' => in_array('messenger_messages', $tables, true),
+                'detail' => in_array('messenger_messages', $tables, true) ? 'Table exists' : 'Missing messenger_messages table',
+            ],
+        ];
+
+        return $this->json([
+            'ok' => !in_array(false, array_column($checks, 'ok'), true),
+            'checks' => $checks,
         ]);
     }
 

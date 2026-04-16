@@ -10,3 +10,39 @@
     {% endfor %}
     <button type="submit" class="form-submit">{{ button_label|default('Save Delivery Man') }}</button>
 {{ form_end(form) }}
+
+<script>
+    (function() {
+        function normalizeToDriver(str) {
+            if (!str) return '';
+            let s = str.trim();
+            if (/\b(delivery|driver)$/i.test(s)) {
+                return s.replace(/\b(delivery|driver)$/i, 'Driver');
+            }
+            return s + ' Driver';
+        }
+
+        function applyDriverSuffix() {
+            const nameInput = document.querySelector('input[name$="[name]"]') || document.querySelector('input[id$="_name"]');
+            if (!nameInput) return;
+            const val = nameInput.value || '';
+            const newVal = normalizeToDriver(val);
+            if (newVal !== val) {
+                nameInput.value = newVal;
+            }
+        }
+
+        document.addEventListener('blur', function(e) {
+            if (e.target && (e.target.matches('input[name$="[name]"]') || e.target.matches('input[id$="_name"]'))) {
+                applyDriverSuffix();
+            }
+        }, true);
+
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form && form.matches && form.matches('.admin-form')) {
+                applyDriverSuffix();
+            }
+        }, true);
+    })();
+</script>

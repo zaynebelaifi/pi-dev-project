@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\MenuRepository;
 use App\Repository\RestaurantTableRepository;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +16,7 @@ final class landingpageController extends AbstractController
         private RequestStack $requestStack,
         private MenuRepository $menuRepository,
         private RestaurantTableRepository $tableRepository,
+        private Connection $connection,
     ) {}
 
     #[Route('/', name: 'app_home')]
@@ -46,28 +48,39 @@ final class landingpageController extends AbstractController
 
     private function buildMenuSections(): array
     {
-        $menus = $this->menuRepository->createQueryBuilder('m')
-            ->where('m.isActive = :active')
-            ->setParameter('active', true)
-            ->orderBy('m.created_at', 'ASC')
-            ->getQuery()
-            ->getResult();
+        // Try the ORM query first; if schema/mapping is out-of-sync this can throw.
+        try {
+            $menus = $this->menuRepository->createQueryBuilder('m')
+                ->andWhere('m.isActive = :active OR m.isActive IS NULL')
+                ->setParameter('active', true)
+                ->orderBy('m.created_at', 'ASC')
+                ->getQuery()
+                ->getResult();
 
-        $menuSections = [];
-        foreach ($menus as $menu) {
-            $dishes = [];
-            foreach ($menu->getDishs() as $dish) {
-                if ($dish->isAvailable()) {
-                    $dishes[] = [
-                        'id'          => $dish->getId(),
-                        'name'        => $dish->getName(),
-                        'description' => $dish->getDescription(),
-                        'basePrice'   => $dish->getBase_price(),
-                        'imageUrl'    => $dish->getImageUrl() ?? null,
-                    ];
-                }
+            if (!$menus) {
+                $menus = $this->menuRepository->createQueryBuilder('m')
+                    ->orderBy('m.created_at', 'ASC')
+                    ->getQuery()
+                    ->getResult();
             }
-            if (!empty($dishes)) {
+
+            $menuSections = [];
+            foreach ($menus as $menu) {
+                $dishes = [];
+                foreach ($menu->getDishs() as $dish) {
+                    $available = $dish->isAvailable();
+                    // Treat NULL availability as available to avoid hiding dishes when schema/data is inconsistent
+                    if ($available === null || $available) {
+                        $dishes[] = [
+                            'id'          => $dish->getId(),
+                            'name'        => $dish->getName(),
+                            'description' => $dish->getDescription(),
+                            'basePrice'   => $dish->getBase_price(),
+                            'imageUrl'    => $dish->getImageUrl() ?? null,
+                        ];
+                    }
+                }
+                // Always include the menu section even if there are no available dishes.
                 $menuSections[] = [
                     'menu'   => [
                         'id'          => $menu->getId(),
@@ -77,6 +90,54 @@ final class landingpageController extends AbstractController
                     'dishes' => $dishes,
                 ];
             }
+            return $menuSections;
+        } catch (\Throwable $e) {
+            // Fallback: use DBAL raw queries to be resilient to schema/mapping drift.
+        }
+
+        // DBAL fallback: inspect columns and query raw rows.
+        try {
+            $sm = $this->connection->createSchemaManager();
+            $columns = $sm->listTableColumns('menu');
+            $colNames = array_map(fn($c) => $c->getName(), $columns);
+            $activeCol = in_array('is_active', $colNames, true) ? 'is_active' : (in_array('isActive', $colNames, true) ? 'isActive' : null);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        if (null === $activeCol) {
+            $menuRows = $this->connection->fetchAllAssociative('SELECT id, title, description FROM menu ORDER BY created_at ASC');
+        } else {
+            $menuRows = $this->connection->fetchAllAssociative("SELECT id, title, description FROM menu WHERE $activeCol = 1 OR $activeCol IS NULL ORDER BY created_at ASC");
+            if (!$menuRows) {
+                $menuRows = $this->connection->fetchAllAssociative('SELECT id, title, description FROM menu ORDER BY created_at ASC');
+            }
+        }
+        $menuSections = [];
+        foreach ($menuRows as $mRow) {
+            $dishRows = $this->connection->fetchAllAssociative('SELECT id, name, description, base_price, image_url, available FROM dish WHERE menu_id = ? ORDER BY created_at ASC', [$mRow['id']]);
+            $dishes = [];
+            foreach ($dishRows as $dRow) {
+                if (isset($dRow['available']) && !$dRow['available']) {
+                    continue;
+                }
+                $dishes[] = [
+                    'id' => $dRow['id'],
+                    'name' => $dRow['name'],
+                    'description' => $dRow['description'],
+                    'basePrice' => isset($dRow['base_price']) ? (float) $dRow['base_price'] : null,
+                    'imageUrl' => $dRow['image_url'] ?? null,
+                ];
+            }
+            // Always include the menu section even if there are no available dishes.
+            $menuSections[] = [
+                'menu' => [
+                    'id' => $mRow['id'],
+                    'title' => $mRow['title'],
+                    'description' => $mRow['description'],
+                ],
+                'dishes' => $dishes,
+            ];
         }
         return $menuSections;
     }

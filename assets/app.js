@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if(e.target === cartOverlay) hideCart();
     });
 
+    // Existing direct bindings (for buttons present at load)
     document.querySelectorAll('.add-cart-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const name = btn.dataset.name;
@@ -116,6 +117,20 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.textContent = "Added";
         setTimeout(()=> btn.textContent = "Add to Cart", 1200);
       });
+    });
+
+    // Event delegation: ensure dynamically inserted or later-updated buttons also work
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest && e.target.closest('.add-cart-btn');
+      if (!btn) return;
+      e.preventDefault();
+      const name = btn.dataset.name;
+      const price = Number(btn.dataset.price);
+      cart.push({name, price});
+      updateCart();
+      const original = btn.textContent;
+      btn.textContent = 'Added';
+      setTimeout(()=> btn.textContent = original || 'Add to Cart', 1200);
     });
 
     function updateCart(){
