@@ -1,411 +1,538 @@
 {% extends 'backend.html.twig' %}
 
-{% block title %}Analytics - BIG 4{% endblock %}
-{% block topbar_title %}Analytics{% endblock %}
-{% block topbar_breadcrumb %}Big 4 · Admin · Insights Center{% endblock %}
+{% block title %}Advanced Analytics - BIG 4{% endblock %}
+{% block topbar_title %}Advanced Analytics{% endblock %}
+{% block topbar_breadcrumb %}Big 4 · Admin · Advanced Inventory & Revenue Insights{% endblock %}
 
 {% block body %}
-{% set totalStatus = statusDistribution.PENDING + statusDistribution.ASSIGNED + statusDistribution.DELIVERED + statusDistribution.OTHER %}
-{% set anglePending = totalStatus > 0 ? (statusDistribution.PENDING / totalStatus) * 360 : 0 %}
-{% set angleAssigned = totalStatus > 0 ? ((statusDistribution.PENDING + statusDistribution.ASSIGNED) / totalStatus) * 360 : 0 %}
-{% set angleDelivered = totalStatus > 0 ? ((statusDistribution.PENDING + statusDistribution.ASSIGNED + statusDistribution.DELIVERED) / totalStatus) * 360 : 0 %}
 <style>
-  .an-hero {
-    position: relative;
-    border: 1px solid rgba(184, 135, 42, 0.2);
-    border-radius: 16px;
-    padding: 1.7rem 1.8rem;
-    margin-bottom: 1.2rem;
-    background:
-      radial-gradient(circle at 10% 10%, rgba(232, 196, 114, 0.24), transparent 35%),
-      radial-gradient(circle at 90% 80%, rgba(58, 126, 201, 0.18), transparent 32%),
-      linear-gradient(140deg, #f9f3e8 0%, #f7efdf 45%, #efe1ca 100%);
-    overflow: hidden;
-  }
-  .an-hero::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(135deg, rgba(184, 135, 42, 0.04) 0 6px, transparent 6px 14px);
-    opacity: 0.35;
-    pointer-events: none;
-  }
-  .an-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2rem;
-    color: var(--espresso);
-    margin-bottom: 0.35rem;
-    line-height: 1;
-    position: relative;
-    z-index: 1;
-  }
-  .an-sub {
-    position: relative;
-    z-index: 1;
-    color: var(--text-2);
-    max-width: 720px;
-    font-size: 0.86rem;
-    line-height: 1.65;
-  }
-  .an-kpi-row {
+  .aa-wrap {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
-    margin-bottom: 1.2rem;
   }
-  .an-kpi {
-    background: var(--ivory);
+
+  .aa-filter {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(130px, 1fr));
+    gap: 0.65rem;
+    padding: 0.95rem;
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 1rem 1.1rem;
-    box-shadow: 0 8px 28px rgba(92, 61, 30, 0.09);
+    background: linear-gradient(135deg, #f7edd9, #fff8e8);
   }
-  .an-kpi-lbl {
-    font-size: 0.57rem;
-    letter-spacing: 0.2em;
+
+  .aa-field {
+    display: grid;
+    gap: 0.28rem;
+  }
+
+  .aa-field label {
+    font-size: 0.58rem;
+    letter-spacing: 0.11em;
     text-transform: uppercase;
     color: var(--text-3);
-    margin-bottom: 0.55rem;
-  }
-  .an-kpi-val {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.8rem;
-    line-height: 1;
-    color: var(--espresso);
-  }
-  .an-kpi-note {
-    margin-top: 0.45rem;
-    font-size: 0.66rem;
-    color: var(--text-2);
-  }
-  .an-kpi-note.up { color: var(--green); }
-  .an-kpi-note.down { color: var(--red); }
-
-  .an-grid {
-    display: grid;
-    grid-template-columns: 1.7fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-  .an-panel {
-    background: var(--ivory);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(92, 61, 30, 0.08);
-  }
-  .an-panel-h {
-    padding: 0.95rem 1.1rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(90deg, rgba(184, 135, 42, 0.12), rgba(184, 135, 42, 0.02));
-  }
-  .an-panel-t {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.12rem;
-    color: var(--espresso);
-  }
-  .an-panel-s {
-    font-size: 0.6rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-3);
-  }
-  .an-panel-b { padding: 1rem 1.1rem 1.2rem; }
-
-  .rev-bars {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.65rem;
-    align-items: end;
-    min-height: 220px;
-  }
-  .rev-day {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.45rem;
-  }
-  .rev-bar-wrap {
-    width: 100%;
-    height: 165px;
-    border-radius: 10px;
-    background: linear-gradient(180deg, rgba(184, 135, 42, 0.08), rgba(184, 135, 42, 0.03));
-    border: 1px solid rgba(184, 135, 42, 0.14);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: end;
-  }
-  .rev-bar {
-    width: 100%;
-    border-radius: 8px 8px 0 0;
-    background: linear-gradient(180deg, #dfb564 0%, #bc8a31 100%);
-    box-shadow: 0 8px 20px rgba(184, 135, 42, 0.3);
-    transition: height .6s ease;
-  }
-  .rev-amt {
-    font-size: 0.61rem;
-    color: var(--text-2);
     font-weight: 600;
   }
-  .rev-lbl {
-    font-size: 0.61rem;
-    letter-spacing: 0.08em;
+
+  .aa-field select,
+  .aa-field input {
+    height: 38px;
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    padding: 0 0.6rem;
+    background: #fff;
+    color: var(--espresso);
+    font-size: 0.75rem;
+  }
+
+  .aa-apply {
+    align-self: end;
+    height: 38px;
+  }
+
+  .aa-revenue-label {
+    font-size: 0.75rem;
+    color: var(--text-2);
+    margin: 0.2rem 0 0.2rem;
+  }
+
+  .aa-kpis {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .aa-kpi {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.8rem;
+    box-shadow: 0 8px 18px rgba(92, 61, 30, 0.08);
+  }
+
+  .aa-kpi-label {
+    font-size: 0.57rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--text-3);
+    margin-bottom: 0.38rem;
   }
 
-  .status-ring {
-    width: 190px;
-    height: 190px;
-    border-radius: 50%;
-    margin: 0.4rem auto 1rem;
-    background:
-      conic-gradient(
-        #3A7EC9 0 {{ anglePending|number_format(2, '.', '') }}deg,
-        #2E9E6A {{ anglePending|number_format(2, '.', '') }}deg {{ angleAssigned|number_format(2, '.', '') }}deg,
-        #C87D20 {{ angleAssigned|number_format(2, '.', '') }}deg {{ angleDelivered|number_format(2, '.', '') }}deg,
-        #D94040 {{ angleDelivered|number_format(2, '.', '') }}deg 360deg
-      );
-    display: grid;
-    place-items: center;
-    position: relative;
-  }
-  .status-ring::before {
-    content: '';
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    background: var(--ivory);
-    border: 1px solid var(--border);
-  }
-  .status-total {
-    position: absolute;
-    text-align: center;
+  .aa-kpi-value {
     font-family: 'Cormorant Garamond', serif;
+    font-size: 1.45rem;
+    line-height: 1;
     color: var(--espresso);
   }
-  .status-total strong { display: block; font-size: 1.7rem; line-height: 1; }
-  .status-total span { font-size: 0.63rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
-  .legend { display: grid; gap: 0.4rem; }
-  .legend-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.35rem 0.5rem;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.45);
-    font-size: 0.7rem;
-    color: var(--text-2);
-  }
-  .legend-left { display: flex; align-items: center; gap: 0.42rem; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; }
 
-  .an-grid-2 {
+  .aa-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 0.95rem;
   }
 
-  .waste-list {
-    display: grid;
-    gap: 0.65rem;
-  }
-  .waste-row {
+  .aa-panel {
     border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 0.6rem 0.7rem;
-    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(92, 61, 30, 0.08);
   }
-  .waste-top {
+
+  .aa-head {
+    padding: 0.75rem 0.95rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(184, 135, 42, 0.12), rgba(184, 135, 42, 0.02));
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
-    font-size: 0.74rem;
-  }
-  .waste-name { color: var(--espresso); font-weight: 600; }
-  .waste-qty { color: var(--text-2); font-size: 0.68rem; }
-  .waste-track {
-    height: 7px;
-    border-radius: 99px;
-    background: rgba(184, 135, 42, 0.16);
-    overflow: hidden;
-  }
-  .waste-fill {
-    height: 100%;
-    border-radius: 99px;
-    background: linear-gradient(90deg, #c98728, #d9503f);
   }
 
-  .roles-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.65rem;
-  }
-  .role-card {
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 0.7rem;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.5);
-  }
-  .role-name {
-    font-size: 0.58rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--text-3);
-    margin-bottom: 0.28rem;
-  }
-  .role-count {
+  .aa-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.5rem;
+    font-size: 1.15rem;
     color: var(--espresso);
-    line-height: 1;
   }
-  .role-share {
-    margin-top: 0.28rem;
-    font-size: 0.66rem;
+
+  .aa-sub {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+    text-transform: uppercase;
+  }
+
+  .aa-body {
+    padding: 0.85rem 0.95rem 1rem;
+  }
+
+  .aa-canvas-wrap {
+    min-height: 280px;
+  }
+
+  .aa-weather {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .aa-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+
+  .wx-hot { color: #991b1b; background: #fee2e2; border-color: #fecaca; }
+  .wx-warm { color: #92400e; background: #ffedd5; border-color: #fed7aa; }
+  .wx-balanced { color: #14532d; background: #dcfce7; border-color: #bbf7d0; }
+  .wx-cool { color: #1e3a8a; background: #dbeafe; border-color: #bfdbfe; }
+  .wx-cold { color: #1e40af; background: #e0e7ff; border-color: #c7d2fe; }
+  .wx-unknown { color: #334155; background: #e2e8f0; border-color: #cbd5e1; }
+
+  .aa-weather-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem;
+    background: #fffcf4;
+  }
+
+  .aa-weather-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+    margin-bottom: 0.25rem;
+  }
+
+  .aa-weather-value {
+    font-size: 0.84rem;
+    color: var(--espresso);
+    font-weight: 600;
+  }
+
+  .aa-list {
+    margin: 0;
+    padding-left: 1rem;
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.74rem;
     color: var(--text-2);
   }
 
-  @media (max-width: 1200px) {
-    .an-kpi-row { grid-template-columns: repeat(2, 1fr); }
-    .an-grid { grid-template-columns: 1fr; }
-    .an-grid-2 { grid-template-columns: 1fr; }
+  .aa-risk-table {
+    width: 100%;
+    border-collapse: collapse;
   }
-  @media (max-width: 700px) {
-    .an-kpi-row { grid-template-columns: 1fr; }
-    .roles-grid { grid-template-columns: 1fr; }
-    .rev-bars { gap: 0.4rem; }
+
+  .aa-risk-table th,
+  .aa-risk-table td {
+    border-bottom: 1px solid #f0e8d5;
+    padding: 0.5rem;
+    font-size: 0.72rem;
+    text-align: left;
+  }
+
+  .aa-risk-table th {
+    color: var(--text-3);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #fffdf8;
+  }
+
+  .risk-high { color: #b91c1c; font-weight: 700; }
+  .risk-medium { color: #c2410c; font-weight: 700; }
+  .risk-low { color: #166534; font-weight: 700; }
+
+  @media (max-width: 1200px) {
+    .aa-kpis {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .aa-filter {
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .aa-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .aa-weather {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 680px) {
+    .aa-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .aa-filter {
+      grid-template-columns: 1fr;
+    }
+
+    .aa-weather {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 
-<div class="an-hero">
-  <h2 class="an-title">Operations Analytics</h2>
-  <p class="an-sub">A live command view of delivery throughput, revenue rhythm, inventory pressure, and waste concentration. The goal is fast decisions with zero dashboard clutter.</p>
-</div>
-
-<div class="an-kpi-row">
-  <div class="an-kpi">
-    <div class="an-kpi-lbl">Total Revenue</div>
-    <div class="an-kpi-val">{{ summary.totalRevenue|number_format(2, '.', ' ') }} <span style="font-size:.85rem;color:var(--text-3)">TND</span></div>
-    <div class="an-kpi-note {{ revenueDeltaPct >= 0 ? 'up' : 'down' }}">{{ revenueDeltaPct >= 0 ? '+' : '' }}{{ revenueDeltaPct|number_format(1) }}% vs previous 7 days</div>
-  </div>
-  <div class="an-kpi">
-    <div class="an-kpi-lbl">Today Revenue</div>
-    <div class="an-kpi-val">{{ summary.todayRevenue|number_format(2, '.', ' ') }} <span style="font-size:.85rem;color:var(--text-3)">TND</span></div>
-    <div class="an-kpi-note">Live from delivery records</div>
-  </div>
-  <div class="an-kpi">
-    <div class="an-kpi-lbl">Avg Ticket</div>
-    <div class="an-kpi-val">{{ summary.avgOrder|number_format(2, '.', ' ') }} <span style="font-size:.85rem;color:var(--text-3)">TND</span></div>
-    <div class="an-kpi-note">Average order value</div>
-  </div>
-  <div class="an-kpi">
-    <div class="an-kpi-lbl">Total Deliveries</div>
-    <div class="an-kpi-val">{{ summary.totalDeliveries }}</div>
-    <div class="an-kpi-note">Current historical volume</div>
-  </div>
-</div>
-
-<div class="an-grid">
-  <section class="an-panel">
-    <div class="an-panel-h">
-      <div class="an-panel-t">7-Day Revenue Rhythm</div>
-      <div class="an-panel-s">Last 7 days</div>
+<div class="aa-wrap">
+  <form method="get" class="aa-filter" id="analyticsFilterForm">
+    <div class="aa-field">
+      <label for="wastePeriodCombo">Waste Period</label>
+      <select id="wastePeriodCombo" name="waste_period">
+        <option value="Week" {{ filters.wastePeriod == 'Week' ? 'selected' : '' }}>Week</option>
+        <option value="Month" {{ filters.wastePeriod == 'Month' ? 'selected' : '' }}>Month</option>
+        <option value="Year" {{ filters.wastePeriod == 'Year' ? 'selected' : '' }}>Year</option>
+      </select>
     </div>
-    <div class="an-panel-b">
-      <div class="rev-bars">
-        {% for day in dailySeries %}
-          {% set pct = maxDailyRevenue > 0 ? ((day.revenue / maxDailyRevenue) * 100) : 0 %}
-          <div class="rev-day">
-            <div class="rev-amt">{{ day.revenue|number_format(0, '.', ' ') }} TND</div>
-            <div class="rev-bar-wrap" title="{{ day.fullDate }} - {{ day.deliveries }} deliveries">
-              <div class="rev-bar" style="height: {{ pct|number_format(2, '.', '') }}%;"></div>
-            </div>
-            <div class="rev-lbl">{{ day.label }}</div>
-          </div>
-        {% endfor %}
+
+    <div class="aa-field">
+      <label for="revenuePeriodCombo">Revenue Period</label>
+      <select id="revenuePeriodCombo" name="revenue_period">
+        <option value="Week" {{ filters.revenuePeriod == 'Week' ? 'selected' : '' }}>Week</option>
+        <option value="Month" {{ filters.revenuePeriod == 'Month' ? 'selected' : '' }}>Month</option>
+        <option value="Year" {{ filters.revenuePeriod == 'Year' ? 'selected' : '' }}>Year</option>
+      </select>
+    </div>
+
+    <div class="aa-field">
+      <label for="revenueFromDatePicker">Revenue From</label>
+      <input id="revenueFromDatePicker" type="date" name="revenue_from" value="{{ filters.revenueFrom }}">
+    </div>
+
+    <div class="aa-field">
+      <label for="revenueToDatePicker">Revenue To</label>
+      <input id="revenueToDatePicker" type="date" name="revenue_to" value="{{ filters.revenueTo }}">
+    </div>
+
+    <div class="aa-field">
+      <label for="revenueSortCombo">Revenue Sort</label>
+      <select id="revenueSortCombo" name="revenue_sort">
+        <option value="revenue_desc" {{ filters.revenueSort == 'revenue_desc' ? 'selected' : '' }}>Revenue Desc</option>
+        <option value="revenue_asc" {{ filters.revenueSort == 'revenue_asc' ? 'selected' : '' }}>Revenue Asc</option>
+      </select>
+    </div>
+
+    <button class="t-btn primary aa-apply" type="submit">Apply</button>
+  </form>
+
+  <div id="totalRevenuePeriodLabel" class="aa-revenue-label">{{ totalRevenuePeriodLabel }}</div>
+
+  <section class="aa-kpis">
+    <div class="aa-kpi"><div class="aa-kpi-label">Total Ingredients</div><div class="aa-kpi-value">{{ kpis.totalIngredients }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Low Stock</div><div class="aa-kpi-value">{{ kpis.lowStock }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Expired Items</div><div class="aa-kpi-value">{{ kpis.expiredItems }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Waste Records</div><div class="aa-kpi-value">{{ kpis.wasteRecords }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Inventory Value</div><div class="aa-kpi-value">{{ kpis.inventoryValue|number_format(2, '.', ' ') }} <span style="font-size:.8rem">TND</span></div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Waste Quantity</div><div class="aa-kpi-value">{{ kpis.wasteQuantity|number_format(2, '.', ' ') }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Waste Cost</div><div class="aa-kpi-value">{{ kpis.wasteCost|number_format(2, '.', ' ') }} <span style="font-size:.8rem">TND</span></div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Near Expiry</div><div class="aa-kpi-value">{{ kpis.nearExpiry }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Out of Stock</div><div class="aa-kpi-value">{{ kpis.outOfStock }}</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Average Unit Cost</div><div class="aa-kpi-value">{{ kpis.avgUnitCost|number_format(2, '.', ' ') }} <span style="font-size:.8rem">TND</span></div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Low Stock Rate</div><div class="aa-kpi-value">{{ kpis.lowStockRate|number_format(1, '.', ' ') }}%</div></div>
+    <div class="aa-kpi"><div class="aa-kpi-label">Total Revenue</div><div class="aa-kpi-value">{{ kpis.totalRevenue|number_format(2, '.', ' ') }} <span style="font-size:.8rem">TND</span></div></div>
+  </section>
+
+  <div class="aa-grid">
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Waste by Type</div><div class="aa-sub">Pie Chart</div></div>
+      <div class="aa-body aa-canvas-wrap"><canvas id="wasteByTypePieChart"></canvas></div>
+    </section>
+
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Stock Health</div><div class="aa-sub">Pie Chart</div></div>
+      <div class="aa-body aa-canvas-wrap"><canvas id="stockHealthPieChart"></canvas></div>
+    </section>
+
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Top Wasted Ingredients</div><div class="aa-sub">Bar Chart</div></div>
+      <div class="aa-body aa-canvas-wrap"><canvas id="topWastedIngredientsBarChart"></canvas></div>
+    </section>
+
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Revenue Trend</div><div class="aa-sub">Bar Chart</div></div>
+      <div class="aa-body aa-canvas-wrap"><canvas id="revenueTrendBarChart"></canvas></div>
+    </section>
+  </div>
+
+  <section class="aa-panel">
+    <div class="aa-head">
+      <div class="aa-title">Weather Impact Engine</div>
+      <div class="aa-sub"><span class="aa-pill {{ weatherImpact.statusClass|default('wx-unknown') }}">{{ weatherImpact.statusLabel }}</span></div>
+    </div>
+    <div class="aa-body">
+      <div class="aa-weather">
+        <div class="aa-weather-card">
+          <div class="aa-weather-label">Current Temp</div>
+          <div class="aa-weather-value">{{ weatherImpact.temperature is not null ? weatherImpact.temperature|number_format(1, '.', ' ') ~ '°C' : 'N/A' }}</div>
+        </div>
+        <div class="aa-weather-card">
+          <div class="aa-weather-label">Demand Multiplier</div>
+          <div class="aa-weather-value">x{{ weatherImpact.demandMultiplier|number_format(2, '.', ' ') }}</div>
+        </div>
+        <div class="aa-weather-card">
+          <div class="aa-weather-label">Expiry Acceleration</div>
+          <div class="aa-weather-value">x{{ weatherImpact.expiryAcceleration|number_format(2, '.', ' ') }}</div>
+        </div>
+        <div class="aa-weather-card">
+          <div class="aa-weather-label">Predicted Waste</div>
+          <div class="aa-weather-value">{{ predictedWaste.quantity|number_format(2, '.', ' ') }} units / {{ predictedWaste.cost|number_format(2, '.', ' ') }} TND</div>
+        </div>
       </div>
+      <div style="margin-top:.5rem;font-size:.67rem;color:var(--text-3);">Last weather sync: {{ weatherImpact.fetchedAt }}{% if weatherImpact.isFallback %} · fallback mode{% endif %}</div>
     </div>
   </section>
 
-  <section class="an-panel">
-    <div class="an-panel-h">
-      <div class="an-panel-t">Delivery Status Mix</div>
-      <div class="an-panel-s">Realtime split</div>
-    </div>
-    <div class="an-panel-b">
-      <div class="status-ring">
-        <div class="status-total"><strong>{{ totalStatus }}</strong><span>Orders</span></div>
-      </div>
-      <div class="legend">
-        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#3A7EC9"></span>Pending</span><strong>{{ statusDistribution.PENDING }}</strong></div>
-        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#2E9E6A"></span>Assigned</span><strong>{{ statusDistribution.ASSIGNED }}</strong></div>
-        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#C87D20"></span>Delivered</span><strong>{{ statusDistribution.DELIVERED }}</strong></div>
-        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#D94040"></span>Other</span><strong>{{ statusDistribution.OTHER }}</strong></div>
-      </div>
-    </div>
-  </section>
-</div>
-
-<div class="an-grid-2">
-  <section class="an-panel">
-    <div class="an-panel-h">
-      <div class="an-panel-t">Waste Hotspots</div>
-      <div class="an-panel-s">Top ingredients by wasted qty</div>
-    </div>
-    <div class="an-panel-b">
-      <div class="waste-list">
-        {% if topWaste is empty %}
-          <div style="font-size:.76rem;color:var(--text-2)">No waste records yet.</div>
+  <div class="aa-grid">
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Shortage Alerts</div><div class="aa-sub">Potential Stockouts</div></div>
+      <div class="aa-body">
+        {% if shortageAlerts is empty %}
+          <div style="font-size:.75rem;color:var(--text-2);">No immediate shortage alerts.</div>
         {% else %}
-          {% for item in topWaste %}
-            {% set p = maxWaste > 0 ? ((item.quantity / maxWaste) * 100) : 0 %}
-            <div class="waste-row">
-              <div class="waste-top">
-                <span class="waste-name">{{ item.ingredient }}</span>
-                <span class="waste-qty">{{ item.quantity|number_format(2, '.', ' ') }} units</span>
-              </div>
-              <div class="waste-track"><div class="waste-fill" style="width: {{ p|number_format(2, '.', '') }}%;"></div></div>
-            </div>
-          {% endfor %}
+          <ol class="aa-list">
+            {% for alert in shortageAlerts %}
+              <li>
+                <strong style="color:var(--espresso)">{{ alert.ingredient }}</strong>
+                gap {{ alert.shortageGap|number_format(2, '.', ' ') }}
+                (need {{ alert.predictedNeed|number_format(2, '.', ' ') }})
+              </li>
+            {% endfor %}
+          </ol>
         {% endif %}
       </div>
-      <div style="margin-top:.9rem;font-size:.68rem;color:var(--text-2)">Total wasted quantity: <strong style="color:var(--espresso)">{{ ingredientHealth.totalWaste|number_format(2, '.', ' ') }}</strong></div>
-    </div>
-  </section>
+    </section>
 
-  <section class="an-panel">
-    <div class="an-panel-h">
-      <div class="an-panel-t">People & Inventory Pulse</div>
-      <div class="an-panel-s">Users + stock health</div>
-    </div>
-    <div class="an-panel-b">
-      <div class="roles-grid">
-        {% for role, value in roleDistribution %}
-          <div class="role-card">
-            <div class="role-name">{{ role }}</div>
-            <div class="role-count">{{ value }}</div>
-            <div class="role-share">{{ totalUsers > 0 ? ((value / totalUsers) * 100)|number_format(1) : '0.0' }}%</div>
-          </div>
+    <section class="aa-panel">
+      <div class="aa-head"><div class="aa-title">Expiry Alerts</div><div class="aa-sub">Weather-Adjusted</div></div>
+      <div class="aa-body">
+        {% if expiryAlerts is empty %}
+          <div style="font-size:.75rem;color:var(--text-2);">No expiry alerts right now.</div>
         {% else %}
-          <div class="role-card" style="grid-column:1/-1">No users found.</div>
-        {% endfor %}
+          <ol class="aa-list">
+            {% for alert in expiryAlerts %}
+              <li>
+                <strong style="color:var(--espresso)">{{ alert.ingredient }}</strong>
+                expires around {{ alert.weatherAdjustedExpiryDate }}
+                {% if alert.predictedWasteQuantity > 0 %}
+                  (risk {{ alert.predictedWasteQuantity|number_format(2, '.', ' ') }} units)
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ol>
+        {% endif %}
       </div>
+    </section>
+  </div>
 
-      <div style="margin-top:1rem;display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;">
-        <div class="role-card"><div class="role-name">Ingredients</div><div class="role-count">{{ ingredientHealth.total }}</div></div>
-        <div class="role-card"><div class="role-name">Low Stock</div><div class="role-count">{{ ingredientHealth.lowStock }}</div></div>
-        <div class="role-card"><div class="role-name">Expired</div><div class="role-count">{{ ingredientHealth.expired }}</div></div>
-        <div class="role-card"><div class="role-name">Inventory Value</div><div class="role-count" style="font-size:1.1rem">{{ ingredientHealth.inventoryValue|number_format(2, '.', ' ') }} TND</div></div>
-      </div>
+  <section class="aa-panel">
+    <div class="aa-head"><div class="aa-title">Weather-Adjusted Ingredient Risk</div><div class="aa-sub">Predicted Need, Stockouts, Expiry</div></div>
+    <div class="aa-body" style="overflow:auto;">
+      <table class="aa-risk-table">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>Stock</th>
+            <th>Predicted Need</th>
+            <th>Gap</th>
+            <th>Adjusted Expiry</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in riskRows %}
+            <tr>
+              <td>{{ row.ingredient }}</td>
+              <td>{{ row.stock|number_format(2, '.', ' ') }} {{ row.unit }}</td>
+              <td>{{ row.predictedNeed|number_format(2, '.', ' ') }} {{ row.unit }}</td>
+              <td>{{ row.shortageGap|number_format(2, '.', ' ') }}</td>
+              <td>{{ row.weatherAdjustedExpiryDate }}</td>
+              <td class="{{ row.riskLevel == 'High' ? 'risk-high' : (row.riskLevel == 'Medium' ? 'risk-medium' : 'risk-low') }}">{{ row.riskLevel }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" style="text-align:center;color:var(--text-3);">No risk rows available.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </section>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  const wasteByTypeData = {{ wasteByTypeChart|json_encode|raw }};
+  const stockHealthData = {{ stockHealthChart|json_encode|raw }};
+  const topWastedData = {{ topWastedChart|json_encode|raw }};
+  const revenueTrendData = {{ revenueTrendChart|json_encode|raw }};
+
+  const renderPie = (canvasId, labels, data, colors) => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !window.Chart) {
+      return;
+    }
+
+    new Chart(canvas, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderWidth: 1,
+          borderColor: '#fff',
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 14, font: { size: 11 } },
+          },
+        },
+      },
+    });
+  };
+
+  const renderBar = (canvasId, labels, data, color, horizontal = false) => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !window.Chart) {
+      return;
+    }
+
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: color,
+          borderRadius: 6,
+          maxBarThickness: 36,
+        }],
+      },
+      options: {
+        indexAxis: horizontal ? 'y' : 'x',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true },
+        },
+        plugins: {
+          legend: { display: false },
+        },
+      },
+    });
+  };
+
+  renderPie(
+    'wasteByTypePieChart',
+    wasteByTypeData.labels || [],
+    wasteByTypeData.data || [],
+    ['#ef4444', '#f97316', '#f59e0b', '#14b8a6', '#3b82f6', '#8b5cf6', '#a855f7']
+  );
+
+  renderPie(
+    'stockHealthPieChart',
+    stockHealthData.labels || [],
+    stockHealthData.data || [],
+    ['#22c55e', '#eab308', '#f97316', '#ef4444', '#64748b']
+  );
+
+  renderBar(
+    'topWastedIngredientsBarChart',
+    topWastedData.labels || [],
+    topWastedData.data || [],
+    '#dc2626',
+    true
+  );
+
+  renderBar(
+    'revenueTrendBarChart',
+    revenueTrendData.labels || [],
+    revenueTrendData.data || [],
+    '#b8872a',
+    false
+  );
+
+  ['wastePeriodCombo', 'revenuePeriodCombo', 'revenueSortCombo', 'revenueFromDatePicker', 'revenueToDatePicker']
+    .forEach((id) => {
+      const control = document.getElementById(id);
+      if (control) {
+        control.addEventListener('change', () => {
+          document.getElementById('analyticsFilterForm').submit();
+        });
+      }
+    });
+</script>
 {% endblock %}

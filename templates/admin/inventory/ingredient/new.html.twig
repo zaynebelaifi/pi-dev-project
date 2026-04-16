@@ -40,7 +40,7 @@
 
         <div class="form-group">
           <label for="new_expiry_date">New expiry date (optional)</label>
-          <input id="new_expiry_date" type="date" name="new_expiry_date" value="{{ stockDraft.expiry_date|default('') }}">
+          <input id="new_expiry_date" type="date" name="new_expiry_date" min="{{ 'now'|date('Y-m-d') }}" value="{{ stockDraft.expiry_date|default('') }}">
         </div>
       </div>
 

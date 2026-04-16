@@ -5,9 +5,11 @@ namespace App\Controller;
 use App\Entity\Ingredient;
 use App\Form\IngredientType;
 use App\Repository\IngredientRepository;
+use App\Service\IngredientCsvImportService;
 use App\Service\IngredientInventorySyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -59,6 +61,56 @@ final class AdminIngredientController extends AbstractController
         ]);
     }
 
+    #[Route('/import-csv', name: 'admin_ingredient_import_csv', methods: ['POST'])]
+    public function importCsv(Request $request, IngredientCsvImportService $ingredientCsvImportService): Response
+    {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
+        if (!$this->isCsrfTokenValid('import_ingredients_csv', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid token.');
+
+            return $this->redirectToRoute('admin_ingredient_index');
+        }
+
+        $csvFile = $request->files->get('csv_file');
+        if (!$csvFile instanceof UploadedFile || !$csvFile->isValid()) {
+            $this->addFlash('error', 'Please upload a valid CSV file.');
+
+            return $this->redirectToRoute('admin_ingredient_index');
+        }
+
+        $extension = strtolower((string) $csvFile->getClientOriginalExtension());
+        if ('csv' !== $extension && 'text/csv' !== $csvFile->getMimeType()) {
+            $this->addFlash('error', 'Invalid file type. Upload a .csv file.');
+
+            return $this->redirectToRoute('admin_ingredient_index');
+        }
+
+        $result = $ingredientCsvImportService->import($csvFile);
+
+        $this->addFlash(
+            'success',
+            sprintf(
+                'CSV import complete: %d created, %d updated, %d skipped, %d processed. Header detected: %s. Delimiter: %s.',
+                (int) ($result['created'] ?? 0),
+                (int) ($result['updated'] ?? 0),
+                (int) ($result['skipped'] ?? 0),
+                (int) ($result['processed'] ?? 0),
+                !empty($result['headerDetected']) ? 'yes' : 'no',
+                (string) ($result['delimiter'] ?? ',')
+            )
+        );
+
+        $errors = array_slice($result['errors'] ?? [], 0, 8);
+        foreach ($errors as $error) {
+            $this->addFlash('error', (string) $error);
+        }
+
+        return $this->redirectToRoute('admin_ingredient_index');
+    }
+
     #[Route('/new', name: 'admin_ingredient_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, ValidatorInterface $validator, IngredientRepository $ingredientRepository): Response
     {
@@ -78,7 +130,9 @@ final class AdminIngredientController extends AbstractController
                 $this->addFlash('error', 'Invalid token.');
 
                 return $this->render('admin/inventory/ingredient/new.html.twig', [
-                    'form' => $this->createForm(IngredientType::class, new Ingredient()),
+                    'form' => $this->createForm(IngredientType::class, new Ingredient(), [
+                        'today' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+                    ]),
                     'existingIngredients' => $existingIngredients,
                     'stockDraft' => $stockDraft,
                 ]);
@@ -105,7 +159,9 @@ final class AdminIngredientController extends AbstractController
                 }
 
                 return $this->render('admin/inventory/ingredient/new.html.twig', [
-                    'form' => $this->createForm(IngredientType::class, new Ingredient()),
+                    'form' => $this->createForm(IngredientType::class, new Ingredient(), [
+                        'today' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+                    ]),
                     'existingIngredients' => $existingIngredients,
                     'stockDraft' => $stockDraft,
                 ]);
@@ -116,7 +172,9 @@ final class AdminIngredientController extends AbstractController
                 $this->addFlash('error', 'Selected ingredient was not found.');
 
                 return $this->render('admin/inventory/ingredient/new.html.twig', [
-                    'form' => $this->createForm(IngredientType::class, new Ingredient()),
+                    'form' => $this->createForm(IngredientType::class, new Ingredient(), [
+                        'today' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+                    ]),
                     'existingIngredients' => $existingIngredients,
                     'stockDraft' => $stockDraft,
                 ]);
@@ -132,7 +190,22 @@ final class AdminIngredientController extends AbstractController
                     $this->addFlash('error', 'Expiry date format is invalid. Use YYYY-MM-DD.');
 
                     return $this->render('admin/inventory/ingredient/new.html.twig', [
-                        'form' => $this->createForm(IngredientType::class, new Ingredient()),
+                        'form' => $this->createForm(IngredientType::class, new Ingredient(), [
+                            'today' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+                        ]),
+                        'existingIngredients' => $existingIngredients,
+                        'stockDraft' => $stockDraft,
+                    ]);
+                }
+
+                $today = new \DateTimeImmutable('today');
+                if ($expiryDate < $today) {
+                    $this->addFlash('error', 'Expiry date cannot be in the past.');
+
+                    return $this->render('admin/inventory/ingredient/new.html.twig', [
+                        'form' => $this->createForm(IngredientType::class, new Ingredient(), [
+                            'today' => $today->format('Y-m-d'),
+                        ]),
                         'existingIngredients' => $existingIngredients,
                         'stockDraft' => $stockDraft,
                     ]);
@@ -150,7 +223,9 @@ final class AdminIngredientController extends AbstractController
         $ingredient = new Ingredient();
         $ingredient->setCreatedAt(new \DateTimeImmutable());
 
-        $form = $this->createForm(IngredientType::class, $ingredient);
+        $form = $this->createForm(IngredientType::class, $ingredient, [
+            'today' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && !$form->isValid()) {
@@ -191,6 +266,20 @@ final class AdminIngredientController extends AbstractController
                     'existingIngredients' => $existingIngredients,
                     'stockDraft' => $stockDraft,
                 ]);
+            }
+
+            $expiryDate = $ingredient->getExpiryDate();
+            if ($expiryDate instanceof \DateTimeInterface) {
+                $expiryAsDate = \DateTimeImmutable::createFromInterface($expiryDate)->setTime(0, 0, 0);
+                if ($expiryAsDate < new \DateTimeImmutable('today')) {
+                    $this->addFlash('error', 'Expiry date cannot be in the past.');
+
+                    return $this->render('admin/inventory/ingredient/new.html.twig', [
+                        'form' => $form,
+                        'existingIngredients' => $existingIngredients,
+                        'stockDraft' => $stockDraft,
+                    ]);
+                }
             }
 
             $duplicate = $ingredientRepository
@@ -227,7 +316,11 @@ final class AdminIngredientController extends AbstractController
             return $redirect;
         }
 
-        $form = $this->createForm(IngredientType::class, $ingredient);
+        $form = $this->createForm(IngredientType::class, $ingredient, [
+            'is_edit_mode' => true,
+            'today' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+        ]);
+        $originalQuantity = (float) ($ingredient->getQuantityInStock() ?? 0);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && !$form->isValid()) {
@@ -235,16 +328,20 @@ final class AdminIngredientController extends AbstractController
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $decreaseQuantity = (float) ($form->get('decreaseQuantity')->getData() ?? 0);
+
             $violations = $validator->validate([
                 'quantityInStock' => (float) ($ingredient->getQuantityInStock() ?? 0),
                 'minStockLevel' => (float) ($ingredient->getMinStockLevel() ?? 0),
                 'unitCost' => (float) ($ingredient->getUnitCost() ?? 0),
+                'decreaseQuantity' => $decreaseQuantity,
             ], new Assert\Collection([
                 'allowExtraFields' => true,
                 'fields' => [
                     'quantityInStock' => [new Assert\PositiveOrZero(message: 'Quantity in stock must be 0 or greater.')],
                     'minStockLevel' => [new Assert\PositiveOrZero(message: 'Minimum stock level must be 0 or greater.')],
                     'unitCost' => [new Assert\PositiveOrZero(message: 'Unit cost must be 0 or greater.')],
+                    'decreaseQuantity' => [new Assert\PositiveOrZero(message: 'Decrease quantity must be 0 or greater.')],
                 ],
             ]));
 
@@ -259,6 +356,17 @@ final class AdminIngredientController extends AbstractController
                 ]);
             }
 
+            if ($decreaseQuantity > $originalQuantity) {
+                $this->addFlash('error', 'Decrease quantity cannot be greater than current stock.');
+
+                return $this->render('admin/inventory/ingredient/edit.html.twig', [
+                    'ingredient' => $ingredient,
+                    'form' => $form,
+                ]);
+            }
+
+            $ingredient->setQuantityInStock(max(0, $originalQuantity - $decreaseQuantity));
+
             if ((float) ($ingredient->getMinStockLevel() ?? 0) > (float) ($ingredient->getQuantityInStock() ?? 0)) {
                 $this->addFlash('error', 'Minimum stock level cannot be greater than quantity in stock.');
 
@@ -266,6 +374,19 @@ final class AdminIngredientController extends AbstractController
                     'ingredient' => $ingredient,
                     'form' => $form,
                 ]);
+            }
+
+            $expiryDate = $ingredient->getExpiryDate();
+            if ($expiryDate instanceof \DateTimeInterface) {
+                $expiryAsDate = \DateTimeImmutable::createFromInterface($expiryDate)->setTime(0, 0, 0);
+                if ($expiryAsDate < new \DateTimeImmutable('today')) {
+                    $this->addFlash('error', 'Expiry date cannot be in the past.');
+
+                    return $this->render('admin/inventory/ingredient/edit.html.twig', [
+                        'ingredient' => $ingredient,
+                        'form' => $form,
+                    ]);
+                }
             }
 
             $duplicate = $ingredientRepository

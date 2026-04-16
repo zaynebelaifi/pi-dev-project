@@ -11,6 +11,11 @@
     </div>
     <div style="display:flex; gap:.7rem;">
       <a href="{{ path('admin_waste_index') }}" class="t-btn">Waste Logs</a>
+      <form method="post" action="{{ path('admin_ingredient_import_csv') }}" enctype="multipart/form-data" style="display:flex; gap:.45rem; align-items:center;">
+        <input type="hidden" name="_token" value="{{ csrf_token('import_ingredients_csv') }}">
+        <input type="file" name="csv_file" accept=".csv,text/csv" required style="max-width:220px; font-size:.72rem;">
+        <button type="submit" class="t-btn">Import CSV</button>
+      </form>
       <form method="post" action="{{ path('admin_ingredient_sync_all') }}" style="display:inline-block;">
         <input type="hidden" name="_token" value="{{ csrf_token('sync_ingredients') }}">
         <button type="submit" class="t-btn" onclick="return confirm('Run full inventory sync? This will move expired stock to waste and merge duplicate ingredients.');">Fix Inventory</button>

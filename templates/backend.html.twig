@@ -196,6 +196,33 @@ tbody tr:hover .dots{color:var(--gold);}
 .q-lbl{font-size:.7rem;font-weight:600;color:var(--espresso);}
 .q-sub{font-size:.6rem;color:var(--text-3);}
 
+.stock-chatbot{position:fixed;right:22px;bottom:22px;z-index:1200;font-family:'Jost',sans-serif;}
+.stock-chat-launcher{width:58px;height:58px;border:none;border-radius:50%;background:linear-gradient(145deg,var(--gold),#d7a646);color:#fff;font-size:1.4rem;cursor:pointer;box-shadow:0 10px 24px rgba(92,61,30,.24);display:flex;align-items:center;justify-content:center;transition:transform .2s ease,box-shadow .2s ease;}
+.stock-chat-launcher:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(92,61,30,.3);}
+.stock-chat-window{position:absolute;right:0;bottom:70px;width:340px;max-width:88vw;height:460px;background:#fff;border:1px solid var(--border-2);border-radius:14px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 16px 34px rgba(92,61,30,.2);resize:both;}
+.stock-chat-window.open{display:flex;}
+.stock-chat-window.expanded{width:min(960px,94vw);height:min(760px,88vh);}
+.stock-chat-head{padding:.68rem .82rem;background:linear-gradient(90deg,rgba(184,135,42,.22),rgba(184,135,42,.04));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.stock-chat-title{font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--espresso);}
+.stock-chat-head-actions{display:flex;align-items:center;gap:.25rem;}
+.stock-chat-expand,.stock-chat-close{border:none;background:transparent;color:var(--text-2);font-size:1rem;cursor:pointer;padding:.1rem .25rem;border-radius:4px;}
+.stock-chat-expand:hover,.stock-chat-close:hover{background:rgba(184,135,42,.12);color:var(--espresso);}
+.stock-chat-messages{flex:1;padding:.75rem;overflow:auto;background:#fffdf8;display:grid;gap:.52rem;}
+.stock-chat-bubble{max-width:86%;padding:.56rem .62rem;border-radius:10px;font-size:.73rem;line-height:1.46;border:1px solid transparent;}
+.stock-chat-bubble.user{justify-self:end;background:#f0f9ff;border-color:#bae6fd;color:#0c4a6e;}
+.stock-chat-bubble.assistant{justify-self:start;background:#fffbeb;border-color:#fde68a;color:#713f12;}
+.stock-chat-bubble pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:'Jost',sans-serif;font-size:.73rem;}
+.stock-chat-table-wrap{overflow:auto;margin-top:.35rem;border:1px solid rgba(113,63,18,.15);border-radius:8px;background:#fffdf8;}
+.stock-chat-table{width:100%;border-collapse:collapse;font-size:.68rem;min-width:320px;}
+.stock-chat-table th,.stock-chat-table td{padding:.34rem .45rem;border-bottom:1px solid rgba(113,63,18,.12);text-align:left;vertical-align:top;}
+.stock-chat-table th{background:rgba(184,135,42,.12);font-weight:600;white-space:nowrap;}
+.stock-chat-table td{text-wrap:balance;}
+.stock-chat-table tbody tr:last-child td{border-bottom:none;}
+.stock-chat-note{font-size:.62rem;color:#92400e;margin-top:.3rem;}
+.stock-chat-form{display:flex;gap:.48rem;padding:.65rem;border-top:1px solid var(--border);background:#fff;}
+.stock-chat-input{flex:1;height:38px;border:1px solid var(--border-2);border-radius:8px;padding:0 .62rem;font-size:.73rem;}
+.stock-chat-send{height:38px;padding:0 .8rem;border:none;border-radius:8px;background:var(--gold);color:#fff;font-size:.72rem;font-weight:600;cursor:pointer;}
+
 @media(max-width:1200px){.kpi-row{grid-template-columns:repeat(2,1fr);}.mod-grid{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:900px){:root{--sidebar-w:0px;}.sidebar{transform:translateX(-256px);width:256px;}.main-wrap{margin-left:0;}.bottom-grid{grid-template-columns:1fr;}}
 </style>
@@ -473,6 +500,28 @@ tbody tr:hover .dots{color:var(--gold);}
   </div>
 </div>
 
+  {% if activeRoute == 'app_admin_dashboard' or activeRoute == 'app_admin_analytics' %}
+    <div class="stock-chatbot" data-chat-endpoint="{{ path('app_admin_stock_chat') }}">
+      <button class="stock-chat-launcher" type="button" id="stockChatLauncher" title="AI Stock Assistant">🤖</button>
+      <div class="stock-chat-window" id="stockChatWindow">
+        <div class="stock-chat-head">
+          <div class="stock-chat-title">Stock Assistant</div>
+          <div class="stock-chat-head-actions">
+            <button type="button" class="stock-chat-expand" id="stockChatExpand" title="Expand chat">⛶</button>
+            <button type="button" class="stock-chat-close" id="stockChatClose">✕</button>
+          </div>
+        </div>
+        <div class="stock-chat-messages" id="stockChatMessages">
+          <div class="stock-chat-bubble assistant">Ask me about shortages, near-expiry stock, weather impact, and waste prevention actions.</div>
+        </div>
+        <form class="stock-chat-form" id="stockChatForm">
+          <input class="stock-chat-input" id="stockChatInput" type="text" placeholder="Ask a stock question..." autocomplete="off" required>
+          <button class="stock-chat-send" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
 <script>
 function tilt(e,el){
   const r=el.getBoundingClientRect();
@@ -519,6 +568,172 @@ document.querySelectorAll('form[data-live-search="true"][method="get"]').forEach
   textInputs.forEach(input=>input.addEventListener('input',submitDebounced));
   instantControls.forEach(control=>control.addEventListener('change',()=>form.submit()));
 });
+
+(() => {
+  const chatbot = document.querySelector('.stock-chatbot');
+  if (!chatbot) {
+    return;
+  }
+
+  const endpoint = chatbot.getAttribute('data-chat-endpoint');
+  const launcher = document.getElementById('stockChatLauncher');
+  const windowEl = document.getElementById('stockChatWindow');
+  const closeBtn = document.getElementById('stockChatClose');
+  const expandBtn = document.getElementById('stockChatExpand');
+  const form = document.getElementById('stockChatForm');
+  const input = document.getElementById('stockChatInput');
+  const messages = document.getElementById('stockChatMessages');
+
+  const isTableSeparator = (line) => /^\s*\|?[\s:-]+\|[\s|:-]*$/.test(line.trim());
+
+  const parseRowCells = (line) => line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map(cell => cell.trim());
+
+  const renderMessageContent = (text, bubble) => {
+    const normalized = String(text || '').replace(/\r\n/g, '\n');
+    const lines = normalized.split('\n');
+    let i = 0;
+
+    while (i < lines.length) {
+      const headerLine = lines[i] ?? '';
+      const separatorLine = lines[i + 1] ?? '';
+      const looksLikeTableHeader = headerLine.includes('|') && parseRowCells(headerLine).length >= 2;
+
+      if (looksLikeTableHeader && isTableSeparator(separatorLine)) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'stock-chat-table-wrap';
+        const table = document.createElement('table');
+        table.className = 'stock-chat-table';
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        const headers = parseRowCells(headerLine);
+        const headTr = document.createElement('tr');
+        headers.forEach(label => {
+          const th = document.createElement('th');
+          th.textContent = label;
+          headTr.appendChild(th);
+        });
+        thead.appendChild(headTr);
+
+        i += 2;
+        while (i < lines.length && (lines[i] || '').includes('|')) {
+          const rowCells = parseRowCells(lines[i]);
+          if (rowCells.length > 0) {
+            const tr = document.createElement('tr');
+            headers.forEach((_, idx) => {
+              const td = document.createElement('td');
+              td.textContent = rowCells[idx] ?? '';
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          }
+          i += 1;
+        }
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+        bubble.appendChild(wrapper);
+        continue;
+      }
+
+      const textBlock = [];
+      while (i < lines.length) {
+        const current = lines[i] ?? '';
+        const next = lines[i + 1] ?? '';
+        const nextIsTable = current.includes('|') && parseRowCells(current).length >= 2 && isTableSeparator(next);
+        if (nextIsTable) {
+          break;
+        }
+        textBlock.push(current);
+        i += 1;
+      }
+
+      if (textBlock.length > 0) {
+        const pre = document.createElement('pre');
+        pre.textContent = textBlock.join('\n').trimEnd();
+        bubble.appendChild(pre);
+      }
+    }
+  };
+
+  const appendMessage = (text, role, fallbackUsed = false, fallbackReason = '') => {
+    const bubble = document.createElement('div');
+    bubble.className = 'stock-chat-bubble ' + role;
+    renderMessageContent(text, bubble);
+
+    if (fallbackUsed) {
+      const note = document.createElement('div');
+      note.className = 'stock-chat-note';
+      note.textContent = fallbackReason
+        ? ('Fallback mode: ' + fallbackReason)
+        : 'Fallback mode: local recommendation generated.';
+      bubble.appendChild(note);
+    }
+
+    messages.appendChild(bubble);
+    messages.scrollTop = messages.scrollHeight;
+  };
+
+  launcher.addEventListener('click', () => {
+    windowEl.classList.toggle('open');
+    if (windowEl.classList.contains('open')) {
+      input.focus();
+    }
+  });
+
+  closeBtn.addEventListener('click', () => {
+    windowEl.classList.remove('open');
+  });
+
+  expandBtn.addEventListener('click', () => {
+    windowEl.classList.toggle('expanded');
+    expandBtn.textContent = windowEl.classList.contains('expanded') ? '🗗' : '⛶';
+    expandBtn.title = windowEl.classList.contains('expanded') ? 'Restore chat size' : 'Expand chat';
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const question = input.value.trim();
+    if (!question) {
+      return;
+    }
+
+    appendMessage(question, 'user');
+    input.value = '';
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ question }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        appendMessage(payload.message || 'Unable to answer right now. Please try again.', 'assistant', true, payload.fallbackReason || 'Request failed');
+        return;
+      }
+
+      appendMessage(
+        payload.answer || 'No answer available.',
+        'assistant',
+        Boolean(payload.usedFallback),
+        payload.fallbackReason || ''
+      );
+    } catch (error) {
+      appendMessage('Network issue while contacting the stock assistant. Please retry.', 'assistant', true);
+    }
+  });
+})();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
