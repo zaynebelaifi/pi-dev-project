@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Delivery;
 use App\Entity\DeliveryMan;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -53,19 +54,10 @@ class DeliveryManRepository extends ServiceEntityRepository
             ->setParameter('active', 'active')
             ->setParameter('inDelivery', ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'])
             ->orderBy('dm.rating', 'DESC')
+            ->addOrderBy('dm.delivery_man_id', 'ASC')
             ->getQuery()
             ->getResult()
         ;
-
-        if (empty($available)) {
-            return $this->createQueryBuilder('dm')
-                ->andWhere('LOWER(dm.status) = :active')
-                ->setParameter('active', 'active')
-                ->orderBy('dm.rating', 'DESC')
-                ->getQuery()
-                ->getResult()
-            ;
-        }
 
         return $available;
     }

@@ -7,6 +7,7 @@ use App\Form\LoginType;
 use App\Form\RegistrationType;
 use App\Repository\DeliveryManRepository;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -86,15 +87,26 @@ final class SecurityController extends AbstractController
                 $normalizedRole = $this->normalizeRole($user->getRole());
 
                 // Upgrade legacy role values in place so existing access checks keep working.
+                $skipFurtherFlushes = false;
                 if ($normalizedRole !== $user->getRole()) {
+                    $originalRole = $user->getRole();
                     $user->setRole($normalizedRole);
-                    $entityManager->flush();
+
+                    try {
+                        $entityManager->flush();
+                    } catch (UniqueConstraintViolationException $exception) {
+                        $user->setRole($originalRole);
+                        $skipFurtherFlushes = !$entityManager->isOpen();
+                        // A duplicate email+role row already exists. Continue login without persisting the legacy normalization.
+                    }
                 }
 
                 // Upgrade legacy SHA-256/base64 passwords to Symfony hasher after a successful login.
-                if ($this->isLegacyPasswordValid($user, $password)) {
+                if (!$skipFurtherFlushes && $this->isLegacyPasswordValid($user, $password)) {
                     $user->setPassword($passwordHasher->hashPassword($user, $password));
-                    $entityManager->flush();
+                    if ($entityManager->isOpen()) {
+                        $entityManager->flush();
+                    }
                 }
 
                 $session->set('user_id', $user->getId());

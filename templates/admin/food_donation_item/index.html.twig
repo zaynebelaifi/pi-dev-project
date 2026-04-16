@@ -13,21 +13,24 @@
   </div>
 
   <form method="get" class="list-filters live-filter-form" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="direction" value="{{ direction }}">
     <input type="text" name="q" value="{{ search }}" placeholder="Search donation items" class="search-input" data-live-search-input style="flex:1;min-width:240px;padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);">
   </form>
 
-  <div class="tbl-card">
-    <div class="tbl-head">
-      <div class="tbl-title">All Donation Items</div>
-      <div>{{ food_donation_items|length }} items</div>
-    </div>
+  <div class="live-ajax-container" data-live-ajax-container>
+    <div class="tbl-card">
+      <div class="tbl-head">
+        <div class="tbl-title">All Donation Items</div>
+        <div>{{ food_donation_items|length }} items</div>
+      </div>
     <table data-live-table>
       <thead>
         <tr>
-          <th><a href="#" class="sort-trigger" data-sort-key="donationEventId" data-sort-type="number" data-sort-direction="asc">Donation Event</a></th>
-          <th><a href="#" class="sort-trigger" data-sort-key="itemId" data-sort-type="number" data-sort-direction="asc">Item ID</a></th>
-          <th><a href="#" class="sort-trigger" data-sort-key="itemName" data-sort-type="text" data-sort-direction="asc">Item Name</a></th>
-          <th><a href="#" class="sort-trigger" data-sort-key="quantity" data-sort-type="number" data-sort-direction="asc">Quantity</a></th>
+          <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'donation_event_id', direction: sort == 'donation_event_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="donationEventId" data-sort-type="number">Donation Event{% if sort == 'donation_event_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'item_id', direction: sort == 'item_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="itemId" data-sort-type="number">Item ID{% if sort == 'item_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'item_name', direction: sort == 'item_name' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="itemName" data-sort-type="text">Item Name{% if sort == 'item_name' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'quantity', direction: sort == 'quantity' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="quantity" data-sort-type="number">Quantity{% if sort == 'quantity' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -55,4 +58,86 @@
       </tbody>
     </table>
   </div>
+</div>
+
+<script>
+(function(){
+  const containerSelector = '[data-live-ajax-container]';
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
+
+  const buildUrl = params => {
+    const url = new URL(window.location.href);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        url.searchParams.delete(key);
+      } else {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  };
+
+  const fetchContent = async url => {
+    try {
+      const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) throw new Error('Request failed');
+      const html = await response.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const newContainer = doc.querySelector(containerSelector);
+      if (newContainer) {
+        container.replaceWith(newContainer);
+        bindAjax();
+      }
+    } catch (error) {
+      console.error('Live item fetch failed', error);
+    }
+  };
+
+  const submitLiveFilter = () => {
+    const form = document.querySelector('.live-filter-form');
+    if (!form) return;
+    const formData = new FormData(form);
+    const params = {
+      q: formData.get('q')?.toString() ?? '',
+      sort: formData.get('sort')?.toString() ?? '{{ sort }}',
+      direction: formData.get('direction')?.toString() ?? '{{ direction }}'
+    };
+    const url = buildUrl(params);
+    fetchContent(url);
+    history.replaceState({}, '', url);
+  };
+
+  const bindAjax = () => {
+    const form = document.querySelector('.live-filter-form');
+    if (!form) return;
+    let timeout;
+    const searchInput = form.querySelector('[name="q"]');
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      submitLiveFilter();
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(submitLiveFilter, 300);
+      });
+    }
+
+    document.querySelectorAll('.sort-trigger').forEach(link => {
+      link.addEventListener('click', event => {
+        event.preventDefault();
+        const url = link.href;
+        fetchContent(url);
+        history.replaceState({}, '', url);
+      });
+    });
+  };
+
+  bindAjax();
+  window.addEventListener('popstate', () => fetchContent(window.location.href));
+})();
+</script>
 {% endblock %}

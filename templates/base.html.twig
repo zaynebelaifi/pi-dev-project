@@ -16,7 +16,7 @@
   <!-- NAV -->
   <nav id="nav">
     <div class="nav-inner">
-      <a href="#home" class="brand">
+      <a href="{{ path('app_home') }}" class="brand">
         <img src="{{ asset('images/FB_IMG_1698958536626-removebg-preview (1).png') }}" alt="BIG 4 logo" onerror="this.style.display='none'">
         <div>
           <h1>BIG 4</h1>
@@ -25,9 +25,9 @@
       </a>
 
       <ul class="nav-links">
-        <li><a href="#menu-section">Menu</a></li>
-        <li><a href="#delivery">Delivery</a></li>
-        <li><a href="#events">Events</a></li>
+        <li><a href="{{ path('app_home') }}#menu-section">Menu</a></li>
+        <li><a href="{{ path('app_home') }}#delivery">Delivery</a></li>
+        <li><a href="{{ path('app_client_food_donation_calendar') }}">Events</a></li>
       </ul>
 
       {% set user_role = app.request.session.get('user_role') %}

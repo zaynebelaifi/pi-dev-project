@@ -1,0 +1,443 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ event.charityName }} · Donation Event{% endblock %}
+
+{% block body %}
+  <section class="event-detail-page">
+    <div class="container event-detail-shell">
+      <div class="event-page-header section-head reveal show">
+        <div>
+          <small>Community Donations</small>
+          <h3>{{ event.charityName }} <em>Event</em></h3>
+          <p>Review the event details, see community feedback, and leave your own rating without switching to another page.</p>
+        </div>
+        <div class="event-header-actions">
+          <a href="{{ path('app_client_food_donation_calendar') }}" class="btn-secondary">Back to Calendar</a>
+          <span class="status-pill {{ event.status == 'COMPLETED' ? 'status-completed' : event.status == 'PENDING' ? 'status-pending' : event.status == 'SCHEDULED' ? 'status-scheduled' : 'status-cancelled' }}">{{ event.status }}</span>
+        </div>
+      </div>
+
+      <div class="event-summary-strip reveal show">
+        <article>
+          <span>Date</span>
+          <strong>{{ event.eventDate ? event.eventDate|date('F j, Y H:i') : 'TBD' }}</strong>
+        </article>
+        <article>
+          <span>Total Items</span>
+          <strong>{{ event.totalQuantity }}</strong>
+        </article>
+        <article>
+          <span>Delivery ID</span>
+          <strong>{{ event.deliveryId ?: 'Not assigned' }}</strong>
+        </article>
+        <article>
+          <span>Reviews</span>
+          <strong>{{ ratingCount }}</strong>
+        </article>
+      </div>
+
+      <div class="event-content-grid">
+        <div class="event-main-column">
+          <section class="event-panel reveal show">
+            <div class="panel-heading">
+              <h4>Community Ratings</h4>
+              <p>Live scores based on submitted visitor feedback.</p>
+            </div>
+            <div class="metrics-grid">
+              <article class="metric-card">
+                <span>Event Rating</span>
+                <strong>{{ averageEventRating ? averageEventRating ~ '/5' : 'No ratings yet' }}</strong>
+              </article>
+              <article class="metric-card">
+                <span>Food Rating</span>
+                <strong>{{ averageFoodRating ? averageFoodRating ~ '/5' : 'No ratings yet' }}</strong>
+              </article>
+              <article class="metric-card">
+                <span>Total Reviews</span>
+                <strong>{{ ratingCount }}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="event-panel reveal show">
+            <div class="panel-heading">
+              <h4>Customer Reviews</h4>
+              <p>Recent feedback from visitors and guests.</p>
+            </div>
+            <div class="reviews-stack">
+              {% if ratings is not empty %}
+                {% for rating in ratings %}
+                  <article class="review-entry">
+                    <div class="review-entry-top">
+                      <div>
+                        <strong>
+                          {% if rating.user %}
+                            {{ rating.user.firstName ? rating.user.firstName ~ ' ' ~ (rating.user.lastName ?: '') : rating.user.email }}
+                          {% else %}
+                            Guest Reviewer
+                          {% endif %}
+                        </strong>
+                        <span>{{ rating.createdAt ? rating.createdAt|date('M j, Y') : 'Recently' }}</span>
+                      </div>
+                      <div class="review-scores">
+                        <span>Event {{ rating.eventRating }}/5</span>
+                        <span>Food {{ rating.foodRating }}/5</span>
+                      </div>
+                    </div>
+                    <p>{{ rating.comment ?: 'No comment provided.' }}</p>
+                  </article>
+                {% endfor %}
+              {% else %}
+                <p class="empty-copy">No reviews yet. Be the first to rate this event.</p>
+              {% endif %}
+            </div>
+          </section>
+        </div>
+
+        <aside class="event-side-column">
+          <section class="event-panel reveal show">
+            <div class="panel-heading">
+              <h4>Available Dishes</h4>
+              <p>Items currently linked to this donation event.</p>
+            </div>
+            <div class="dish-stack">
+              {% if availableDishes is not empty %}
+                {% for dish in availableDishes %}
+                  <article class="dish-card">
+                    <strong>{{ dish.dishName ?: 'Item #' ~ dish.itemId }}</strong>
+                    <span>Quantity: {{ dish.quantity }}</span>
+                  </article>
+                {% endfor %}
+              {% else %}
+                <p class="empty-copy">No dishes listed for this event.</p>
+              {% endif %}
+            </div>
+          </section>
+
+          <section class="event-panel rate-panel reveal show">
+            <div class="panel-heading">
+              <h4>Rate This Event</h4>
+              <p>Signed-out visitors can submit as guests. Signed-in users keep their identity attached.</p>
+            </div>
+
+            <form method="post" action="{{ path('app_client_food_donation_rate', {'id': event.donationEventId}) }}" class="rating-form">
+              <input type="hidden" name="_token" value="{{ csrf_token('rate-event' ~ event.donationEventId) }}">
+
+              <fieldset class="form-row rating-group">
+                <legend>Event Rating</legend>
+                <div class="star-picker">
+                  {% for value in 5..1 %}
+                    <input type="radio" id="eventRating{{ value }}" name="eventRating" value="{{ value }}" {{ value == 5 ? 'checked' : '' }}>
+                    <label for="eventRating{{ value }}" title="{{ value }} stars">★</label>
+                  {% endfor %}
+                </div>
+              </fieldset>
+
+              <fieldset class="form-row rating-group">
+                <legend>Food Rating</legend>
+                <div class="star-picker">
+                  {% for value in 5..1 %}
+                    <input type="radio" id="foodRating{{ value }}" name="foodRating" value="{{ value }}" {{ value == 5 ? 'checked' : '' }}>
+                    <label for="foodRating{{ value }}" title="{{ value }} stars">★</label>
+                  {% endfor %}
+                </div>
+              </fieldset>
+
+              <div class="form-row">
+                <label for="comment">Comment</label>
+                <textarea id="comment" name="comment" rows="4" placeholder="Share what worked well, what stood out, or what could improve."></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary">Submit Rating</button>
+            </form>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .event-detail-page {
+      padding: 118px 0 72px;
+      color: var(--text);
+    }
+    .event-detail-shell {
+      display: grid;
+      gap: 1.4rem;
+    }
+    .event-page-header {
+      align-items: end;
+      gap: 1.2rem;
+      margin-bottom: 0;
+    }
+    .event-page-header p {
+      max-width: 620px;
+    }
+    .event-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .9rem;
+      flex-wrap: wrap;
+    }
+    .event-summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .event-summary-strip article,
+    .event-panel {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    .event-summary-strip article {
+      padding: 1.15rem 1.2rem;
+    }
+    .event-summary-strip span,
+    .metric-card span,
+    .dish-card span,
+    .review-entry-top span,
+    .panel-heading p,
+    .empty-copy,
+    .rating-form label,
+    .rating-group legend {
+      color: var(--text-2);
+    }
+    .event-summary-strip span {
+      display: block;
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: .55rem;
+    }
+    .event-summary-strip strong {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      color: var(--espresso);
+      font-weight: 600;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .8rem 1.05rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .status-scheduled { background: #8d6c2f; color: #fff; }
+    .status-pending { background: #a88a5f; color: #fff; }
+    .status-completed { background: #2e6e7e; color: #fff; }
+    .status-cancelled { background: #9c3f3f; color: #fff; }
+    .event-content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, .9fr);
+      gap: 1.2rem;
+      align-items: start;
+    }
+    .event-main-column,
+    .event-side-column {
+      display: grid;
+      gap: 1.2rem;
+    }
+    .event-panel {
+      padding: 1.35rem;
+    }
+    .panel-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .panel-heading h4 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      color: var(--espresso);
+      margin: 0;
+    }
+    .panel-heading p {
+      max-width: 380px;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .metrics-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .metric-card,
+    .dish-card,
+    .review-entry {
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,244,231,.88));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+    }
+    .metric-card {
+      padding: 1rem;
+    }
+    .metric-card span {
+      display: block;
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: .55rem;
+    }
+    .metric-card strong {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.65rem;
+      color: var(--espresso);
+      font-weight: 600;
+    }
+    .reviews-stack,
+    .dish-stack {
+      display: grid;
+      gap: .9rem;
+    }
+    .review-entry {
+      padding: 1rem 1.05rem;
+    }
+    .review-entry-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: .9rem;
+      margin-bottom: .6rem;
+    }
+    .review-entry strong {
+      display: block;
+      color: var(--espresso);
+      margin-bottom: .18rem;
+    }
+    .review-entry-top span {
+      font-size: .86rem;
+    }
+    .review-scores {
+      display: inline-flex;
+      gap: .55rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .review-scores span {
+      padding: .4rem .7rem;
+      border-radius: 999px;
+      background: var(--gold-pale);
+      color: var(--brown);
+      font-size: .74rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .review-entry p,
+    .empty-copy {
+      margin: 0;
+      line-height: 1.75;
+    }
+    .dish-card {
+      padding: .95rem 1rem;
+    }
+    .dish-card strong {
+      display: block;
+      margin-bottom: .3rem;
+      color: var(--espresso);
+    }
+    .rating-form {
+      display: grid;
+      gap: 1rem;
+    }
+    .form-row {
+      margin-bottom: 1rem;
+    }
+    .rating-form label,
+    .rating-group legend {
+      display: block;
+      margin-bottom: .55rem;
+      font-weight: 600;
+    }
+    .rating-form textarea {
+      width: 100%;
+      border: 1px solid var(--line-2);
+      border-radius: 18px;
+      padding: 1rem 1.05rem;
+      font-family: inherit;
+      color: var(--espresso);
+      background: #fff;
+    }
+    .rating-form textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+    .rating-group {
+      border: 0;
+      padding: 0;
+      margin: 0;
+    }
+    .star-picker {
+      display: inline-flex;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      gap: .3rem;
+    }
+    .star-picker input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .star-picker label {
+      font-size: 2rem;
+      line-height: 1;
+      color: #d8cbb0;
+      cursor: pointer;
+      margin: 0;
+      transition: color .18s ease, transform .18s ease;
+    }
+    .star-picker label:hover,
+    .star-picker label:hover ~ label,
+    .star-picker input:checked + label,
+    .star-picker input:checked + label ~ label {
+      color: var(--gold);
+      transform: translateY(-1px);
+    }
+    .rate-panel .btn-primary {
+      width: 100%;
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      .event-summary-strip,
+      .metrics-grid,
+      .event-content-grid {
+        grid-template-columns: 1fr;
+      }
+      .panel-heading,
+      .review-entry-top,
+      .event-page-header {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+      .event-header-actions {
+        justify-content: flex-start;
+      }
+      .review-scores {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .event-detail-page {
+        padding: 102px 0 56px;
+      }
+      .event-panel,
+      .event-summary-strip article {
+        padding: 1rem;
+      }
+      .panel-heading h4 {
+        font-size: 1.7rem;
+      }
+    }
+  </style>
+{% endblock %}

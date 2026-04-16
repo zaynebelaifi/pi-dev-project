@@ -30,7 +30,7 @@ class FoodDonationEvent
         return $this;
     }
 
-    #[ORM\Column(type: 'date', nullable: false)]
+    #[ORM\Column(type: 'datetime', nullable: false)]
     #[Assert\NotNull(message: 'Event date is required.')]
     private ?\DateTimeInterface $event_date = null;
 

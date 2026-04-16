@@ -13,6 +13,8 @@
   </div>
 
   <form method="get" class="list-filters live-filter-form" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="direction" value="{{ direction }}">
     <input type="text" name="q" value="{{ search }}" placeholder="Search donation events" class="search-input" data-live-search-input style="flex:1;min-width:240px;padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);">
     <select name="status" class="status-filter" data-live-status-filter style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;min-width:190px;background:var(--ivory);color:var(--text);">
       <option value="">All statuses</option>
@@ -23,11 +25,12 @@
     </select>
   </form>
 
-  <div class="tbl-card">
-    <div class="tbl-head">
-      <div class="tbl-title">All Donation Events</div>
-      <div>{{ food_donation_events|length }} events</div>
-    </div>
+  <div class="live-ajax-container" data-live-ajax-container>
+    <div class="tbl-card">
+      <div class="tbl-head">
+        <div class="tbl-title">All Donation Events</div>
+        <div>{{ food_donation_events|length }} events</div>
+      </div>
     <table data-live-table>
       <thead>
         <tr>
@@ -43,9 +46,9 @@
       </thead>
       <tbody>
         {% for event in food_donation_events %}
-          <tr data-status="{{ event.status }}" data-search="{{ event.donationEventId }} {{ event.eventDate ? event.eventDate|date('Y-m-d') : '' }} {{ event.totalQuantity }} {{ event.charityName }} {{ event.status }} {{ event.deliveryId }}">
+          <tr data-status="{{ event.status }}" data-search="{{ event.donationEventId }} {{ event.eventDate ? event.eventDate|date('Y-m-d H:i') : '' }} {{ event.totalQuantity }} {{ event.charityName }} {{ event.status }} {{ event.deliveryId }}">
             <td class="ord-id">#{{ event.donationEventId }}</td>
-            <td>{{ event.eventDate ? event.eventDate|date('Y-m-d') : '—' }}</td>
+            <td>{{ event.eventDate ? event.eventDate|date('Y-m-d H:i') : '—' }}</td>
             <td>{{ event.totalQuantity }}</td>
             <td>{{ event.charityName }}</td>
             <td>
@@ -70,4 +73,92 @@
       </tbody>
     </table>
   </div>
+</div>
+
+<script>
+(function(){
+  const containerSelector = '[data-live-ajax-container]';
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
+
+  const buildUrl = params => {
+    const url = new URL(window.location.href);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        url.searchParams.delete(key);
+      } else {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  };
+
+  const fetchContent = async url => {
+    try {
+      const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) throw new Error('Request failed');
+      const html = await response.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const newContainer = doc.querySelector(containerSelector);
+      if (newContainer) {
+        container.replaceWith(newContainer);
+        bindAjax();
+      }
+    } catch (error) {
+      console.error('Live event fetch failed', error);
+    }
+  };
+
+  const submitLiveFilter = () => {
+    const form = document.querySelector('.live-filter-form');
+    if (!form) return;
+    const formData = new FormData(form);
+    const params = {
+      q: formData.get('q')?.toString() ?? '',
+      status: formData.get('status')?.toString() ?? '',
+      sort: formData.get('sort')?.toString() ?? '{{ sort }}',
+      direction: formData.get('direction')?.toString() ?? '{{ direction }}'
+    };
+    const url = buildUrl(params);
+    fetchContent(url);
+    history.replaceState({}, '', url);
+  };
+
+  const bindAjax = () => {
+    const form = document.querySelector('.live-filter-form');
+    if (!form) return;
+    let timeout;
+    const searchInput = form.querySelector('[name="q"]');
+    const statusFilter = form.querySelector('[name="status"]');
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      submitLiveFilter();
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(submitLiveFilter, 300);
+      });
+    }
+
+    if (statusFilter) {
+      statusFilter.addEventListener('change', submitLiveFilter);
+    }
+
+    document.querySelectorAll('.sort-trigger').forEach(link => {
+      link.addEventListener('click', event => {
+        event.preventDefault();
+        const url = link.href;
+        fetchContent(url);
+        history.replaceState({}, '', url);
+      });
+    });
+  };
+
+  bindAjax();
+  window.addEventListener('popstate', () => fetchContent(window.location.href));
+})();
+</script>
 {% endblock %}
