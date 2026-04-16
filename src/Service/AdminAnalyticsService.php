@@ -184,6 +184,57 @@ class AdminAnalyticsService
 
         $totalRevenuePeriodLabel = sprintf('Total Revenue (%s): %.2f TND', $rangeLabel, (float) ($revenueSummary['total_revenue'] ?? 0));
 
+        $inventoryItemsRows = $this->connection->fetchAllAssociative(
+            'SELECT i.id, i.name, i.quantityInStock, i.unitCost, i.unit, i.minStockLevel, i.expiryDate
+             FROM ingredient i
+             ORDER BY i.name ASC'
+        );
+
+        $shortageByIngredient = [];
+        foreach ($riskComputation['shortageAlerts'] as $alert) {
+            $shortageByIngredient[(string) ($alert['ingredient'] ?? '')] = (float) ($alert['shortageGap'] ?? 0);
+        }
+
+        $inventoryItems = [];
+        foreach ($inventoryItemsRows as $row) {
+            $name = (string) ($row['name'] ?? 'Unknown');
+            $qty = (float) ($row['quantityInStock'] ?? 0);
+            $unitCost = (float) ($row['unitCost'] ?? 0);
+            $minStock = (float) ($row['minStockLevel'] ?? 0);
+            $status = 'healthy';
+
+            $expiryDate = null;
+            if (!empty($row['expiryDate'])) {
+                try {
+                    $expiryDate = new \DateTimeImmutable((string) $row['expiryDate']);
+                } catch (\Throwable) {
+                    $expiryDate = null;
+                }
+            }
+
+            if ($qty <= 0) {
+                $status = 'out_of_stock';
+            } elseif ($expiryDate instanceof \DateTimeImmutable && $expiryDate < $today) {
+                $status = 'expired';
+            } elseif ($expiryDate instanceof \DateTimeImmutable && $expiryDate <= $today->modify('+3 day')) {
+                $status = 'near_expiry';
+            } elseif ($qty <= $minStock) {
+                $status = 'low_stock';
+            }
+
+            $inventoryItems[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'ingredient' => $name,
+                'quantity' => $qty,
+                'unit' => (string) ($row['unit'] ?? 'units'),
+                'unitCost' => $unitCost,
+                'stockValue' => round($qty * $unitCost, 2),
+                'minStockLevel' => $minStock,
+                'status' => $status,
+                'shortageGap' => (float) ($shortageByIngredient[$name] ?? 0),
+            ];
+        }
+
         return [
             'filters' => [
                 'wastePeriod' => $wastePeriod,
@@ -252,6 +303,7 @@ class AdminAnalyticsService
                     'quantity' => (float) $row['total_quantity'],
                     'cost' => (float) $row['total_cost'],
                 ], $topWastedRows),
+                'inventoryItems' => $inventoryItems,
             ],
         ];
     }

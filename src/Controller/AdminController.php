@@ -271,6 +271,9 @@ final class AdminController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
+        // Release the session lock before running analytics queries.
+        $session->save();
+
         $viewData = $adminAnalyticsService->buildAnalyticsViewData(
             (string) $request->query->get('waste_period', 'Month'),
             (string) $request->query->get('revenue_period', 'Month'),
@@ -293,6 +296,9 @@ final class AdminController extends AbstractController
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
             return new JsonResponse(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
+
+        // Release session lock to avoid blocking parallel requests.
+        $session->save();
 
         $payload = json_decode((string) $request->getContent(), true);
         $question = trim((string) ($payload['question'] ?? ''));
