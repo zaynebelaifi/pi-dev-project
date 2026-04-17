@@ -68,12 +68,14 @@ class AiStockInsightService
         $endpoint = rtrim($this->getEnv('FREE_CHAT_API_URL', 'https://text.pollinations.ai'), '/');
         $prompt = $this->buildFreePrompt($question, $context);
         $url = $endpoint.'/'.rawurlencode($prompt);
+        $timeout = max(2, min(20, (int) $this->getEnv('FREE_CHAT_TIMEOUT', '12')));
 
         $response = $this->httpClient->request('GET', $url, [
             'headers' => [
                 'Accept' => 'text/plain, application/json',
             ],
-            'timeout' => (int) $this->getEnv('FREE_CHAT_TIMEOUT', '25'),
+            'timeout' => $timeout,
+            'max_duration' => $timeout,
         ]);
 
         $statusCode = $response->getStatusCode();
