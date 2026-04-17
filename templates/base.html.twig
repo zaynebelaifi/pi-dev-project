@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=1">
+  <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=3">
 </head>
 <body>
 
@@ -154,65 +154,67 @@
       </div>
 
       {% if menuSections is defined and menuSections is not empty %}
-        {# Count total available dishes across sections #}
-        {% set totalDishes = 0 %}
-        {% for section in menuSections %}
-          {% set totalDishes = totalDishes + (section.dishes is defined ? section.dishes|length : 0) %}
-        {% endfor %}
-
-        {# If there are any dishes, render a consolidated Main Menu first so the page shows items clearly #}
-        {% if totalDishes > 0 %}
-          <div style="margin:1.2rem 0 .7rem;">
-            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">Main Menu</h4>
-            <p style="margin:.25rem 0 0;color:var(--text-2);">All available dishes</p>
-          </div>
-          <div class="menu-grid">
-            {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
+        <div class="menu-picker-row">
+          <label for="menuPicker" class="menu-picker-label">Choose menu</label>
+          <select id="menuPicker" class="menu-picker">
             {% for section in menuSections %}
-              {% if section.dishes is defined and section.dishes|length > 0 %}
-                {% for dish in section.dishes %}
-                  <div class="menu-card reveal compact">
-                    <div class="menu-card-inner">
-                      <div class="menu-thumb">
-                        <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
-                      </div>
-                      <div class="menu-card-content">
-                        <h4>{{ dish.name }}</h4>
-                        <p class="short-desc">{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
-                        <div class="menu-card-footer">
-                          <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
-                          <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
+              <option value="{{ section.menu.id }}" {{ loop.first ? 'selected' : '' }}>
+                {{ section.menu.title }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
+        {% for section in menuSections %}
+          <div class="menu-section-group" data-menu-id="{{ section.menu.id }}" {{ loop.first ? '' : 'style="display:none;"' }}>
+            <div style="margin:1.2rem 0 .7rem;">
+              <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">{{ section.menu.title }}</h4>
+              <p style="margin:.25rem 0 0;color:var(--text-2);">{{ section.menu.description ?: 'No description provided.' }}</p>
+            </div>
+
+            <div class="menu-carousel" data-menu-carousel>
+              <button type="button" class="menu-scroll-btn" data-scroll="prev" aria-label="Show previous dishes">&#8249;</button>
+              <div class="menu-grid-wrap">
+                <div class="menu-grid" data-dish-slider>
+                  {% for dish in section.dishes %}
+                    <div class="menu-card reveal compact">
+                      <div class="menu-card-inner">
+                        <div class="menu-thumb">
+                          <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
+                        </div>
+                        <div class="menu-card-content">
+                          <h4>{{ dish.name }}</h4>
+                          <p class="short-desc">{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
+                          {% set basePrice = dish.basePrice|number_format(2, '.', '') %}
+                          <div class="menu-card-footer">
+                            <span class="price js-convertible-price" data-base-price="{{ basePrice }}">{{ basePrice }} TND</span>
+                            <select class="currency-select" data-base-price="{{ basePrice }}" aria-label="Choose currency for {{ dish.name }}">
+                              <option value="TND" selected>TND</option>
+                              <option value="USD">USD</option>
+                              <option value="EUR">EUR</option>
+                              <option value="CNY">CNY</option>
+                            </select>
+                            <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endfor %}
-          </div>
-
-          {# Instead of repeating dishes, show a compact category list linking to sections. #}
-          <div style="margin:1.2rem 0 .7rem;">
-            <h5 style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:500;color:var(--espresso);margin:0 0 .5rem;">Categories</h5>
-            <div class="menu-categories" style="display:flex;flex-wrap:wrap;gap:.6rem">
-              {% for section in menuSections %}
-                {% if section.dishes is defined and section.dishes|length > 0 %}
-                  <a href="#menu-section" class="menu-category" style="padding:.5rem .8rem;border:1px solid rgba(184,135,42,.12);border-radius:999px;background:rgba(255,255,255,.92);color:var(--brown);text-decoration:none;font-weight:600">{{ section.menu.title }} ({{ section.dishes|length }})</a>
-                {% endif %}
-              {% endfor %}
-            </div>
-          </div>
-        {% else %}
-          <div class="menu-grid">
-            <div class="menu-card reveal">
-              <div class="menu-card-content">
-                <h4>Menu Coming Soon</h4>
-                <p>Our dishes are being updated right now. Please check back shortly.</p>
-                <span class="price">--</span>
+                  {% else %}
+                    <div class="menu-card reveal">
+                      <div class="menu-card-content">
+                        <h4>No dishes yet</h4>
+                        <p>This menu is available, but no dishes are assigned to it yet.</p>
+                        <span class="price">--</span>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
               </div>
+              <button type="button" class="menu-scroll-btn" data-scroll="next" aria-label="Show next dishes">&#8250;</button>
             </div>
           </div>
-        {% endif %}
+        {% endfor %}
       {% else %}
         <div class="menu-grid">
           <div class="menu-card reveal">
@@ -1100,6 +1102,153 @@
 
   let cart = [];
   let pendingDeliveryOrderId = null;
+
+  const menuPicker = document.getElementById('menuPicker');
+  const menuSectionGroups = Array.from(document.querySelectorAll('.menu-section-group'));
+  const refreshMenuSliderStates = [];
+
+  document.querySelectorAll('[data-dish-slider]').forEach((slider) => {
+    const carousel = slider.closest('[data-menu-carousel]');
+    const prevBtn = carousel ? carousel.querySelector('[data-scroll="prev"]') : null;
+    const nextBtn = carousel ? carousel.querySelector('[data-scroll="next"]') : null;
+
+    if (!carousel || !prevBtn || !nextBtn) {
+      return;
+    }
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartScrollLeft = 0;
+    let dragDistance = 0;
+
+    const getScrollStep = () => {
+      const firstCard = slider.querySelector('.menu-card');
+      if (!firstCard) {
+        return Math.max(slider.clientWidth, 220);
+      }
+
+      const sliderStyles = window.getComputedStyle(slider);
+      const gap = parseFloat(sliderStyles.columnGap || sliderStyles.gap || '0');
+      return firstCard.getBoundingClientRect().width + gap;
+    };
+
+    const scrollByStep = (direction) => {
+      slider.scrollBy({
+        left: getScrollStep() * direction,
+        behavior: 'smooth',
+      });
+    };
+
+    const updateButtons = () => {
+      const maxScrollLeft = Math.max(0, slider.scrollWidth - slider.clientWidth - 2);
+      prevBtn.disabled = slider.scrollLeft <= 2;
+      nextBtn.disabled = slider.scrollLeft >= maxScrollLeft;
+    };
+
+    prevBtn.addEventListener('click', () => scrollByStep(-1));
+    nextBtn.addEventListener('click', () => scrollByStep(1));
+
+    slider.addEventListener('scroll', updateButtons, { passive: true });
+
+    slider.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'mouse' || event.button !== 0) {
+        return;
+      }
+
+      isDragging = true;
+      dragDistance = 0;
+      dragStartX = event.clientX;
+      dragStartScrollLeft = slider.scrollLeft;
+      slider.classList.add('is-dragging');
+      slider.setPointerCapture(event.pointerId);
+    });
+
+    slider.addEventListener('pointermove', (event) => {
+      if (!isDragging) {
+        return;
+      }
+
+      const delta = event.clientX - dragStartX;
+      dragDistance = Math.max(dragDistance, Math.abs(delta));
+      slider.scrollLeft = dragStartScrollLeft - delta;
+    });
+
+    const endMouseDrag = () => {
+      if (!isDragging) {
+        return;
+      }
+
+      isDragging = false;
+      slider.classList.remove('is-dragging');
+      setTimeout(() => {
+        dragDistance = 0;
+      }, 0);
+    };
+
+    slider.addEventListener('pointerup', endMouseDrag);
+    slider.addEventListener('pointercancel', endMouseDrag);
+    slider.addEventListener('pointerleave', endMouseDrag);
+
+    slider.addEventListener('click', (event) => {
+      if (dragDistance > 6) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+
+    slider.addEventListener('touchstart', (event) => {
+      touchStartX = event.changedTouches[0]?.clientX || 0;
+    }, { passive: true });
+
+    slider.addEventListener('touchend', (event) => {
+      touchEndX = event.changedTouches[0]?.clientX || 0;
+      const delta = touchEndX - touchStartX;
+      if (Math.abs(delta) < 40) {
+        return;
+      }
+
+      scrollByStep(delta > 0 ? -1 : 1);
+    }, { passive: true });
+
+    window.addEventListener('resize', updateButtons);
+    refreshMenuSliderStates.push(updateButtons);
+    updateButtons();
+  });
+
+  const refreshVisibleMenuSliders = () => {
+    refreshMenuSliderStates.forEach((refresh) => refresh());
+  };
+
+  if (menuPicker && menuSectionGroups.length > 0) {
+    const showMenuById = (menuId) => {
+      menuSectionGroups.forEach(group => {
+        group.style.display = group.dataset.menuId === menuId ? '' : 'none';
+      });
+
+      requestAnimationFrame(refreshVisibleMenuSliders);
+    };
+
+    menuPicker.addEventListener('change', () => showMenuById(menuPicker.value));
+    showMenuById(menuPicker.value);
+  } else {
+    refreshVisibleMenuSliders();
+  }
+
+  const currencyRates = { TND: 1, USD: 0.32, EUR: 0.30, CNY: 2.31 };
+  document.querySelectorAll('.currency-select').forEach(select => {
+    select.addEventListener('change', () => {
+      const footer = select.closest('.menu-card-footer');
+      const priceEl = footer ? footer.querySelector('.js-convertible-price') : null;
+      if (!priceEl) return;
+
+      const basePrice = parseFloat(priceEl.dataset.basePrice || select.dataset.basePrice || '0');
+      const currency = currencyRates[select.value] ? select.value : 'TND';
+      const converted = basePrice * currencyRates[currency];
+      priceEl.textContent = `${converted.toFixed(2)} ${currency}`;
+    });
+  });
 
   document.querySelectorAll('.add-cart-btn').forEach(btn => {
     btn.addEventListener('click', () => {
