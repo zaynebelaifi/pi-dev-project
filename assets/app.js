@@ -20,6 +20,23 @@ document.addEventListener('DOMContentLoaded', function() {
       observer.observe(el);
     });
 
+    // CURRENCY CONVERSION (fixed rates from 1 TND)
+    const currencyRates = { TND: 1, USD: 0.32, EUR: 0.30, CNY: 2.31 };
+    document.querySelectorAll('.currency-select').forEach(select=>{
+      select.addEventListener('change', ()=>{
+        const footer = select.closest('.menu-card-footer');
+        const priceEl = footer ? footer.querySelector('.js-convertible-price') : null;
+        if(!priceEl){
+          return;
+        }
+
+        const basePrice = Number(priceEl.dataset.basePrice || select.dataset.basePrice || 0);
+        const currency = Object.prototype.hasOwnProperty.call(currencyRates, select.value) ? select.value : 'TND';
+        const converted = basePrice * currencyRates[currency];
+        priceEl.textContent = `${converted.toFixed(2)} ${currency}`;
+      });
+    });
+
     // BOOKING POPUP
     const bookingPopup = document.getElementById('bookingPopup');
     const openBooking = document.getElementById('openBooking');
