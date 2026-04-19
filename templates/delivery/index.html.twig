@@ -206,7 +206,6 @@
                 </select>
             </div>
             <div class="btn-actions">
-                <button type="submit" class="t-btn primary">🔄 Apply Filters</button>
                 <a href="{{ path('app_delivery_new') }}" class="t-btn primary" style="background: var(--green); border-color: var(--green);">+ New Delivery</a>
             </div>
         </form>
@@ -216,7 +215,7 @@
         <div class="table-header">
             <div>
                 <div class="table-title">All Deliveries</div>
-                <div class="table-count">{{ deliveries|length }} total orders</div>
+                <div class="table-count">{{ pagination.getTotalItemCount() }} total orders</div>
             </div>
         </div>
         <table class="delivery-table">
@@ -236,7 +235,7 @@
                 </tr>
             </thead>
             <tbody>
-            {% for delivery in deliveries %}
+            {% for delivery in pagination %}
                 <tr>
                     <td><span class="delivery-id">#{{ delivery.delivery_id }}</span></td>
                     <td><span class="delivery-id">#{{ delivery.order_id }}</span></td>
@@ -275,6 +274,14 @@
             {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <div style="padding:1rem; display:flex; justify-content:center;">
+        {% if pagination.getPageCount() > 1 %}
+            {{ knp_pagination_render(pagination) }}
+        {% else %}
+            <div style="color:var(--text-2); padding:0.5rem 1rem; border-radius:8px; background:var(--ivory-2);">Page {{ pagination.getCurrentPageNumber() }} of {{ pagination.getPageCount() }}</div>
+        {% endif %}
     </div>
 
     <script>

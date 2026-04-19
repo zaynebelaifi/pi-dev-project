@@ -29,7 +29,7 @@ final class landingpageController extends AbstractController
             return $this->redirectToRoute('app_admin_dashboard');
         }
 
-        return $this->render('base.html.twig', [
+        return $this->render('frontend.html.twig', [
             'controller_name' => 'landingpageController',
             'menuSections'    => $this->buildMenuSections(),
             'availableTables' => $this->tableRepository->findBy(['status' => 'AVAILABLE']),
@@ -39,7 +39,7 @@ final class landingpageController extends AbstractController
     #[Route('/landingpage', name: 'app_landingpage')]
     public function index(): Response
     {
-        return $this->render('base.html.twig', [
+        return $this->render('frontend.html.twig', [
             'controller_name' => 'landingpageController',
             'menuSections'    => $this->buildMenuSections(),
             'availableTables' => $this->tableRepository->findBy(['status' => 'AVAILABLE']),

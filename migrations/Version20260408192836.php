@@ -42,12 +42,20 @@ final class Version20260408192836 extends AbstractMigration
         if ($schema->hasTable('car')) {
             $this->addSql('DROP TABLE car');
         }
-        $this->addSql('ALTER TABLE delivery DROP FOREIGN KEY fk_delivery_man');
+        try {
+            $this->connection->executeStatement('ALTER TABLE delivery DROP FOREIGN KEY fk_delivery_man');
+        } catch (\Throwable $e) {
+            // constraint may not exist, ignore
+        }
         $this->addSql('DROP INDEX uk_order_id ON delivery');
         $this->addSql('DROP INDEX idx_scheduled_date ON delivery');
         $this->addSql('DROP INDEX idx_order_id ON delivery');
         $this->addSql('DROP INDEX idx_status ON delivery');
-        $this->addSql('ALTER TABLE delivery DROP FOREIGN KEY fk_delivery_man');
+        try {
+            $this->connection->executeStatement('ALTER TABLE delivery DROP FOREIGN KEY fk_delivery_man');
+        } catch (\Throwable $e) {
+            // constraint may not exist, ignore
+        }
         $this->addSql('ALTER TABLE delivery ADD fleet_car_id INT DEFAULT NULL, ADD cart_items LONGTEXT DEFAULT NULL, ADD order_total NUMERIC(10, 2) DEFAULT NULL, ADD restaurant_rating INT DEFAULT NULL, ADD license_plate VARCHAR(255) DEFAULT NULL, CHANGE delivery_id delivery_id INT AUTO_INCREMENT NOT NULL, CHANGE delivery_man_id delivery_man_id INT DEFAULT NULL, CHANGE order_id order_id INT NOT NULL, CHANGE recipient_name recipient_name VARCHAR(255) DEFAULT NULL, CHANGE recipient_phone recipient_phone VARCHAR(255) DEFAULT NULL, CHANGE status status VARCHAR(255) DEFAULT NULL, CHANGE actual_delivery_date actual_delivery_date DATETIME DEFAULT NULL, CHANGE current_latitude current_latitude NUMERIC(10, 0) DEFAULT NULL, CHANGE current_longitude current_longitude NUMERIC(10, 0) DEFAULT NULL, CHANGE delivery_notes delivery_notes LONGTEXT DEFAULT NULL, CHANGE created_at created_at DATETIME NOT NULL, CHANGE updated_at updated_at DATETIME NOT NULL');
         $this->addSql('ALTER TABLE delivery ADD CONSTRAINT FK_3781EC10FD128646 FOREIGN KEY (delivery_man_id) REFERENCES delivery_man (delivery_man_id)');
         $this->addSql('ALTER TABLE delivery ADD CONSTRAINT FK_3781EC1048CD51AF FOREIGN KEY (fleet_car_id) REFERENCES fleet_car (car_id)');

@@ -211,9 +211,39 @@ class Delivery
     #[Assert\Length(max: 1000, maxMessage: 'Delivery notes cannot be longer than {{ limit }} characters.')]
     private ?string $delivery_notes = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $candidate_delivery_men = null; // JSON array of delivery_man_id candidates
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $candidate_index = null;
+
     public function getDelivery_notes(): ?string
     {
         return $this->delivery_notes;
+    }
+
+    public function getCandidateDeliveryMen(): ?array
+    {
+        if (!$this->candidate_delivery_men) return null;
+        $data = json_decode($this->candidate_delivery_men, true);
+        return is_array($data) ? $data : null;
+    }
+
+    public function setCandidateDeliveryMen(?array $ids): self
+    {
+        $this->candidate_delivery_men = $ids ? json_encode(array_values($ids)) : null;
+        return $this;
+    }
+
+    public function getCandidateIndex(): ?int
+    {
+        return $this->candidate_index;
+    }
+
+    public function setCandidateIndex(?int $i): self
+    {
+        $this->candidate_index = $i;
+        return $this;
     }
 
     public function setDelivery_notes(?string $delivery_notes): self
