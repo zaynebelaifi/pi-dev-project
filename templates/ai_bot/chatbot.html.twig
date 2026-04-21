@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIG 4 AI Assistant</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #f7f5f0;
+      display: grid;
+      place-items: center;
+    }
+
+    .chat-shell {
+      width: min(720px, calc(100vw - 2rem));
+      height: min(80vh, 760px);
+      background: #fff;
+      border: 1px solid #e7dcc1;
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .chat-head {
+      padding: 1rem 1.25rem;
+      font-weight: 700;
+      color: #5d4317;
+      border-bottom: 1px solid #eee6d3;
+      background: #fff9ea;
+    }
+
+    .chat-messages {
+      padding: 1rem;
+      overflow-y: auto;
+      display: grid;
+      gap: 0.65rem;
+      align-content: start;
+      background: #fffcf5;
+    }
+
+    .bubble {
+      max-width: 86%;
+      padding: 0.62rem 0.75rem;
+      border-radius: 10px;
+      line-height: 1.35;
+      font-size: 0.95rem;
+      border: 1px solid transparent;
+      word-break: break-word;
+    }
+
+    .bubble.user {
+      justify-self: end;
+      background: #f0f9ff;
+      border-color: #bae6fd;
+      color: #0c4a6e;
+    }
+
+    .bubble.assistant {
+      justify-self: start;
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #713f12;
+    }
+
+    .chat-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.55rem;
+      border-top: 1px solid #eee6d3;
+      padding: 0.8rem;
+      background: #fff;
+    }
+
+    .chat-input {
+      min-height: 42px;
+      border: 1px solid #d8c89f;
+      border-radius: 10px;
+      padding: 0 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    .chat-send {
+      min-height: 42px;
+      border: none;
+      border-radius: 10px;
+      padding: 0 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: #d4af37;
+      cursor: pointer;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-shell">
+    <div class="chat-head">BIG 4 AI Assistant</div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="bubble assistant">Hi, I can help with menu, reservations, delivery, and opening hours.</div>
+    </div>
+    <form class="chat-form" id="chatForm">
+      <label for="chatInput" class="sr-only">Ask BIG 4 AI Assistant a question</label>
+      <input id="chatInput" class="chat-input" type="text" maxlength="240" placeholder="Ask a question..." aria-label="Ask BIG 4 AI Assistant a question" required>
+      <button class="chat-send" type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+
+    function appendBubble(role, text) {
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${role}`;
+      bubble.textContent = text;
+      chatMessages.appendChild(bubble);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    chatForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const question = (chatInput.value || '').trim();
+      if (!question) {
+        return;
+      }
+
+      appendBubble('user', question);
+      chatInput.value = '';
+      appendBubble('assistant', 'Thinking...');
+
+      try {
+        const response = await fetch('{{ path("app_ai_bot_ask") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        });
+
+        const data = await response.json();
+        chatMessages.lastElementChild?.remove();
+        appendBubble('assistant', data.success ? data.answer : (data.message || 'Sorry, I could not answer right now.'));
+      } catch (error) {
+        chatMessages.lastElementChild?.remove();
+        appendBubble('assistant', 'Network error, please try again in a moment.');
+      }
+    });
+  </script>
+</body>
+</html>

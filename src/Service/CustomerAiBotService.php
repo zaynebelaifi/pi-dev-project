@@ -10,7 +10,9 @@ final class CustomerAiBotService
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger,
-        private readonly string $endpoint,
+        private readonly string $hfApiUrl,
+        private readonly string $hfApiToken,
+        private readonly string $hfModel,
         private readonly int $timeout = 20,
     ) {
     }
@@ -19,16 +21,28 @@ final class CustomerAiBotService
     {
         $question = trim($question);
         if ($question === '') {
-            return 'Ask me about menu items, delivery, reservations, or opening hours.';
+            return 'Ask me about menu items, reservations, delivery, or opening hours.';
         }
 
         try {
             $prompt = $this->buildPrompt($question);
-            $url = rtrim($this->endpoint, '/').'/'.rawurlencode($prompt);
+            $headers = [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ];
+            if (trim($this->hfApiToken) !== '') {
+                $headers['Authorization'] = 'Bearer '.trim($this->hfApiToken);
+            }
 
-            $response = $this->httpClient->request('GET', $url, [
-                'headers' => [
-                    'Accept' => 'text/plain, application/json',
+            $response = $this->httpClient->request('POST', $this->resolveHfUrl(), [
+                'headers' => $headers,
+                'json' => [
+                    'inputs' => $prompt,
+                    'parameters' => [
+                        'max_new_tokens' => 180,
+                        'temperature' => 0.4,
+                        'return_full_text' => false,
+                    ],
                 ],
                 'timeout' => $this->timeout,
             ]);
@@ -42,17 +56,12 @@ final class CustomerAiBotService
                 return $this->fallback($question);
             }
 
-            if (str_starts_with($body, '{') || str_starts_with($body, '[')) {
-                $decoded = json_decode($body, true);
-                if (is_array($decoded)) {
-                    $text = $decoded['text'] ?? $decoded['response'] ?? $decoded['output'] ?? '';
-                    if (is_string($text) && trim($text) !== '') {
-                        return $this->normalize($text);
-                    }
-                }
+            $generated = $this->extractHfText($body);
+            if ($generated === '') {
+                return $this->fallback($question);
             }
 
-            return $this->normalize($body);
+            return $this->normalize($generated);
         } catch (\Throwable $e) {
             $this->logger->warning('Customer AI bot fallback used.', ['message' => $e->getMessage()]);
 
@@ -63,9 +72,48 @@ final class CustomerAiBotService
     private function buildPrompt(string $question): string
     {
         return sprintf(
-            "You are BIG 4 Coffee Lounge assistant. Keep replies concise, friendly, and practical. You can answer about: reservations, menu highlights, delivery, and opening hours. If you do not know a fact, say so clearly and suggest contacting support. User question: %s",
+            "You are BIG 4 Coffee Lounge assistant. Keep replies concise, friendly, and practical. You can answer about menu highlights, reservations, delivery, and opening hours. If the user asks for booking help, ask for date, time, and number of guests and direct them to the reservation process. If you do not know a fact, say so clearly and suggest contacting support. User question: %s",
             $question
         );
+    }
+
+    private function resolveHfUrl(): string
+    {
+        $baseUrl = rtrim($this->hfApiUrl, '/');
+        if ($this->hfModel === '') {
+            return $baseUrl;
+        }
+
+        if (str_contains($baseUrl, '{model}')) {
+            return str_replace('{model}', rawurlencode($this->hfModel), $baseUrl);
+        }
+
+        if (str_contains($baseUrl, '/models/')) {
+            return $baseUrl;
+        }
+
+        if (str_ends_with($baseUrl, '/models')) {
+            return $baseUrl.'/'.rawurlencode($this->hfModel);
+        }
+
+        return $baseUrl.'/models/'.rawurlencode($this->hfModel);
+    }
+
+    private function extractHfText(string $body): string
+    {
+        $decoded = json_decode($body, true);
+        if (!is_array($decoded)) {
+            return $this->normalize($body);
+        }
+
+        $text = '';
+        if (isset($decoded[0]) && is_array($decoded[0])) {
+            $text = (string) ($decoded[0]['generated_text'] ?? $decoded[0]['text'] ?? '');
+        } else {
+            $text = (string) ($decoded['generated_text'] ?? $decoded['text'] ?? $decoded['response'] ?? $decoded['output'] ?? '');
+        }
+
+        return $this->normalize($text);
     }
 
     private function normalize(string $text): string
@@ -77,8 +125,8 @@ final class CustomerAiBotService
     {
         $q = mb_strtolower($question);
 
-        if (str_contains($q, 'reservation') || str_contains($q, 'book')) {
-            return 'You can reserve a table from the Book Now button. Choose date, time, guests, and optionally use AI Assign Best Table.';
+        if (str_contains($q, 'table') || str_contains($q, 'reservation') || str_contains($q, 'book')) {
+            return 'To book a table, please use the reservation form and provide date (YYYY-MM-DD), time (HH:MM), and number of guests.';
         }
 
         if (str_contains($q, 'delivery') || str_contains($q, 'order')) {
@@ -93,6 +141,6 @@ final class CustomerAiBotService
             return 'You can browse available dishes in the Main Menu section and add items directly to your cart.';
         }
 
-        return 'I can help with reservations, delivery, menu browsing, and opening hours. What do you need?';
+        return 'I can help with menu, reservations, delivery, and opening-hours questions.';
     }
 }
