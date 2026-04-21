@@ -12,6 +12,12 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/ai-bot')]
 final class AiBotController extends AbstractController
 {
+    #[Route('/chatbot-4', name: 'app_ai_bot_page', methods: ['GET'])]
+    public function page(): Response
+    {
+        return $this->render('ai_bot/chatbot.html.twig');
+    }
+
     #[Route('/ask', name: 'app_ai_bot_ask', methods: ['POST'])]
     public function ask(Request $request, CustomerAiBotService $customerAiBotService): JsonResponse
     {
