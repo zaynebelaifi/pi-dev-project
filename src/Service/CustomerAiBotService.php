@@ -172,7 +172,7 @@ final class CustomerAiBotService
             || str_contains($q, 'choose');
 
         $dateInput = trim((string) ($bookingContext['date'] ?? ''));
-        if ($dateInput === '' && preg_match('/\b(20\d{2}-\d{2}-\d{2})\b/', $question, $dateMatch) === 1) {
+        if ($dateInput === '' && preg_match('/\b(\d{4}-\d{2}-\d{2})\b/', $question, $dateMatch) === 1) {
             $dateInput = $dateMatch[1];
         }
 
@@ -188,6 +188,9 @@ final class CustomerAiBotService
             } elseif (preg_match('/\bfor\s+(\d{1,2})\b/i', $question, $forMatch) === 1) {
                 $guests = (int) $forMatch[1];
             }
+        }
+        if ($guests > 20) {
+            $guests = 20;
         }
 
         $occasion = trim((string) ($bookingContext['occasion'] ?? ''));
@@ -217,8 +220,11 @@ final class CustomerAiBotService
 
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $dateInput);
         $time = \DateTimeImmutable::createFromFormat('!H:i', $timeInput);
-        if (!$date || !$time) {
-            return 'Please use date format YYYY-MM-DD and time format HH:MM so I can recommend the best table.';
+        if (!$date) {
+            return 'Invalid date format. Please use YYYY-MM-DD.';
+        }
+        if (!$time) {
+            return 'Invalid time format. Please use HH:MM.';
         }
 
         $recommendations = $this->smartTableMatcher->recommendRanked(
@@ -227,7 +233,7 @@ final class CustomerAiBotService
             guests: $guests,
             occasion: $occasion,
             mobilityNeeds: $mobilityNeeds,
-            clientId: $clientId !== null && $clientId > 0 ? $clientId : null,
+            clientId: $clientId,
             limit: 3,
         );
 
@@ -253,7 +259,8 @@ final class CustomerAiBotService
         }
 
         $bestTable = $best['table'];
-        $reason = trim((string) ($best['explanation'] ?? implode(' ', array_slice($best['reasons'] ?? [], 0, 2))));
+        $topReasons = implode(' ', array_slice($best['reasons'] ?? [], 0, 2));
+        $reason = trim((string) ($best['explanation'] ?? $topReasons));
         $message = sprintf(
             'Best match: Table #%d (%d seats, %s confidence) for %d guest(s) on %s at %s.',
             $bestTable->getTableId(),
