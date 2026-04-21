@@ -158,12 +158,32 @@ document.addEventListener('DOMContentLoaded', function() {
       cartCount.textContent = cart.length;
     }
 
+    function showFrontFlash(message, isError = false){
+      const existing = document.getElementById('frontFlashToast');
+      if (existing) {
+        existing.remove();
+      }
+
+      const toast = document.createElement('div');
+      toast.id = 'frontFlashToast';
+      toast.style.cssText = 'position:fixed;top:92px;left:50%;transform:translateX(-50%);z-index:9999;padding:1rem 1.6rem;border-radius:999px;font-size:.92rem;font-weight:600;color:#fff;box-shadow:0 10px 30px rgba(44,26,14,.25);max-width:90vw;text-align:center;';
+      toast.style.background = isError
+        ? 'linear-gradient(135deg,#D94040,#a82a2a)'
+        : 'linear-gradient(135deg,#2E9E6A,#1e7a52)';
+      toast.textContent = `${isError ? '✕' : '✓'} ${message}`;
+      document.body.appendChild(toast);
+
+      window.setTimeout(() => {
+        toast.remove();
+      }, 3500);
+    }
+
     checkoutBtn.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
       
       if(cart.length === 0){
-        alert("Your cart is empty.");
+        window.location.href = '/orders/create-from-cart?validation_only=1';
         return;
       }
 

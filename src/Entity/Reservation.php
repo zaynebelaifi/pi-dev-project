@@ -16,25 +16,31 @@ class Reservation
     private ?int $id = null;
 
     #[ORM\Column(name: 'client_id', type: 'integer')]
+    #[Assert\NotBlank(message: 'Client ID is required')]
+    #[Assert\Positive(message: 'Client ID must be a positive number')]
     private int $clientId;
 
     #[ORM\ManyToOne(targetEntity: RestaurantTable::class)]
     #[ORM\JoinColumn(name: 'table_id', referencedColumnName: 'table_id', nullable: false)]
+    #[Assert\NotNull(message: 'Please select a table')]
     private ?RestaurantTable $table = null;
 
     #[ORM\Column(name: 'reservation_date', type: 'date')]
+    #[Assert\NotBlank(message: 'Reservation date is required')]
     private \DateTimeInterface $reservationDate;
 
     #[ORM\Column(name: 'reservation_time', type: 'time')]
+    #[Assert\NotBlank(message: 'Reservation time is required')]
     private \DateTimeInterface $reservationTime;
 
     #[ORM\Column(name: 'number_of_guests', type: 'integer')]
-    #[Assert\NotBlank]
-    #[Assert\Min(1)]
-    #[Assert\Max(8)]
+    #[Assert\NotBlank(message: 'Number of guests is required')]
+    #[Assert\Min(value: 1, message: 'Must have at least 1 guest')]
+    #[Assert\Max(value: 8, message: 'Cannot exceed 8 guests')]
     private int $numberOfGuests;
 
     #[ORM\Column(type: 'string')]
+    #[Assert\NotBlank(message: 'Status is required')]
     private string $status = 'CONFIRMED';
 
     public function getReservationId(): ?int { return $this->id; }

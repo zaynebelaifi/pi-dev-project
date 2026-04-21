@@ -128,14 +128,25 @@ final class OrderController extends AbstractController
         $cartItems  = $request->query->get('cart_items');
         $orderTotal = $request->query->get('order_total');
         $orderType  = $request->query->get('order_type');
+        $paymentMethod = strtoupper(trim((string) $request->query->get('payment_method', '')));
+        $isAjax = $request->query->getBoolean('ajax', false);
         $sessionUserId = (int) $request->getSession()->get('user_id', 0);
 
-        if (!$cartItems || !$orderTotal || !$orderType) {
+        if (!$cartItems || !$orderTotal || !$orderType || $paymentMethod === '') {
+            if (!$isAjax) {
+                $this->addFlash('error', 'Your cart is empty. Add items before ordering.');
+                return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('app_home'));
+            }
+
             return new JsonResponse(['success' => false, 'message' => 'Invalid order data.']);
         }
 
         if (!in_array($orderType, ['DINE_IN', 'DELIVERY'])) {
             return new JsonResponse(['success' => false, 'message' => 'Invalid order type.']);
+        }
+
+        if (!in_array($paymentMethod, ['CASH', 'CARD'], true)) {
+            return new JsonResponse(['success' => false, 'message' => 'Invalid payment method.']);
         }
 
         if (!is_numeric($orderTotal) || (float) $orderTotal < 0) {
@@ -158,9 +169,16 @@ final class OrderController extends AbstractController
             $order->setStatus('PENDING');
             $order->setTotalAmount((string) $orderTotal);
             $order->setCartItems($cartItems);
+            $order->setPaymentMethod($paymentMethod);
 
             $em->persist($order);
             $em->flush();
+
+            if ($paymentMethod === 'CARD') {
+                $request->getSession()->set('checkout_order_id', $order->getOrderId());
+            } else {
+                $request->getSession()->remove('checkout_order_id');
+            }
         } catch (\Throwable $e) {
             return new JsonResponse([
                 'success' => false,
@@ -172,6 +190,44 @@ final class OrderController extends AbstractController
             'success'  => true,
             'message'  => 'Your order has been created successfully!',
             'order_id' => $order->getOrderId(),
+        ]);
+    }
+
+    #[Route('/{id}/payment-method', name: 'app_order_update_payment_method', methods: ['POST'])]
+    public function updatePaymentMethod(Request $request, Order $order, EntityManagerInterface $em): JsonResponse
+    {
+        $sessionUserId = (int) $request->getSession()->get('user_id', 0);
+        $clientId = $this->resolveClientIdForOrder($em->getConnection(), $sessionUserId);
+
+        if ($clientId === null || $order->getClientId() !== $clientId) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'You are not allowed to update this order.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $payload = json_decode((string) $request->getContent(), true);
+        $paymentMethod = strtoupper(trim((string) ($payload['payment_method'] ?? '')));
+
+        if (!in_array($paymentMethod, ['CASH', 'CARD'], true)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Invalid payment method.',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $order->setPaymentMethod($paymentMethod);
+        $em->flush();
+
+        if ($paymentMethod === 'CARD') {
+            $request->getSession()->set('checkout_order_id', $order->getOrderId());
+        } elseif ((int) $request->getSession()->get('checkout_order_id', 0) === $order->getOrderId()) {
+            $request->getSession()->remove('checkout_order_id');
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'payment_method' => $paymentMethod,
         ]);
     }
 

@@ -216,6 +216,7 @@
                 <th>Type</th>
                 <th>Status</th>
                 <th>Amount</th>
+                <th>Payment</th>
                 <th>Address / Delivery Info</th>
                 <th>Order Date</th>
                 <th>Actions</th>
@@ -237,6 +238,16 @@
                     </span>
                 </td>
                 <td>{{ order.totalAmount|number_format(2) }} TND</td>                   {# ✅ #}
+                <td>
+                    {% if order.paymentMethod %}
+                        {% set paymentBadgeClass = order.paymentMethod == 'CARD' ? 'pending' : 'prepared' %}
+                        <span class="status-badge status-{{ paymentBadgeClass }}">
+                            {{ order.paymentMethod == 'CARD' ? 'Credit Card' : 'Cash' }}
+                        </span>
+                    {% else %}
+                        <span style="color: var(--text-3);">Not set</span>
+                    {% endif %}
+                </td>
                 <td>
                     {% if order.orderType == 'DELIVERY' %}                              {# ✅ #}
                         {% set delivery = deliveries[order.orderId]|default(null) %}    {# ✅ #}

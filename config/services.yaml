@@ -20,5 +20,31 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    App\Service\OpenWeatherMapService:
+        arguments:
+            $apiKey: '%env(string:OPENWEATHERMAP_API_KEY)%'
+
+    App\Service\StripeCheckoutService:
+        arguments:
+            $secretKey: '%env(string:STRIPE_SECRET_KEY)%'
+            $currency: '%env(string:STRIPE_CURRENCY)%'
+            $displayCurrency: '%env(string:STRIPE_DISPLAY_CURRENCY)%'
+            $displayToChargeRate: '%env(float:STRIPE_DISPLAY_TO_CHARGE_RATE)%'
+
+    App\Service\CustomerAiBotService:
+        arguments:
+            $endpoint: '%env(string:FREE_CHAT_API_URL)%'
+            $timeout: '%env(int:FREE_CHAT_TIMEOUT)%'
+
+    App\Service\PaymentConfirmationMailer:
+        arguments:
+            $smtpHost: '%env(string:PHPMAILER_SMTP_HOST)%'
+            $smtpPort: '%env(int:PHPMAILER_SMTP_PORT)%'
+            $smtpUsername: '%env(string:PHPMAILER_SMTP_USERNAME)%'
+            $smtpPassword: '%env(string:PHPMAILER_SMTP_PASSWORD)%'
+            $smtpEncryption: '%env(string:PHPMAILER_SMTP_ENCRYPTION)%'
+            $fromEmail: '%env(string:PHPMAILER_FROM_EMAIL)%'
+            $fromName: '%env(string:PHPMAILER_FROM_NAME)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

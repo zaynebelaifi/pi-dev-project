@@ -490,6 +490,18 @@
   </div>
   <script>setTimeout(()=>{const e=document.getElementById('bookingFlashErr');if(e)e.remove();},5000);</script>
   {% endfor %}
+  {% for msg in app.flashes('success') %}
+  <div id="frontFlashSuccess" style="position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:9999;background:linear-gradient(135deg,#2E9E6A,#1e7a52);color:#fff;padding:1rem 2rem;border-radius:50px;box-shadow:0 10px 30px rgba(46,158,106,.35);font-family:'Jost',sans-serif;font-size:.9rem;font-weight:500;max-width:90vw;text-align:center;">
+    ✓ {{ msg }}
+  </div>
+  <script>setTimeout(()=>{const e=document.getElementById('frontFlashSuccess');if(e)e.remove();},5000);</script>
+  {% endfor %}
+  {% for msg in app.flashes('error') %}
+  <div id="frontFlashError" style="position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:9999;background:linear-gradient(135deg,#D94040,#a82a2a);color:#fff;padding:1rem 2rem;border-radius:50px;box-shadow:0 10px 30px rgba(217,64,64,.35);font-family:'Jost',sans-serif;font-size:.9rem;font-weight:500;max-width:90vw;text-align:center;">
+    ✕ {{ msg }}
+  </div>
+  <script>setTimeout(()=>{const e=document.getElementById('frontFlashError');if(e)e.remove();},5000);</script>
+  {% endfor %}
 
   <!-- NAV -->
   <nav id="nav">
@@ -854,6 +866,36 @@
     function showProfile(){ profilePopup.classList.add('active'); document.body.style.overflow='hidden'; }
     function hideProfile(){ profilePopup.classList.remove('active'); document.body.style.overflow=''; }
 
+    function showFrontFlash(message, type = 'info'){
+      const flash = document.createElement('div');
+      const background = type === 'error'
+        ? 'linear-gradient(135deg,#D94040,#a82a2a)'
+        : type === 'success'
+          ? 'linear-gradient(135deg,#2E9E6A,#1e7a52)'
+          : 'linear-gradient(135deg,#c39134,#8f651d)';
+
+      flash.style.cssText = [
+        'position:fixed',
+        'top:90px',
+        'left:50%',
+        'transform:translateX(-50%)',
+        'z-index:9999',
+        `background:${background}`,
+        'color:#fff',
+        'padding:1rem 2rem',
+        'border-radius:50px',
+        'box-shadow:0 10px 30px rgba(46,158,106,.35)',
+        "font-family:'Jost',sans-serif",
+        'font-size:.9rem',
+        'font-weight:500',
+        'max-width:90vw',
+        'text-align:center'
+      ].join(';');
+      flash.textContent = `${type === 'error' ? '✕' : '✓'} ${message}`;
+      document.body.appendChild(flash);
+      window.setTimeout(()=>{ flash.remove(); }, 3000);
+    }
+
     openProfile.addEventListener('click', showProfile);
     closeProfile.addEventListener('click', hideProfile);
     profilePopup.addEventListener('click', (e)=>{ if(e.target===profilePopup) hideProfile(); });
@@ -922,7 +964,7 @@
     window.removeFromCart = removeFromCart;
 
     checkoutBtn.addEventListener('click', ()=>{
-      if(cart.length===0){ alert("Your cart is empty."); return; }
+      if(cart.length===0){ showFrontFlash("Your cart is empty.", 'error'); return; }
       const total = cart.reduce((s,i)=>s+i.price,0);
       cartItemsInput.value    = JSON.stringify(cart);
       cartTotalInput.value    = total.toFixed(2);

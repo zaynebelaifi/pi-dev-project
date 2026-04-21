@@ -413,6 +413,33 @@
         <small class="booking-help">We will recommend the smallest comfortable table for your group.</small>
       </div>
 
+      <div class="booking-field">
+        <label for="booking_occasion">Occasion</label>
+        <select id="booking_occasion" name="occasion">
+          <option value="">No specific occasion</option>
+          <option value="date">Date Night</option>
+          <option value="business">Business Meeting</option>
+          <option value="birthday">Birthday</option>
+          <option value="celebration">Celebration</option>
+          <option value="anniversary">Anniversary</option>
+        </select>
+        <small class="booking-help">Used by Smart Match to suggest atmosphere and seating style.</small>
+      </div>
+
+      <div class="booking-field">
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.86rem;">
+          <input type="checkbox" id="booking_mobility" name="mobility_needs" value="1">
+          Mobility-friendly seating needed
+        </label>
+        <small class="booking-help">Smart Match prioritizes tables with easier access.</small>
+      </div>
+
+      <div class="full booking-field">
+        <button type="button" class="btn-secondary" id="bookingAutoAssignBtn" style="width:100%;text-align:center;display:inline-flex;justify-content:center;">AI Assign Best Table</button>
+        <small class="booking-help" id="bookingAiReason">AI can auto-assign the best table from your preferences and history.</small>
+        <div id="bookingAiAlternatives" style="display:none;margin-top:.7rem;gap:.45rem;"></div>
+      </div>
+
       <div class="full booking-summary" id="bookingSummary" aria-live="polite">
         <div class="booking-summary-row">
           <span>Selected table</span>
@@ -492,6 +519,19 @@
         <button id="deliveryBtn" type="button" style="padding:1rem; background:#D4AF37; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">🛵 Delivery</button>
       </div>
       <button id="closeOrderType" type="button" style="margin-top:1rem; padding:0.5rem 1rem; background:#ccc; border:none; border-radius:6px; cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- PAYMENT METHOD MODAL -->
+  <div id="paymentMethodModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; padding:2rem; border-radius:12px; min-width:300px; max-width:520px; box-shadow:0 10px 40px rgba(0,0,0,0.3); text-align:center;">
+      <h2 id="paymentMethodTitle" style="margin-bottom:1rem; font-family:'Cormorant Garamond', serif; font-size:2rem;">Choose Payment Method</h2>
+      <p id="paymentMethodCopy" style="margin-bottom:2rem; color:#666;">How should the customer pay for this order?</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <button id="cashPaymentBtn" type="button" style="padding:1rem; background:#285943; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">💵 Cash</button>
+        <button id="cardPaymentBtn" type="button" style="padding:1rem; background:#D4AF37; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">💳 Credit Card</button>
+      </div>
+      <button id="closePaymentMethod" type="button" style="margin-top:1rem; padding:0.5rem 1rem; background:#ccc; border:none; border-radius:6px; cursor:pointer;">Back</button>
     </div>
   </div>
 
@@ -778,7 +818,7 @@
         </form>
       
         <div class="delivery-modal-actions">
-          <button id="confirmDeliveryBtn" type="button" class="delivery-modal-btn delivery-modal-btn-primary">Confirm Delivery</button>
+          <button id="confirmDeliveryBtn" type="button" class="delivery-modal-btn delivery-modal-btn-primary">Continue to Payment</button>
           <button id="closeDeliveryForm" type="button" class="delivery-modal-btn delivery-modal-btn-secondary">Cancel</button>
         </div>
       </div>
@@ -793,6 +833,129 @@
     <input type="hidden" name="order_id" id="deliverySavedOrderIdInput">
   </form>
 
+  <style>
+    .ai-bot-widget {
+      position: fixed;
+      right: 22px;
+      bottom: 24px;
+      z-index: 1200;
+      font-family: 'Jost', sans-serif;
+    }
+
+    .ai-bot-toggle {
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #d4af37, #b6851b);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      min-height: 52px;
+      padding: 0 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 14px 34px rgba(92, 61, 30, 0.28);
+    }
+
+    .ai-bot-panel {
+      display: none;
+      width: min(360px, 92vw);
+      height: min(520px, 78vh);
+      margin-bottom: 0.8rem;
+      background: #fff;
+      border: 1px solid rgba(184, 135, 42, 0.22);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 18px 42px rgba(44, 26, 14, 0.24);
+      flex-direction: column;
+    }
+
+    .ai-bot-panel.open {
+      display: flex;
+    }
+
+    .ai-bot-head {
+      padding: 0.85rem 0.95rem;
+      background: linear-gradient(120deg, rgba(184, 135, 42, 0.24), rgba(184, 135, 42, 0.08));
+      color: var(--espresso);
+      font-weight: 700;
+      border-bottom: 1px solid rgba(184, 135, 42, 0.14);
+    }
+
+    .ai-bot-messages {
+      flex: 1;
+      overflow: auto;
+      background: #fffdf8;
+      padding: 0.9rem;
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .ai-bot-bubble {
+      max-width: 86%;
+      border-radius: 12px;
+      padding: 0.6rem 0.72rem;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      border: 1px solid transparent;
+      white-space: pre-wrap;
+    }
+
+    .ai-bot-bubble.user {
+      justify-self: end;
+      background: #f0f9ff;
+      border-color: #bae6fd;
+      color: #0c4a6e;
+    }
+
+    .ai-bot-bubble.assistant {
+      justify-self: start;
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #713f12;
+    }
+
+    .ai-bot-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem;
+      border-top: 1px solid rgba(184, 135, 42, 0.14);
+      padding: 0.75rem;
+      background: #fff;
+    }
+
+    .ai-bot-input {
+      min-height: 40px;
+      border: 1px solid rgba(184, 135, 42, 0.24);
+      border-radius: 10px;
+      padding: 0 0.7rem;
+      font-size: 0.85rem;
+      font-family: 'Jost', sans-serif;
+    }
+
+    .ai-bot-send {
+      min-height: 40px;
+      border: none;
+      border-radius: 10px;
+      background: #d4af37;
+      color: #fff;
+      padding: 0 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+  <div class="ai-bot-widget" id="aiBotWidget">
+    <div class="ai-bot-panel" id="aiBotPanel">
+      <div class="ai-bot-head">BIG 4 AI Assistant</div>
+      <div class="ai-bot-messages" id="aiBotMessages">
+        <div class="ai-bot-bubble assistant">Hi, I can help with menu, reservations, delivery, and opening hours.</div>
+      </div>
+      <form class="ai-bot-form" id="aiBotForm">
+        <input class="ai-bot-input" id="aiBotInput" type="text" placeholder="Ask a question..." maxlength="240" required>
+        <button class="ai-bot-send" type="submit">Send</button>
+      </form>
+    </div>
+    <button class="ai-bot-toggle" id="aiBotToggle" type="button">AI Bot</button>
+  </div>
+
   {% endblock %}
 
   {% block javascripts %}
@@ -803,6 +966,25 @@
 
   function openBookingPopup(e) { e.preventDefault(); bookingPopup.classList.add('active'); document.body.style.overflow='hidden'; }
   function closeBookingPopup() { bookingPopup.classList.remove('active'); document.body.style.overflow=''; document.getElementById('bookingMsg')?.remove(); }
+  function showFrontFlash(message, isError = false) {
+    const existing = document.getElementById('frontFlashToast');
+    if (existing) {
+      existing.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.id = 'frontFlashToast';
+    toast.style.cssText = 'position:fixed;top:92px;left:50%;transform:translateX(-50%);z-index:9999;padding:1rem 1.6rem;border-radius:999px;font-size:.92rem;font-weight:600;color:#fff;box-shadow:0 10px 30px rgba(44,26,14,.25);max-width:90vw;text-align:center;';
+    toast.style.background = isError
+      ? 'linear-gradient(135deg,#D94040,#a82a2a)'
+      : 'linear-gradient(135deg,#2E9E6A,#1e7a52)';
+    toast.textContent = `${isError ? '✕' : '✓'} ${message}`;
+    document.body.appendChild(toast);
+
+    window.setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
 
   document.getElementById('openBooking').addEventListener('click', openBookingPopup);
   document.getElementById('openBooking2').addEventListener('click', openBookingPopup);
@@ -814,6 +996,11 @@
   const bookingDate = document.getElementById('booking_date');
   const bookingTime = document.getElementById('booking_time');
   const bookingGuests = document.getElementById('booking_guests');
+  const bookingOccasion = document.getElementById('booking_occasion');
+  const bookingMobility = document.getElementById('booking_mobility');
+  const bookingAutoAssignBtn = document.getElementById('bookingAutoAssignBtn');
+  const bookingAiReason = document.getElementById('bookingAiReason');
+  const bookingAiAlternatives = document.getElementById('bookingAiAlternatives');
   const bookingSubmitBtn = document.getElementById('bookingSubmitBtn');
   const bookingCapacityHint = document.getElementById('bookingCapacityHint');
   const bookingTableHint = document.getElementById('bookingTableHint');
@@ -1011,8 +1198,126 @@
     form.insertAdjacentElement('beforebegin', msg);
   }
 
+  async function runSmartMatch(showSuccessMessage = true) {
+    const guests = parseInt(bookingGuests.value || '0', 10);
+
+    if (!bookingDate.value || !bookingTime.value || guests < 1) {
+      showBookingMsg(bookingForm, 'Select date, time, and guests before running Smart Match.', true);
+      return false;
+    }
+
+    if (bookingAutoAssignBtn) {
+      bookingAutoAssignBtn.disabled = true;
+      bookingAutoAssignBtn.textContent = 'Finding Best Table...';
+    }
+
+    try {
+      const res = await fetch('{{ path("app_reservation_smart_match") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: bookingDate.value,
+          time: bookingTime.value,
+          guests: guests,
+          occasion: bookingOccasion?.value || '',
+          mobility_needs: Boolean(bookingMobility?.checked),
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        showBookingMsg(bookingForm, data.error || 'No suitable table found for your preferences.', true);
+        if (bookingAiReason) {
+          bookingAiReason.textContent = 'Smart Match could not find a fit. Try another time or party size.';
+        }
+        if (bookingAiAlternatives) {
+          bookingAiAlternatives.style.display = 'none';
+          bookingAiAlternatives.innerHTML = '';
+        }
+        return false;
+      }
+
+      bookingTable.value = String(data.table_id);
+      syncGuestOptions();
+      updateBookingSummary();
+      bookingTableHint.textContent = `AI choice: Table #${data.table_id} (${data.capacity} seats)`;
+      if (bookingAiReason) {
+        const confidence = data.confidence ? ` (${data.confidence} confidence)` : '';
+        const weatherNote = data.weather && data.weather.main
+          ? ` Weather: ${data.weather.main}${typeof data.weather.temp === 'number' ? ` ${Math.round(data.weather.temp)}C` : ''}.`
+          : '';
+        bookingAiReason.textContent = `${data.explanation || 'AI selected the best available table.'}${confidence}${weatherNote}`;
+      }
+
+      if (bookingAiAlternatives) {
+        const alternatives = Array.isArray(data.alternatives) ? data.alternatives : [];
+        const items = alternatives.slice(0, 3).map((item, index) => {
+          const isPrimary = index === 0;
+          const border = isPrimary ? 'rgba(46,158,106,.35)' : 'rgba(184,135,42,.20)';
+          const background = isPrimary ? 'rgba(46,158,106,.08)' : 'rgba(255,255,255,.9)';
+          const badgeBackground = item.confidence === 'High' ? 'rgba(46,158,106,.15)' : (item.confidence === 'Medium' ? 'rgba(200,125,32,.15)' : 'rgba(217,64,64,.12)');
+          const badgeColor = item.confidence === 'High' ? '#2e9e6a' : (item.confidence === 'Medium' ? '#c87d20' : '#d94040');
+
+          return `
+            <button type="button" class="booking-ai-option" data-table-id="${item.table_id}" style="width:100%;text-align:left;border:1px solid ${border};background:${background};border-radius:12px;padding:.6rem .75rem;display:grid;gap:.25rem;cursor:pointer;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;">
+                <strong style="font-size:.86rem;color:var(--espresso);">Table #${item.table_id} · ${item.capacity} seats</strong>
+                <span style="font-size:.68rem;padding:.15rem .45rem;border-radius:999px;background:${badgeBackground};color:${badgeColor};font-weight:600;">${item.confidence || 'Medium'}</span>
+              </div>
+              <span style="font-size:.76rem;color:var(--text-2);">${item.explanation || 'Balanced match for your booking constraints.'}</span>
+            </button>
+          `;
+        });
+
+        bookingAiAlternatives.innerHTML = items.join('');
+        bookingAiAlternatives.style.display = items.length ? 'grid' : 'none';
+
+        bookingAiAlternatives.querySelectorAll('.booking-ai-option').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const tableId = this.dataset.tableId || '';
+            if (!tableId) {
+              return;
+            }
+
+            bookingTable.value = tableId;
+            syncGuestOptions();
+            updateBookingSummary();
+            showBookingMsg(bookingForm, `Selected AI alternative: Table #${tableId}.`, false);
+          });
+        });
+      }
+
+      if (showSuccessMessage) {
+        showBookingMsg(bookingForm, `AI assigned Table #${data.table_id} for your booking.`, false);
+      }
+
+      return true;
+    } catch (err) {
+      showBookingMsg(bookingForm, 'Smart Match is temporarily unavailable. Please select a table manually.', true);
+      return false;
+    } finally {
+      if (bookingAutoAssignBtn) {
+        bookingAutoAssignBtn.disabled = false;
+        bookingAutoAssignBtn.textContent = 'AI Assign Best Table';
+      }
+    }
+  }
+
+  if (bookingAutoAssignBtn) {
+    bookingAutoAssignBtn.addEventListener('click', async function() {
+      await runSmartMatch(true);
+    });
+  }
+
   bookingForm.addEventListener('submit', async function(e) {
     e.preventDefault();
+
+    if (!bookingTable.value) {
+      const matched = await runSmartMatch(false);
+      if (!matched) {
+        return;
+      }
+    }
 
     const capacity = getSelectedTableCapacity();
     const guests = parseInt(bookingGuests.value || '0', 10);
@@ -1044,6 +1349,8 @@
       date: bookingDate.value,
       time: bookingTime.value,
       guests: guests,
+      occasion: bookingOccasion?.value || '',
+      mobility_needs: Boolean(bookingMobility?.checked),
     };
 
     try {
@@ -1099,7 +1406,39 @@
   cartOverlay.addEventListener('click', e => { if(e.target === cartOverlay) closeCart(); });
 
   let cart = [];
-  let pendingDeliveryOrderId = null;
+  let pendingCheckoutContext = null;
+  const updatePaymentMethodUrlTemplate = '{{ path("app_order_update_payment_method", {"id": "__ORDER_ID__"}) }}';
+
+  async function startStripeCheckout(orderId) {
+    const response = await fetch('{{ path("app_payment_stripe_session") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId }),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success || !data.checkoutUrl) {
+      throw new Error(data.message || 'Payment session could not be created.');
+    }
+
+    const paymentSummary = data.paymentSummary || null;
+    if (paymentSummary && paymentSummary.requiresConversion) {
+      const continueToStripe = window.confirm([
+        `Original total: ${paymentSummary.displayAmountWithCurrency}`,
+        `Card charge on Stripe: ${paymentSummary.chargeAmountWithCurrency}`,
+        '',
+        paymentSummary.notice,
+        '',
+        'Do you want to continue to payment?'
+      ].join('\n'));
+
+      if (!continueToStripe) {
+        return;
+      }
+    }
+
+    window.location.href = data.checkoutUrl;
+  }
 
   document.querySelectorAll('.add-cart-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1133,209 +1472,361 @@
   const dineInBtn = document.getElementById('dineInBtn');
   const deliveryBtn = document.getElementById('deliveryBtn');
   const closeOrderTypeBtn = document.getElementById('closeOrderType');
+  const deliveryFormModal = document.getElementById('deliveryFormModal');
+  const deliveryForm = document.getElementById('deliveryForm');
+  const confirmDeliveryBtn = document.getElementById('confirmDeliveryBtn');
+  const closeDeliveryFormBtn = document.getElementById('closeDeliveryForm');
+  const getCurrentLocationBtn = document.getElementById('getCurrentLocation');
+  const paymentMethodModal = document.getElementById('paymentMethodModal');
+  const paymentMethodTitle = document.getElementById('paymentMethodTitle');
+  const paymentMethodCopy = document.getElementById('paymentMethodCopy');
+  const cashPaymentBtn = document.getElementById('cashPaymentBtn');
+  const cardPaymentBtn = document.getElementById('cardPaymentBtn');
+  const closePaymentMethodBtn = document.getElementById('closePaymentMethod');
 
-  if(checkoutBtn) {
+  function isCheckoutModalOpen(modal) {
+    return Boolean(modal) && window.getComputedStyle(modal).display !== 'none';
+  }
+
+  function syncCheckoutModalOverflow() {
+    const hasOpenModal = [orderTypeModal, deliveryFormModal, paymentMethodModal].some(isCheckoutModalOpen);
+    document.body.style.overflow = hasOpenModal ? 'hidden' : '';
+  }
+
+  function showCheckoutModal(modal) {
+    if (!modal) {
+      return;
+    }
+
+    modal.style.display = 'flex';
+    syncCheckoutModalOverflow();
+  }
+
+  function hideCheckoutModal(modal) {
+    if (!modal) {
+      return;
+    }
+
+    modal.style.display = 'none';
+    syncCheckoutModalOverflow();
+  }
+
+  function setCheckoutOrderId(orderId) {
+    const normalizedValue = orderId ? String(orderId) : '';
+    document.getElementById('deliveryOrderId').value = normalizedValue;
+    document.getElementById('deliverySavedOrderIdInput').value = normalizedValue;
+  }
+
+  function resetDeliveryFormState() {
+    deliveryForm?.reset();
+    setCheckoutOrderId('');
+  }
+
+  function clearCheckoutContext() {
+    pendingCheckoutContext = null;
+  }
+
+  function openPaymentMethodModal(context) {
+    pendingCheckoutContext = context;
+
+    if (paymentMethodTitle) {
+      paymentMethodTitle.textContent = context.orderType === 'DELIVERY'
+        ? 'Choose Delivery Payment'
+        : 'Choose Payment Method';
+    }
+
+    if (paymentMethodCopy) {
+      paymentMethodCopy.textContent = context.orderType === 'DELIVERY'
+        ? 'Delivery details are ready. How should the customer pay for this order?'
+        : 'How should the customer pay for this dine-in order?';
+    }
+
+    showCheckoutModal(paymentMethodModal);
+  }
+
+  function returnFromPaymentMethod() {
+    hideCheckoutModal(paymentMethodModal);
+
+    if (!pendingCheckoutContext) {
+      return;
+    }
+
+    if (pendingCheckoutContext.orderType === 'DELIVERY') {
+      showCheckoutModal(deliveryFormModal);
+      return;
+    }
+
+    showCheckoutModal(orderTypeModal);
+  }
+
+  function closeAllCheckoutModals() {
+    hideCheckoutModal(paymentMethodModal);
+    hideCheckoutModal(deliveryFormModal);
+    hideCheckoutModal(orderTypeModal);
+  }
+
+  function completeCashCheckout(context) {
+    const message = context.orderType === 'DELIVERY'
+      ? `Delivery order #${context.orderId} saved. The customer can pay cash on delivery.`
+      : `Dine-in order #${context.orderId} saved. The customer can pay cash at the restaurant.`;
+
+    closeAllCheckoutModals();
+    resetDeliveryFormState();
+    clearCheckoutContext();
+    cart = [];
+    updateCart();
+    showFrontFlash(message, 'success');
+  }
+
+  function setPaymentActionState(isBusy) {
+    [cashPaymentBtn, cardPaymentBtn, closePaymentMethodBtn].forEach((button) => {
+      if (!button) {
+        return;
+      }
+
+      button.disabled = isBusy;
+      button.style.opacity = isBusy ? '0.7' : '1';
+      button.style.cursor = isBusy ? 'not-allowed' : 'pointer';
+    });
+  }
+
+  function buildOrderPaymentMethodUrl(orderId) {
+    return updatePaymentMethodUrlTemplate.replace('__ORDER_ID__', String(orderId));
+  }
+
+  async function createOrder(orderType, paymentMethod) {
+    const cartItemsInput = document.getElementById('redirectCartItemsInput');
+    const orderTotalInput = document.getElementById('redirectCartTotalInput');
+    const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
+
+    url.searchParams.append('cart_items', cartItemsInput.value);
+    url.searchParams.append('order_total', orderTotalInput.value);
+    url.searchParams.append('order_type', orderType);
+    url.searchParams.append('payment_method', paymentMethod);
+    url.searchParams.append('ajax', '1');
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!response.ok || !data.success || !data.order_id) {
+      throw new Error(data.message || 'Failed to create order.');
+    }
+
+    return data.order_id;
+  }
+
+  async function updateOrderPaymentMethod(orderId, paymentMethod) {
+    const response = await fetch(buildOrderPaymentMethodUrl(orderId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payment_method: paymentMethod }),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to update payment method.');
+    }
+  }
+
+  async function ensureCheckoutOrder(context) {
+    if (!context.orderId) {
+      context.orderId = await createOrder(context.orderType, context.paymentMethod);
+      context.appliedPaymentMethod = context.paymentMethod;
+      setCheckoutOrderId(context.orderId);
+
+      return context.orderId;
+    }
+
+    if (context.appliedPaymentMethod !== context.paymentMethod) {
+      await updateOrderPaymentMethod(context.orderId, context.paymentMethod);
+      context.appliedPaymentMethod = context.paymentMethod;
+    }
+
+    return context.orderId;
+  }
+
+  function collectDeliveryDetails() {
+    return {
+      recipientName: document.getElementById('recipientName').value.trim(),
+      recipientPhone: document.getElementById('recipientPhone').value.trim(),
+      deliveryAddress: document.getElementById('deliveryAddress').value.trim(),
+      pickupLocation: document.getElementById('pickupLocation').value.trim(),
+      latitude: document.getElementById('deliveryLatitude').value.trim(),
+      longitude: document.getElementById('deliveryLongitude').value.trim(),
+      token: document.getElementById('deliverySaveToken').value,
+    };
+  }
+
+  function validateDeliveryDetails(details) {
+    if (!details.recipientName || !details.recipientPhone || !details.deliveryAddress || !details.latitude || !details.longitude) {
+      return 'Please fill in all required fields before choosing a payment method.';
+    }
+
+    return null;
+  }
+
+  async function saveDeliveryDetails(orderId, details) {
+    const payload = new URLSearchParams();
+    payload.append('order_id', String(orderId));
+    payload.append('recipient_name', details.recipientName);
+    payload.append('recipient_phone', details.recipientPhone);
+    payload.append('delivery_address', details.deliveryAddress);
+    payload.append('pickup_location', details.pickupLocation);
+    payload.append('delivery_notes', '');
+    payload.append('current_latitude', details.latitude);
+    payload.append('current_longitude', details.longitude);
+    payload.append('_token', details.token);
+
+    const response = await fetch('{{ path("app_delivery_save") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: payload.toString(),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to save delivery details.');
+    }
+
+    return data;
+  }
+
+  async function handlePaymentSelection(paymentMethod) {
+    if (!pendingCheckoutContext) {
+      showFrontFlash('Please start your order again.', 'error');
+      return;
+    }
+
+    const context = pendingCheckoutContext;
+    context.paymentMethod = paymentMethod;
+    setPaymentActionState(true);
+
+    try {
+      const orderId = await ensureCheckoutOrder(context);
+
+      if (context.orderType === 'DELIVERY' && context.deliveryData) {
+        try {
+          await saveDeliveryDetails(orderId, context.deliveryData);
+        } catch (error) {
+          hideCheckoutModal(paymentMethodModal);
+          showCheckoutModal(deliveryFormModal);
+          throw error;
+        }
+      }
+
+      if (paymentMethod === 'CARD') {
+        await startStripeCheckout(orderId);
+        return;
+      }
+
+      completeCashCheckout(context);
+    } catch (error) {
+      console.error('Checkout flow error:', error);
+      showFrontFlash(error.message || 'Could not finish the order. Please try again.', 'error');
+    } finally {
+      setPaymentActionState(false);
+    }
+  }
+
+  if (checkoutBtn) {
     checkoutBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      
-      if(cart.length === 0){
-        alert("Your cart is empty.");
+
+      if (cart.length === 0) {
+        showFrontFlash('Your cart is empty. Add items before ordering.', 'error');
         return;
       }
 
       const total = cart.reduce((sum, item) => sum + item.price, 0);
       document.getElementById('redirectCartItemsInput').value = JSON.stringify(cart);
       document.getElementById('redirectCartTotalInput').value = total.toFixed(2);
-      
+      document.getElementById('orderTypeInput').value = '';
       closeCart();
-      
-      if(orderTypeModal){
-        orderTypeModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-      }
+      clearCheckoutContext();
+      resetDeliveryFormState();
+      showCheckoutModal(orderTypeModal);
     });
   }
 
-  if(dineInBtn) {
+  if (dineInBtn) {
     dineInBtn.addEventListener('click', function() {
-      const cartItemsInput = document.getElementById('redirectCartItemsInput');
-      const orderTotalInput = document.getElementById('redirectCartTotalInput');
-      
-      const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
-      url.searchParams.append('cart_items', cartItemsInput.value);
-      url.searchParams.append('order_total', orderTotalInput.value);
-      url.searchParams.append('order_type', 'DINE_IN');
-      
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          if(data.success) {
-            // Close modal
-            if(orderTypeModal){
-              orderTypeModal.style.display = 'none';
-              document.body.style.overflow = '';
-            }
-            
-            // Clear cart display
-            const cartContainer = document.getElementById('cartItems');
-            if(cartContainer) {
-              cartContainer.innerHTML = '<div class="empty-cart">Your luxury cart is currently empty.</div>';
-            }
-            document.getElementById('cartCount').textContent = '0';
-            document.getElementById('cartTotal').textContent = '0 TND';
-            
-            // Show success notification
-            alert('✅ Your Dine In order has been placed successfully!\nOrder ID: #' + data.order_id);
-          } else {
-            alert('❌ Error: ' + (data.message || 'Failed to place order'));
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('❌ Error placing order. Please try again.');
-        });
+      hideCheckoutModal(orderTypeModal);
+      clearCheckoutContext();
+      openPaymentMethodModal({ orderType: 'DINE_IN' });
     });
   }
 
-  if(deliveryBtn) {
-    deliveryBtn.addEventListener('click', async function() {
-      if(cart.length === 0) {
-        alert('Your cart is empty. Add items before selecting delivery.');
+  if (deliveryBtn) {
+    deliveryBtn.addEventListener('click', function() {
+      if (cart.length === 0) {
+        showFrontFlash('Your cart is empty. Add items before selecting delivery.', 'error');
         return;
       }
 
-      if (!pendingDeliveryOrderId) {
-        const cartItemsInput = document.getElementById('redirectCartItemsInput');
-        const orderTotalInput = document.getElementById('redirectCartTotalInput');
-        const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
-
-        url.searchParams.append('cart_items', cartItemsInput.value);
-        url.searchParams.append('order_total', orderTotalInput.value);
-        url.searchParams.append('order_type', 'DELIVERY');
-
-        try {
-          const response = await fetch(url);
-          const data = await response.json();
-
-          if (!data.success) {
-            alert('❌ Error: ' + (data.message || 'Failed to create delivery order')); 
-            return;
-          }
-
-          pendingDeliveryOrderId = data.order_id;
-          document.getElementById('deliveryOrderId').value = pendingDeliveryOrderId;
-          document.getElementById('deliverySavedOrderIdInput').value = pendingDeliveryOrderId;
-          alert('✅ Delivery order saved automatically. Please confirm delivery details. Order ID: #' + pendingDeliveryOrderId);
-        } catch (error) {
-          console.error('Error creating delivery order:', error);
-          alert('❌ Error creating delivery order. Please try again.');
-          return;
-        }
-      }
-
-      if(orderTypeModal){
-        orderTypeModal.style.display = 'none';
-      }
-      const deliveryFormModal = document.getElementById('deliveryFormModal');
-      if(deliveryFormModal){
-        deliveryFormModal.style.display = 'flex';
-      }
+      hideCheckoutModal(orderTypeModal);
+      clearCheckoutContext();
+      resetDeliveryFormState();
+      showCheckoutModal(deliveryFormModal);
     });
   }
 
-  // Handle confirm delivery button
-  const confirmDeliveryBtn = document.getElementById('confirmDeliveryBtn');
-  if(confirmDeliveryBtn) {
-    confirmDeliveryBtn.addEventListener('click', async function() {
-      const orderId = document.getElementById('deliveryOrderId').value.trim() || pendingDeliveryOrderId;
-      const recipientName = document.getElementById('recipientName').value.trim();
-      const recipientPhone = document.getElementById('recipientPhone').value.trim();
-      const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
-      const pickupLocation = document.getElementById('pickupLocation').value.trim();
-      const latitude = document.getElementById('deliveryLatitude').value.trim();
-      const longitude = document.getElementById('deliveryLongitude').value.trim();
-      const token = document.getElementById('deliverySaveToken').value;
+  if (confirmDeliveryBtn) {
+    confirmDeliveryBtn.addEventListener('click', function() {
+      const deliveryData = collectDeliveryDetails();
+      const validationMessage = validateDeliveryDetails(deliveryData);
 
-      if (!orderId) {
-        alert('❌ No delivery order has been created yet. Please select Delivery again.');
+      if (validationMessage) {
+        showFrontFlash(validationMessage, 'error');
         return;
       }
 
-      if (!recipientName || !recipientPhone || !deliveryAddress || !latitude || !longitude) {
-        alert('❌ Please fill in all required fields (Name, Phone, Address, Latitude, Longitude)');
-        return;
-      }
+      const existingContext = pendingCheckoutContext && pendingCheckoutContext.orderType === 'DELIVERY'
+        ? pendingCheckoutContext
+        : {};
 
-      const payload = new URLSearchParams();
-      payload.append('order_id', orderId);
-      payload.append('recipient_name', recipientName);
-      payload.append('recipient_phone', recipientPhone);
-      payload.append('delivery_address', deliveryAddress);
-      payload.append('pickup_location', pickupLocation);
-      payload.append('current_latitude', latitude);
-      payload.append('current_longitude', longitude);
-      payload.append('_token', token);
-
-      try {
-        const response = await fetch('{{ path("app_delivery_save") }}', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: payload.toString(),
-        });
-        const data = await response.json();
-
-        if (data.success) {
-          const deliveryFormModal = document.getElementById('deliveryFormModal');
-          if(deliveryFormModal){
-            deliveryFormModal.style.display = 'none';
-          }
-          if(orderTypeModal){
-            orderTypeModal.style.display = 'none';
-            document.body.style.overflow = '';
-          }
-
-          cart = [];
-          updateCart();
-
-          document.getElementById('deliveryForm').reset();
-          pendingDeliveryOrderId = null;
-          document.getElementById('deliveryOrderId').value = '';
-          document.getElementById('deliverySavedOrderIdInput').value = '';
-
-          alert('✅ Your delivery details have been saved successfully!\nOrder ID: #' + orderId + '\nDelivery ID: #' + data.delivery_id);
-        } else {
-          alert('❌ Error: ' + (data.message || 'Failed to save delivery details'));
-        }
-      } catch (error) {
-        console.error('Error saving delivery:', error);
-        alert('❌ Error saving delivery details. Please try again.');
-      }
+      hideCheckoutModal(deliveryFormModal);
+      openPaymentMethodModal({
+        orderType: 'DELIVERY',
+        deliveryData: deliveryData,
+        orderId: existingContext.orderId || null,
+        appliedPaymentMethod: existingContext.appliedPaymentMethod || null,
+      });
     });
   }
 
-  // Handle get current location button
-  const getCurrentLocationBtn = document.getElementById('getCurrentLocation');
-  if(getCurrentLocationBtn) {
+  if (cashPaymentBtn) {
+    cashPaymentBtn.addEventListener('click', function() {
+      handlePaymentSelection('CASH');
+    });
+  }
+
+  if (cardPaymentBtn) {
+    cardPaymentBtn.addEventListener('click', function() {
+      handlePaymentSelection('CARD');
+    });
+  }
+
+  if (getCurrentLocationBtn) {
     getCurrentLocationBtn.addEventListener('click', function() {
       const latitudeInput = document.getElementById('deliveryLatitude');
       const longitudeInput = document.getElementById('deliveryLongitude');
-      
+
       if (navigator.geolocation) {
         getCurrentLocationBtn.textContent = '📍 Getting location...';
         getCurrentLocationBtn.disabled = true;
-        
+
         navigator.geolocation.getCurrentPosition(
           function(position) {
             const latitude = position.coords.latitude.toFixed(6);
             const longitude = position.coords.longitude.toFixed(6);
-            
+
             latitudeInput.value = latitude;
             longitudeInput.value = longitude;
-            
+
             getCurrentLocationBtn.textContent = '📍 Location updated!';
             getCurrentLocationBtn.style.background = '#28a745';
-            
+
             setTimeout(() => {
               getCurrentLocationBtn.textContent = '📍 Get Current Location';
               getCurrentLocationBtn.style.background = '#28a745';
@@ -1344,7 +1835,7 @@
           },
           function(error) {
             let errorMessage = 'Unable to get your location.';
-            switch(error.code) {
+            switch (error.code) {
               case error.PERMISSION_DENIED:
                 errorMessage = 'Location access denied. Please enable location services.';
                 break;
@@ -1355,7 +1846,7 @@
                 errorMessage = 'Location request timed out.';
                 break;
             }
-            
+
             alert('❌ ' + errorMessage);
             getCurrentLocationBtn.textContent = '📍 Get Current Location';
             getCurrentLocationBtn.disabled = false;
@@ -1363,7 +1854,7 @@
           {
             enableHighAccuracy: true,
             timeout: 10000,
-            maximumAge: 300000 // 5 minutes
+            maximumAge: 300000
           }
         );
       } else {
@@ -1372,52 +1863,107 @@
     });
   }
 
-  if(closeOrderTypeBtn) {
+  if (closeOrderTypeBtn) {
     closeOrderTypeBtn.addEventListener('click', function() {
-      if(orderTypeModal){
-        orderTypeModal.style.display = 'none';
-        document.body.style.overflow = '';
-      }
+      clearCheckoutContext();
+      resetDeliveryFormState();
+      hideCheckoutModal(orderTypeModal);
     });
   }
 
-  // Handle close delivery form button
-  const closeDeliveryFormBtn = document.getElementById('closeDeliveryForm');
-  const deliveryFormModal = document.getElementById('deliveryFormModal');
-  if(closeDeliveryFormBtn) {
+  if (closeDeliveryFormBtn) {
     closeDeliveryFormBtn.addEventListener('click', function() {
-      if(deliveryFormModal){
-        deliveryFormModal.style.display = 'none';
-      }
-      // Show order type modal again
-      if(orderTypeModal){
-        orderTypeModal.style.display = 'flex';
-      }
-      // Reset the form
-      document.getElementById('deliveryForm').reset();
+      clearCheckoutContext();
+      resetDeliveryFormState();
+      hideCheckoutModal(deliveryFormModal);
+      showCheckoutModal(orderTypeModal);
     });
   }
 
-  // Close delivery form by clicking outside
-  if(deliveryFormModal) {
+  if (closePaymentMethodBtn) {
+    closePaymentMethodBtn.addEventListener('click', function() {
+      returnFromPaymentMethod();
+    });
+  }
+
+  if (deliveryFormModal) {
     deliveryFormModal.addEventListener('click', function(e) {
-      if(e.target === deliveryFormModal) {
-        deliveryFormModal.style.display = 'none';
-        // Show order type modal again
-        if(orderTypeModal){
-          orderTypeModal.style.display = 'flex';
-        }
-        // Reset the form
-        document.getElementById('deliveryForm').reset();
+      if (e.target === deliveryFormModal) {
+        clearCheckoutContext();
+        resetDeliveryFormState();
+        hideCheckoutModal(deliveryFormModal);
+        showCheckoutModal(orderTypeModal);
       }
     });
   }
 
-  if(orderTypeModal) {
+  if (paymentMethodModal) {
+    paymentMethodModal.addEventListener('click', function(e) {
+      if (e.target === paymentMethodModal) {
+        returnFromPaymentMethod();
+      }
+    });
+  }
+
+  if (orderTypeModal) {
     orderTypeModal.addEventListener('click', function(e) {
-      if(e.target === orderTypeModal) {
-        orderTypeModal.style.display = 'none';
-        document.body.style.overflow = '';
+      if (e.target === orderTypeModal) {
+        clearCheckoutContext();
+        resetDeliveryFormState();
+        hideCheckoutModal(orderTypeModal);
+      }
+    });
+  }
+
+  // ── CUSTOMER AI BOT ───────────────────────────────────────
+  const aiBotToggle = document.getElementById('aiBotToggle');
+  const aiBotPanel = document.getElementById('aiBotPanel');
+  const aiBotForm = document.getElementById('aiBotForm');
+  const aiBotInput = document.getElementById('aiBotInput');
+  const aiBotMessages = document.getElementById('aiBotMessages');
+
+  function appendAiBubble(role, text) {
+    const bubble = document.createElement('div');
+    bubble.className = `ai-bot-bubble ${role}`;
+    bubble.textContent = text;
+    aiBotMessages.appendChild(bubble);
+    aiBotMessages.scrollTop = aiBotMessages.scrollHeight;
+  }
+
+  if (aiBotToggle && aiBotPanel) {
+    aiBotToggle.addEventListener('click', function() {
+      aiBotPanel.classList.toggle('open');
+      if (aiBotPanel.classList.contains('open')) {
+        aiBotInput?.focus();
+      }
+    });
+  }
+
+  if (aiBotForm) {
+    aiBotForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const question = (aiBotInput?.value || '').trim();
+      if (!question) {
+        return;
+      }
+
+      appendAiBubble('user', question);
+      aiBotInput.value = '';
+      appendAiBubble('assistant', 'Thinking...');
+
+      try {
+        const response = await fetch('{{ path("app_ai_bot_ask") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question }),
+        });
+
+        const data = await response.json();
+        aiBotMessages.lastElementChild?.remove();
+        appendAiBubble('assistant', data.success ? data.answer : (data.message || 'Sorry, I could not answer right now.'));
+      } catch (error) {
+        aiBotMessages.lastElementChild?.remove();
+        appendAiBubble('assistant', 'Network error, please try again in a moment.');
       }
     });
   }
@@ -1428,7 +1974,9 @@
       closeBookingPopup(); 
       closeCart(); 
       closeProfilePopup();
-      if(orderTypeModal) orderTypeModal.style.display = 'none';
+      closeAllCheckoutModals();
+      clearCheckoutContext();
+      resetDeliveryFormState();
     }
   });
 
