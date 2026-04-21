@@ -17,7 +17,6 @@ final class AiBotController extends AbstractController
     {
         $payload = json_decode((string) $request->getContent(), true);
         $question = trim((string) ($payload['question'] ?? ''));
-        $bookingContext = is_array($payload['booking_context'] ?? null) ? $payload['booking_context'] : null;
 
         if ($question === '') {
             return new JsonResponse([
@@ -26,12 +25,7 @@ final class AiBotController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $clientId = (int) $request->getSession()->get('user_id', 0);
-        $answer = $customerAiBotService->ask(
-            $question,
-            $bookingContext,
-            $clientId > 0 ? $clientId : null
-        );
+        $answer = $customerAiBotService->ask($question);
 
         return new JsonResponse([
             'success' => true,

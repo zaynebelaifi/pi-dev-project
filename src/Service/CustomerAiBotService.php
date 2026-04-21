@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use App\Service\SmartTableMatcher;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -11,7 +10,6 @@ final class CustomerAiBotService
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger,
-        private readonly SmartTableMatcher $smartTableMatcher,
         private readonly string $hfApiUrl,
         private readonly string $hfApiToken,
         private readonly string $hfModel,
@@ -19,17 +17,15 @@ final class CustomerAiBotService
     ) {
     }
 
-    public function ask(string $question, ?array $bookingContext = null, ?int $clientId = null): string
+    public function ask(string $question): string
     {
         $question = trim($question);
         if ($question === '') {
-            return 'Ask me about table booking (date, time, guests), menu items, delivery, or opening hours.';
+            return 'Ask me about menu items, reservations, delivery, or opening hours.';
         }
 
-        $tableGuidance = $this->buildTableGuidance($question, $bookingContext, $clientId);
-
         try {
-            $prompt = $this->buildPrompt($question, $tableGuidance);
+            $prompt = $this->buildPrompt($question);
             $headers = [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
@@ -57,36 +53,26 @@ final class CustomerAiBotService
 
             $body = trim($response->getContent(false));
             if ($body === '') {
-                return $this->fallback($question, $tableGuidance);
+                return $this->fallback($question);
             }
 
             $generated = $this->extractHfText($body);
             if ($generated === '') {
-                return $this->fallback($question, $tableGuidance);
+                return $this->fallback($question);
             }
 
-            $combined = $generated;
-            if ($tableGuidance !== null) {
-                $combined = trim($generated.' '.$tableGuidance);
-            }
-
-            return $this->normalize($combined);
+            return $this->normalize($generated);
         } catch (\Throwable $e) {
             $this->logger->warning('Customer AI bot fallback used.', ['message' => $e->getMessage()]);
 
-            return $this->fallback($question, $tableGuidance);
+            return $this->fallback($question);
         }
     }
 
-    private function buildPrompt(string $question, ?string $tableGuidance): string
+    private function buildPrompt(string $question): string
     {
-        $tableContext = $tableGuidance !== null && $tableGuidance !== ''
-            ? 'Table recommendation context: '.$tableGuidance
-            : 'If the user asks about table choice, ask for date (YYYY-MM-DD), time (HH:MM), and guest count.';
-
         return sprintf(
-            "You are BIG 4 Coffee Lounge assistant. Keep replies concise, friendly, and practical. Prioritize helping customers choose the right table based on date, time, number of guests, occasion, and mobility needs. %s You can also answer about: reservations, menu highlights, delivery, and opening hours. If you do not know a fact, say so clearly and suggest contacting support. User question: %s",
-            $tableContext,
+            "You are BIG 4 Coffee Lounge assistant. Keep replies concise, friendly, and practical. You can answer about menu highlights, reservations, delivery, and opening hours. If the user asks for booking help, ask for date, time, and number of guests and direct them to the reservation process. If you do not know a fact, say so clearly and suggest contacting support. User question: %s",
             $question
         );
     }
@@ -135,16 +121,12 @@ final class CustomerAiBotService
         return mb_substr(trim($text), 0, 800);
     }
 
-    private function fallback(string $question, ?string $tableGuidance): string
+    private function fallback(string $question): string
     {
-        if ($tableGuidance !== null && $tableGuidance !== '') {
-            return $tableGuidance;
-        }
-
         $q = mb_strtolower($question);
 
         if (str_contains($q, 'table') || str_contains($q, 'reservation') || str_contains($q, 'book')) {
-            return 'To suggest the best table, share your booking date (YYYY-MM-DD), time (HH:MM), number of guests, and optional occasion/mobility needs.';
+            return 'To book a table, please use the reservation form and provide date (YYYY-MM-DD), time (HH:MM), and number of guests.';
         }
 
         if (str_contains($q, 'delivery') || str_contains($q, 'order')) {
@@ -159,126 +141,6 @@ final class CustomerAiBotService
             return 'You can browse available dishes in the Main Menu section and add items directly to your cart.';
         }
 
-        return 'I can help you choose a table, reserve it, or answer menu, delivery, and opening-hours questions.';
-    }
-
-    private function buildTableGuidance(string $question, ?array $bookingContext, ?int $clientId): ?string
-    {
-        $q = mb_strtolower($question);
-        $tableIntent = str_contains($q, 'table')
-            || str_contains($q, 'seat')
-            || str_contains($q, 'reservation')
-            || str_contains($q, 'book')
-            || str_contains($q, 'choose');
-
-        $dateInput = trim((string) ($bookingContext['date'] ?? ''));
-        if ($dateInput === '' && preg_match('/\b(\d{4}-\d{2}-\d{2})\b/', $question, $dateMatch) === 1) {
-            $dateInput = $dateMatch[1];
-        }
-
-        $timeInput = trim((string) ($bookingContext['time'] ?? ''));
-        if ($timeInput === '' && preg_match('/\b([01]?\d|2[0-3]):([0-5]\d)\b/', $question, $timeMatch) === 1) {
-            $timeInput = sprintf('%02d:%02d', (int) $timeMatch[1], (int) $timeMatch[2]);
-        }
-
-        $guests = (int) ($bookingContext['guests'] ?? 0);
-        if ($guests < 1) {
-            if (preg_match('/\b(\d{1,2})\s*(?:people|persons|guests|pax|seats?)\b/i', $question, $guestMatch) === 1) {
-                $guests = (int) $guestMatch[1];
-            } elseif (preg_match('/\bfor\s+(\d{1,2})\b/i', $question, $forMatch) === 1) {
-                $guests = (int) $forMatch[1];
-            }
-        }
-        if ($guests > 20) {
-            $guests = 20;
-        }
-
-        $occasion = trim((string) ($bookingContext['occasion'] ?? ''));
-        if ($occasion === '') {
-            foreach (['date', 'romantic', 'anniversary', 'birthday', 'celebration', 'party', 'business', 'meeting'] as $keyword) {
-                if (str_contains($q, $keyword)) {
-                    $occasion = $keyword;
-                    break;
-                }
-            }
-        }
-
-        $mobilityNeeds = (bool) ($bookingContext['mobility_needs'] ?? false);
-        if (!$mobilityNeeds) {
-            $mobilityNeeds = str_contains($q, 'wheelchair')
-                || str_contains($q, 'mobility')
-                || str_contains($q, 'accessible');
-        }
-
-        if (!$tableIntent && $guests < 1) {
-            return null;
-        }
-
-        if ($guests < 1 || $dateInput === '' || $timeInput === '') {
-            return 'I can choose a table for you. Please share date (YYYY-MM-DD), time (HH:MM), guests, and any occasion or mobility needs.';
-        }
-
-        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $dateInput);
-        $time = \DateTimeImmutable::createFromFormat('!H:i', $timeInput);
-        if (!$date) {
-            return 'Invalid date format. Please use YYYY-MM-DD.';
-        }
-        if (!$time) {
-            return 'Invalid time format. Please use HH:MM.';
-        }
-
-        $recommendations = $this->smartTableMatcher->recommendRanked(
-            date: $date,
-            time: $time,
-            guests: $guests,
-            occasion: $occasion,
-            mobilityNeeds: $mobilityNeeds,
-            clientId: $clientId,
-            limit: 3,
-        );
-
-        if ($recommendations === []) {
-            return sprintf(
-                'No suitable table is free for %d guest(s) on %s at %s. Please try another time or party size.',
-                $guests,
-                $dateInput,
-                $timeInput
-            );
-        }
-
-        $best = $recommendations[0];
-        $alternatives = [];
-        foreach (array_slice($recommendations, 1, 2) as $candidate) {
-            $candidateTable = $candidate['table'];
-            $alternatives[] = sprintf(
-                '#%d (%d seats, %s confidence)',
-                $candidateTable->getTableId(),
-                $candidateTable->getCapacity(),
-                $candidate['confidence'] ?? 'Medium'
-            );
-        }
-
-        $bestTable = $best['table'];
-        $topReasons = implode(' ', array_slice($best['reasons'] ?? [], 0, 2));
-        $reason = trim((string) ($best['explanation'] ?? $topReasons));
-        $message = sprintf(
-            'Best match: Table #%d (%d seats, %s confidence) for %d guest(s) on %s at %s.',
-            $bestTable->getTableId(),
-            $bestTable->getCapacity(),
-            $best['confidence'] ?? 'Medium',
-            $guests,
-            $dateInput,
-            $timeInput
-        );
-
-        if ($reason !== '') {
-            $message .= ' '.$reason;
-        }
-
-        if ($alternatives !== []) {
-            $message .= ' Alternatives: '.implode('; ', $alternatives).'.';
-        }
-
-        return $message;
+        return 'I can help with menu, reservations, delivery, and opening-hours questions.';
     }
 }
