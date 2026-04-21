@@ -1955,7 +1955,17 @@
         const response = await fetch('{{ path("app_ai_bot_ask") }}', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: question }),
+          body: JSON.stringify({
+            question: question,
+            booking_context: {
+              date: bookingDate?.value || '',
+              time: bookingTime?.value || '',
+              guests: parseInt(bookingGuests?.value || '0', 10),
+              occasion: bookingOccasion?.value || '',
+              mobility_needs: Boolean(bookingMobility?.checked),
+              table_id: bookingTable?.value || '',
+            },
+          }),
         });
 
         const data = await response.json();
