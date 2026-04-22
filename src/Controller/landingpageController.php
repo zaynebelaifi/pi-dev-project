@@ -37,7 +37,6 @@ final class landingpageController extends AbstractController
             return $this->redirectToRoute('app_admin_dashboard');
         }
 
-<<<<<<< HEAD
         return $this->renderLandingPage($request);
     }
 
@@ -78,9 +77,6 @@ final class landingpageController extends AbstractController
         );
 
         return $this->render('base.html.twig', [
-=======
-        return $this->render('frontend.html.twig', [
->>>>>>> origin/zayneb
             'controller_name' => 'landingpageController',
             'menuSections'    => $menuSections,
             'selectedSection' => $selectedSection,
@@ -93,7 +89,6 @@ final class landingpageController extends AbstractController
     #[Route('/landingpage/mood-recommendations', name: 'app_landingpage_mood_recommendations', methods: ['POST'])]
     public function moodRecommendations(Request $request): JsonResponse
     {
-<<<<<<< HEAD
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {
             return $this->json([
@@ -217,12 +212,6 @@ final class landingpageController extends AbstractController
             'assistantMessage' => $profile['message'],
             'recommendations' => $formatted,
             'source' => 'local-fallback',
-=======
-        return $this->render('frontend.html.twig', [
-            'controller_name' => 'landingpageController',
-            'menuSections'    => $this->buildMenuSections(),
-            'availableTables' => $this->tableRepository->findBy(['status' => 'AVAILABLE']),
->>>>>>> origin/zayneb
         ]);
     }
 

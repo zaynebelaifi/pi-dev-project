@@ -2005,10 +2005,12 @@
   }
 
   // ── NAV SCROLL ─────────────────────────────────────────────
-<<<<<<< HEAD
-  window.addEventListener('scroll', () => {
-    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
-  });
+  const nav = document.getElementById('nav');
+  if (nav) {
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    });
+  }
 
   // ── MOOD CHAT ASSISTANT ────────────────────────────────────
   const moodChatToggle = document.getElementById('moodChatToggle');
@@ -2383,12 +2385,6 @@
       }
 
       requestMoodRecommendations(`I feel ${mood} today`);
-=======
-  const nav = document.getElementById('nav');
-  if (nav) {
-    window.addEventListener('scroll', () => {
-      nav.classList.toggle('scrolled', window.scrollY > 40);
->>>>>>> origin/zayneb
     });
   }
   </script>
