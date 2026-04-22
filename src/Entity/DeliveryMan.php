@@ -6,11 +6,13 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 use App\Repository\DeliveryManRepository;
 
 #[ORM\Entity(repositoryClass: DeliveryManRepository::class)]
 #[ORM\Table(name: 'delivery_man')]
+#[UniqueEntity(fields: ['phone'], message: 'This phone number is already used.')]
 class DeliveryMan
 {
     #[ORM\Id]
@@ -46,7 +48,7 @@ class DeliveryMan
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
+    #[ORM\Column(type: 'string', nullable: false, unique: true)]
     #[Assert\NotBlank(message: 'Phone number is required.')]
     #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Phone number must be exactly 8 digits.')]
     private ?string $phone = null;

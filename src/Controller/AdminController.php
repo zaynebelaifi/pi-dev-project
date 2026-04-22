@@ -125,6 +125,17 @@ final class AdminController extends AbstractController
         ]);
     }
 
+    #[Route('/support-queue', name: 'app_admin_support_queue', methods: ['GET'])]
+    public function supportQueue(Request $request): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        return $this->render('admin/support_queue.html.twig');
+    }
+
     #[Route('/users/{id}/ban', name: 'app_admin_user_ban', methods: ['POST'])]
     public function banUser(int $id, Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager): Response
     {
