@@ -568,9 +568,10 @@
       position: fixed;
       inset: 0;
       z-index: 9999;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 28px 18px;
       background:
         radial-gradient(circle at top, rgba(212, 175, 55, 0.16), transparent 35%),
@@ -581,11 +582,14 @@
     .delivery-modal-card {
       width: min(100%, 640px);
       margin: auto;
+      max-height: 90vh;
       background: linear-gradient(180deg, #fffdf9 0%, #fff7ea 100%);
       border: 1px solid rgba(155, 114, 29, 0.18);
       border-radius: 28px;
       box-shadow: 0 32px 90px rgba(25, 16, 10, 0.32);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .delivery-modal-header {
@@ -626,6 +630,8 @@
 
     .delivery-modal-body {
       padding: 1.6rem 2rem 2rem;
+      overflow-y: auto;
+      max-height: calc(90vh - 180px);
     }
 
     .delivery-form-grid {
@@ -866,14 +872,35 @@
   <script>
   // ── BOOKING POPUP ──────────────────────────────────────────
   const bookingPopup = document.getElementById('bookingPopup');
+  const openBookingBtn = document.getElementById('openBooking');
+  const openBooking2Btn = document.getElementById('openBooking2');
+  const closeBookingBtn = document.getElementById('closeBooking');
 
-  function openBookingPopup(e) { e.preventDefault(); bookingPopup.classList.add('active'); document.body.style.overflow='hidden'; }
-  function closeBookingPopup() { bookingPopup.classList.remove('active'); document.body.style.overflow=''; document.getElementById('bookingMsg')?.remove(); }
+  function openBookingPopup(e) {
+    e.preventDefault();
+    if (!bookingPopup) return;
+    bookingPopup.classList.add('active');
+    document.body.style.overflow='hidden';
+  }
+  function closeBookingPopup() {
+    if (!bookingPopup) return;
+    bookingPopup.classList.remove('active');
+    document.body.style.overflow='';
+    document.getElementById('bookingMsg')?.remove();
+  }
 
-  document.getElementById('openBooking').addEventListener('click', openBookingPopup);
-  document.getElementById('openBooking2').addEventListener('click', openBookingPopup);
-  document.getElementById('closeBooking').addEventListener('click', closeBookingPopup);
-  bookingPopup.addEventListener('click', e => { if(e.target === bookingPopup) closeBookingPopup(); });
+  if (openBookingBtn) {
+    openBookingBtn.addEventListener('click', openBookingPopup);
+  }
+  if (openBooking2Btn) {
+    openBooking2Btn.addEventListener('click', openBookingPopup);
+  }
+  if (closeBookingBtn) {
+    closeBookingBtn.addEventListener('click', closeBookingPopup);
+  }
+  if (bookingPopup) {
+    bookingPopup.addEventListener('click', e => { if(e.target === bookingPopup) closeBookingPopup(); });
+  }
 
   const bookingForm = document.getElementById('bookingForm');
   const bookingTable = document.getElementById('booking_table');
@@ -889,9 +916,23 @@
   const bookingSummaryGuests = document.getElementById('bookingSummaryGuests');
   const bookingSlotButtons = Array.from(document.querySelectorAll('.booking-slot-btn'));
 
-  function getSelectedTableCapacity() {
-    return parseInt(bookingTable.selectedOptions[0]?.dataset.capacity || 0, 10);
-  }
+  const bookingElementsReady = bookingForm
+    && bookingTable
+    && bookingDate
+    && bookingTime
+    && bookingGuests
+    && bookingSubmitBtn
+    && bookingCapacityHint
+    && bookingTableHint
+    && bookingSummaryTable
+    && bookingSummaryDate
+    && bookingSummaryTime
+    && bookingSummaryGuests;
+
+  if (bookingElementsReady) {
+    function getSelectedTableCapacity() {
+      return parseInt(bookingTable.selectedOptions[0]?.dataset.capacity || 0, 10);
+    }
 
   function formatBookingDate(value) {
     if (!value) {
@@ -1020,44 +1061,44 @@
     bookingSummaryGuests.textContent = guests;
   }
 
-  bookingTable.addEventListener('change', function() {
-    syncGuestOptions();
-    updateBookingSummary();
-  });
+    bookingTable.addEventListener('change', function() {
+      syncGuestOptions();
+      updateBookingSummary();
+    });
 
-  bookingGuests.addEventListener('change', function() {
-    suggestBestFitTable();
-    syncGuestOptions();
-    updateBookingSummary();
-  });
+    bookingGuests.addEventListener('change', function() {
+      suggestBestFitTable();
+      syncGuestOptions();
+      updateBookingSummary();
+    });
 
-  bookingDate.addEventListener('change', function() {
-    syncTimeConstraints();
-    syncTimeSlotState();
-    updateBookingSummary();
-  });
-
-  bookingTime.addEventListener('input', function() {
-    syncTimeSlotState();
-    updateBookingSummary();
-  });
-
-  bookingSlotButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      if (this.disabled) {
-        return;
-      }
-
-      bookingTime.value = this.dataset.time;
+    bookingDate.addEventListener('change', function() {
+      syncTimeConstraints();
       syncTimeSlotState();
       updateBookingSummary();
     });
-  });
 
-  syncTimeConstraints();
-  syncGuestOptions();
-  syncTimeSlotState();
-  updateBookingSummary();
+    bookingTime.addEventListener('input', function() {
+      syncTimeSlotState();
+      updateBookingSummary();
+    });
+
+    bookingSlotButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        if (this.disabled) {
+          return;
+        }
+
+        bookingTime.value = this.dataset.time;
+        syncTimeSlotState();
+        updateBookingSummary();
+      });
+    });
+
+    syncTimeConstraints();
+    syncGuestOptions();
+    syncTimeSlotState();
+    updateBookingSummary();
 
   function showBookingMsg(form, text, isError) {
     document.getElementById('bookingMsg')?.remove();
@@ -1077,92 +1118,126 @@
     form.insertAdjacentElement('beforebegin', msg);
   }
 
-  bookingForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
+    bookingForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
 
-    const capacity = getSelectedTableCapacity();
-    const guests = parseInt(bookingGuests.value || '0', 10);
-    const selectedDateTime = bookingDate.value && bookingTime.value
-      ? new Date(`${bookingDate.value}T${bookingTime.value}:00`)
-      : null;
+      const capacity = getSelectedTableCapacity();
+      const guests = parseInt(bookingGuests.value || '0', 10);
+      const selectedDateTime = bookingDate.value && bookingTime.value
+        ? new Date(`${bookingDate.value}T${bookingTime.value}:00`)
+        : null;
 
-    // Client-side capacity guard
-    if (capacity && guests > capacity) {
-      showBookingMsg(this, `This table only seats ${capacity} guest(s). Please select fewer guests or a larger table.`, true);
-      return;
-    }
-
-    if (selectedDateTime && selectedDateTime < new Date()) {
-      showBookingMsg(this, 'Please choose a reservation time in the future.', true);
-      return;
-    }
-
-    if (bookingTime.value && (bookingTime.value < '08:00' || bookingTime.value > '23:30')) {
-      showBookingMsg(this, 'Please choose a time between 08:00 and 23:30.', true);
-      return;
-    }
-
-    bookingSubmitBtn.textContent = 'Processing...';
-    bookingSubmitBtn.disabled = true;
-
-    const payload = {
-      table_id: bookingTable.value,
-      date: bookingDate.value,
-      time: bookingTime.value,
-      guests: guests,
-    };
-
-    try {
-      const res  = await fetch('{{ path("app_reservation_book") }}', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        showBookingMsg(this, 'Your reservation is confirmed! We look forward to welcoming you.', false);
-        this.reset();
-        // Re-enable all guest options after reset
-        document.querySelectorAll('#booking_guests option').forEach(o => { o.disabled = false; o.style.color = ''; });
-        bookingTableHint.textContent = 'Choose guests to get a best-fit table.';
-        bookingCapacityHint.textContent = 'Select a table to see its seating capacity.';
-        syncTimeConstraints();
-        syncTimeSlotState();
-        updateBookingSummary();
-        setTimeout(closeBookingPopup, 2500);
-      } else {
-        showBookingMsg(this, data.error || 'Something went wrong. Please try again.', true);
+      // Client-side capacity guard
+      if (capacity && guests > capacity) {
+        showBookingMsg(this, `This table only seats ${capacity} guest(s). Please select fewer guests or a larger table.`, true);
+        return;
       }
-    } catch(err) {
-      showBookingMsg(this, 'Network error. Please try again.', true);
-    }
 
-    bookingSubmitBtn.textContent = 'Confirm Booking';
-    bookingSubmitBtn.disabled = false;
-  });
+      if (selectedDateTime && selectedDateTime < new Date()) {
+        showBookingMsg(this, 'Please choose a reservation time in the future.', true);
+        return;
+      }
+
+      if (bookingTime.value && (bookingTime.value < '08:00' || bookingTime.value > '23:30')) {
+        showBookingMsg(this, 'Please choose a time between 08:00 and 23:30.', true);
+        return;
+      }
+
+      bookingSubmitBtn.textContent = 'Processing...';
+      bookingSubmitBtn.disabled = true;
+
+      const payload = {
+        table_id: bookingTable.value,
+        date: bookingDate.value,
+        time: bookingTime.value,
+        guests: guests,
+      };
+
+      try {
+        const res  = await fetch('{{ path("app_reservation_book") }}', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showBookingMsg(this, 'Your reservation is confirmed! We look forward to welcoming you.', false);
+          this.reset();
+          // Re-enable all guest options after reset
+          document.querySelectorAll('#booking_guests option').forEach(o => { o.disabled = false; o.style.color = ''; });
+          bookingTableHint.textContent = 'Choose guests to get a best-fit table.';
+          bookingCapacityHint.textContent = 'Select a table to see its seating capacity.';
+          syncTimeConstraints();
+          syncTimeSlotState();
+          updateBookingSummary();
+          setTimeout(closeBookingPopup, 2500);
+        } else {
+          showBookingMsg(this, data.error || 'Something went wrong. Please try again.', true);
+        }
+      } catch(err) {
+        showBookingMsg(this, 'Network error. Please try again.', true);
+      }
+
+      bookingSubmitBtn.textContent = 'Confirm Booking';
+      bookingSubmitBtn.disabled = false;
+    });
+  }
 
   // ── PROFILE POPUP ──────────────────────────────────────────
   const profilePopup = document.getElementById('profilePopup');
-  function closeProfilePopup() { profilePopup.classList.remove('active'); document.body.style.overflow=''; }
-  document.getElementById('openProfile').addEventListener('click', () => { profilePopup.classList.add('active'); document.body.style.overflow='hidden'; });
-  document.getElementById('closeProfile').addEventListener('click', closeProfilePopup);
-  profilePopup.addEventListener('click', e => { if(e.target === profilePopup) closeProfilePopup(); });
-  document.getElementById('profileForm').addEventListener('submit', function(e) {
+  const openProfileBtn = document.getElementById('openProfile');
+  const closeProfileBtn = document.getElementById('closeProfile');
+  const profileForm = document.getElementById('profileForm');
+  function closeProfilePopup() {
+    if (!profilePopup) return;
+    profilePopup.classList.remove('active');
+    document.body.style.overflow='';
+  }
+  if (openProfileBtn) {
+    openProfileBtn.addEventListener('click', () => {
+      if (!profilePopup) return;
+      profilePopup.classList.add('active');
+      document.body.style.overflow='hidden';
+    });
+  }
+  if (closeProfileBtn) {
+    closeProfileBtn.addEventListener('click', closeProfilePopup);
+  }
+  if (profilePopup) {
+    profilePopup.addEventListener('click', e => { if(e.target === profilePopup) closeProfilePopup(); });
+  }
+  if (profileForm) {
+    profileForm.addEventListener('submit', function(e) {
     e.preventDefault();
     alert('Your profile has been saved successfully!');
     this.reset();
     closeProfilePopup();
-  });
+    });
+  }
 
   // ── CART DRAWER ────────────────────────────────────────────
   const cartOverlay = document.getElementById('cartOverlay');
-  function openCart()  { cartOverlay.classList.add('active');    document.body.style.overflow='hidden'; }
-  function closeCart() { cartOverlay.classList.remove('active'); document.body.style.overflow=''; }
-  document.getElementById('openCart').addEventListener('click', openCart);
-  document.getElementById('openCart2').addEventListener('click', openCart);
-  document.getElementById('closeCart').addEventListener('click', closeCart);
-  cartOverlay.addEventListener('click', e => { if(e.target === cartOverlay) closeCart(); });
+  const openCartBtn = document.getElementById('openCart');
+  const openCart2Btn = document.getElementById('openCart2');
+  const closeCartBtn = document.getElementById('closeCart');
+  const cartItemsContainer = document.getElementById('cartItems');
+  const cartTotal = document.getElementById('cartTotal');
+  const cartCount = document.getElementById('cartCount');
+  function openCart()  { if (!cartOverlay) return; cartOverlay.classList.add('active');    document.body.style.overflow='hidden'; }
+  function closeCart() { if (!cartOverlay) return; cartOverlay.classList.remove('active'); document.body.style.overflow=''; }
+  if (openCartBtn) {
+    openCartBtn.addEventListener('click', openCart);
+  }
+  if (openCart2Btn) {
+    openCart2Btn.addEventListener('click', openCart);
+  }
+  if (closeCartBtn) {
+    closeCartBtn.addEventListener('click', closeCart);
+  }
+  if (cartOverlay) {
+    cartOverlay.addEventListener('click', e => { if(e.target === cartOverlay) closeCart(); });
+  }
 
   let cart = [];
   let pendingDeliveryOrderId = null;
@@ -1545,8 +1620,8 @@
   });
 
   function updateCart() {
-    const container = document.getElementById('cartItems');
-    container.innerHTML = cart.length === 0
+    if (!cartItemsContainer || !cartTotal || !cartCount) return;
+    cartItemsContainer.innerHTML = cart.length === 0
       ? '<div class="empty-cart">Your luxury cart is currently empty.</div>'
       : cart.map((item, i) => `
           <div class="cart-item">
@@ -1554,8 +1629,8 @@
             <button class="remove-btn" onclick="removeFromCart(${i})">Remove</button>
           </div>`).join('');
     const total = cart.reduce((s, i) => s + i.price, 0);
-    document.getElementById('cartTotal').textContent  = total.toFixed(2) + ' TND';
-    document.getElementById('cartCount').textContent  = cart.length;
+    cartTotal.textContent  = total.toFixed(2) + ' TND';
+    cartCount.textContent  = cart.length;
   }
 
   function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
@@ -1579,8 +1654,14 @@
       }
 
       const total = cart.reduce((sum, item) => sum + item.price, 0);
-      document.getElementById('redirectCartItemsInput').value = JSON.stringify(cart);
-      document.getElementById('redirectCartTotalInput').value = total.toFixed(2);
+      const redirectCartItemsInput = document.getElementById('redirectCartItemsInput');
+      const redirectCartTotalInput = document.getElementById('redirectCartTotalInput');
+      if (redirectCartItemsInput) {
+        redirectCartItemsInput.value = JSON.stringify(cart);
+      }
+      if (redirectCartTotalInput) {
+        redirectCartTotalInput.value = total.toFixed(2);
+      }
       
       closeCart();
       
@@ -1595,10 +1676,12 @@
     dineInBtn.addEventListener('click', function() {
       const cartItemsInput = document.getElementById('redirectCartItemsInput');
       const orderTotalInput = document.getElementById('redirectCartTotalInput');
+      const cartItemsValue = cartItemsInput ? cartItemsInput.value : '';
+      const orderTotalValue = orderTotalInput ? orderTotalInput.value : '';
       
       const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
-      url.searchParams.append('cart_items', cartItemsInput.value);
-      url.searchParams.append('order_total', orderTotalInput.value);
+      url.searchParams.append('cart_items', cartItemsValue);
+      url.searchParams.append('order_total', orderTotalValue);
       url.searchParams.append('order_type', 'DINE_IN');
       
       fetch(url)
@@ -1612,12 +1695,15 @@
             }
             
             // Clear cart display
-            const cartContainer = document.getElementById('cartItems');
-            if(cartContainer) {
-              cartContainer.innerHTML = '<div class="empty-cart">Your luxury cart is currently empty.</div>';
+            if(cartItemsContainer) {
+              cartItemsContainer.innerHTML = '<div class="empty-cart">Your luxury cart is currently empty.</div>';
             }
-            document.getElementById('cartCount').textContent = '0';
-            document.getElementById('cartTotal').textContent = '0 TND';
+            if (cartCount) {
+              cartCount.textContent = '0';
+            }
+            if (cartTotal) {
+              cartTotal.textContent = '0 TND';
+            }
             
             // Show success notification
             alert('✅ Your Dine In order has been placed successfully!\nOrder ID: #' + data.order_id);
@@ -1642,10 +1728,12 @@
       if (!pendingDeliveryOrderId) {
         const cartItemsInput = document.getElementById('redirectCartItemsInput');
         const orderTotalInput = document.getElementById('redirectCartTotalInput');
+        const cartItemsValue = cartItemsInput ? cartItemsInput.value : '';
+        const orderTotalValue = orderTotalInput ? orderTotalInput.value : '';
         const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
 
-        url.searchParams.append('cart_items', cartItemsInput.value);
-        url.searchParams.append('order_total', orderTotalInput.value);
+        url.searchParams.append('cart_items', cartItemsValue);
+        url.searchParams.append('order_total', orderTotalValue);
         url.searchParams.append('order_type', 'DELIVERY');
 
         try {
@@ -1658,8 +1746,14 @@
           }
 
           pendingDeliveryOrderId = data.order_id;
-          document.getElementById('deliveryOrderId').value = pendingDeliveryOrderId;
-          document.getElementById('deliverySavedOrderIdInput').value = pendingDeliveryOrderId;
+          const deliveryOrderIdInput = document.getElementById('deliveryOrderId');
+          const deliverySavedOrderIdInput = document.getElementById('deliverySavedOrderIdInput');
+          if (deliveryOrderIdInput) {
+            deliveryOrderIdInput.value = pendingDeliveryOrderId;
+          }
+          if (deliverySavedOrderIdInput) {
+            deliverySavedOrderIdInput.value = pendingDeliveryOrderId;
+          }
           alert('✅ Delivery order saved automatically. Please confirm delivery details. Order ID: #' + pendingDeliveryOrderId);
         } catch (error) {
           console.error('Error creating delivery order:', error);
@@ -1682,14 +1776,23 @@
   const confirmDeliveryBtn = document.getElementById('confirmDeliveryBtn');
   if(confirmDeliveryBtn) {
     confirmDeliveryBtn.addEventListener('click', async function() {
-      const orderId = document.getElementById('deliveryOrderId').value.trim() || pendingDeliveryOrderId;
-      const recipientName = document.getElementById('recipientName').value.trim();
-      const recipientPhone = document.getElementById('recipientPhone').value.trim();
-      const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
-      const pickupLocation = document.getElementById('pickupLocation').value.trim();
-      const latitude = document.getElementById('deliveryLatitude').value.trim();
-      const longitude = document.getElementById('deliveryLongitude').value.trim();
-      const token = document.getElementById('deliverySaveToken').value;
+      const deliveryOrderInput = document.getElementById('deliveryOrderId');
+      const recipientNameInput = document.getElementById('recipientName');
+      const recipientPhoneInput = document.getElementById('recipientPhone');
+      const deliveryAddressInput = document.getElementById('deliveryAddress');
+      const pickupLocationInput = document.getElementById('pickupLocation');
+      const deliveryLatitudeInput = document.getElementById('deliveryLatitude');
+      const deliveryLongitudeInput = document.getElementById('deliveryLongitude');
+      const deliverySaveTokenInput = document.getElementById('deliverySaveToken');
+
+      const orderId = (deliveryOrderInput ? deliveryOrderInput.value.trim() : '') || pendingDeliveryOrderId;
+      const recipientName = recipientNameInput ? recipientNameInput.value.trim() : '';
+      const recipientPhone = recipientPhoneInput ? recipientPhoneInput.value.trim() : '';
+      const deliveryAddress = deliveryAddressInput ? deliveryAddressInput.value.trim() : '';
+      const pickupLocation = pickupLocationInput ? pickupLocationInput.value.trim() : '';
+      const latitude = deliveryLatitudeInput ? deliveryLatitudeInput.value.trim() : '';
+      const longitude = deliveryLongitudeInput ? deliveryLongitudeInput.value.trim() : '';
+      const token = deliverySaveTokenInput ? deliverySaveTokenInput.value : '';
 
       if (!orderId) {
         alert('❌ No delivery order has been created yet. Please select Delivery again.');
@@ -1709,6 +1812,14 @@
       payload.append('pickup_location', pickupLocation);
       payload.append('current_latitude', latitude);
       payload.append('current_longitude', longitude);
+      const redirectCartItemsInput = document.getElementById('redirectCartItemsInput');
+      if (redirectCartItemsInput) {
+        payload.append('cart_items', redirectCartItemsInput.value || '[]');
+      }
+      const orderTotalInput = document.getElementById('redirectCartTotalInput');
+      if (orderTotalInput) {
+        payload.append('order_total', orderTotalInput.value || '0');
+      }
       payload.append('_token', token);
 
       try {
@@ -1732,10 +1843,18 @@
           cart = [];
           updateCart();
 
-          document.getElementById('deliveryForm').reset();
+          const deliveryForm = document.getElementById('deliveryForm');
+          if (deliveryForm) {
+            deliveryForm.reset();
+          }
           pendingDeliveryOrderId = null;
-          document.getElementById('deliveryOrderId').value = '';
-          document.getElementById('deliverySavedOrderIdInput').value = '';
+          if (deliveryOrderInput) {
+            deliveryOrderInput.value = '';
+          }
+          const deliverySavedOrderIdInput = document.getElementById('deliverySavedOrderIdInput');
+          if (deliverySavedOrderIdInput) {
+            deliverySavedOrderIdInput.value = '';
+          }
 
           alert('✅ Your delivery details have been saved successfully!\nOrder ID: #' + orderId + '\nDelivery ID: #' + data.delivery_id);
         } else {
@@ -1764,8 +1883,12 @@
             const latitude = position.coords.latitude.toFixed(6);
             const longitude = position.coords.longitude.toFixed(6);
             
-            latitudeInput.value = latitude;
-            longitudeInput.value = longitude;
+            if (latitudeInput) {
+              latitudeInput.value = latitude;
+            }
+            if (longitudeInput) {
+              longitudeInput.value = longitude;
+            }
             
             getCurrentLocationBtn.textContent = '📍 Location updated!';
             getCurrentLocationBtn.style.background = '#28a745';
@@ -1828,7 +1951,10 @@
         orderTypeModal.style.display = 'flex';
       }
       // Reset the form
-      document.getElementById('deliveryForm').reset();
+      const deliveryForm = document.getElementById('deliveryForm');
+      if (deliveryForm) {
+        deliveryForm.reset();
+      }
     });
   }
 
@@ -1842,7 +1968,10 @@
           orderTypeModal.style.display = 'flex';
         }
         // Reset the form
-        document.getElementById('deliveryForm').reset();
+        const deliveryForm = document.getElementById('deliveryForm');
+        if (deliveryForm) {
+          deliveryForm.reset();
+        }
       }
     });
   }
@@ -1870,9 +1999,13 @@
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('show'); observer.unobserve(entry.target); }});
   }, { threshold: 0.15 });
-  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
+  const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+  if (revealElements.length) {
+    revealElements.forEach(el => observer.observe(el));
+  }
 
   // ── NAV SCROLL ─────────────────────────────────────────────
+<<<<<<< HEAD
   window.addEventListener('scroll', () => {
     document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
   });
@@ -2250,6 +2383,12 @@
       }
 
       requestMoodRecommendations(`I feel ${mood} today`);
+=======
+  const nav = document.getElementById('nav');
+  if (nav) {
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+>>>>>>> origin/zayneb
     });
   }
   </script>
