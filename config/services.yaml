@@ -46,5 +46,11 @@ services:
             $fromEmail: '%env(string:PHPMAILER_FROM_EMAIL)%'
             $fromName: '%env(string:PHPMAILER_FROM_NAME)%'
 
+    App\Service\TwilioVoiceCallService:
+        arguments:
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $fromNumber: '%env(string:TWILIO_FROM_NUMBER)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

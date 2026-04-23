@@ -9,6 +9,7 @@ use App\Repository\User1Repository;
 use App\Repository\UserRepository;
 use App\Service\PaymentConfirmationMailer;
 use App\Service\StripeCheckoutService;
+use App\Service\TwilioVoiceCallService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -76,6 +77,7 @@ final class PaymentController extends AbstractController
         UserRepository $userRepository,
         User1Repository $user1Repository,
         PaymentConfirmationMailer $paymentConfirmationMailer,
+        TwilioVoiceCallService $twilioVoiceCallService,
     ): Response
     {
         $sessionId = (string) $request->query->get('session_id', '');
@@ -106,6 +108,19 @@ final class PaymentController extends AbstractController
             $this->addFlash('error', 'Payment was successful, but no customer email address was available for the confirmation message.');
         }
 
+        $recipientPhone = $this->resolveRecipientPhone($order->getClientId(), $userRepository, (string) $session->get('user_phone', ''));
+        if ($recipientPhone !== '') {
+            $alreadyCalledKey = sprintf('payment_confirmation_called_%d', $orderId);
+            if (!$session->get($alreadyCalledKey, false)) {
+                try {
+                    $twilioVoiceCallService->sendPaymentConfirmationCall($order, $recipientPhone);
+                    $session->set($alreadyCalledKey, true);
+                } catch (\Throwable $e) {
+                    $this->addFlash('error', 'Payment was successful, but the confirmation voice call could not be placed: ' . $e->getMessage());
+                }
+            }
+        }
+
         $message = 'Payment completed successfully.';
         if ($sessionId !== '') {
             $message .= sprintf(' Stripe session: %s', $sessionId);
@@ -122,6 +137,21 @@ final class PaymentController extends AbstractController
         $this->addFlash('error', sprintf('Payment cancelled for order #%d.', $orderId));
 
         return $this->redirectToRoute('app_home');
+    }
+
+    private function resolveRecipientPhone(
+        ?int $clientId,
+        UserRepository $userRepository,
+        string $sessionPhone,
+    ): string {
+        if ($clientId !== null && $clientId > 0) {
+            $user = $userRepository->find($clientId);
+            if ($user instanceof User && trim((string) $user->getPhone()) !== '') {
+                return trim((string) $user->getPhone());
+            }
+        }
+
+        return trim($sessionPhone);
     }
 
     private function resolveRecipientEmail(
