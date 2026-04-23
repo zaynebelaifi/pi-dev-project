@@ -9,7 +9,7 @@ use App\Repository\User1Repository;
 use App\Repository\UserRepository;
 use App\Service\PaymentConfirmationMailer;
 use App\Service\StripeCheckoutService;
-use App\Service\TwilioVoiceCallService;
+use App\Service\WhatsAppApiService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -77,10 +77,8 @@ final class PaymentController extends AbstractController
         UserRepository $userRepository,
         User1Repository $user1Repository,
         PaymentConfirmationMailer $paymentConfirmationMailer,
-        TwilioVoiceCallService $twilioVoiceCallService,
-    ): Response
-    {
-        $sessionId = (string) $request->query->get('session_id', '');
+        WhatsAppApiService $whatsAppApiService,
+    ): Response {
         $session = $request->getSession();
         $session->remove('checkout_order_id');
 
@@ -93,6 +91,7 @@ final class PaymentController extends AbstractController
 
         $recipientEmail = $this->resolveRecipientEmail($order->getClientId(), $userRepository, $user1Repository, (string) $session->get('user_email', ''));
         $recipientName = trim((string) $session->get('user_name', ''));
+        $recipientPhone = $this->resolveRecipientPhone($order->getClientId(), $userRepository, (string) $session->get('client_phone', ''));
 
         if ($recipientEmail !== '') {
             $alreadySentKey = sprintf('payment_confirmation_sent_%d', $orderId);
@@ -101,32 +100,26 @@ final class PaymentController extends AbstractController
                     $paymentConfirmationMailer->sendPaymentConfirmation($order, $recipientEmail, $recipientName);
                     $session->set($alreadySentKey, true);
                 } catch (\Throwable $e) {
-                    $this->addFlash('error', 'Payment was successful, but the confirmation email could not be sent: ' . $e->getMessage());
+                    $this->addFlash('error', 'Payment was successful, but the confirmation email could not be sent: '.$e->getMessage());
                 }
             }
-        } else {
-            $this->addFlash('error', 'Payment was successful, but no customer email address was available for the confirmation message.');
         }
 
-        $recipientPhone = $this->resolveRecipientPhone($order->getClientId(), $userRepository, (string) $session->get('user_phone', ''));
         if ($recipientPhone !== '') {
-            $alreadyCalledKey = sprintf('payment_confirmation_called_%d', $orderId);
-            if (!$session->get($alreadyCalledKey, false)) {
+            $alreadyWhatsAppSentKey = sprintf('payment_whatsapp_sent_%d', $orderId);
+            if (!$session->get($alreadyWhatsAppSentKey, false)) {
                 try {
-                    $twilioVoiceCallService->sendPaymentConfirmationCall($order, $recipientPhone);
-                    $session->set($alreadyCalledKey, true);
-                } catch (\Throwable $e) {
-                    $this->addFlash('error', 'Payment was successful, but the confirmation voice call could not be placed: ' . $e->getMessage());
+                    $sent = $whatsAppApiService->sendPaymentConfirmationCall($order, $recipientPhone);
+                    if ($sent) {
+                        $session->set($alreadyWhatsAppSentKey, true);
+                    } else {
+                        $this->addFlash('warning', 'Payment was successful, but the WhatsApp confirmation could not be sent.');
+                    }
+                } catch (\Throwable) {
+                    $this->addFlash('warning', 'Payment was successful, but the WhatsApp confirmation could not be sent.');
                 }
             }
         }
-
-        $message = 'Payment completed successfully.';
-        if ($sessionId !== '') {
-            $message .= sprintf(' Stripe session: %s', $sessionId);
-        }
-
-        $this->addFlash('success', sprintf('Order #%d paid. %s', $orderId, $message));
 
         return $this->redirectToRoute('app_home');
     }
@@ -137,21 +130,6 @@ final class PaymentController extends AbstractController
         $this->addFlash('error', sprintf('Payment cancelled for order #%d.', $orderId));
 
         return $this->redirectToRoute('app_home');
-    }
-
-    private function resolveRecipientPhone(
-        ?int $clientId,
-        UserRepository $userRepository,
-        string $sessionPhone,
-    ): string {
-        if ($clientId !== null && $clientId > 0) {
-            $user = $userRepository->find($clientId);
-            if ($user instanceof User && trim((string) $user->getPhone()) !== '') {
-                return trim((string) $user->getPhone());
-            }
-        }
-
-        return trim($sessionPhone);
     }
 
     private function resolveRecipientEmail(
@@ -165,7 +143,6 @@ final class PaymentController extends AbstractController
             if ($user instanceof User && trim((string) $user->getEmail()) !== '') {
                 return trim((string) $user->getEmail());
             }
-
             $legacyUser = $user1Repository->find($clientId);
             if ($legacyUser instanceof User1 && trim((string) $legacyUser->getEmail()) !== '') {
                 return trim((string) $legacyUser->getEmail());
@@ -173,5 +150,29 @@ final class PaymentController extends AbstractController
         }
 
         return trim($sessionEmail);
+    }
+
+    private function resolveRecipientPhone(
+        ?int $clientId,
+        UserRepository $userRepository,
+        string $sessionPhone,
+    ): string {
+        if ($clientId !== null && $clientId > 0) {
+            $user = $userRepository->find($clientId);
+            if ($user instanceof User && trim((string) $user->getPhone()) !== '') {
+                return $this->normalizePhone($user->getPhone());
+            }
+        }
+
+        return $this->normalizePhone($sessionPhone);
+    }
+
+    private function normalizePhone(?string $phone): string
+    {
+        if ($phone === null) {
+            return '';
+        }
+
+        return trim((string) preg_replace('/[^0-9+]/', '', $phone));
     }
 }

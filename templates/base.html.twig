@@ -355,6 +355,7 @@
       </div>
     </div>
 
+    <div class="booking-popup-layout">
     <form class="booking-form" id="bookingForm" novalidate>
       <div class="full booking-field">
         <label for="booking_table">Preferred Table</label>
@@ -434,12 +435,6 @@
         <small class="booking-help">Smart Match prioritizes tables with easier access.</small>
       </div>
 
-      <div class="full booking-field">
-        <button type="button" class="btn-secondary" id="bookingAutoAssignBtn" style="width:100%;text-align:center;display:inline-flex;justify-content:center;">AI Assign Best Table</button>
-        <small class="booking-help" id="bookingAiReason">AI can auto-assign the best table from your preferences and history.</small>
-        <div id="bookingAiAlternatives" style="display:none;margin-top:.7rem;gap:.45rem;"></div>
-      </div>
-
       <div class="full booking-summary" id="bookingSummary" aria-live="polite">
         <div class="booking-summary-row">
           <span>Selected table</span>
@@ -463,7 +458,78 @@
         <button type="submit" class="btn-primary" style="width:100%" id="bookingSubmitBtn">Confirm Booking</button>
       </div>
     </form>
+
+    <aside class="booking-side-widgets">
+      <section class="booking-widget-weather" style="border-radius:18px;padding:.95rem;background:linear-gradient(155deg,#163760,#0f2744 65%,#0c2038);color:#f8fbff;box-shadow:0 14px 30px rgba(10,26,46,.28);display:grid;gap:.75rem;">
+        <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start;">
+          <div>
+            <small style="display:block;letter-spacing:.06em;text-transform:uppercase;opacity:.82;font-size:.68rem;">Reservation Day Forecast</small>
+            <strong style="font-size:1.02rem;font-weight:600;display:block;line-height:1.25;">Tunis Weather View</strong>
+          </div>
+          <span style="font-size:1.3rem;line-height:1;">🌙</span>
+        </div>
+
+        <div id="bookingWeatherState" style="font-size:.9rem;line-height:1.45;">
+          • Weather forecast will appear after choosing a date.
+        </div>
+
+        <small style="opacity:.8;font-size:.72rem;">Tip: weather conditions help Smart Match prioritize comfort-oriented seating.</small>
+      </section>
+
+      <section class="booking-widget-chat" style="border:1px solid rgba(184,135,42,.2);border-radius:16px;background:rgba(255,255,255,.92);padding:.75rem;display:grid;gap:.6rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;">
+          <label for="bookingAiChatInput" style="font-weight:600;color:var(--espresso);margin:0;">AI Reservation Assistant</label>
+          <span style="font-size:.7rem;padding:.15rem .45rem;border-radius:999px;background:rgba(184,135,42,.12);color:#8d611d;font-weight:600;">Live</span>
+        </div>
+
+        <div id="bookingAiChatLog" aria-live="polite" style="max-height:180px;overflow:auto;display:grid;gap:.45rem;padding-right:.2rem;"></div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem;">
+          <button type="button" class="booking-ai-quick" data-question="Recommend the best table for my booking" style="border:1px solid rgba(184,135,42,.28);background:#fff;border-radius:999px;padding:.25rem .55rem;font-size:.72rem;color:var(--espresso);">Best table</button>
+          <button type="button" class="booking-ai-quick" data-question="What time is less crowded tonight?" style="border:1px solid rgba(184,135,42,.28);background:#fff;border-radius:999px;padding:.25rem .55rem;font-size:.72rem;color:var(--espresso);">Less crowded time</button>
+          <button type="button" class="booking-ai-quick" data-question="Suggest a table for a celebration" style="border:1px solid rgba(184,135,42,.28);background:#fff;border-radius:999px;padding:.25rem .55rem;font-size:.72rem;color:var(--espresso);">Celebration vibe</button>
+        </div>
+
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          <input id="bookingAiChatInput" type="text" placeholder="Ask about table choice, timing, or booking tips..." style="flex:1;border:1px solid rgba(184,135,42,.22);border-radius:999px;padding:.55rem .9rem;background:#fff;">
+          <button type="button" id="bookingAiChatSend" class="btn-secondary" style="padding:.5rem .9rem;min-width:92px;display:inline-flex;justify-content:center;">Ask AI</button>
+        </div>
+
+        <small class="booking-help" id="bookingAiReason">The assistant can suggest a table and explain why.</small>
+        <div id="bookingAiAlternatives" style="display:none;gap:.45rem;"></div>
+      </section>
+    </aside>
+    </div>
   </div>
+</div>
+
+<div id="floatingAiAssistant" style="position:fixed;right:18px;bottom:22px;z-index:12000;display:grid;gap:.6rem;justify-items:end;">
+  <div id="floatingAiPanel" style="width:min(360px,calc(100vw - 24px));max-height:min(520px,72vh);background:rgba(255,255,255,.98);border:1px solid rgba(184,135,42,.24);border-radius:18px;box-shadow:0 16px 40px rgba(26,18,8,.2);padding:.8rem;display:none;grid-template-rows:auto 1fr auto;gap:.65rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:.7rem;">
+      <div style="display:grid;gap:.1rem;">
+        <strong style="font-size:.9rem;color:var(--espresso);">BIG 4 AI Assistant</strong>
+        <span style="font-size:.74rem;color:var(--text-2);">Menu, reservations, delivery, and smart booking help.</span>
+      </div>
+      <button type="button" id="floatingAiClose" style="border:0;background:transparent;color:var(--text-2);font-size:1.2rem;line-height:1;cursor:pointer;">&times;</button>
+    </div>
+
+    <div id="floatingAiLog" aria-live="polite" style="overflow:auto;max-height:320px;display:grid;gap:.45rem;padding-right:.2rem;"></div>
+
+    <div style="display:grid;gap:.45rem;">
+      <div style="display:flex;flex-wrap:wrap;gap:.35rem;">
+        <button type="button" class="floating-ai-quick" data-question="Help me reserve a table" style="border:1px solid rgba(184,135,42,.28);background:#fff;border-radius:999px;padding:.2rem .5rem;font-size:.7rem;color:var(--espresso);">Reserve table</button>
+        <button type="button" class="floating-ai-quick" data-question="Show me menu highlights" style="border:1px solid rgba(184,135,42,.28);background:#fff;border-radius:999px;padding:.2rem .5rem;font-size:.7rem;color:var(--espresso);">Menu picks</button>
+        <button type="button" class="floating-ai-quick" data-question="How does delivery work?" style="border:1px solid rgba(184,135,42,.28);background:#fff;border-radius:999px;padding:.2rem .5rem;font-size:.7rem;color:var(--espresso);">Delivery</button>
+      </div>
+
+      <div style="display:flex;gap:.45rem;align-items:center;">
+        <input id="floatingAiInput" type="text" placeholder="Ask anything..." style="flex:1;border:1px solid rgba(184,135,42,.22);border-radius:999px;padding:.55rem .85rem;background:#fff;">
+        <button type="button" id="floatingAiSend" class="btn-secondary" style="padding:.48rem .8rem;min-width:88px;display:inline-flex;justify-content:center;">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" id="floatingAiToggle" style="border:0;border-radius:999px;padding:.68rem 1rem;background:linear-gradient(135deg,#b8872a,#9a6f1f);color:#fff;font-weight:600;font-size:.82rem;box-shadow:0 10px 26px rgba(44,26,14,.3);cursor:pointer;">AI Concierge</button>
 </div>
 
   <!-- PROFILE POPUP -->
@@ -986,6 +1052,143 @@
     }, 3000);
   }
 
+  const floatingAiPanel = document.getElementById('floatingAiPanel');
+  const floatingAiToggle = document.getElementById('floatingAiToggle');
+  const floatingAiClose = document.getElementById('floatingAiClose');
+  const floatingAiLog = document.getElementById('floatingAiLog');
+  const floatingAiInput = document.getElementById('floatingAiInput');
+  const floatingAiSend = document.getElementById('floatingAiSend');
+  const floatingAiQuickButtons = Array.from(document.querySelectorAll('.floating-ai-quick'));
+
+  function appendFloatingAiMessage(role, text) {
+    if (!floatingAiLog || !text) {
+      return;
+    }
+
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
+
+    const bubble = document.createElement('div');
+    bubble.style.maxWidth = '90%';
+    bubble.style.padding = '.48rem .68rem';
+    bubble.style.borderRadius = '12px';
+    bubble.style.fontSize = '.79rem';
+    bubble.style.lineHeight = '1.35';
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.style.background = role === 'user' ? 'linear-gradient(135deg,#b8872a,#9a6f1f)' : 'rgba(245,240,231,.95)';
+    bubble.style.color = role === 'user' ? '#fff' : 'var(--espresso)';
+    bubble.style.border = role === 'user' ? 'none' : '1px solid rgba(184,135,42,.2)';
+    bubble.textContent = text;
+
+    row.appendChild(bubble);
+    floatingAiLog.appendChild(row);
+    floatingAiLog.scrollTop = floatingAiLog.scrollHeight;
+  }
+
+  function setFloatingAiBusy(isBusy) {
+    if (floatingAiSend) {
+      floatingAiSend.disabled = isBusy;
+      floatingAiSend.textContent = isBusy ? 'Thinking...' : 'Send';
+    }
+  }
+
+  function openFloatingAi() {
+    if (!floatingAiPanel) {
+      return;
+    }
+
+    floatingAiPanel.style.display = 'grid';
+    if (floatingAiToggle) {
+      floatingAiToggle.style.display = 'none';
+    }
+  }
+
+  function closeFloatingAi() {
+    if (!floatingAiPanel) {
+      return;
+    }
+
+    floatingAiPanel.style.display = 'none';
+    if (floatingAiToggle) {
+      floatingAiToggle.style.display = 'inline-flex';
+    }
+  }
+
+  async function askFloatingAssistant(question) {
+    const text = String(question || '').trim();
+    if (!text) {
+      return;
+    }
+
+    appendFloatingAiMessage('user', text);
+    setFloatingAiBusy(true);
+
+    try {
+      const res = await fetch('{{ path("app_ai_bot_ask") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: text }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        appendFloatingAiMessage('assistant', data.message || 'I could not respond right now.');
+        return;
+      }
+
+      appendFloatingAiMessage('assistant', String(data.answer || 'How else can I help you?'));
+    } catch (err) {
+      appendFloatingAiMessage('assistant', 'I am temporarily unavailable. Please try again in a moment.');
+    } finally {
+      setFloatingAiBusy(false);
+    }
+  }
+
+  if (floatingAiToggle) {
+    floatingAiToggle.addEventListener('click', function() {
+      openFloatingAi();
+      if (floatingAiInput) {
+        floatingAiInput.focus();
+      }
+    });
+  }
+
+  if (floatingAiClose) {
+    floatingAiClose.addEventListener('click', closeFloatingAi);
+  }
+
+  if (floatingAiSend) {
+    floatingAiSend.addEventListener('click', async function() {
+      const question = floatingAiInput?.value || '';
+      if (floatingAiInput) {
+        floatingAiInput.value = '';
+      }
+      await askFloatingAssistant(question);
+    });
+  }
+
+  if (floatingAiInput) {
+    floatingAiInput.addEventListener('keydown', async function(event) {
+      if (event.key !== 'Enter') {
+        return;
+      }
+
+      event.preventDefault();
+      const question = floatingAiInput.value || '';
+      floatingAiInput.value = '';
+      await askFloatingAssistant(question);
+    });
+  }
+
+  floatingAiQuickButtons.forEach(button => {
+    button.addEventListener('click', async function() {
+      await askFloatingAssistant(this.dataset.question || 'Help me with my booking');
+    });
+  });
+
+  appendFloatingAiMessage('assistant', 'Welcome to BIG 4. I can help with menu picks, bookings, delivery, and timing tips.');
+
   document.getElementById('openBooking').addEventListener('click', openBookingPopup);
   document.getElementById('openBooking2').addEventListener('click', openBookingPopup);
   document.getElementById('closeBooking').addEventListener('click', closeBookingPopup);
@@ -999,6 +1202,10 @@
   const bookingOccasion = document.getElementById('booking_occasion');
   const bookingMobility = document.getElementById('booking_mobility');
   const bookingAutoAssignBtn = document.getElementById('bookingAutoAssignBtn');
+  const bookingAiChatLog = document.getElementById('bookingAiChatLog');
+  const bookingAiChatInput = document.getElementById('bookingAiChatInput');
+  const bookingAiChatSend = document.getElementById('bookingAiChatSend');
+  const bookingAiQuickButtons = Array.from(document.querySelectorAll('.booking-ai-quick'));
   const bookingAiReason = document.getElementById('bookingAiReason');
   const bookingAiAlternatives = document.getElementById('bookingAiAlternatives');
   const bookingSubmitBtn = document.getElementById('bookingSubmitBtn');
@@ -1008,6 +1215,7 @@
   const bookingSummaryDate = document.getElementById('bookingSummaryDate');
   const bookingSummaryTime = document.getElementById('bookingSummaryTime');
   const bookingSummaryGuests = document.getElementById('bookingSummaryGuests');
+  const bookingWeatherState = document.getElementById('bookingWeatherState');
   const bookingSlotButtons = Array.from(document.querySelectorAll('.booking-slot-btn'));
 
   function getSelectedTableCapacity() {
@@ -1141,6 +1349,98 @@
     bookingSummaryGuests.textContent = guests;
   }
 
+  async function refreshReservationWeatherState() {
+    if (!bookingWeatherState) {
+      return;
+    }
+
+    function getWeatherIcon(state) {
+      const normalized = String(state || '').toLowerCase();
+
+      if (normalized === 'clear') return '☀';
+      if (normalized === 'partly cloudy') return '⛅';
+      if (normalized === 'cloudy') return '☁';
+      if (normalized === 'foggy') return '🌫';
+      if (normalized === 'drizzle') return '🌦';
+      if (normalized === 'rainy') return '🌧';
+      if (normalized === 'snowy') return '❄';
+      if (normalized === 'stormy') return '⛈';
+
+      return '•';
+    }
+
+    function setWeatherStateStyle(state) {
+      const normalized = String(state || '').toLowerCase();
+      const stylesByState = {
+        clear: { color: '#2e9e6a', background: 'rgba(46,158,106,.10)', border: 'rgba(46,158,106,.25)' },
+        'partly cloudy': { color: '#7a5f2f', background: 'rgba(184,135,42,.12)', border: 'rgba(184,135,42,.24)' },
+        cloudy: { color: '#566175', background: 'rgba(86,97,117,.10)', border: 'rgba(86,97,117,.24)' },
+        foggy: { color: '#6f7180', background: 'rgba(111,113,128,.12)', border: 'rgba(111,113,128,.25)' },
+        drizzle: { color: '#246a8c', background: 'rgba(36,106,140,.12)', border: 'rgba(36,106,140,.26)' },
+        rainy: { color: '#1f6fb0', background: 'rgba(31,111,176,.12)', border: 'rgba(31,111,176,.25)' },
+        snowy: { color: '#3c5f94', background: 'rgba(60,95,148,.12)', border: 'rgba(60,95,148,.25)' },
+        stormy: { color: '#9b2f2f', background: 'rgba(185,67,67,.12)', border: 'rgba(185,67,67,.27)' },
+        uncertain: { color: '#7b6b52', background: 'rgba(123,107,82,.10)', border: 'rgba(123,107,82,.23)' },
+      };
+
+      const style = stylesByState[normalized] || {
+        color: 'var(--text-2)',
+        background: 'rgba(184,135,42,.08)',
+        border: 'rgba(184,135,42,.22)',
+      };
+
+      bookingWeatherState.style.display = 'inline-flex';
+      bookingWeatherState.style.alignItems = 'center';
+      bookingWeatherState.style.width = 'fit-content';
+      bookingWeatherState.style.marginTop = '.45rem';
+      bookingWeatherState.style.padding = '.22rem .55rem';
+      bookingWeatherState.style.borderRadius = '999px';
+      bookingWeatherState.style.border = `1px solid ${style.border}`;
+      bookingWeatherState.style.background = style.background;
+      bookingWeatherState.style.color = style.color;
+      bookingWeatherState.style.fontWeight = '600';
+      bookingWeatherState.style.fontSize = '.74rem';
+      bookingWeatherState.style.lineHeight = '1.3';
+    }
+
+    if (!bookingDate.value) {
+      bookingWeatherState.textContent = `${getWeatherIcon('uncertain')} Weather forecast will appear after choosing a date.`;
+      setWeatherStateStyle('uncertain');
+      return;
+    }
+
+    bookingWeatherState.textContent = `${getWeatherIcon('uncertain')} Loading weather forecast...`;
+    setWeatherStateStyle('uncertain');
+
+    try {
+      const url = new URL('{{ path("app_reservation_weather_day") }}', window.location.origin);
+      url.searchParams.set('date', bookingDate.value);
+
+      const res = await fetch(url.toString(), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.weather) {
+        bookingWeatherState.textContent = `${getWeatherIcon('uncertain')} Weather forecast unavailable for this date.`;
+        setWeatherStateStyle('uncertain');
+        return;
+      }
+
+      const forecast = data.weather;
+      const min = typeof forecast.temperature_min === 'number' ? `${Math.round(forecast.temperature_min)}C` : '--';
+      const max = typeof forecast.temperature_max === 'number' ? `${Math.round(forecast.temperature_max)}C` : '--';
+      const rain = typeof forecast.precipitation_probability === 'number' ? `${forecast.precipitation_probability}% rain chance` : 'rain chance unavailable';
+
+      bookingWeatherState.textContent = `${getWeatherIcon(forecast.state)} ${forecast.state}: ${forecast.description}. ${min} to ${max}, ${rain}.`;
+      setWeatherStateStyle(forecast.state || 'uncertain');
+    } catch (err) {
+      bookingWeatherState.textContent = `${getWeatherIcon('uncertain')} Weather forecast unavailable for this date.`;
+      setWeatherStateStyle('uncertain');
+    }
+  }
+
   bookingTable.addEventListener('change', function() {
     syncGuestOptions();
     updateBookingSummary();
@@ -1156,6 +1456,7 @@
     syncTimeConstraints();
     syncTimeSlotState();
     updateBookingSummary();
+    refreshReservationWeatherState();
   });
 
   bookingTime.addEventListener('input', function() {
@@ -1179,6 +1480,7 @@
   syncGuestOptions();
   syncTimeSlotState();
   updateBookingSummary();
+  refreshReservationWeatherState();
 
   function showBookingMsg(form, text, isError) {
     document.getElementById('bookingMsg')?.remove();
@@ -1196,6 +1498,92 @@
     }
     msg.textContent = text;
     form.insertAdjacentElement('beforebegin', msg);
+  }
+
+  function pushBookingChatMessage(role, text) {
+    if (!bookingAiChatLog || !text) {
+      return;
+    }
+
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
+
+    const bubble = document.createElement('div');
+    bubble.style.maxWidth = '88%';
+    bubble.style.padding = '.45rem .65rem';
+    bubble.style.borderRadius = '12px';
+    bubble.style.fontSize = '.8rem';
+    bubble.style.lineHeight = '1.35';
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.style.background = role === 'user' ? 'linear-gradient(135deg,#b8872a,#9a6f1f)' : 'rgba(245,240,231,.96)';
+    bubble.style.color = role === 'user' ? '#fff' : 'var(--espresso)';
+    bubble.style.border = role === 'user' ? 'none' : '1px solid rgba(184,135,42,.2)';
+    bubble.textContent = text;
+
+    row.appendChild(bubble);
+    bookingAiChatLog.appendChild(row);
+    bookingAiChatLog.scrollTop = bookingAiChatLog.scrollHeight;
+  }
+
+  function buildBookingAiContext() {
+    const guests = bookingGuests?.value ? `${bookingGuests.value} guest${bookingGuests.value === '1' ? '' : 's'}` : 'not selected';
+    const occasion = bookingOccasion?.value || 'no specific occasion';
+    const mobility = bookingMobility?.checked ? 'mobility-friendly seating required' : 'no mobility requirement';
+    const date = bookingDate?.value || 'not selected';
+    const time = bookingTime?.value || 'not selected';
+
+    return `Booking context: date ${date}, time ${time}, party ${guests}, occasion ${occasion}, ${mobility}.`;
+  }
+
+  async function askBookingAssistant(question) {
+    const text = String(question || '').trim();
+    if (!text) {
+      return;
+    }
+
+    pushBookingChatMessage('user', text);
+
+    const shouldRunSmartMatch = /(best\s*table|assign|smart\s*match|recommend\s*table|choose\s*table)/i.test(text);
+    if (shouldRunSmartMatch) {
+      const matched = await runSmartMatch(true);
+      if (matched) {
+        pushBookingChatMessage('assistant', bookingAiReason?.textContent || 'I found a strong table match for your booking.');
+      } else {
+        pushBookingChatMessage('assistant', 'I could not assign a table with the current inputs. Please set date, time, and guests, then ask again.');
+      }
+      return;
+    }
+
+    if (bookingAiChatSend) {
+      bookingAiChatSend.disabled = true;
+      bookingAiChatSend.textContent = 'Thinking...';
+    }
+
+    try {
+      const res = await fetch('{{ path("app_ai_bot_ask") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: `${text}\n${buildBookingAiContext()}`,
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        pushBookingChatMessage('assistant', data.message || 'I was unable to answer right now. Please try again.');
+        return;
+      }
+
+      pushBookingChatMessage('assistant', String(data.answer || 'I can help with table selection, timing, and reservation tips.'));
+    } catch (err) {
+      pushBookingChatMessage('assistant', 'AI assistant is temporarily unavailable. You can still complete booking manually.');
+    } finally {
+      if (bookingAiChatSend) {
+        bookingAiChatSend.disabled = false;
+        bookingAiChatSend.textContent = 'Ask AI';
+      }
+    }
   }
 
   async function runSmartMatch(showSuccessMessage = true) {
@@ -1309,6 +1697,37 @@
     });
   }
 
+  if (bookingAiChatSend) {
+    bookingAiChatSend.addEventListener('click', async function() {
+      const question = bookingAiChatInput?.value || '';
+      if (bookingAiChatInput) {
+        bookingAiChatInput.value = '';
+      }
+      await askBookingAssistant(question);
+    });
+  }
+
+  if (bookingAiChatInput) {
+    bookingAiChatInput.addEventListener('keydown', async function(event) {
+      if (event.key !== 'Enter') {
+        return;
+      }
+
+      event.preventDefault();
+      const question = bookingAiChatInput.value || '';
+      bookingAiChatInput.value = '';
+      await askBookingAssistant(question);
+    });
+  }
+
+  bookingAiQuickButtons.forEach(button => {
+    button.addEventListener('click', async function() {
+      await askBookingAssistant(this.dataset.question || 'Recommend a table for me');
+    });
+  });
+
+  pushBookingChatMessage('assistant', 'Hello. I can help you pick the best table, suggest times, or explain your Smart Match options.');
+
   bookingForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -1371,6 +1790,7 @@
         syncTimeConstraints();
         syncTimeSlotState();
         updateBookingSummary();
+        refreshReservationWeatherState();
         setTimeout(closeBookingPopup, 2500);
       } else {
         showBookingMsg(this, data.error || 'Something went wrong. Please try again.', true);
@@ -1419,22 +1839,6 @@
     const data = await response.json();
     if (!response.ok || !data.success || !data.checkoutUrl) {
       throw new Error(data.message || 'Payment session could not be created.');
-    }
-
-    const paymentSummary = data.paymentSummary || null;
-    if (paymentSummary && paymentSummary.requiresConversion) {
-      const continueToStripe = window.confirm([
-        `Original total: ${paymentSummary.displayAmountWithCurrency}`,
-        `Card charge on Stripe: ${paymentSummary.chargeAmountWithCurrency}`,
-        '',
-        paymentSummary.notice,
-        '',
-        'Do you want to continue to payment?'
-      ].join('\n'));
-
-      if (!continueToStripe) {
-        return;
-      }
     }
 
     window.location.href = data.checkoutUrl;

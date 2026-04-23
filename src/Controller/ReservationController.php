@@ -6,6 +6,8 @@ use App\Entity\Reservation;
 use App\Entity\RestaurantTable;
 use App\Repository\ReservationRepository;
 use App\Repository\RestaurantTableRepository;
+use App\Repository\User1Repository;
+use App\Service\ReservationWeatherService;
 use App\Service\SmartTableMatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -43,6 +45,7 @@ final class ReservationController extends AbstractController
         EntityManagerInterface $em,
         RestaurantTableRepository $tableRepo,
         ReservationRepository $reservationRepo,
+        User1Repository $user1Repository,
         SmartTableMatcher $smartTableMatcher,
     ): Response
     {
@@ -126,7 +129,13 @@ final class ReservationController extends AbstractController
             ], 400);
         }
 
-        $clientId = (int) $request->getSession()->get('user_id', 0);
+        $clientId = $this->resolveReservationClientId($request, $user1Repository);
+        if ($clientId === null) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Reservation profile not found. Please re-login or contact support.',
+            ], 400);
+        }
 
         try {
             $reservation = new Reservation();
@@ -146,6 +155,35 @@ final class ReservationController extends AbstractController
         } catch (\Exception $e) {
             return $this->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+
+    private function resolveReservationClientId(Request $request, User1Repository $user1Repository): ?int
+    {
+        $session = $request->getSession();
+
+        $sessionUserId = (int) $session->get('user_id', 0);
+        if ($sessionUserId > 0) {
+            $legacyById = $user1Repository->find($sessionUserId);
+            if ($legacyById !== null && $legacyById->getId() !== null) {
+                return (int) $legacyById->getId();
+            }
+        }
+
+        $sessionEmail = strtolower(trim((string) $session->get('user_email', '')));
+        if ($sessionEmail !== '') {
+            $legacyByEmail = $user1Repository->createQueryBuilder('u')
+                ->andWhere('LOWER(u.email) = :email')
+                ->setParameter('email', $sessionEmail)
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult();
+
+            if ($legacyByEmail !== null && $legacyByEmail->getId() !== null) {
+                return (int) $legacyByEmail->getId();
+            }
+        }
+
+        return null;
     }
 
     #[Route('/smart-match', name: 'app_reservation_smart_match', methods: ['POST'])]
@@ -228,6 +266,33 @@ final class ReservationController extends AbstractController
             'explanation' => implode(' ', array_slice($recommendation['reasons'], 0, 2)),
             'alternatives' => $alternatives,
             'weather' => $weatherContext,
+        ]);
+    }
+
+    #[Route('/weather/day', name: 'app_reservation_weather_day', methods: ['GET'])]
+    public function weatherDay(Request $request, ReservationWeatherService $reservationWeatherService): Response
+    {
+        $dateInput = trim((string) $request->query->get('date', ''));
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $dateInput);
+
+        if (!$date || $dateInput === '') {
+            return $this->json([
+                'success' => false,
+                'error' => 'Please provide a valid date in Y-m-d format.',
+            ], 400);
+        }
+
+        $weather = $reservationWeatherService->getDailyState($date);
+        if ($weather === null) {
+            return $this->json([
+                'success' => false,
+                'error' => 'Weather forecast is unavailable for that day.',
+            ], 404);
+        }
+
+        return $this->json([
+            'success' => true,
+            'weather' => $weather,
         ]);
     }
 

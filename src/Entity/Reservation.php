@@ -35,8 +35,7 @@ class Reservation
 
     #[ORM\Column(name: 'number_of_guests', type: 'integer')]
     #[Assert\NotBlank(message: 'Number of guests is required')]
-    #[Assert\Min(value: 1, message: 'Must have at least 1 guest')]
-    #[Assert\Max(value: 8, message: 'Cannot exceed 8 guests')]
+    #[Assert\Range(min: 1, max: 8, notInRangeMessage: 'Number of guests must be between {{ min }} and {{ max }}.')]
     private int $numberOfGuests;
 
     #[ORM\Column(type: 'string')]

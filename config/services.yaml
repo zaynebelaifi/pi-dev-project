@@ -36,6 +36,11 @@ services:
             $endpoint: '%env(string:FREE_CHAT_API_URL)%'
             $timeout: '%env(int:FREE_CHAT_TIMEOUT)%'
 
+    App\Service\ReservationWeatherService:
+        arguments:
+            $latitude: '%env(float:WEATHER_LATITUDE)%'
+            $longitude: '%env(float:WEATHER_LONGITUDE)%'
+
     App\Service\PaymentConfirmationMailer:
         arguments:
             $smtpHost: '%env(string:PHPMAILER_SMTP_HOST)%'
@@ -52,5 +57,16 @@ services:
             $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
             $fromNumber: '%env(string:TWILIO_FROM_NUMBER)%'
 
+    App\Service\TwilioSmsService:
+        arguments:
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $fromNumber: '%env(string:TWILIO_FROM_NUMBER)%'
+
+    App\Service\WhatsAppApiService:
+        arguments:
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $fromNumber: '%env(string:TWILIO_WHATSAPP_FROM)%'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
