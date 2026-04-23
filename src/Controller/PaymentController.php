@@ -9,6 +9,7 @@ use App\Repository\User1Repository;
 use App\Repository\UserRepository;
 use App\Service\PaymentConfirmationMailer;
 use App\Service\StripeCheckoutService;
+use App\Service\TwilioVoiceConfirmationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -76,6 +77,7 @@ final class PaymentController extends AbstractController
         UserRepository $userRepository,
         User1Repository $user1Repository,
         PaymentConfirmationMailer $paymentConfirmationMailer,
+        TwilioVoiceConfirmationService $twilioVoiceConfirmationService,
     ): Response
     {
         $sessionId = (string) $request->query->get('session_id', '');
@@ -90,6 +92,7 @@ final class PaymentController extends AbstractController
         }
 
         $recipientEmail = $this->resolveRecipientEmail($order->getClientId(), $userRepository, $user1Repository, (string) $session->get('user_email', ''));
+        $recipientPhone = $this->resolveRecipientPhone($order->getClientId(), $userRepository, (string) $session->get('client_phone', ''));
         $recipientName = trim((string) $session->get('user_name', ''));
 
         if ($recipientEmail !== '') {
@@ -104,6 +107,20 @@ final class PaymentController extends AbstractController
             }
         } else {
             $this->addFlash('error', 'Payment was successful, but no customer email address was available for the confirmation message.');
+        }
+
+        if ($recipientPhone !== '') {
+            $alreadySentVoiceKey = sprintf('payment_voice_confirmation_sent_%d', $orderId);
+            if (!$session->get($alreadySentVoiceKey, false)) {
+                try {
+                    $twilioVoiceConfirmationService->sendPaymentConfirmationCall($order, $recipientPhone, $recipientName);
+                    $session->set($alreadySentVoiceKey, true);
+                } catch (\Throwable $e) {
+                    $this->addFlash('error', 'Payment was successful, but the voice confirmation call could not be sent: ' . $e->getMessage());
+                }
+            }
+        } else {
+            $this->addFlash('error', 'Payment was successful, but no customer phone number was available for the voice confirmation call.');
         }
 
         $message = 'Payment completed successfully.';
@@ -143,5 +160,20 @@ final class PaymentController extends AbstractController
         }
 
         return trim($sessionEmail);
+    }
+
+    private function resolveRecipientPhone(
+        ?int $clientId,
+        UserRepository $userRepository,
+        string $sessionPhone,
+    ): string {
+        if ($clientId !== null && $clientId > 0) {
+            $user = $userRepository->find($clientId);
+            if ($user instanceof User && trim((string) $user->getPhone()) !== '') {
+                return trim((string) $user->getPhone());
+            }
+        }
+
+        return trim($sessionPhone);
     }
 }
