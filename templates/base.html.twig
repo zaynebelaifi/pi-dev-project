@@ -147,7 +147,7 @@
     <div class="container">
       <div class="section-head reveal">
         <div>
-          <small>Luxury Menu</small>
+          <small>✦ Luxury Menu ✦</small>
           <h3>Signature <em>Flavours</em> of BIG 4</h3>
         </div>
         <p>A polished menu designed for coffee lovers, brunch guests, and elegant dining moments.</p>
@@ -155,8 +155,8 @@
 
       <div id="menuDynamicArea">
         {% if menuSections is defined and menuSections is not empty and selectedSection is defined and selectedSection %}
-          <div class="menu-picker-row">
-            <label for="menuPicker" class="menu-picker-label">Choose menu</label>
+          <div class="menu-picker-row" style="margin-bottom:2rem;">
+            <label for="menuPicker" class="menu-picker-label">Select Your Category</label>
             <select id="menuPicker" class="menu-picker">
               {% for section in menuSections %}
                 <option value="{{ section.menu.id }}" {{ section.menu.id == selectedMenuId ? 'selected' : '' }}>
@@ -168,9 +168,9 @@
 
           {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
           <div class="menu-section-group" data-menu-id="{{ selectedSection.menu.id }}">
-            <div style="margin:1.2rem 0 .7rem;">
-              <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">{{ selectedSection.menu.title }}</h4>
-              <p style="margin:.25rem 0 0;color:var(--text-2);">{{ selectedSection.menu.description ?: 'No description provided.' }}</p>
+            <div style="margin:2rem 0 1.2rem;">
+              <h4 style="font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:400;color:var(--espresso);margin:0;letter-spacing:.3px;">{{ selectedSection.menu.title }}</h4>
+              <p style="margin:.5rem 0 0;color:var(--text-2);font-size:.95rem;">{{ selectedSection.menu.description ?: 'No description provided.' }}</p>
             </div>
 
             <div class="menu-paged-grid" data-menu-swipe-grid>
@@ -192,13 +192,13 @@
                       {% set basePrice = dish.basePrice|number_format(2, '.', '') %}
                       <div class="menu-card-footer">
                         <span class="price js-convertible-price" data-base-price="{{ basePrice }}">{{ basePrice }} TND</span>
-                        <select class="currency-select" data-base-price="{{ basePrice }}" aria-label="Choose currency for {{ dish.name }}">
+                        <select class="currency-select" data-base-price="{{ basePrice }}" aria-label="Choose currency for {{ dish.name }}" style="padding:.5rem .6rem;font-size:.8rem;border:1px solid rgba(184,135,42,.15);border-radius:6px;background:rgba(255,255,255,.8);cursor:pointer;">
                           <option value="TND" selected>TND</option>
                           <option value="USD">USD</option>
                           <option value="EUR">EUR</option>
                           <option value="CNY">CNY</option>
                         </select>
-                        <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
+                        <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}" style="padding:.7rem 1.2rem;font-size:.85rem;white-space:nowrap;">Add</button>
                       </div>
                     </div>
                   </div>
@@ -276,6 +276,35 @@
         <div class="card reveal"><div class="number">02</div><h4>Premium Packaging</h4><p>Luxury-inspired packaging designed to keep your order elegant and intact from our lounge to your table.</p></div>
         <div class="card reveal"><div class="number">03</div><h4>Easy Ordering</h4><p>A seamless experience for coffee, desserts, and signature dishes whenever you want BIG 4 at home.</p></div>
       </div>
+    </div>
+  </section>
+
+  <!-- FEEDBACK -->
+  <section id="feedback" class="feedback-section" data-feedback-base="/feedback">
+    <div class="container">
+      <div class="section-head reveal">
+        <div><small>Guest Voices</small><h3>AI-Verified <em>Testimonials</em></h3></div>
+        <p>Every review is analyzed by our AI feedback system to highlight standout experiences and flag support needs instantly.</p>
+      </div>
+      <div class="feedback-toolbar">
+        <div class="feedback-toggle">
+          <button class="feedback-toggle-btn active" data-view="testimonials">⭐ Testimonials</button>
+        </div>
+        <div class="feedback-filters">
+          <button class="feedback-filter active" data-filter="all">All</button>
+          <button class="feedback-filter" data-filter="5">5 Stars</button>
+          <button class="feedback-filter" data-filter="4">4 Stars</button>
+          <button class="feedback-filter" data-filter="fast">Fast Delivery</button>
+          <button class="feedback-filter" data-filter="packaging">Great Packaging</button>
+        </div>
+        <div class="feedback-filters" id="feedbackPager" style="margin-left:auto;">
+          <button class="feedback-filter" id="feedbackPrev">Prev</button>
+          <span id="feedbackPageLabel" style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);padding:.65rem .8rem;">Page 1</span>
+          <button class="feedback-filter" id="feedbackNext">Next</button>
+        </div>
+      </div>
+      <div class="feedback-grid" id="feedbackGrid"></div>
+      <div class="feedback-empty" id="feedbackEmpty">No feedback entries match your filters yet.</div>
     </div>
   </section>
 
@@ -563,6 +592,60 @@
 
   <!-- DELIVERY FORM MODAL -->
   <style>
+    .feedback-section{ background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(244,237,225,.9)); }
+    .feedback-toolbar{ display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between; margin-bottom:2rem; }
+    .feedback-toggle, .feedback-filters{ display:flex; flex-wrap:wrap; gap:.6rem; }
+    .feedback-toggle-btn, .feedback-filter{
+      border:1px solid rgba(184,135,42,.2);
+      background:rgba(255,255,255,.85);
+      padding:.65rem 1.1rem;
+      border-radius:999px;
+      font-size:.72rem;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--brown);
+      cursor:pointer;
+      transition:.25s ease;
+      font-weight:600;
+    }
+    .feedback-toggle-btn.active, .feedback-filter.active{
+      background:linear-gradient(180deg,#e7bd63 0%, #d8a84a 50%, #b8872a 100%);
+      color:#fff;
+      border-color:rgba(255,255,255,.4);
+      box-shadow:0 10px 0 #8f651d,0 18px 30px rgba(184,135,42,.25);
+    }
+    .feedback-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1.4rem; }
+    .feedback-card{
+      background:rgba(255,255,255,.96);
+      border:1px solid rgba(184,135,42,.16);
+      border-radius:26px;
+      padding:1.6rem;
+      box-shadow:0 16px 34px rgba(92,61,30,.10);
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+      position:relative;
+    }
+    .feedback-card::after{ content:''; position:absolute; inset:10px; border:1px solid rgba(184,135,42,.08); border-radius:20px; pointer-events:none; }
+    .feedback-header{ display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+    .feedback-user{ display:flex; align-items:center; gap:.75rem; }
+    .feedback-avatar{
+      width:44px; height:44px; border-radius:50%;
+      background:linear-gradient(135deg, rgba(184,135,42,.35), rgba(255,255,255,.7));
+      display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--brown);
+      box-shadow:0 10px 22px rgba(184,135,42,.18);
+    }
+    .feedback-name{ font-weight:700; color:var(--espresso); }
+    .feedback-stars{ color:var(--gold); font-size:.9rem; letter-spacing:.12em; }
+    .feedback-badge{ display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .8rem; border-radius:999px; background:rgba(47,127,79,.14); color:#2f7f4f; font-size:.7rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+    .feedback-summary{ color:var(--text-2); font-size:1rem; line-height:1.7; font-weight:600; }
+    .feedback-review{ color:var(--text-3); line-height:1.8; }
+    .feedback-tags{ display:flex; flex-wrap:wrap; gap:.4rem; }
+    .feedback-pill{ padding:.35rem .7rem; border-radius:999px; background:rgba(184,135,42,.12); color:var(--brown); font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; }
+    .support-card{ border-left:4px solid #c04a3a; }
+    .feedback-meta{ display:flex; gap:.6rem; flex-wrap:wrap; font-size:.75rem; color:var(--text-3); }
+    .feedback-empty{ text-align:center; color:var(--text-3); margin-top:1.5rem; display:none; }
+
     .delivery-modal-overlay {
       display: none;
       position: fixed;
@@ -790,6 +873,10 @@
       .delivery-modal-actions {
         grid-template-columns: 1fr;
       }
+    }
+
+    @media (max-width:1080px){
+      .feedback-grid{ grid-template-columns:1fr; }
     }
   </style>
   <div id="deliveryFormModal" class="delivery-modal-overlay">
@@ -1635,6 +1722,156 @@
 
   function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
   window.removeFromCart = removeFromCart;
+
+  // ── FEEDBACK WIDGET ──────────────────────────────────────
+  const feedbackSection = document.getElementById('feedback');
+  const API_BASE = feedbackSection?.dataset.feedbackBase || '';
+  const feedbackGrid = document.getElementById('feedbackGrid');
+  const feedbackEmpty = document.getElementById('feedbackEmpty');
+  const filterButtons = document.querySelectorAll('.feedback-filter');
+  const toggleButtons = document.querySelectorAll('.feedback-toggle-btn');
+  const feedbackPager = document.getElementById('feedbackPager');
+  const feedbackPrev = document.getElementById('feedbackPrev');
+  const feedbackNext = document.getElementById('feedbackNext');
+  const feedbackPageLabel = document.getElementById('feedbackPageLabel');
+
+  const mockTestimonials = [
+    { id: 1, customer_name: 'Amira', review_text: 'Super fast delivery and elegant packaging.', summary: 'Fast delivery with premium presentation.', rating: 5, created_at: '2026-04-12T12:10:00' },
+    { id: 2, customer_name: 'Zayd', review_text: 'Coffee arrived hot and beautifully boxed.', summary: 'Warm coffee and beautiful boxing.', rating: 5, created_at: '2026-04-10T17:42:00' },
+    { id: 3, customer_name: 'Salma', review_text: 'Quick service with a smooth handoff.', summary: 'Efficient handoff and quick service.', rating: 4, created_at: '2026-04-08T09:15:00' }
+  ];
+
+  const feedbackState = {
+    view: 'testimonials',
+    filter: 'all',
+    page: 1,
+    pageSize: 3,
+    testimonials: [],
+    support: []
+  };
+
+  function starLine(rating){
+    const value = Math.max(1, Math.min(5, rating || 5));
+    return '★'.repeat(value) + '☆'.repeat(5 - value);
+  }
+
+  function tagMatches(item, filter){
+    if (filter === 'all') return true;
+    if (filter === '5') return (item.rating || 0) >= 5;
+    if (filter === '4') return (item.rating || 0) === 4;
+    const text = `${item.summary || ''} ${item.review_text || ''}`.toLowerCase();
+    if (filter === 'fast') return text.includes('fast') || text.includes('quick');
+    if (filter === 'packaging') return text.includes('package') || text.includes('boxing') || text.includes('packaging');
+    return true;
+  }
+
+  function renderFeedback(){
+    if (!feedbackGrid) return;
+    feedbackGrid.innerHTML = '';
+    const items = feedbackState.testimonials;
+    const filtered = items.filter(item => tagMatches(item, feedbackState.filter));
+
+    let paged = filtered;
+    const totalPages = Math.max(1, Math.ceil(filtered.length / feedbackState.pageSize));
+    if (feedbackState.page > totalPages) {
+      feedbackState.page = totalPages;
+    }
+    const start = (feedbackState.page - 1) * feedbackState.pageSize;
+    paged = filtered.slice(start, start + feedbackState.pageSize);
+
+    if (feedbackPager) {
+      feedbackPager.style.display = 'flex';
+    }
+    if (feedbackPageLabel) {
+      feedbackPageLabel.textContent = `Page ${feedbackState.page} of ${totalPages}`;
+    }
+    if (feedbackPrev) {
+      feedbackPrev.disabled = feedbackState.page <= 1;
+    }
+    if (feedbackNext) {
+      feedbackNext.disabled = feedbackState.page >= totalPages;
+    }
+
+    if (feedbackEmpty) {
+      feedbackEmpty.style.display = paged.length ? 'none' : 'block';
+    }
+
+    paged.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'feedback-card' + (feedbackState.view === 'support' ? ' support-card' : '');
+      card.innerHTML = `
+        <div class="feedback-header">
+          <div class="feedback-user">
+            <div class="feedback-avatar">${(item.customer_name || 'G').slice(0,1)}</div>
+            <div>
+              <div class="feedback-name">${item.customer_name || 'Guest'}</div>
+              <div class="feedback-stars">${starLine(item.rating)}</div>
+            </div>
+          </div>
+          <span class="feedback-badge">AI Verified</span>
+        </div>
+        <div class="feedback-summary">${item.summary || ''}</div>
+        <div class="feedback-review">${item.review_text || ''}</div>
+        <div class="feedback-tags">
+          <span class="feedback-pill">${item.rating || 5} Stars</span>
+          <span class="feedback-pill">Verified</span>
+        </div>
+      `;
+      feedbackGrid.appendChild(card);
+    });
+  }
+
+  async function fetchJson(url, fallback){
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 1800);
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!response.ok) throw new Error('Bad response');
+      const data = await response.json();
+      return Array.isArray(data) ? data : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  async function initFeedback(){
+    const testimonialsUrl = API_BASE ? `${API_BASE}/testimonials` : '/feedback/testimonials';
+    feedbackState.testimonials = await fetchJson(testimonialsUrl, mockTestimonials);
+    renderFeedback();
+  }
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      feedbackState.filter = btn.dataset.filter || 'all';
+      feedbackState.page = 1;
+      renderFeedback();
+    });
+  });
+
+  toggleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  if (feedbackPrev) {
+    feedbackPrev.addEventListener('click', () => {
+      feedbackState.page = Math.max(1, feedbackState.page - 1);
+      renderFeedback();
+    });
+  }
+  if (feedbackNext) {
+    feedbackNext.addEventListener('click', () => {
+      feedbackState.page += 1;
+      renderFeedback();
+    });
+  }
+
+  initFeedback();
 
   // ── ORDER TYPE MODAL ───────────────────────────────────────
   const checkoutBtn = document.getElementById('checkoutBtn');

@@ -133,7 +133,11 @@ final class AdminController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        return $this->render('admin/support_queue.html.twig');
+        $feedbackBaseUrl = rtrim((string) ($_ENV['FEEDBACK_AI_BASE_URL'] ?? 'http://127.0.0.1:8001'), '/');
+
+        return $this->render('admin/support_queue.html.twig', [
+            'feedbackBaseUrl' => $feedbackBaseUrl,
+        ]);
     }
 
     #[Route('/users/{id}/ban', name: 'app_admin_user_ban', methods: ['POST'])]

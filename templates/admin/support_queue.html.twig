@@ -34,7 +34,7 @@
     </div>
   </div>
 
-  <div class="tbl-card" data-feedback-base="{{ app.request.scheme }}://{{ app.request.host }}:8001">
+  <div class="tbl-card" data-feedback-base="/feedback">
     <div class="tbl-head">
       <div class="tbl-title">AI-Routed Reviews (Neutral/Negative)</div>
     </div>
@@ -45,13 +45,12 @@
           <th>Customer</th>
           <th>Sentiment</th>
           <th>Summary</th>
-          <th>Note</th>
           <th>Time</th>
         </tr>
       </thead>
       <tbody id="supportQueueBody">
         <tr>
-          <td colspan="6" style="color:var(--text-3)">Loading support queue...</td>
+          <td colspan="5" style="color:var(--text-3)">Loading support queue...</td>
         </tr>
       </tbody>
     </table>
@@ -66,7 +65,7 @@
       const sortSelect = document.getElementById('supportQueueSort');
       if (!table || !body) return;
 
-      const apiBase = table.getAttribute('data-feedback-base') || 'http://localhost:8001';
+      const apiBase = table.getAttribute('data-feedback-base') || '';
 
       const renderEmpty = (message) => {
         body.innerHTML = '';
@@ -98,18 +97,13 @@
           const summary = document.createElement('td');
           summary.textContent = item.summary || '-';
 
-          const note = document.createElement('td');
-          note.textContent = item.support_message || '-';
-
           const time = document.createElement('td');
           const createdAt = item.created_at ? new Date(item.created_at) : null;
           time.textContent = createdAt ? createdAt.toLocaleString() : '-';
-
           row.appendChild(order);
           row.appendChild(customer);
           row.appendChild(sentiment);
           row.appendChild(summary);
-          row.appendChild(note);
           row.appendChild(time);
           body.appendChild(row);
         });
@@ -160,7 +154,8 @@
         try {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 2000);
-          const response = await fetch(`${apiBase}/support/queue`, { signal: controller.signal });
+          const supportUrl = apiBase ? `${apiBase}/support-queue` : '/feedback/support-queue';
+          const response = await fetch(supportUrl, { signal: controller.signal });
           clearTimeout(timeout);
           if (!response.ok) throw new Error('Bad response');
           const data = await response.json();

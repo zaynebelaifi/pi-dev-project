@@ -16,23 +16,28 @@
     "last 2 versions"
   ],
   "devDependencies": {
-    "@symfony/webpack-encore": "^2.1.0",
-    "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4",
-    "core-js": "^3.30.0",
-    "regenerator-runtime": "^0.13.9",
-    "babel-loader": "^9.1.3",
     "@babel/core": "^7.22.10",
     "@babel/preset-env": "^7.22.10",
+    "@symfony/webpack-encore": "^2.1.0",
+    "autoprefixer": "^10.4.14",
+    "babel-loader": "^9.1.3",
+    "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "core-js": "^3.30.0",
     "css-loader": "^6.8.1",
-    "style-loader": "^3.3.2",
+    "file-loader": "^6.2.0",
     "mini-css-extract-plugin": "^2.7.6",
+    "postcss-loader": "^7.3.3",
+    "regenerator-runtime": "^0.13.9",
     "sass": "^1.70.0",
     "sass-loader": "^13.3.2",
-    "postcss-loader": "^7.3.3",
-    "autoprefixer": "^10.4.14",
-    "file-loader": "^6.2.0",
-    "copy-webpack-plugin": "^11.0.0",
-    "clean-webpack-plugin": "^4.0.0"
+    "style-loader": "^3.3.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "express": "^5.2.1",
+    "ws": "^8.20.0"
   }
 }

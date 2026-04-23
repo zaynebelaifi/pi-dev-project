@@ -662,7 +662,7 @@
   <section id="menu-section">
     <div class="container">
       <div class="section-head reveal">
-        <div><small>Luxury Menu</small><h3>Signature <em>Flavours</em> of BIG 4</h3></div>
+        <div><small>✦ Luxury Menu ✦</small><h3>Signature <em>Flavours</em> of BIG 4</h3></div>
         <p>A polished menu designed for coffee lovers, brunch guests, and elegant dining moments.</p>
       </div>
       {% if menuSections is defined and menuSections is not empty %}
@@ -672,11 +672,11 @@
         {% endfor %}
 
         {% if totalDishes > 0 %}
-          <div style="margin:1.2rem 0 .7rem;">
-            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">Main Menu</h4>
-            <p style="margin:.25rem 0 0;color:var(--text-2);">All available dishes</p>
+          <div style="margin:2rem 0 1.2rem;">
+            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:400;color:var(--espresso);margin:0;letter-spacing:.3px;">Main Menu</h4>
+            <p style="margin:.5rem 0 0;color:var(--text-2);font-size:.95rem;">All available dishes</p>
           </div>
-          <div class="menu-grid">
+          <div class="menu-paged-grid">
             {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
             {% for section in menuSections %}
               {% if section.dishes is defined and section.dishes|length > 0 %}
@@ -691,7 +691,7 @@
                         <p class="short-desc">{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
                         <div class="menu-card-footer">
                           <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
-                          <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
+                          <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}" style="padding:.7rem 1.2rem;font-size:.85rem;white-space:nowrap;">Add</button>
                         </div>
                       </div>
                     </div>
@@ -701,12 +701,12 @@
             {% endfor %}
           </div>
 
-          <div style="margin:1.2rem 0 .7rem;">
-            <h5 style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:500;color:var(--espresso);margin:0 0 .5rem;">Categories</h5>
-            <div class="menu-categories" style="display:flex;flex-wrap:wrap;gap:.6rem">
+          <div style="margin:2rem 0 1rem;">
+            <h5 style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:400;color:var(--espresso);margin:0 0 .8rem;letter-spacing:.2px;">Browse Categories</h5>
+            <div class="menu-categories">
               {% for section in menuSections %}
                 {% if section.dishes is defined and section.dishes|length > 0 %}
-                  <a href="#menu-section" class="menu-category" style="padding:.5rem .8rem;border:1px solid rgba(184,135,42,.12);border-radius:999px;background:rgba(255,255,255,.92);color:var(--brown);text-decoration:none;font-weight:600">{{ section.menu.title }} ({{ section.dishes|length }})</a>
+                  <a href="#menu-section" class="menu-category">{{ section.menu.title }} ({{ section.dishes|length }})</a>
                 {% endif %}
               {% endfor %}
             </div>
@@ -1124,7 +1124,7 @@
     }
 
     // FEEDBACK WIDGET
-    const API_BASE = 'http://localhost:8001';
+    const API_BASE = '{{ feedbackBaseUrl|default('http://127.0.0.1:8001')|e('js') }}';
     const feedbackGrid = document.getElementById('feedbackGrid');
     const feedbackEmpty = document.getElementById('feedbackEmpty');
     const filterButtons = document.querySelectorAll('.feedback-filter');

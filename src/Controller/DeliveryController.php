@@ -18,6 +18,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[Route('/delivery')]
@@ -582,23 +584,62 @@ final class DeliveryController extends AbstractController
         ]);
     }
 
-    #[Route('/delivery/{id}/location', name: 'app_delivery_update_location', methods: ['POST'])]
-    public function updateLocation(Request $request, Delivery $delivery, EntityManagerInterface $em): Response
+    #[Route('/{id}/location', name: 'app_delivery_update_location', methods: ['GET', 'POST'])]
+    public function updateLocation(Request $request, Delivery $delivery, EntityManagerInterface $em, \Symfony\Contracts\HttpClient\HttpClientInterface $httpClient): Response
     {
+        if ($request->isMethod('GET')) {
+            return $this->json([
+                'client_latitude' => $delivery->getCurrentLatitude(),
+                'client_longitude' => $delivery->getCurrentLongitude(),
+                'driver_latitude' => $delivery->getDriverLatitude(),
+                'driver_longitude' => $delivery->getDriverLongitude(),
+            ]);
+        }
+
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+            return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+        if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
+            return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
+        }
+
         $data = json_decode($request->getContent() ?: '{}', true);
-        $lat = isset($data['lat']) ? (float)$data['lat'] : null;
-        $lon = isset($data['lon']) ? (float)$data['lon'] : null;
+        $lat = isset($data['lat']) ? (float) $data['lat'] : null;
+        $lon = isset($data['lon']) ? (float) $data['lon'] : null;
         if ($lat === null || $lon === null) {
             return $this->json(['success' => false, 'message' => 'Missing coordinates'], 400);
         }
-        $delivery->setCurrentLatitude((string)$lat);
-        $delivery->setCurrentLongitude((string)$lon);
+
+        $delivery->setDriverLatitude((string) $lat);
+        $delivery->setDriverLongitude((string) $lon);
         $em->flush();
-        return $this->json(['success' => true]);
+
+        // Try to notify WebSocket broadcast server (if running)
+        try {
+            $broadcastUrl = 'http://127.0.0.1:3001/broadcast';
+            $httpClient->request('POST', $broadcastUrl, [
+                'json' => [
+                    'delivery_id' => $delivery->getDelivery_id(),
+                    'driver_latitude' => (string) $lat,
+                    'driver_longitude' => (string) $lon,
+                ],
+                'timeout' => 1,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore broadcast failures in case WS server is not running
+        }
+
+        return $this->json([
+            'success' => true,
+            'driver_latitude' => $lat,
+            'driver_longitude' => $lon,
+        ]);
     }
 
     #[Route('/delivery/{id}/mark-delivered', name: 'app_delivery_mark_delivered', methods: ['POST'])]
-    public function markDelivered(Request $request, Delivery $delivery, EntityManagerInterface $em, MessageBusInterface $bus): Response
+    public function markDelivered(Request $request, Delivery $delivery, EntityManagerInterface $em, MessageBusInterface $bus, \Symfony\Contracts\HttpClient\HttpClientInterface $httpClient): Response
     {
         if ($delivery->getStatus() === 'DELIVERED') {
             return $this->json(['success' => false, 'message' => 'This delivery has already been marked as delivered.'], 400);
@@ -620,16 +661,59 @@ final class DeliveryController extends AbstractController
             return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
         }
 
-        $restaurantLat = 35.03244783428717;
-        $restaurantLon = 9.470642415342553;
+        // Use the client's saved coordinates (delivery current latitude/longitude) for geofence check.
+        // If missing, attempt a reverse-geocode (forward geocode) using the delivery address as a fallback.
+        $clientLat = $delivery->getCurrentLatitude();
+        $clientLon = $delivery->getCurrentLongitude();
+        if ($clientLat === null || $clientLon === null || $clientLat === '' || $clientLon === '') {
+            $address = $delivery->getDeliveryAddress();
+            if (!$address) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Client location and delivery address are missing. Cannot verify delivery proximity.',
+                ], 400);
+            }
 
-        $distance = $this->haversineDistanceMeters($lat, $lon, $restaurantLat, $restaurantLon);
+            try {
+                $url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' . urlencode($address);
+                $resp = $httpClient->request('GET', $url, [
+                    'headers' => [
+                        'User-Agent' => 'FirstProject/1.0 (+http://localhost)'
+                    ],
+                    'timeout' => 3,
+                ]);
+                $arr = $resp->toArray(false);
+                if (is_array($arr) && count($arr) > 0 && isset($arr[0]['lat']) && isset($arr[0]['lon'])) {
+                    $clientLat = (string) $arr[0]['lat'];
+                    $clientLon = (string) $arr[0]['lon'];
+                    // persist these coordinates on the delivery so future checks don't need geocoding
+                    $delivery->setCurrentLatitude($clientLat);
+                    $delivery->setCurrentLongitude($clientLon);
+                    $em->flush();
+                } else {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Could not determine client coordinates from delivery address.',
+                    ], 400);
+                }
+            } catch (\Throwable $e) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Failed to geocode delivery address: ' . $e->getMessage(),
+                ], 500);
+            }
+        }
+
+        $clientLatF = (float) $clientLat;
+        $clientLonF = (float) $clientLon;
+
+        $distance = $this->haversineDistanceMeters($lat, $lon, $clientLatF, $clientLonF);
         if ($distance > 50.0) {
             $distanceMeters = (int) round($distance);
             return $this->json([
                 'success' => false,
                 'message' => sprintf(
-                    'You must be within 50 meters of the restaurant (you are %dm away)',
+                    'You must be within 50 meters of the client delivery address (you are %dm away)',
                     $distanceMeters
                 ),
             ], 400);
@@ -682,7 +766,7 @@ final class DeliveryController extends AbstractController
         }
     }
 
-    private function assignDeliveryMan(Delivery $delivery, DeliveryManRepository $deliveryManRepository): ?DeliveryMan
+    private function assignDeliveryMan(Delivery $delivery, DeliveryManRepository $deliveryManRepository, array $excludedDeliveryManIds = []): ?DeliveryMan
     {
         // Build a full ranked candidate list using AI scoring (includes busy drivers)
         $allDeliveryMen = $deliveryManRepository->findAll();
@@ -699,6 +783,9 @@ final class DeliveryController extends AbstractController
 
         $candidates = [];
         foreach ($allDeliveryMen as $dm) {
+            if (in_array((int) $dm->getId(), $excludedDeliveryManIds, true)) {
+                continue;
+            }
             try {
                 $score = $ai ? $ai->scoreDriverForDelivery($delivery, $dm) : 0.0;
             } catch (\Throwable $e) {
@@ -712,7 +799,13 @@ final class DeliveryController extends AbstractController
 
         // Find first currently available candidate, otherwise keep unassigned but pending
         $available = $deliveryManRepository->findAvailableDeliveryMen();
-        $availableIds = array_map(fn($d) => $d->getId(), $available);
+        $availableIds = array_map(
+            fn($d) => (int) $d->getId(),
+            array_filter(
+                $available,
+                fn($d) => !in_array((int) $d->getId(), $excludedDeliveryManIds, true)
+            )
+        );
 
         $assigned = null;
         $assignedIndex = null;
@@ -740,7 +833,11 @@ final class DeliveryController extends AbstractController
     private function reassignPendingDeliveriesForFreedDriver(int $freedDeliveryManId, EntityManagerInterface $entityManager, MessageBusInterface $bus): void
     {
         $repo = $entityManager->getRepository(Delivery::class);
-        $pending = $repo->findBy(['status' => 'PENDING_ASSIGNMENT']);
+        $pending = $repo->createQueryBuilder('d')
+            ->andWhere('d.status IN (:statuses)')
+            ->setParameter('statuses', ['PENDING_ASSIGNMENT', 'UNASSIGNED'])
+            ->getQuery()
+            ->getResult();
         if (empty($pending)) return;
 
         $freed = $entityManager->getRepository(DeliveryMan::class)->find($freedDeliveryManId);
@@ -748,7 +845,16 @@ final class DeliveryController extends AbstractController
 
         foreach ($pending as $delivery) {
             $candidates = $delivery->getCandidateDeliveryMen() ?? [];
-            if (!is_array($candidates) || empty($candidates)) continue;
+            if (!is_array($candidates) || empty($candidates)) {
+                /** @var DeliveryManRepository $deliveryManRepository */
+                $deliveryManRepository = $this->container->get(DeliveryManRepository::class);
+                $this->assignDeliveryMan($delivery, $deliveryManRepository);
+                $entityManager->flush();
+                $candidates = $delivery->getCandidateDeliveryMen() ?? [];
+                if (!is_array($candidates) || empty($candidates)) {
+                    continue;
+                }
+            }
 
             $currentIndex = $delivery->getCandidateIndex() ?? 0;
             $foundIndex = array_search($freedDeliveryManId, $candidates, true);
@@ -782,6 +888,47 @@ final class DeliveryController extends AbstractController
         }
     }
 
+    private function sendCancellationEmailToRecipient(
+    Delivery $delivery, 
+    UserRepository $userRepository, 
+    \Symfony\Component\Mailer\MailerInterface $mailer
+): void {
+    // 1. Resolve phone and user
+    $phone = $delivery->getRecipient_phone();
+    $user = $phone ? $userRepository->findOneByPhoneLoose((string) $phone) : null;
+
+    // 2. Extract email - if no email, we can't send anything
+    $recipientEmail = ($user && method_exists($user, 'getEmail')) ? trim((string) $user->getEmail()) : null;
+
+    if (!$recipientEmail) {
+        return; 
+    }
+
+    // 3. Prepare data for the template
+    $orderId = $delivery->getOrder_id() ?? 'N/A';
+    $recipientName = $delivery->getRecipient_name() ?? 'Customer';
+
+    // 4. Create the TemplatedEmail
+    $email = (new TemplatedEmail())
+        ->from('Zayneb.Elaifi@esprit.tn') // Use your verified sender
+        ->to($recipientEmail)
+        ->subject(sprintf('Order #%s Delivery Cancelled', $orderId))
+        ->htmlTemplate('emails/delivery_cancellation.html.twig') // Ensure this filename matches exactly
+        ->context([
+            'orderId' => $orderId,
+            'recipientName' => $recipientName,
+            // Pass the tel: link here
+            'supportUrl' => 'tel:50916717', 
+            'supportPhone' => '50916717'
+        ]);
+
+    // 5. Send
+    try {
+        $mailer->send($email);
+    } catch (\Exception $e) {
+        // If it fails, the app won't crash, it just won't send the mail
+    }
+}
     private function syncClientPhoneWithProfile(SessionInterface $session, UserRepository $userRepository, ?string $phone): void
     {
         if (!$phone || !$session->get('user_role') || $session->get('user_role') !== 'ROLE_CLIENT') {
@@ -954,7 +1101,15 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/{id}/driver-status', name: 'app_delivery_driver_status', methods: ['POST'])]
-    public function updateDriverStatus(Request $request, Delivery $delivery, EntityManagerInterface $entityManager): Response
+    public function updateDriverStatus(
+        Request $request,
+        Delivery $delivery,
+        EntityManagerInterface $entityManager,
+        MessageBusInterface $bus,
+        UserRepository $userRepository,
+        \Symfony\Component\Mailer\MailerInterface $mailer,
+        \Psr\Log\LoggerInterface $logger
+    ): Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_DELIVERY_MAN') {
             return $this->redirectToRoute('app_login');
@@ -978,7 +1133,22 @@ final class DeliveryController extends AbstractController
             $delivery->setStatus('DELIVERED');
             $delivery->setActual_delivery_date(new \DateTime());
         }
+        $delivery->setUpdated_at(new \DateTimeImmutable());
         $entityManager->flush();
+
+        if ($action === 'cancel') {
+            try {
+                $this->sendCancellationEmailToRecipient($delivery, $userRepository, $mailer);
+            } catch (\Throwable $e) {
+                $logger->warning('Failed to send cancellation email: '.$e->getMessage(), ['exception' => $e]);
+            }
+
+            try {
+                $this->reassignPendingDeliveriesForFreedDriver((int) $deliveryManId, $entityManager, $bus);
+            } catch (\Throwable $e) {
+                $logger->warning('Failed to reassign pending deliveries after cancellation: '.$e->getMessage(), ['exception' => $e]);
+            }
+        }
 
         return $this->redirectToRoute('app_driver_deliveries');
     }
@@ -1008,7 +1178,13 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/{id}/candidate/decline', name: 'app_delivery_candidate_decline', methods: ['POST'])]
-    public function declineCandidate(Request $request, Delivery $delivery, EntityManagerInterface $entityManager, MessageBusInterface $bus): Response
+    public function declineCandidate(
+        Request $request,
+        Delivery $delivery,
+        EntityManagerInterface $entityManager,
+        MessageBusInterface $bus,
+        DeliveryManRepository $deliveryManRepository
+    ): Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_DELIVERY_MAN') {
             return $this->redirectToRoute('app_login');
@@ -1027,11 +1203,9 @@ final class DeliveryController extends AbstractController
         $index = $delivery->getCandidateIndex() ?? 0;
         $index++;
         if ($index >= count($candidates)) {
-            // no more candidates
+            // No more candidates in the current list: regenerate candidates and keep pending assignment.
             $delivery->setDeliveryMan(null);
-            $delivery->setCandidateDeliveryMen(null);
-            $delivery->setCandidateIndex(null);
-            $delivery->setStatus('UNASSIGNED');
+            $this->assignDeliveryMan($delivery, $deliveryManRepository, [(int) $deliveryManId]);
             $entityManager->flush();
             return $this->redirectToRoute('app_driver_deliveries');
         }
@@ -1040,9 +1214,7 @@ final class DeliveryController extends AbstractController
         $next = $entityManager->getRepository(DeliveryMan::class)->find($nextId);
         if (!$next) {
             $delivery->setDeliveryMan(null);
-            $delivery->setCandidateDeliveryMen(null);
-            $delivery->setCandidateIndex(null);
-            $delivery->setStatus('UNASSIGNED');
+            $this->assignDeliveryMan($delivery, $deliveryManRepository, [(int) $deliveryManId]);
             $entityManager->flush();
             return $this->redirectToRoute('app_driver_deliveries');
         }
