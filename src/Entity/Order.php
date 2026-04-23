@@ -45,6 +45,10 @@ class Order
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $cart_items = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\Choice(choices: ['CASH', 'CARD'], message: 'Invalid payment method.')]
+    private ?string $payment_method = null;
+
     // ✅ camelCase getters/setters — Symfony can now find them
     public function getOrderId(): ?int { return $this->order_id; }
 
@@ -71,4 +75,7 @@ class Order
 
     public function getCartItems(): ?string { return $this->cart_items; }
     public function setCartItems(?string $cart_items): self { $this->cart_items = $cart_items; return $this; }
+
+    public function getPaymentMethod(): ?string { return $this->payment_method; }
+    public function setPaymentMethod(?string $payment_method): self { $this->payment_method = $payment_method; return $this; }
 }

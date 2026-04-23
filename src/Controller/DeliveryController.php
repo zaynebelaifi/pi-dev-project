@@ -136,6 +136,11 @@ final class DeliveryController extends AbstractController
                 $items = [];
             }
 
+            if ($items === []) {
+                $this->addFlash('error', 'Your cart is empty. Add items before ordering.');
+                return $this->redirectToRoute('app_home');
+            }
+
             $cartSummary = array_map(static function ($item) {
                 return sprintf('%s (%s TND)', $item['name'] ?? '', number_format((float) ($item['price'] ?? 0), 2, '.', ''));
             }, $items);
@@ -236,117 +241,25 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/create', name: 'app_delivery_create', methods: ['GET', 'POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session, ValidatorInterface $validator, UserRepository $userRepository): Response
-    {
-        if ($session->get('user_role') !== 'ROLE_CLIENT') {
-            return $this->redirectToRoute('app_home');
-        }
+public function create(Request $request, EntityManagerInterface $entityManager,
+    DeliveryManRepository $deliveryManRepository, SessionInterface $session,
+    UserRepository $userRepository): Response   // ← remove ValidatorInterface
+{
+    $delivery = new Delivery();
+    // pre-fill from session/user profile
+    $form = $this->createForm(DeliveryType::class, $delivery);
+    $form->handleRequest($request);
 
-        $cartItems = json_decode($request->query->get('cart_items', '[]'), true);
-        $orderTotal = $request->query->get('order_total', '0');
-
-        if ($request->isMethod('POST')) {
-            $rawCartItems = $request->request->get('cart_items', '[]');
-            $orderTotal = $request->request->get('order_total', '0');
-            $deliveryAddress = $request->request->get('delivery_address');
-            $recipientName = $request->request->get('recipient_name');
-            $recipientPhone = $request->request->get('recipient_phone');
-            $pickupLocation = $request->request->get('pickup_location');
-            $deliveryNotes = $request->request->get('delivery_notes');
-
-            $clientUser = null;
-            if ($session->get('user_role') === 'ROLE_CLIENT') {
-                $userId = $session->get('user_id');
-                if ($userId) {
-                    $clientUser = $userRepository->find($userId);
-                }
-            }
-
-            if (!$recipientPhone && $clientUser && $clientUser->getPhone()) {
-                $recipientPhone = $clientUser->getPhone();
-            }
-            if (!$recipientName && $clientUser) {
-                $recipientName = trim($clientUser->getFirstName() . ' ' . $clientUser->getLastName());
-            }
-
-            $items = json_decode($rawCartItems, true);
-            if (!is_array($items)) {
-                $items = [];
-            }
-
-            $cartSummary = array_map(static function ($item) {
-                return sprintf('%s (%s TND)', $item['name'] ?? '', number_format((float) ($item['price'] ?? 0), 2, '.', ''));
-            }, $items);
-
-            $delivery = new Delivery();
-            $delivery->setOrder_id(random_int(100000, 999999));
-            $delivery->setDelivery_address(trim((string) $deliveryAddress));
-            $delivery->setRecipient_name(trim((string) $recipientName));
-            $normalizedPhone = $this->normalizePhone(trim((string) $recipientPhone));
-            $delivery->setRecipient_phone($normalizedPhone);
-            $delivery->setPickup_location(trim((string) $pickupLocation));
-            $delivery->setDelivery_notes(trim((string) $deliveryNotes));
-            $delivery->setCart_items(implode("\n", $cartSummary));
-            $delivery->setOrder_total((string) number_format((float) $orderTotal, 2, '.', ''));
-            $delivery->setEstimated_time(30);
-            $delivery->setStatus('PENDING');
-            $delivery->setCreated_at(new \DateTime());
-            $delivery->setUpdated_at(new \DateTime());
-
-            $errors = $this->validateDelivery($delivery, $validator);
-            if (!empty($errors)) {
-                return $this->render('delivery/create.html.twig', [
-                    'cart_items' => $items,
-                    'order_total' => $orderTotal,
-                    'form_values' => [
-                        'delivery_address' => $deliveryAddress,
-                        'recipient_name' => $recipientName,
-                        'recipient_phone' => $recipientPhone,
-                        'pickup_location' => $pickupLocation,
-                        'delivery_notes' => $deliveryNotes,
-                    ],
-                    'errors' => $errors,
-                ]);
-            }
-
-            $this->assignDeliveryMan($delivery, $deliveryManRepository);
-
-            $entityManager->persist($delivery);
-            $this->syncClientPhoneWithProfile($session, $userRepository, $recipientPhone);
-            $entityManager->flush();
-
-            $session->set('client_phone', $this->normalizePhone($recipientPhone));
-            $session->set('client_name', $recipientName);
-
-            return $this->redirectToRoute('app_delivery_confirmation', ['id' => $delivery->getDelivery_id()]);
-        }
-
-        $formValues = [
-            'recipient_name' => '',
-            'recipient_phone' => '',
-        ];
-        if ($session->get('user_role') === 'ROLE_CLIENT') {
-            $formValues['recipient_name'] = $session->get('client_name') ?? '';
-            $formValues['recipient_phone'] = $this->normalizePhone($session->get('client_phone')) ?? '';
-
-            $userId = $session->get('user_id');
-            $clientUser = $userId ? $userRepository->find($userId) : null;
-            if ($clientUser) {
-                if (!$formValues['recipient_name']) {
-                    $formValues['recipient_name'] = trim($clientUser->getFirstName() . ' ' . $clientUser->getLastName());
-                }
-                if (!$formValues['recipient_phone']) {
-                    $formValues['recipient_phone'] = $this->normalizePhone($clientUser->getPhone()) ?? '';
-                }
-            }
-        }
-
-        return $this->render('delivery/create.html.twig', [
-            'cart_items' => $cartItems,
-            'order_total' => $orderTotal,
-            'form_values' => $formValues,
-        ]);
+    if ($form->isSubmitted() && $form->isValid()) {
+        // collect cart data from hidden fields, persist, redirect
     }
+
+    return $this->render('delivery/create.html.twig', [
+        'cart_items' => $cartItems,
+        'order_total' => $orderTotal,
+        'form' => $form,   // ← pass form object, not form_values array
+    ]);
+}
 
     #[Route('/save', name: 'app_delivery_save', methods: ['POST'])]
     public function save(Request $request, EntityManagerInterface $entityManager, DeliveryRepository $deliveryRepository, DeliveryManRepository $deliveryManRepository, ValidatorInterface $validator, UserRepository $userRepository, SessionInterface $session): JsonResponse

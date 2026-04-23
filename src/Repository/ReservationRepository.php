@@ -40,4 +40,65 @@ class ReservationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    public function findBookedTableIdsAt(
+        \DateTimeInterface $date,
+        \DateTimeInterface $time,
+        array $statuses = ['CONFIRMED', 'PENDING']
+    ): array {
+        $rows = $this->createQueryBuilder('r')
+            ->select('IDENTITY(r.table) AS tableId')
+            ->where('r.reservationDate = :date')
+            ->andWhere('r.reservationTime = :time')
+            ->andWhere('r.status IN (:statuses)')
+            ->setParameter('date', $date)
+            ->setParameter('time', $time)
+            ->setParameter('statuses', $statuses)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_values(array_unique(array_map(static fn (array $row) => (int) $row['tableId'], $rows)));
+    }
+
+    public function isTableBookedAt(
+        int $tableId,
+        \DateTimeInterface $date,
+        \DateTimeInterface $time,
+        array $statuses = ['CONFIRMED', 'PENDING']
+    ): bool {
+        $count = (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->where('r.table = :tableId')
+            ->andWhere('r.reservationDate = :date')
+            ->andWhere('r.reservationTime = :time')
+            ->andWhere('r.status IN (:statuses)')
+            ->setParameter('tableId', $tableId)
+            ->setParameter('date', $date)
+            ->setParameter('time', $time)
+            ->setParameter('statuses', $statuses)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count > 0;
+    }
+
+    public function getClientTablePreferenceCounts(int $clientId): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('IDENTITY(r.table) AS tableId, COUNT(r.id) AS uses')
+            ->where('r.clientId = :clientId')
+            ->andWhere('r.status = :status')
+            ->setParameter('clientId', $clientId)
+            ->setParameter('status', 'CONFIRMED')
+            ->groupBy('r.table')
+            ->getQuery()
+            ->getScalarResult();
+
+        $preferences = [];
+        foreach ($rows as $row) {
+            $preferences[(int) $row['tableId']] = (int) $row['uses'];
+        }
+
+        return $preferences;
+    }
 }
