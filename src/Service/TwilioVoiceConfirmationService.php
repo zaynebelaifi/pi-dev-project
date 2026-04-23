@@ -61,7 +61,7 @@ final class TwilioVoiceConfirmationService
         $amount = number_format((float) ($order->getTotalAmount() ?? 0), 2);
 
         return sprintf(
-            'Hello %s. This is Big Four Coffee Lounge. Your payment for order number %d, amount %s Tunisian dinars, has been confirmed. Thank you.',
+            'Hello %s. This is BIG 4 Coffee Lounge. Your payment for order number %d, amount %s Tunisian dinars, has been confirmed. Thank you.',
             $name !== '' ? $name : 'there',
             $orderId,
             $amount
