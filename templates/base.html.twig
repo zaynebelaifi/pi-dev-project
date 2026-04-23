@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=3">
+  <link rel="stylesheet" href="/styles/app.css?v=5">
 </head>
 <body>
 
@@ -147,85 +147,96 @@
     <div class="container">
       <div class="section-head reveal">
         <div>
-          <small>Luxury Menu</small>
+          <small>✦ Luxury Menu ✦</small>
           <h3>Signature <em>Flavours</em> of BIG 4</h3>
         </div>
         <p>A polished menu designed for coffee lovers, brunch guests, and elegant dining moments.</p>
       </div>
 
-      {% if menuSections is defined and menuSections is not empty %}
-        <div class="menu-picker-row">
-          <label for="menuPicker" class="menu-picker-label">Choose menu</label>
-          <select id="menuPicker" class="menu-picker">
-            {% for section in menuSections %}
-              <option value="{{ section.menu.id }}" {{ loop.first ? 'selected' : '' }}>
-                {{ section.menu.title }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
+      <div id="menuDynamicArea">
+        {% if menuSections is defined and menuSections is not empty and selectedSection is defined and selectedSection %}
+          <div class="menu-picker-row" style="margin-bottom:2rem;">
+            <label for="menuPicker" class="menu-picker-label">Select Your Category</label>
+            <select id="menuPicker" class="menu-picker">
+              {% for section in menuSections %}
+                <option value="{{ section.menu.id }}" {{ section.menu.id == selectedMenuId ? 'selected' : '' }}>
+                  {{ section.menu.title }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
 
-        {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
-        {% for section in menuSections %}
-          <div class="menu-section-group" data-menu-id="{{ section.menu.id }}" {{ loop.first ? '' : 'style="display:none;"' }}>
-            <div style="margin:1.2rem 0 .7rem;">
-              <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">{{ section.menu.title }}</h4>
-              <p style="margin:.25rem 0 0;color:var(--text-2);">{{ section.menu.description ?: 'No description provided.' }}</p>
+          {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
+          <div class="menu-section-group" data-menu-id="{{ selectedSection.menu.id }}">
+            <div style="margin:2rem 0 1.2rem;">
+              <h4 style="font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:400;color:var(--espresso);margin:0;letter-spacing:.3px;">{{ selectedSection.menu.title }}</h4>
+              <p style="margin:.5rem 0 0;color:var(--text-2);font-size:.95rem;">{{ selectedSection.menu.description ?: 'No description provided.' }}</p>
             </div>
 
-            <div class="menu-carousel" data-menu-carousel>
-              <button type="button" class="menu-scroll-btn" data-scroll="prev" aria-label="Show previous dishes">&#8249;</button>
-              <div class="menu-grid-wrap">
-                <div class="menu-grid" data-dish-slider>
-                  {% for dish in section.dishes %}
-                    <div class="menu-card reveal compact">
-                      <div class="menu-card-inner">
-                        <div class="menu-thumb">
-                          <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
-                        </div>
-                        <div class="menu-card-content">
-                          <h4>{{ dish.name }}</h4>
-                          <p class="short-desc">{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
-                          {% set basePrice = dish.basePrice|number_format(2, '.', '') %}
-                          <div class="menu-card-footer">
-                            <span class="price js-convertible-price" data-base-price="{{ basePrice }}">{{ basePrice }} TND</span>
-                            <select class="currency-select" data-base-price="{{ basePrice }}" aria-label="Choose currency for {{ dish.name }}">
-                              <option value="TND" selected>TND</option>
-                              <option value="USD">USD</option>
-                              <option value="EUR">EUR</option>
-                              <option value="CNY">CNY</option>
-                            </select>
-                            <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
-                          </div>
-                        </div>
+            <div class="menu-paged-grid" data-menu-swipe-grid>
+              {% for dish in paginatedDishes %}
+                <div class="menu-card reveal compact">
+                  <div class="menu-card-inner">
+                    <div class="menu-thumb">
+                      <img
+                        class="js-dish-image"
+                        src="{{ dish.imageUrl ?: fallbackImage }}"
+                        data-has-image="{{ dish.imageUrl ? '1' : '0' }}"
+                        data-dish-name="{{ dish.name }}"
+                        alt="{{ dish.name }}"
+                      >
+                    </div>
+                    <div class="menu-card-content">
+                      <h4>{{ dish.name }}</h4>
+                      <p class="short-desc">{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
+                      {% set basePrice = dish.basePrice|number_format(2, '.', '') %}
+                      <div class="menu-card-footer">
+                        <span class="price js-convertible-price" data-base-price="{{ basePrice }}">{{ basePrice }} TND</span>
+                        <select class="currency-select" data-base-price="{{ basePrice }}" aria-label="Choose currency for {{ dish.name }}" style="padding:.5rem .6rem;font-size:.8rem;border:1px solid rgba(184,135,42,.15);border-radius:6px;background:rgba(255,255,255,.8);cursor:pointer;">
+                          <option value="TND" selected>TND</option>
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                          <option value="CNY">CNY</option>
+                        </select>
+                        <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}" style="padding:.7rem 1.2rem;font-size:.85rem;white-space:nowrap;">Add</button>
                       </div>
                     </div>
-                  {% else %}
-                    <div class="menu-card reveal">
-                      <div class="menu-card-content">
-                        <h4>No dishes yet</h4>
-                        <p>This menu is available, but no dishes are assigned to it yet.</p>
-                        <span class="price">--</span>
-                      </div>
-                    </div>
-                  {% endfor %}
+                  </div>
                 </div>
+              {% else %}
+                <div class="menu-card reveal">
+                  <div class="menu-card-content">
+                    <h4>No dishes yet</h4>
+                    <p>This menu is available, but no dishes are assigned to it yet.</p>
+                    <span class="price">--</span>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            {% if paginatedDishes.pageCount > 1 %}
+              <div
+                class="menu-pagination-wrap"
+                data-menu-pagination
+                data-current-page="{{ paginatedDishes.currentPageNumber }}"
+                data-page-count="{{ paginatedDishes.pageCount }}"
+              >
+                {{ knp_pagination_render(paginatedDishes) }}
               </div>
-              <button type="button" class="menu-scroll-btn" data-scroll="next" aria-label="Show next dishes">&#8250;</button>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="menu-grid">
+            <div class="menu-card reveal">
+              <div class="menu-card-content">
+                <h4>Menu Coming Soon</h4>
+                <p>Our dishes are being updated right now. Please check back shortly.</p>
+                <span class="price">--</span>
+              </div>
             </div>
           </div>
-        {% endfor %}
-      {% else %}
-        <div class="menu-grid">
-          <div class="menu-card reveal">
-            <div class="menu-card-content">
-              <h4>Menu Coming Soon</h4>
-              <p>Our dishes are being updated right now. Please check back shortly.</p>
-              <span class="price">--</span>
-            </div>
-          </div>
-        </div>
-      {% endif %}
+        {% endif %}
+      </div>
     </div>
   </section>
 
@@ -268,6 +279,35 @@
     </div>
   </section>
 
+  <!-- FEEDBACK -->
+  <section id="feedback" class="feedback-section" data-feedback-base="/feedback">
+    <div class="container">
+      <div class="section-head reveal">
+        <div><small>Guest Voices</small><h3>AI-Verified <em>Testimonials</em></h3></div>
+        <p>Every review is analyzed by our AI feedback system to highlight standout experiences and flag support needs instantly.</p>
+      </div>
+      <div class="feedback-toolbar">
+        <div class="feedback-toggle">
+          <button class="feedback-toggle-btn active" data-view="testimonials">⭐ Testimonials</button>
+        </div>
+        <div class="feedback-filters">
+          <button class="feedback-filter active" data-filter="all">All</button>
+          <button class="feedback-filter" data-filter="5">5 Stars</button>
+          <button class="feedback-filter" data-filter="4">4 Stars</button>
+          <button class="feedback-filter" data-filter="fast">Fast Delivery</button>
+          <button class="feedback-filter" data-filter="packaging">Great Packaging</button>
+        </div>
+        <div class="feedback-filters" id="feedbackPager" style="margin-left:auto;">
+          <button class="feedback-filter" id="feedbackPrev">Prev</button>
+          <span id="feedbackPageLabel" style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);padding:.65rem .8rem;">Page 1</span>
+          <button class="feedback-filter" id="feedbackNext">Next</button>
+        </div>
+      </div>
+      <div class="feedback-grid" id="feedbackGrid"></div>
+      <div class="feedback-empty" id="feedbackEmpty">No feedback entries match your filters yet.</div>
+    </div>
+  </section>
+
   <!-- EVENTS -->
   <section id="events">
     <div class="container">
@@ -299,6 +339,59 @@
       </div>
     </div>
   </section>
+
+  <div class="mood-chat-shell" id="moodChatShell" aria-live="polite">
+    <button type="button" class="mood-chat-toggle" id="moodChatToggle" aria-expanded="false" aria-controls="moodChatPanel">
+      <span>Mood to Menu</span>
+      <strong>AI Live</strong>
+    </button>
+    <section class="mood-chat-panel" id="moodChatPanel" aria-label="Mood-based food assistant" hidden>
+      <header class="mood-chat-header">
+        <h4>Mood Menu Assistant</h4>
+        <p>Tell us your mood and get dish suggestions with ingredients.</p>
+        <small class="mood-chat-hint">Model-powered recommendations in real time.</small>
+      </header>
+
+      <div class="mood-chat-quick" id="moodQuickPicks">
+        <button type="button" data-weather="1">Weather Pick</button>
+        <button type="button" data-mood="happy">Happy</button>
+        <button type="button" data-mood="sad">Sad</button>
+        <button type="button" data-mood="stressed">Stressed</button>
+        <button type="button" data-mood="tired">Tired</button>
+        <button type="button" data-mood="romantic">Romantic</button>
+      </div>
+
+      <div class="mood-chat-filters">
+        <label>
+          Budget
+          <select id="moodBudget">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="mood-chat-messages" id="moodChatMessages">
+        <div class="mood-chat-msg assistant">
+          Hi, how are you feeling today? Share your mood and I will suggest dishes from our menu.
+        </div>
+      </div>
+
+      <form id="moodChatForm" class="mood-chat-form">
+        <input
+          type="text"
+          id="moodChatInput"
+          name="mood"
+          autocomplete="off"
+          maxlength="120"
+          placeholder="Example: I am stressed and want something light"
+          required
+        >
+        <button type="submit" id="moodChatSubmit">Ask AI</button>
+      </form>
+    </section>
+  </div>
 
   <!-- FOOTER -->
   <footer id="profile">
@@ -499,14 +592,69 @@
 
   <!-- DELIVERY FORM MODAL -->
   <style>
+    .feedback-section{ background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(244,237,225,.9)); }
+    .feedback-toolbar{ display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between; margin-bottom:2rem; }
+    .feedback-toggle, .feedback-filters{ display:flex; flex-wrap:wrap; gap:.6rem; }
+    .feedback-toggle-btn, .feedback-filter{
+      border:1px solid rgba(184,135,42,.2);
+      background:rgba(255,255,255,.85);
+      padding:.65rem 1.1rem;
+      border-radius:999px;
+      font-size:.72rem;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--brown);
+      cursor:pointer;
+      transition:.25s ease;
+      font-weight:600;
+    }
+    .feedback-toggle-btn.active, .feedback-filter.active{
+      background:linear-gradient(180deg,#e7bd63 0%, #d8a84a 50%, #b8872a 100%);
+      color:#fff;
+      border-color:rgba(255,255,255,.4);
+      box-shadow:0 10px 0 #8f651d,0 18px 30px rgba(184,135,42,.25);
+    }
+    .feedback-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1.4rem; }
+    .feedback-card{
+      background:rgba(255,255,255,.96);
+      border:1px solid rgba(184,135,42,.16);
+      border-radius:26px;
+      padding:1.6rem;
+      box-shadow:0 16px 34px rgba(92,61,30,.10);
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+      position:relative;
+    }
+    .feedback-card::after{ content:''; position:absolute; inset:10px; border:1px solid rgba(184,135,42,.08); border-radius:20px; pointer-events:none; }
+    .feedback-header{ display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+    .feedback-user{ display:flex; align-items:center; gap:.75rem; }
+    .feedback-avatar{
+      width:44px; height:44px; border-radius:50%;
+      background:linear-gradient(135deg, rgba(184,135,42,.35), rgba(255,255,255,.7));
+      display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--brown);
+      box-shadow:0 10px 22px rgba(184,135,42,.18);
+    }
+    .feedback-name{ font-weight:700; color:var(--espresso); }
+    .feedback-stars{ color:var(--gold); font-size:.9rem; letter-spacing:.12em; }
+    .feedback-badge{ display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .8rem; border-radius:999px; background:rgba(47,127,79,.14); color:#2f7f4f; font-size:.7rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+    .feedback-summary{ color:var(--text-2); font-size:1rem; line-height:1.7; font-weight:600; }
+    .feedback-review{ color:var(--text-3); line-height:1.8; }
+    .feedback-tags{ display:flex; flex-wrap:wrap; gap:.4rem; }
+    .feedback-pill{ padding:.35rem .7rem; border-radius:999px; background:rgba(184,135,42,.12); color:var(--brown); font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; }
+    .support-card{ border-left:4px solid #c04a3a; }
+    .feedback-meta{ display:flex; gap:.6rem; flex-wrap:wrap; font-size:.75rem; color:var(--text-3); }
+    .feedback-empty{ text-align:center; color:var(--text-3); margin-top:1.5rem; display:none; }
+
     .delivery-modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
       z-index: 9999;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 28px 18px;
       background:
         radial-gradient(circle at top, rgba(212, 175, 55, 0.16), transparent 35%),
@@ -517,11 +665,14 @@
     .delivery-modal-card {
       width: min(100%, 640px);
       margin: auto;
+      max-height: 90vh;
       background: linear-gradient(180deg, #fffdf9 0%, #fff7ea 100%);
       border: 1px solid rgba(155, 114, 29, 0.18);
       border-radius: 28px;
       box-shadow: 0 32px 90px rgba(25, 16, 10, 0.32);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .delivery-modal-header {
@@ -562,6 +713,8 @@
 
     .delivery-modal-body {
       padding: 1.6rem 2rem 2rem;
+      overflow-y: auto;
+      max-height: calc(90vh - 180px);
     }
 
     .delivery-form-grid {
@@ -721,6 +874,10 @@
         grid-template-columns: 1fr;
       }
     }
+
+    @media (max-width:1080px){
+      .feedback-grid{ grid-template-columns:1fr; }
+    }
   </style>
   <div id="deliveryFormModal" class="delivery-modal-overlay">
     <div class="delivery-modal-card">
@@ -802,14 +959,35 @@
   <script>
   // ── BOOKING POPUP ──────────────────────────────────────────
   const bookingPopup = document.getElementById('bookingPopup');
+  const openBookingBtn = document.getElementById('openBooking');
+  const openBooking2Btn = document.getElementById('openBooking2');
+  const closeBookingBtn = document.getElementById('closeBooking');
 
-  function openBookingPopup(e) { e.preventDefault(); bookingPopup.classList.add('active'); document.body.style.overflow='hidden'; }
-  function closeBookingPopup() { bookingPopup.classList.remove('active'); document.body.style.overflow=''; document.getElementById('bookingMsg')?.remove(); }
+  function openBookingPopup(e) {
+    e.preventDefault();
+    if (!bookingPopup) return;
+    bookingPopup.classList.add('active');
+    document.body.style.overflow='hidden';
+  }
+  function closeBookingPopup() {
+    if (!bookingPopup) return;
+    bookingPopup.classList.remove('active');
+    document.body.style.overflow='';
+    document.getElementById('bookingMsg')?.remove();
+  }
 
-  document.getElementById('openBooking').addEventListener('click', openBookingPopup);
-  document.getElementById('openBooking2').addEventListener('click', openBookingPopup);
-  document.getElementById('closeBooking').addEventListener('click', closeBookingPopup);
-  bookingPopup.addEventListener('click', e => { if(e.target === bookingPopup) closeBookingPopup(); });
+  if (openBookingBtn) {
+    openBookingBtn.addEventListener('click', openBookingPopup);
+  }
+  if (openBooking2Btn) {
+    openBooking2Btn.addEventListener('click', openBookingPopup);
+  }
+  if (closeBookingBtn) {
+    closeBookingBtn.addEventListener('click', closeBookingPopup);
+  }
+  if (bookingPopup) {
+    bookingPopup.addEventListener('click', e => { if(e.target === bookingPopup) closeBookingPopup(); });
+  }
 
   const bookingForm = document.getElementById('bookingForm');
   const bookingTable = document.getElementById('booking_table');
@@ -825,9 +1003,23 @@
   const bookingSummaryGuests = document.getElementById('bookingSummaryGuests');
   const bookingSlotButtons = Array.from(document.querySelectorAll('.booking-slot-btn'));
 
-  function getSelectedTableCapacity() {
-    return parseInt(bookingTable.selectedOptions[0]?.dataset.capacity || 0, 10);
-  }
+  const bookingElementsReady = bookingForm
+    && bookingTable
+    && bookingDate
+    && bookingTime
+    && bookingGuests
+    && bookingSubmitBtn
+    && bookingCapacityHint
+    && bookingTableHint
+    && bookingSummaryTable
+    && bookingSummaryDate
+    && bookingSummaryTime
+    && bookingSummaryGuests;
+
+  if (bookingElementsReady) {
+    function getSelectedTableCapacity() {
+      return parseInt(bookingTable.selectedOptions[0]?.dataset.capacity || 0, 10);
+    }
 
   function formatBookingDate(value) {
     if (!value) {
@@ -956,44 +1148,44 @@
     bookingSummaryGuests.textContent = guests;
   }
 
-  bookingTable.addEventListener('change', function() {
-    syncGuestOptions();
-    updateBookingSummary();
-  });
+    bookingTable.addEventListener('change', function() {
+      syncGuestOptions();
+      updateBookingSummary();
+    });
 
-  bookingGuests.addEventListener('change', function() {
-    suggestBestFitTable();
-    syncGuestOptions();
-    updateBookingSummary();
-  });
+    bookingGuests.addEventListener('change', function() {
+      suggestBestFitTable();
+      syncGuestOptions();
+      updateBookingSummary();
+    });
 
-  bookingDate.addEventListener('change', function() {
-    syncTimeConstraints();
-    syncTimeSlotState();
-    updateBookingSummary();
-  });
-
-  bookingTime.addEventListener('input', function() {
-    syncTimeSlotState();
-    updateBookingSummary();
-  });
-
-  bookingSlotButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      if (this.disabled) {
-        return;
-      }
-
-      bookingTime.value = this.dataset.time;
+    bookingDate.addEventListener('change', function() {
+      syncTimeConstraints();
       syncTimeSlotState();
       updateBookingSummary();
     });
-  });
 
-  syncTimeConstraints();
-  syncGuestOptions();
-  syncTimeSlotState();
-  updateBookingSummary();
+    bookingTime.addEventListener('input', function() {
+      syncTimeSlotState();
+      updateBookingSummary();
+    });
+
+    bookingSlotButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        if (this.disabled) {
+          return;
+        }
+
+        bookingTime.value = this.dataset.time;
+        syncTimeSlotState();
+        updateBookingSummary();
+      });
+    });
+
+    syncTimeConstraints();
+    syncGuestOptions();
+    syncTimeSlotState();
+    updateBookingSummary();
 
   function showBookingMsg(form, text, isError) {
     document.getElementById('bookingMsg')?.remove();
@@ -1013,255 +1205,510 @@
     form.insertAdjacentElement('beforebegin', msg);
   }
 
-  bookingForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
+    bookingForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
 
-    const capacity = getSelectedTableCapacity();
-    const guests = parseInt(bookingGuests.value || '0', 10);
-    const selectedDateTime = bookingDate.value && bookingTime.value
-      ? new Date(`${bookingDate.value}T${bookingTime.value}:00`)
-      : null;
+      const capacity = getSelectedTableCapacity();
+      const guests = parseInt(bookingGuests.value || '0', 10);
+      const selectedDateTime = bookingDate.value && bookingTime.value
+        ? new Date(`${bookingDate.value}T${bookingTime.value}:00`)
+        : null;
 
-    // Client-side capacity guard
-    if (capacity && guests > capacity) {
-      showBookingMsg(this, `This table only seats ${capacity} guest(s). Please select fewer guests or a larger table.`, true);
-      return;
-    }
-
-    if (selectedDateTime && selectedDateTime < new Date()) {
-      showBookingMsg(this, 'Please choose a reservation time in the future.', true);
-      return;
-    }
-
-    if (bookingTime.value && (bookingTime.value < '08:00' || bookingTime.value > '23:30')) {
-      showBookingMsg(this, 'Please choose a time between 08:00 and 23:30.', true);
-      return;
-    }
-
-    bookingSubmitBtn.textContent = 'Processing...';
-    bookingSubmitBtn.disabled = true;
-
-    const payload = {
-      table_id: bookingTable.value,
-      date: bookingDate.value,
-      time: bookingTime.value,
-      guests: guests,
-    };
-
-    try {
-      const res  = await fetch('{{ path("app_reservation_book") }}', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        showBookingMsg(this, 'Your reservation is confirmed! We look forward to welcoming you.', false);
-        this.reset();
-        // Re-enable all guest options after reset
-        document.querySelectorAll('#booking_guests option').forEach(o => { o.disabled = false; o.style.color = ''; });
-        bookingTableHint.textContent = 'Choose guests to get a best-fit table.';
-        bookingCapacityHint.textContent = 'Select a table to see its seating capacity.';
-        syncTimeConstraints();
-        syncTimeSlotState();
-        updateBookingSummary();
-        setTimeout(closeBookingPopup, 2500);
-      } else {
-        showBookingMsg(this, data.error || 'Something went wrong. Please try again.', true);
+      // Client-side capacity guard
+      if (capacity && guests > capacity) {
+        showBookingMsg(this, `This table only seats ${capacity} guest(s). Please select fewer guests or a larger table.`, true);
+        return;
       }
-    } catch(err) {
-      showBookingMsg(this, 'Network error. Please try again.', true);
-    }
 
-    bookingSubmitBtn.textContent = 'Confirm Booking';
-    bookingSubmitBtn.disabled = false;
-  });
+      if (selectedDateTime && selectedDateTime < new Date()) {
+        showBookingMsg(this, 'Please choose a reservation time in the future.', true);
+        return;
+      }
+
+      if (bookingTime.value && (bookingTime.value < '08:00' || bookingTime.value > '23:30')) {
+        showBookingMsg(this, 'Please choose a time between 08:00 and 23:30.', true);
+        return;
+      }
+
+      bookingSubmitBtn.textContent = 'Processing...';
+      bookingSubmitBtn.disabled = true;
+
+      const payload = {
+        table_id: bookingTable.value,
+        date: bookingDate.value,
+        time: bookingTime.value,
+        guests: guests,
+      };
+
+      try {
+        const res  = await fetch('{{ path("app_reservation_book") }}', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showBookingMsg(this, 'Your reservation is confirmed! We look forward to welcoming you.', false);
+          this.reset();
+          // Re-enable all guest options after reset
+          document.querySelectorAll('#booking_guests option').forEach(o => { o.disabled = false; o.style.color = ''; });
+          bookingTableHint.textContent = 'Choose guests to get a best-fit table.';
+          bookingCapacityHint.textContent = 'Select a table to see its seating capacity.';
+          syncTimeConstraints();
+          syncTimeSlotState();
+          updateBookingSummary();
+          setTimeout(closeBookingPopup, 2500);
+        } else {
+          showBookingMsg(this, data.error || 'Something went wrong. Please try again.', true);
+        }
+      } catch(err) {
+        showBookingMsg(this, 'Network error. Please try again.', true);
+      }
+
+      bookingSubmitBtn.textContent = 'Confirm Booking';
+      bookingSubmitBtn.disabled = false;
+    });
+  }
 
   // ── PROFILE POPUP ──────────────────────────────────────────
   const profilePopup = document.getElementById('profilePopup');
-  function closeProfilePopup() { profilePopup.classList.remove('active'); document.body.style.overflow=''; }
-  document.getElementById('openProfile').addEventListener('click', () => { profilePopup.classList.add('active'); document.body.style.overflow='hidden'; });
-  document.getElementById('closeProfile').addEventListener('click', closeProfilePopup);
-  profilePopup.addEventListener('click', e => { if(e.target === profilePopup) closeProfilePopup(); });
-  document.getElementById('profileForm').addEventListener('submit', function(e) {
+  const openProfileBtn = document.getElementById('openProfile');
+  const closeProfileBtn = document.getElementById('closeProfile');
+  const profileForm = document.getElementById('profileForm');
+  function closeProfilePopup() {
+    if (!profilePopup) return;
+    profilePopup.classList.remove('active');
+    document.body.style.overflow='';
+  }
+  if (openProfileBtn) {
+    openProfileBtn.addEventListener('click', () => {
+      if (!profilePopup) return;
+      profilePopup.classList.add('active');
+      document.body.style.overflow='hidden';
+    });
+  }
+  if (closeProfileBtn) {
+    closeProfileBtn.addEventListener('click', closeProfilePopup);
+  }
+  if (profilePopup) {
+    profilePopup.addEventListener('click', e => { if(e.target === profilePopup) closeProfilePopup(); });
+  }
+  if (profileForm) {
+    profileForm.addEventListener('submit', function(e) {
     e.preventDefault();
     alert('Your profile has been saved successfully!');
     this.reset();
     closeProfilePopup();
-  });
+    });
+  }
 
   // ── CART DRAWER ────────────────────────────────────────────
   const cartOverlay = document.getElementById('cartOverlay');
-  function openCart()  { cartOverlay.classList.add('active');    document.body.style.overflow='hidden'; }
-  function closeCart() { cartOverlay.classList.remove('active'); document.body.style.overflow=''; }
-  document.getElementById('openCart').addEventListener('click', openCart);
-  document.getElementById('openCart2').addEventListener('click', openCart);
-  document.getElementById('closeCart').addEventListener('click', closeCart);
-  cartOverlay.addEventListener('click', e => { if(e.target === cartOverlay) closeCart(); });
+  const openCartBtn = document.getElementById('openCart');
+  const openCart2Btn = document.getElementById('openCart2');
+  const closeCartBtn = document.getElementById('closeCart');
+  const cartItemsContainer = document.getElementById('cartItems');
+  const cartTotal = document.getElementById('cartTotal');
+  const cartCount = document.getElementById('cartCount');
+  function openCart()  { if (!cartOverlay) return; cartOverlay.classList.add('active');    document.body.style.overflow='hidden'; }
+  function closeCart() { if (!cartOverlay) return; cartOverlay.classList.remove('active'); document.body.style.overflow=''; }
+  if (openCartBtn) {
+    openCartBtn.addEventListener('click', openCart);
+  }
+  if (openCart2Btn) {
+    openCart2Btn.addEventListener('click', openCart);
+  }
+  if (closeCartBtn) {
+    closeCartBtn.addEventListener('click', closeCart);
+  }
+  if (cartOverlay) {
+    cartOverlay.addEventListener('click', e => { if(e.target === cartOverlay) closeCart(); });
+  }
 
   let cart = [];
   let pendingDeliveryOrderId = null;
+  const dishFallbackApiUrl = '{{ path("app_api_dish_fallback_image") }}';
+  const genericDishFallbackUrl = 'https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?auto=format&fit=crop&w=1200&q=80';
 
-  const menuPicker = document.getElementById('menuPicker');
-  const menuSectionGroups = Array.from(document.querySelectorAll('.menu-section-group'));
-  const refreshMenuSliderStates = [];
+  const menuSection = document.getElementById('menu-section');
+  let menuRequestController = null;
 
-  document.querySelectorAll('[data-dish-slider]').forEach((slider) => {
-    const carousel = slider.closest('[data-menu-carousel]');
-    const prevBtn = carousel ? carousel.querySelector('[data-scroll="prev"]') : null;
-    const nextBtn = carousel ? carousel.querySelector('[data-scroll="next"]') : null;
-
-    if (!carousel || !prevBtn || !nextBtn) {
+  async function loadMenuWithoutRefresh(url, options = {}) {
+    if (!menuSection) {
+      window.location.href = url;
       return;
     }
 
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let isDragging = false;
-    let dragStartX = 0;
-    let dragStartScrollLeft = 0;
-    let dragDistance = 0;
+    const targetUrl = new URL(url, window.location.origin).toString();
+    const pushState = options.pushState !== false;
 
-    const getScrollStep = () => {
-      const firstCard = slider.querySelector('.menu-card');
-      if (!firstCard) {
-        return Math.max(slider.clientWidth, 220);
-      }
+    if (menuRequestController) {
+      menuRequestController.abort();
+    }
 
-      const sliderStyles = window.getComputedStyle(slider);
-      const gap = parseFloat(sliderStyles.columnGap || sliderStyles.gap || '0');
-      return firstCard.getBoundingClientRect().width + gap;
-    };
+    const controller = new AbortController();
+    menuRequestController = controller;
+    menuSection.classList.add('is-loading');
 
-    const scrollByStep = (direction) => {
-      slider.scrollBy({
-        left: getScrollStep() * direction,
-        behavior: 'smooth',
-      });
-    };
-
-    const updateButtons = () => {
-      const maxScrollLeft = Math.max(0, slider.scrollWidth - slider.clientWidth - 2);
-      prevBtn.disabled = slider.scrollLeft <= 2;
-      nextBtn.disabled = slider.scrollLeft >= maxScrollLeft;
-    };
-
-    prevBtn.addEventListener('click', () => scrollByStep(-1));
-    nextBtn.addEventListener('click', () => scrollByStep(1));
-
-    slider.addEventListener('scroll', updateButtons, { passive: true });
-
-    slider.addEventListener('pointerdown', (event) => {
-      if (event.pointerType !== 'mouse' || event.button !== 0) {
-        return;
-      }
-
-      isDragging = true;
-      dragDistance = 0;
-      dragStartX = event.clientX;
-      dragStartScrollLeft = slider.scrollLeft;
-      slider.classList.add('is-dragging');
-      slider.setPointerCapture(event.pointerId);
-    });
-
-    slider.addEventListener('pointermove', (event) => {
-      if (!isDragging) {
-        return;
-      }
-
-      const delta = event.clientX - dragStartX;
-      dragDistance = Math.max(dragDistance, Math.abs(delta));
-      slider.scrollLeft = dragStartScrollLeft - delta;
-    });
-
-    const endMouseDrag = () => {
-      if (!isDragging) {
-        return;
-      }
-
-      isDragging = false;
-      slider.classList.remove('is-dragging');
-      setTimeout(() => {
-        dragDistance = 0;
-      }, 0);
-    };
-
-    slider.addEventListener('pointerup', endMouseDrag);
-    slider.addEventListener('pointercancel', endMouseDrag);
-    slider.addEventListener('pointerleave', endMouseDrag);
-
-    slider.addEventListener('click', (event) => {
-      if (dragDistance > 6) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    }, true);
-
-    slider.addEventListener('touchstart', (event) => {
-      touchStartX = event.changedTouches[0]?.clientX || 0;
-    }, { passive: true });
-
-    slider.addEventListener('touchend', (event) => {
-      touchEndX = event.changedTouches[0]?.clientX || 0;
-      const delta = touchEndX - touchStartX;
-      if (Math.abs(delta) < 40) {
-        return;
-      }
-
-      scrollByStep(delta > 0 ? -1 : 1);
-    }, { passive: true });
-
-    window.addEventListener('resize', updateButtons);
-    refreshMenuSliderStates.push(updateButtons);
-    updateButtons();
-  });
-
-  const refreshVisibleMenuSliders = () => {
-    refreshMenuSliderStates.forEach((refresh) => refresh());
-  };
-
-  if (menuPicker && menuSectionGroups.length > 0) {
-    const showMenuById = (menuId) => {
-      menuSectionGroups.forEach(group => {
-        group.style.display = group.dataset.menuId === menuId ? '' : 'none';
+    try {
+      const response = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        signal: controller.signal,
       });
 
-      requestAnimationFrame(refreshVisibleMenuSliders);
-    };
+      if (!response.ok) {
+        window.location.href = targetUrl;
+        return;
+      }
 
-    menuPicker.addEventListener('change', () => showMenuById(menuPicker.value));
-    showMenuById(menuPicker.value);
-  } else {
-    refreshVisibleMenuSliders();
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const incomingArea = doc.querySelector('#menuDynamicArea');
+      const currentArea = document.querySelector('#menuDynamicArea');
+
+      if (!incomingArea || !currentArea) {
+        window.location.href = targetUrl;
+        return;
+      }
+
+      currentArea.replaceWith(incomingArea);
+
+      incomingArea.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach((element) => {
+        element.classList.add('show');
+      });
+
+      if (pushState) {
+        window.history.pushState({ menuDynamic: true }, '', targetUrl);
+      }
+
+      applyDishImageFallbacks(incomingArea);
+      initializeMenuSwipeInteractions();
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        window.location.href = targetUrl;
+      }
+    } finally {
+      if (menuRequestController === controller) {
+        menuRequestController = null;
+        menuSection.classList.remove('is-loading');
+      }
+    }
   }
 
-  const currencyRates = { TND: 1, USD: 0.32, EUR: 0.30, CNY: 2.31 };
-  document.querySelectorAll('.currency-select').forEach(select => {
-    select.addEventListener('change', () => {
-      const footer = select.closest('.menu-card-footer');
-      const priceEl = footer ? footer.querySelector('.js-convertible-price') : null;
-      if (!priceEl) return;
+  function initializeMenuSwipeInteractions() {
+    const menuSwipeGrid = document.querySelector('[data-menu-swipe-grid]');
+    const menuPagination = document.querySelector('[data-menu-pagination]');
 
-      const basePrice = parseFloat(priceEl.dataset.basePrice || select.dataset.basePrice || '0');
-      const currency = currencyRates[select.value] ? select.value : 'TND';
-      const converted = basePrice * currencyRates[currency];
-      priceEl.textContent = `${converted.toFixed(2)} ${currency}`;
+    if (!menuSwipeGrid || !menuPagination || menuSwipeGrid.dataset.swipeBound === '1') {
+      return;
+    }
+
+    menuSwipeGrid.dataset.swipeBound = '1';
+
+    const pageCount = Math.max(1, parseInt(menuPagination.dataset.pageCount || '1', 10) || 1);
+    if (pageCount <= 1) {
+      return;
+    }
+
+    const swipeThreshold = 56;
+    const verticalTolerance = 90;
+    let startX = 0;
+    let startY = 0;
+    let isTrackingSwipe = false;
+    let activePointerId = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchTracking = false;
+    let lastWheelNavigationAt = 0;
+
+    const isInteractiveTarget = (target) => (
+      target instanceof Element
+      && Boolean(target.closest('a,button,select,input,textarea,label'))
+    );
+
+    const getCurrentPage = () => {
+      const pageFromData = parseInt(menuPagination.dataset.currentPage || '1', 10);
+      if (Number.isInteger(pageFromData) && pageFromData > 0) {
+        return Math.min(pageCount, pageFromData);
+      }
+
+      const pageFromUrl = parseInt(new URL(window.location.href).searchParams.get('page') || '', 10);
+      if (Number.isInteger(pageFromUrl) && pageFromUrl > 0) {
+        return Math.min(pageCount, pageFromUrl);
+      }
+
+      return 1;
+    };
+
+    const goToPage = (page) => {
+      if (!Number.isInteger(page) || page < 1 || page > pageCount) {
+        return;
+      }
+
+      const currentPage = getCurrentPage();
+      if (page === currentPage) {
+        return;
+      }
+
+      const url = new URL(window.location.href);
+      const picker = document.getElementById('menuPicker');
+      url.searchParams.set('page', String(page));
+
+      if (picker && picker.value) {
+        url.searchParams.set('menu', picker.value);
+      }
+
+      loadMenuWithoutRefresh(url.toString());
+    };
+
+    const navigateByDirection = (direction) => {
+      const currentPage = getCurrentPage();
+      const targetPage = direction > 0 ? currentPage + 1 : currentPage - 1;
+      goToPage(Math.max(1, Math.min(pageCount, targetPage)));
+    };
+
+    const processSwipe = (endX, endY, swipeStartX, swipeStartY) => {
+      const deltaX = endX - swipeStartX;
+      const deltaY = endY - swipeStartY;
+
+      if (
+        Math.abs(deltaX) < swipeThreshold
+        || Math.abs(deltaY) > verticalTolerance
+        || Math.abs(deltaX) <= Math.abs(deltaY)
+      ) {
+        return;
+      }
+
+      navigateByDirection(deltaX < 0 ? 1 : -1);
+    };
+
+    const endPointerSwipe = (event) => {
+      if (!isTrackingSwipe || event.pointerId !== activePointerId) {
+        return;
+      }
+
+      isTrackingSwipe = false;
+      activePointerId = null;
+      menuSwipeGrid.classList.remove('is-page-swiping');
+      processSwipe(event.clientX, event.clientY, startX, startY);
+    };
+
+    menuSwipeGrid.addEventListener('pointerdown', (event) => {
+      if ((event.pointerType === 'mouse' && event.button !== 0) || isInteractiveTarget(event.target)) {
+        isTrackingSwipe = false;
+        return;
+      }
+
+      isTrackingSwipe = true;
+      activePointerId = event.pointerId;
+      startX = event.clientX;
+      startY = event.clientY;
+      menuSwipeGrid.classList.add('is-page-swiping');
+
+      if (typeof menuSwipeGrid.setPointerCapture === 'function') {
+        try {
+          menuSwipeGrid.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // Ignore pointer-capture failures and keep gesture handling active.
+        }
+      }
     });
+
+    menuSwipeGrid.addEventListener('pointerup', endPointerSwipe);
+    menuSwipeGrid.addEventListener('pointercancel', () => {
+      isTrackingSwipe = false;
+      activePointerId = null;
+      menuSwipeGrid.classList.remove('is-page-swiping');
+    });
+
+    if (!window.PointerEvent) {
+      menuSwipeGrid.addEventListener('touchstart', (event) => {
+        if (isInteractiveTarget(event.target)) {
+          touchTracking = false;
+          return;
+        }
+
+        const touch = event.changedTouches[0];
+        if (!touch) {
+          touchTracking = false;
+          return;
+        }
+
+        touchTracking = true;
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        menuSwipeGrid.classList.add('is-page-swiping');
+      }, { passive: true });
+
+      menuSwipeGrid.addEventListener('touchend', (event) => {
+        if (!touchTracking) {
+          return;
+        }
+
+        touchTracking = false;
+        menuSwipeGrid.classList.remove('is-page-swiping');
+
+        const touch = event.changedTouches[0];
+        if (!touch) {
+          return;
+        }
+
+        processSwipe(touch.clientX, touch.clientY, touchStartX, touchStartY);
+      }, { passive: true });
+
+      menuSwipeGrid.addEventListener('touchcancel', () => {
+        touchTracking = false;
+        menuSwipeGrid.classList.remove('is-page-swiping');
+      }, { passive: true });
+    }
+
+    menuSwipeGrid.addEventListener('wheel', (event) => {
+      if (Math.abs(event.deltaX) <= Math.abs(event.deltaY) || Math.abs(event.deltaX) < 24) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastWheelNavigationAt < 420) {
+        return;
+      }
+
+      lastWheelNavigationAt = now;
+      event.preventDefault();
+      navigateByDirection(event.deltaX > 0 ? 1 : -1);
+    }, { passive: false });
+  }
+
+  function applyDishImageFallbacks(scope = document) {
+    scope.querySelectorAll('.js-dish-image').forEach((img) => {
+      if (img.dataset.fallbackBound === '1') {
+        return;
+      }
+
+      img.dataset.fallbackBound = '1';
+
+      const resolveDishImage = async () => {
+        if (img.dataset.fallbackApplied === '1') {
+          return;
+        }
+
+        img.dataset.fallbackApplied = '1';
+        const dishName = (img.dataset.dishName || '').trim();
+
+        try {
+          const apiUrl = `${dishFallbackApiUrl}?name=${encodeURIComponent(dishName)}`;
+          const response = await fetch(apiUrl, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Fallback API failed');
+          }
+
+          const data = await response.json();
+          const imageUrl = typeof data?.imageUrl === 'string' ? data.imageUrl.trim() : '';
+          img.src = imageUrl !== '' ? imageUrl : genericDishFallbackUrl;
+        } catch (error) {
+          img.src = genericDishFallbackUrl;
+        }
+      };
+
+      img.addEventListener('error', () => {
+        resolveDishImage();
+      });
+
+      if (img.dataset.hasImage !== '1') {
+        resolveDishImage();
+      }
+    });
+  }
+
+  applyDishImageFallbacks(document);
+  initializeMenuSwipeInteractions();
+
+  const currencyRates = { TND: 1, USD: 0.32, EUR: 0.30, CNY: 2.31 };
+
+  document.addEventListener('change', (event) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    const picker = event.target.closest('#menuPicker');
+    if (picker) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('menu', picker.value);
+      url.searchParams.delete('page');
+      loadMenuWithoutRefresh(url.toString());
+      return;
+    }
+
+    const currencySelect = event.target.closest('.currency-select');
+    if (!currencySelect) {
+      return;
+    }
+
+    const footer = currencySelect.closest('.menu-card-footer');
+    const priceEl = footer ? footer.querySelector('.js-convertible-price') : null;
+    if (!priceEl) {
+      return;
+    }
+
+    const basePrice = parseFloat(priceEl.dataset.basePrice || currencySelect.dataset.basePrice || '0');
+    const currency = currencyRates[currencySelect.value] ? currencySelect.value : 'TND';
+    const converted = basePrice * currencyRates[currency];
+    priceEl.textContent = `${converted.toFixed(2)} ${currency}`;
   });
 
-  document.querySelectorAll('.add-cart-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      cart.push({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) });
-      updateCart();
-      btn.textContent = 'Added';
-      setTimeout(() => btn.textContent = 'Add to Cart', 1200);
-    });
+  document.addEventListener('click', (event) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    const paginationLink = event.target.closest('#menu-section .menu-pagination-wrap a');
+    if (paginationLink) {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+        return;
+      }
+
+      event.preventDefault();
+      loadMenuWithoutRefresh(paginationLink.href);
+      return;
+    }
+
+    const btn = event.target.closest('.add-cart-btn');
+    if (!btn) {
+      return;
+    }
+
+    cart.push({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) });
+    updateCart();
+
+    const originalText = btn.textContent;
+    btn.textContent = 'Added';
+    setTimeout(() => {
+      if (document.body.contains(btn)) {
+        btn.textContent = originalText || 'Add to Cart';
+      }
+    }, 1200);
+  });
+
+  window.addEventListener('popstate', () => {
+    if (!document.getElementById('menuDynamicArea')) {
+      return;
+    }
+
+    loadMenuWithoutRefresh(window.location.href, { pushState: false });
   });
 
   function updateCart() {
-    const container = document.getElementById('cartItems');
-    container.innerHTML = cart.length === 0
+    if (!cartItemsContainer || !cartTotal || !cartCount) return;
+    cartItemsContainer.innerHTML = cart.length === 0
       ? '<div class="empty-cart">Your luxury cart is currently empty.</div>'
       : cart.map((item, i) => `
           <div class="cart-item">
@@ -1269,12 +1716,162 @@
             <button class="remove-btn" onclick="removeFromCart(${i})">Remove</button>
           </div>`).join('');
     const total = cart.reduce((s, i) => s + i.price, 0);
-    document.getElementById('cartTotal').textContent  = total.toFixed(2) + ' TND';
-    document.getElementById('cartCount').textContent  = cart.length;
+    cartTotal.textContent  = total.toFixed(2) + ' TND';
+    cartCount.textContent  = cart.length;
   }
 
   function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
   window.removeFromCart = removeFromCart;
+
+  // ── FEEDBACK WIDGET ──────────────────────────────────────
+  const feedbackSection = document.getElementById('feedback');
+  const API_BASE = feedbackSection?.dataset.feedbackBase || '';
+  const feedbackGrid = document.getElementById('feedbackGrid');
+  const feedbackEmpty = document.getElementById('feedbackEmpty');
+  const filterButtons = document.querySelectorAll('.feedback-filter');
+  const toggleButtons = document.querySelectorAll('.feedback-toggle-btn');
+  const feedbackPager = document.getElementById('feedbackPager');
+  const feedbackPrev = document.getElementById('feedbackPrev');
+  const feedbackNext = document.getElementById('feedbackNext');
+  const feedbackPageLabel = document.getElementById('feedbackPageLabel');
+
+  const mockTestimonials = [
+    { id: 1, customer_name: 'Amira', review_text: 'Super fast delivery and elegant packaging.', summary: 'Fast delivery with premium presentation.', rating: 5, created_at: '2026-04-12T12:10:00' },
+    { id: 2, customer_name: 'Zayd', review_text: 'Coffee arrived hot and beautifully boxed.', summary: 'Warm coffee and beautiful boxing.', rating: 5, created_at: '2026-04-10T17:42:00' },
+    { id: 3, customer_name: 'Salma', review_text: 'Quick service with a smooth handoff.', summary: 'Efficient handoff and quick service.', rating: 4, created_at: '2026-04-08T09:15:00' }
+  ];
+
+  const feedbackState = {
+    view: 'testimonials',
+    filter: 'all',
+    page: 1,
+    pageSize: 3,
+    testimonials: [],
+    support: []
+  };
+
+  function starLine(rating){
+    const value = Math.max(1, Math.min(5, rating || 5));
+    return '★'.repeat(value) + '☆'.repeat(5 - value);
+  }
+
+  function tagMatches(item, filter){
+    if (filter === 'all') return true;
+    if (filter === '5') return (item.rating || 0) >= 5;
+    if (filter === '4') return (item.rating || 0) === 4;
+    const text = `${item.summary || ''} ${item.review_text || ''}`.toLowerCase();
+    if (filter === 'fast') return text.includes('fast') || text.includes('quick');
+    if (filter === 'packaging') return text.includes('package') || text.includes('boxing') || text.includes('packaging');
+    return true;
+  }
+
+  function renderFeedback(){
+    if (!feedbackGrid) return;
+    feedbackGrid.innerHTML = '';
+    const items = feedbackState.testimonials;
+    const filtered = items.filter(item => tagMatches(item, feedbackState.filter));
+
+    let paged = filtered;
+    const totalPages = Math.max(1, Math.ceil(filtered.length / feedbackState.pageSize));
+    if (feedbackState.page > totalPages) {
+      feedbackState.page = totalPages;
+    }
+    const start = (feedbackState.page - 1) * feedbackState.pageSize;
+    paged = filtered.slice(start, start + feedbackState.pageSize);
+
+    if (feedbackPager) {
+      feedbackPager.style.display = 'flex';
+    }
+    if (feedbackPageLabel) {
+      feedbackPageLabel.textContent = `Page ${feedbackState.page} of ${totalPages}`;
+    }
+    if (feedbackPrev) {
+      feedbackPrev.disabled = feedbackState.page <= 1;
+    }
+    if (feedbackNext) {
+      feedbackNext.disabled = feedbackState.page >= totalPages;
+    }
+
+    if (feedbackEmpty) {
+      feedbackEmpty.style.display = paged.length ? 'none' : 'block';
+    }
+
+    paged.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'feedback-card' + (feedbackState.view === 'support' ? ' support-card' : '');
+      card.innerHTML = `
+        <div class="feedback-header">
+          <div class="feedback-user">
+            <div class="feedback-avatar">${(item.customer_name || 'G').slice(0,1)}</div>
+            <div>
+              <div class="feedback-name">${item.customer_name || 'Guest'}</div>
+              <div class="feedback-stars">${starLine(item.rating)}</div>
+            </div>
+          </div>
+          <span class="feedback-badge">AI Verified</span>
+        </div>
+        <div class="feedback-summary">${item.summary || ''}</div>
+        <div class="feedback-review">${item.review_text || ''}</div>
+        <div class="feedback-tags">
+          <span class="feedback-pill">${item.rating || 5} Stars</span>
+          <span class="feedback-pill">Verified</span>
+        </div>
+      `;
+      feedbackGrid.appendChild(card);
+    });
+  }
+
+  async function fetchJson(url, fallback){
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 1800);
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!response.ok) throw new Error('Bad response');
+      const data = await response.json();
+      return Array.isArray(data) ? data : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  async function initFeedback(){
+    const testimonialsUrl = API_BASE ? `${API_BASE}/testimonials` : '/feedback/testimonials';
+    feedbackState.testimonials = await fetchJson(testimonialsUrl, mockTestimonials);
+    renderFeedback();
+  }
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      feedbackState.filter = btn.dataset.filter || 'all';
+      feedbackState.page = 1;
+      renderFeedback();
+    });
+  });
+
+  toggleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  if (feedbackPrev) {
+    feedbackPrev.addEventListener('click', () => {
+      feedbackState.page = Math.max(1, feedbackState.page - 1);
+      renderFeedback();
+    });
+  }
+  if (feedbackNext) {
+    feedbackNext.addEventListener('click', () => {
+      feedbackState.page += 1;
+      renderFeedback();
+    });
+  }
+
+  initFeedback();
 
   // ── ORDER TYPE MODAL ───────────────────────────────────────
   const checkoutBtn = document.getElementById('checkoutBtn');
@@ -1294,8 +1891,14 @@
       }
 
       const total = cart.reduce((sum, item) => sum + item.price, 0);
-      document.getElementById('redirectCartItemsInput').value = JSON.stringify(cart);
-      document.getElementById('redirectCartTotalInput').value = total.toFixed(2);
+      const redirectCartItemsInput = document.getElementById('redirectCartItemsInput');
+      const redirectCartTotalInput = document.getElementById('redirectCartTotalInput');
+      if (redirectCartItemsInput) {
+        redirectCartItemsInput.value = JSON.stringify(cart);
+      }
+      if (redirectCartTotalInput) {
+        redirectCartTotalInput.value = total.toFixed(2);
+      }
       
       closeCart();
       
@@ -1310,10 +1913,12 @@
     dineInBtn.addEventListener('click', function() {
       const cartItemsInput = document.getElementById('redirectCartItemsInput');
       const orderTotalInput = document.getElementById('redirectCartTotalInput');
+      const cartItemsValue = cartItemsInput ? cartItemsInput.value : '';
+      const orderTotalValue = orderTotalInput ? orderTotalInput.value : '';
       
       const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
-      url.searchParams.append('cart_items', cartItemsInput.value);
-      url.searchParams.append('order_total', orderTotalInput.value);
+      url.searchParams.append('cart_items', cartItemsValue);
+      url.searchParams.append('order_total', orderTotalValue);
       url.searchParams.append('order_type', 'DINE_IN');
       
       fetch(url)
@@ -1327,12 +1932,15 @@
             }
             
             // Clear cart display
-            const cartContainer = document.getElementById('cartItems');
-            if(cartContainer) {
-              cartContainer.innerHTML = '<div class="empty-cart">Your luxury cart is currently empty.</div>';
+            if(cartItemsContainer) {
+              cartItemsContainer.innerHTML = '<div class="empty-cart">Your luxury cart is currently empty.</div>';
             }
-            document.getElementById('cartCount').textContent = '0';
-            document.getElementById('cartTotal').textContent = '0 TND';
+            if (cartCount) {
+              cartCount.textContent = '0';
+            }
+            if (cartTotal) {
+              cartTotal.textContent = '0 TND';
+            }
             
             // Show success notification
             alert('✅ Your Dine In order has been placed successfully!\nOrder ID: #' + data.order_id);
@@ -1357,10 +1965,12 @@
       if (!pendingDeliveryOrderId) {
         const cartItemsInput = document.getElementById('redirectCartItemsInput');
         const orderTotalInput = document.getElementById('redirectCartTotalInput');
+        const cartItemsValue = cartItemsInput ? cartItemsInput.value : '';
+        const orderTotalValue = orderTotalInput ? orderTotalInput.value : '';
         const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
 
-        url.searchParams.append('cart_items', cartItemsInput.value);
-        url.searchParams.append('order_total', orderTotalInput.value);
+        url.searchParams.append('cart_items', cartItemsValue);
+        url.searchParams.append('order_total', orderTotalValue);
         url.searchParams.append('order_type', 'DELIVERY');
 
         try {
@@ -1373,8 +1983,14 @@
           }
 
           pendingDeliveryOrderId = data.order_id;
-          document.getElementById('deliveryOrderId').value = pendingDeliveryOrderId;
-          document.getElementById('deliverySavedOrderIdInput').value = pendingDeliveryOrderId;
+          const deliveryOrderIdInput = document.getElementById('deliveryOrderId');
+          const deliverySavedOrderIdInput = document.getElementById('deliverySavedOrderIdInput');
+          if (deliveryOrderIdInput) {
+            deliveryOrderIdInput.value = pendingDeliveryOrderId;
+          }
+          if (deliverySavedOrderIdInput) {
+            deliverySavedOrderIdInput.value = pendingDeliveryOrderId;
+          }
           alert('✅ Delivery order saved automatically. Please confirm delivery details. Order ID: #' + pendingDeliveryOrderId);
         } catch (error) {
           console.error('Error creating delivery order:', error);
@@ -1397,14 +2013,23 @@
   const confirmDeliveryBtn = document.getElementById('confirmDeliveryBtn');
   if(confirmDeliveryBtn) {
     confirmDeliveryBtn.addEventListener('click', async function() {
-      const orderId = document.getElementById('deliveryOrderId').value.trim() || pendingDeliveryOrderId;
-      const recipientName = document.getElementById('recipientName').value.trim();
-      const recipientPhone = document.getElementById('recipientPhone').value.trim();
-      const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
-      const pickupLocation = document.getElementById('pickupLocation').value.trim();
-      const latitude = document.getElementById('deliveryLatitude').value.trim();
-      const longitude = document.getElementById('deliveryLongitude').value.trim();
-      const token = document.getElementById('deliverySaveToken').value;
+      const deliveryOrderInput = document.getElementById('deliveryOrderId');
+      const recipientNameInput = document.getElementById('recipientName');
+      const recipientPhoneInput = document.getElementById('recipientPhone');
+      const deliveryAddressInput = document.getElementById('deliveryAddress');
+      const pickupLocationInput = document.getElementById('pickupLocation');
+      const deliveryLatitudeInput = document.getElementById('deliveryLatitude');
+      const deliveryLongitudeInput = document.getElementById('deliveryLongitude');
+      const deliverySaveTokenInput = document.getElementById('deliverySaveToken');
+
+      const orderId = (deliveryOrderInput ? deliveryOrderInput.value.trim() : '') || pendingDeliveryOrderId;
+      const recipientName = recipientNameInput ? recipientNameInput.value.trim() : '';
+      const recipientPhone = recipientPhoneInput ? recipientPhoneInput.value.trim() : '';
+      const deliveryAddress = deliveryAddressInput ? deliveryAddressInput.value.trim() : '';
+      const pickupLocation = pickupLocationInput ? pickupLocationInput.value.trim() : '';
+      const latitude = deliveryLatitudeInput ? deliveryLatitudeInput.value.trim() : '';
+      const longitude = deliveryLongitudeInput ? deliveryLongitudeInput.value.trim() : '';
+      const token = deliverySaveTokenInput ? deliverySaveTokenInput.value : '';
 
       if (!orderId) {
         alert('❌ No delivery order has been created yet. Please select Delivery again.');
@@ -1424,6 +2049,14 @@
       payload.append('pickup_location', pickupLocation);
       payload.append('current_latitude', latitude);
       payload.append('current_longitude', longitude);
+      const redirectCartItemsInput = document.getElementById('redirectCartItemsInput');
+      if (redirectCartItemsInput) {
+        payload.append('cart_items', redirectCartItemsInput.value || '[]');
+      }
+      const orderTotalInput = document.getElementById('redirectCartTotalInput');
+      if (orderTotalInput) {
+        payload.append('order_total', orderTotalInput.value || '0');
+      }
       payload.append('_token', token);
 
       try {
@@ -1447,10 +2080,18 @@
           cart = [];
           updateCart();
 
-          document.getElementById('deliveryForm').reset();
+          const deliveryForm = document.getElementById('deliveryForm');
+          if (deliveryForm) {
+            deliveryForm.reset();
+          }
           pendingDeliveryOrderId = null;
-          document.getElementById('deliveryOrderId').value = '';
-          document.getElementById('deliverySavedOrderIdInput').value = '';
+          if (deliveryOrderInput) {
+            deliveryOrderInput.value = '';
+          }
+          const deliverySavedOrderIdInput = document.getElementById('deliverySavedOrderIdInput');
+          if (deliverySavedOrderIdInput) {
+            deliverySavedOrderIdInput.value = '';
+          }
 
           alert('✅ Your delivery details have been saved successfully!\nOrder ID: #' + orderId + '\nDelivery ID: #' + data.delivery_id);
         } else {
@@ -1479,8 +2120,12 @@
             const latitude = position.coords.latitude.toFixed(6);
             const longitude = position.coords.longitude.toFixed(6);
             
-            latitudeInput.value = latitude;
-            longitudeInput.value = longitude;
+            if (latitudeInput) {
+              latitudeInput.value = latitude;
+            }
+            if (longitudeInput) {
+              longitudeInput.value = longitude;
+            }
             
             getCurrentLocationBtn.textContent = '📍 Location updated!';
             getCurrentLocationBtn.style.background = '#28a745';
@@ -1543,7 +2188,10 @@
         orderTypeModal.style.display = 'flex';
       }
       // Reset the form
-      document.getElementById('deliveryForm').reset();
+      const deliveryForm = document.getElementById('deliveryForm');
+      if (deliveryForm) {
+        deliveryForm.reset();
+      }
     });
   }
 
@@ -1557,7 +2205,10 @@
           orderTypeModal.style.display = 'flex';
         }
         // Reset the form
-        document.getElementById('deliveryForm').reset();
+        const deliveryForm = document.getElementById('deliveryForm');
+        if (deliveryForm) {
+          deliveryForm.reset();
+        }
       }
     });
   }
@@ -1585,12 +2236,394 @@
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('show'); observer.unobserve(entry.target); }});
   }, { threshold: 0.15 });
-  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
+  const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+  if (revealElements.length) {
+    revealElements.forEach(el => observer.observe(el));
+  }
 
   // ── NAV SCROLL ─────────────────────────────────────────────
-  window.addEventListener('scroll', () => {
-    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
-  });
+  const nav = document.getElementById('nav');
+  if (nav) {
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    });
+  }
+
+  // ── MOOD CHAT ASSISTANT ────────────────────────────────────
+  const moodChatToggle = document.getElementById('moodChatToggle');
+  const moodChatPanel = document.getElementById('moodChatPanel');
+  const moodChatForm = document.getElementById('moodChatForm');
+  const moodChatInput = document.getElementById('moodChatInput');
+  const moodChatMessages = document.getElementById('moodChatMessages');
+  const moodQuickPicks = document.getElementById('moodQuickPicks');
+  const moodBudget = document.getElementById('moodBudget');
+  const moodChatSubmit = document.getElementById('moodChatSubmit');
+  const aiRecoForm = document.getElementById('aiRecoForm');
+  const aiRecoInput = document.getElementById('aiRecoInput');
+  const aiRecoCategory = document.getElementById('aiRecoCategory');
+  const aiRecoBudget = document.getElementById('aiRecoBudget');
+  const aiRecoStatus = document.getElementById('aiRecoStatus');
+  const aiRecoResults = document.getElementById('aiRecoResults');
+  const aiRecoSubmit = document.getElementById('aiRecoSubmit');
+  let moodRequestInFlight = false;
+  let aiRequestInFlight = false;
+
+  function buildMoodPayload(inputText, options = {}) {
+    const source = options.source || 'chat';
+
+    return {
+      mood: inputText,
+      message: inputText,
+      category: aiRecoCategory?.value || 'pasta',
+      budget_level: source === 'section' ? (aiRecoBudget?.value || 'medium') : (moodBudget?.value || 'medium'),
+      is_vegetarian: 0,
+      is_vegan: 0,
+      is_gluten_free: 0,
+    };
+  }
+
+  async function fetchMoodRecommendations(inputText, options = {}) {
+    const response = await fetch('{{ path("app_landingpage_mood_recommendations") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(buildMoodPayload(inputText, options)),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'I could not generate suggestions right now. Please try again.');
+    }
+
+    return data;
+  }
+
+  async function fetchWeatherSuggestions() {
+    const response = await fetch('{{ path("app_api_weather_order_suggestions") }}', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'I could not load weather-based suggestions right now.');
+    }
+
+    return data;
+  }
+
+  function appendMoodMessage(role, text, extraClass = '') {
+    if (!moodChatMessages || !text) {
+      return null;
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = `mood-chat-msg ${role === 'user' ? 'user' : 'assistant'}`;
+    if (extraClass) {
+      bubble.classList.add(extraClass);
+    }
+    bubble.textContent = text;
+    moodChatMessages.appendChild(bubble);
+    moodChatMessages.scrollTop = moodChatMessages.scrollHeight;
+
+    return bubble;
+  }
+
+  function appendDishCard(dish) {
+    if (!moodChatMessages || !dish) {
+      return;
+    }
+
+    const card = document.createElement('article');
+    card.className = 'mood-chat-dish-card';
+
+    const hasIngredients = Array.isArray(dish.ingredients) && dish.ingredients.length > 0;
+    const ingredientsText = hasIngredients ? dish.ingredients.join(', ') : '';
+    const ingredientsMarkup = hasIngredients
+      ? `<p class="dish-ingredients"><strong>Ingredients:</strong> ${ingredientsText}</p>`
+      : '';
+
+    const priceText = dish.price || 'Price on request';
+    card.innerHTML = `
+      <h5>${dish.name || 'Recommended dish'}</h5>
+      <p class="dish-desc">${dish.description || ''}</p>
+      ${ingredientsMarkup}
+      <p class="dish-reason"><strong>Why this fits:</strong> ${dish.reason || 'Good mood match.'}</p>
+      <span class="dish-price">${priceText}</span>
+    `;
+
+    moodChatMessages.appendChild(card);
+    moodChatMessages.scrollTop = moodChatMessages.scrollHeight;
+  }
+
+  async function requestMoodRecommendations(inputText) {
+    if (moodRequestInFlight) {
+      return;
+    }
+
+    moodRequestInFlight = true;
+    if (moodChatInput) {
+      moodChatInput.disabled = true;
+    }
+    if (moodChatSubmit) {
+      moodChatSubmit.disabled = true;
+      moodChatSubmit.textContent = 'Working...';
+    }
+    if (moodQuickPicks) {
+      moodQuickPicks.querySelectorAll('button').forEach((button) => {
+        button.disabled = true;
+      });
+    }
+
+    appendMoodMessage('user', inputText);
+    const loadingBubble = appendMoodMessage('assistant', 'Analyzing your mood with the AI model...', 'loading');
+
+    try {
+      const data = await fetchMoodRecommendations(inputText, { source: 'chat' });
+      if (loadingBubble && loadingBubble.isConnected) {
+        loadingBubble.remove();
+      }
+
+      appendMoodMessage('assistant', data.assistantMessage || 'Here are dishes that match your mood.');
+
+      const picks = (Array.isArray(data.recommendations) ? data.recommendations : []).slice(0, 4);
+      if (picks.length === 0) {
+        appendMoodMessage('assistant', 'I did not find strong matches, but our menu has fresh options waiting for you.');
+        return;
+      }
+
+      picks.forEach((dish) => appendDishCard(dish));
+    } catch (error) {
+      if (loadingBubble && loadingBubble.isConnected) {
+        loadingBubble.remove();
+      }
+
+      appendMoodMessage('assistant', error?.message || 'Network issue while loading recommendations. Please try once more.');
+    } finally {
+      moodRequestInFlight = false;
+      if (moodChatInput) {
+        moodChatInput.disabled = false;
+      }
+      if (moodChatSubmit) {
+        moodChatSubmit.disabled = false;
+        moodChatSubmit.textContent = 'Ask AI';
+      }
+      if (moodQuickPicks) {
+        moodQuickPicks.querySelectorAll('button').forEach((button) => {
+          button.disabled = false;
+        });
+      }
+    }
+  }
+
+  async function requestWeatherRecommendations() {
+    if (moodRequestInFlight) {
+      return;
+    }
+
+    moodRequestInFlight = true;
+    if (moodChatInput) {
+      moodChatInput.disabled = true;
+    }
+    if (moodChatSubmit) {
+      moodChatSubmit.disabled = true;
+      moodChatSubmit.textContent = 'Working...';
+    }
+    if (moodQuickPicks) {
+      moodQuickPicks.querySelectorAll('button').forEach((button) => {
+        button.disabled = true;
+      });
+    }
+
+    const loadingBubble = appendMoodMessage('assistant', 'Checking current weather and matching dishes...', 'loading');
+
+    try {
+      const data = await fetchWeatherSuggestions();
+      if (loadingBubble && loadingBubble.isConnected) {
+        loadingBubble.remove();
+      }
+
+      const tempLabel = data?.weather?.temperature !== null && data?.weather?.temperature !== undefined
+        ? `${Number(data.weather.temperature).toFixed(1)}°C`
+        : 'unavailable temperature';
+      const targetMessage = data?.target?.message || 'Weather-based suggestions are ready.';
+
+      appendMoodMessage('assistant', `Weather now: ${tempLabel}. ${targetMessage}`);
+
+      const picks = (Array.isArray(data.suggestions) ? data.suggestions : []).slice(0, 4);
+      if (picks.length === 0) {
+        appendMoodMessage('assistant', 'No weather suggestions found right now, please try again in a moment.');
+        return;
+      }
+
+      picks.forEach((dish) => appendDishCard(dish));
+    } catch (error) {
+      if (loadingBubble && loadingBubble.isConnected) {
+        loadingBubble.remove();
+      }
+
+      appendMoodMessage('assistant', error?.message || 'Could not load weather suggestions right now.');
+    } finally {
+      moodRequestInFlight = false;
+      if (moodChatInput) {
+        moodChatInput.disabled = false;
+      }
+      if (moodChatSubmit) {
+        moodChatSubmit.disabled = false;
+        moodChatSubmit.textContent = 'Ask AI';
+      }
+      if (moodQuickPicks) {
+        moodQuickPicks.querySelectorAll('button').forEach((button) => {
+          button.disabled = false;
+        });
+      }
+    }
+  }
+
+  function renderAiRecoCards(picks) {
+    if (!aiRecoResults) {
+      return;
+    }
+
+    aiRecoResults.innerHTML = '';
+
+    picks.forEach((dish) => {
+      const card = document.createElement('article');
+      card.className = 'ai-reco-card';
+
+      const hasIngredients = Array.isArray(dish.ingredients) && dish.ingredients.length > 0;
+      const ingredientsText = hasIngredients ? dish.ingredients.join(', ') : '';
+      const ingredientsMarkup = hasIngredients
+        ? `<p><strong>Ingredients:</strong> ${ingredientsText}</p>`
+        : '';
+
+      card.innerHTML = `
+        <h5>${dish.name || 'Recommended dish'}</h5>
+        <p>${dish.description || ''}</p>
+        ${ingredientsMarkup}
+        <p><strong>Why this fits:</strong> ${dish.reason || 'Good mood match.'}</p>
+        <span>${dish.price || 'Price on request'}</span>
+      `;
+
+      aiRecoResults.appendChild(card);
+    });
+  }
+
+  if (aiRecoForm && aiRecoInput) {
+    aiRecoForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (aiRequestInFlight) {
+        return;
+      }
+
+      const inputText = aiRecoInput.value.trim();
+
+      if (!inputText) {
+        return;
+      }
+
+      aiRequestInFlight = true;
+      aiRecoInput.disabled = true;
+      if (aiRecoSubmit) {
+        aiRecoSubmit.disabled = true;
+        aiRecoSubmit.textContent = 'Running...';
+      }
+
+      if (aiRecoStatus) {
+        aiRecoStatus.dataset.state = 'loading';
+        aiRecoStatus.textContent = 'Running model prediction...';
+      }
+
+      try {
+        const data = await fetchMoodRecommendations(inputText, { source: 'section' });
+        const picks = (Array.isArray(data.recommendations) ? data.recommendations : []).slice(0, 4);
+
+        if (picks.length === 0) {
+          if (aiRecoStatus) {
+            aiRecoStatus.dataset.state = 'error';
+            aiRecoStatus.textContent = 'No strong matches found. Try another mood or preference set.';
+          }
+          if (aiRecoResults) {
+            aiRecoResults.innerHTML = '';
+          }
+          return;
+        }
+
+        if (aiRecoStatus) {
+          aiRecoStatus.dataset.state = 'success';
+          aiRecoStatus.textContent = data.assistantMessage || 'Model recommendations ready.';
+        }
+
+        renderAiRecoCards(picks);
+      } catch (error) {
+        if (aiRecoStatus) {
+          aiRecoStatus.dataset.state = 'error';
+          aiRecoStatus.textContent = error?.message || 'Could not load AI recommendations right now.';
+        }
+        if (aiRecoResults) {
+          aiRecoResults.innerHTML = '';
+        }
+      } finally {
+        aiRequestInFlight = false;
+        aiRecoInput.disabled = false;
+        if (aiRecoSubmit) {
+          aiRecoSubmit.disabled = false;
+          aiRecoSubmit.textContent = 'Run AI Match';
+        }
+      }
+    });
+  }
+
+  if (moodChatToggle && moodChatPanel) {
+    moodChatToggle.addEventListener('click', () => {
+      const expanded = moodChatToggle.getAttribute('aria-expanded') === 'true';
+      moodChatToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      moodChatPanel.hidden = expanded;
+
+      if (!expanded && moodChatInput) {
+        moodChatInput.focus();
+      }
+    });
+  }
+
+  if (moodChatForm && moodChatInput) {
+    moodChatForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const value = moodChatInput.value.trim();
+
+      if (!value) {
+        return;
+      }
+
+      requestMoodRecommendations(value);
+      moodChatInput.value = '';
+    });
+  }
+
+  if (moodQuickPicks) {
+    moodQuickPicks.addEventListener('click', (event) => {
+      const weatherButton = event.target.closest('button[data-weather]');
+      if (weatherButton) {
+        requestWeatherRecommendations();
+        return;
+      }
+
+      const button = event.target.closest('button[data-mood]');
+      if (!button) {
+        return;
+      }
+
+      const mood = button.dataset.mood || '';
+      if (mood === '') {
+        return;
+      }
+
+      requestMoodRecommendations(`I feel ${mood} today`);
+    });
+  }
   </script>
   {% endblock %}
 

@@ -104,6 +104,10 @@
         padding: 120px 24px 40px;
     }
 
+    body {
+        overflow-y: auto;
+    }
+
     .page-header {
         display: flex;
         flex-wrap: wrap;
@@ -336,4 +340,12 @@
         }
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.body && document.body.style.overflow === 'hidden') {
+            document.body.style.overflow = '';
+        }
+    });
+</script>
 {% endblock %}

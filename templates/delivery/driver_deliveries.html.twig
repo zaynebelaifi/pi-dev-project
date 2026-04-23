@@ -3,12 +3,52 @@
 {% block title %}My Deliveries - BIG 4{% endblock %}
 
 {% block body %}
-<div class="page-header" style="margin-top:140px; padding: 0 1rem;">
-    <h1>My Deliveries</h1>
-    <p style="color: var(--text-2); max-width: 900px;">Review your assigned deliveries and update the status quickly as you move orders through pickup, transit, and final delivery.</p>
+<div class="delivery-header" style="margin-top:140px;">
+    <h2>My Deliveries</h2>
+    <p>Review your assigned deliveries and update the status quickly as you move orders through pickup, transit, and final delivery.</p>
+</div>
+
+<div class="filter-section" style="padding: 0 1rem 2rem; max-width: 1180px; margin: 0 auto 1rem;">
+    <div class="filter-controls" style="align-items:center">
+        <div style="flex:2;min-width:220px">
+            <label class="filter-label">🔍 Search</label>
+            <input id="driver-search" type="search" placeholder="Search orders, client, phone" value="{{ search ?? '' }}" class="filter-input">
+        </div>
+        <div>
+            <label class="filter-label">📋 Sort</label>
+            <select id="driver-sort" class="filter-select">
+                <option value="created_at" {{ sort=='created_at' ? 'selected' : '' }}>Date</option>
+                <option value="order_id" {{ sort=='order_id' ? 'selected' : '' }}>Order</option>
+                <option value="recipient_name" {{ sort=='recipient_name' ? 'selected' : '' }}>Client</option>
+                <option value="status" {{ sort=='status' ? 'selected' : '' }}>Status</option>
+            </select>
+        </div>
+        <div>
+            <label class="filter-label">Order</label>
+            <select id="driver-direction" class="filter-select">
+                <option value="DESC" {{ direction=='DESC' ? 'selected' : '' }}>Newest</option>
+                <option value="ASC" {{ direction=='ASC' ? 'selected' : '' }}>Oldest</option>
+            </select>
+        </div>
+        <div>
+            <label class="filter-label">Status</label>
+            <select id="driver-status" class="filter-select">
+                <option value="">All</option>
+                <option value="PENDING" {{ status=='PENDING' ? 'selected' : '' }}>Pending</option>
+                <option value="IN_TRANSIT" {{ status=='IN_TRANSIT' ? 'selected' : '' }}>In Transit</option>
+                <option value="DELIVERED" {{ status=='DELIVERED' ? 'selected' : '' }}>Delivered</option>
+                <option value="CANCELLED" {{ status=='CANCELLED' ? 'selected' : '' }}>Cancelled</option>
+            </select>
+        </div>
+        <div style="margin-left:auto">
+            <a href="{{ path('app_home') }}" class="t-btn primary">Back to Home</a>
+        </div>
+    </div>
 </div>
 
 <div class="delivery-page" style="padding: 0 1rem 4rem; max-width: 1180px; margin: 0 auto;">
+    {# compact controls removed - use the styled filter-section above for search/sort/filter #}
+
     {% if deliveries is empty %}
         <div class="empty-state-card">
             <h2>No deliveries assigned to you yet.</h2>
@@ -30,33 +70,61 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                {% for delivery in deliveries %}
-                    <tr>
-                        <td>{{ delivery.order_id }}</td>
-                        <td>{{ delivery.recipient_name }}<br><span class="meta-text">{{ delivery.recipient_phone }}</span></td>
-                        <td>{{ delivery.delivery_address }}</td>
-                        <td>{{ delivery.status }}</td>
-                        <td>{{ delivery.pickup_location }}</td>
-                        <td>{{ delivery.order_total }} TND</td>
-                        <td>{{ delivery.created_at ? delivery.created_at|date('Y-m-d H:i') : '-' }}</td>
-                        <td class="action-cell">
-                            <form method="post" action="{{ path('app_delivery_driver_status', {'id': delivery.delivery_id}) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token('driver_status' ~ delivery.delivery_id) }}">
-                                <button type="submit" name="action" value="in_transit" class="btn-action">In Transit</button>
-                                <button type="button" data-url="{{ path('app_delivery_mark_delivered', {'id': delivery.delivery_id}) }}" data-delivery-id="{{ delivery.delivery_id }}" class="btn-action btn-success mark-delivered-btn">Delivered</button>
-                                <button type="submit" name="action" value="cancel" class="btn-action btn-danger">Cancel</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
+                <tbody id="driver-table-body">
+                    {{ include('delivery/_driver_table.html.twig') }}
                 </tbody>
             </table>
         </div>
+            <div class="pagination" style="display:flex;gap:0.5rem;align-items:center;justify-content:center;margin-top:1rem;">
+                {% set prev = page - 1 %}
+                {% set next = page + 1 %}
+                <button id="page-prev" class="btn-small" data-page="{{ prev }}" {{ page <= 1 ? 'disabled' : '' }}>Prev</button>
+                <span style="padding:0.45rem 0.75rem;color:var(--text-2);">Page {{ page }} / {{ totalPages }}</span>
+                <button id="page-next" class="btn-small" data-page="{{ next }}" {{ page >= totalPages ? 'disabled' : '' }}>Next</button>
+            </div>
     {% endif %}
 </div>
 
 <style>
+        .delivery-header { margin-bottom: 1rem; }
+        .delivery-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: var(--espresso); margin-bottom: 0.5rem; }
+        .delivery-header p { color: var(--text-2); font-size: 0.95rem; }
+
+        .filter-section { 
+            background: var(--ivory); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            padding: 1rem; 
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .filter-controls { 
+            display: flex; 
+            gap: 0.8rem; 
+            align-items: flex-end; 
+            flex-wrap: wrap;
+        }
+        .filter-label { 
+            font-size: 0.72rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.08em; 
+            color: var(--text-3); 
+            font-weight: 700;
+            display:block;margin-bottom:0.25rem
+        }
+        .filter-input, .filter-select { 
+            padding: 0.6rem 0.9rem; 
+            border: 1px solid rgba(92,61,30,0.06); 
+            border-radius: 10px; 
+            font-family: 'Jost', sans-serif;
+            font-size: 0.95rem;
+            color: var(--brown);
+            background: rgba(255,250,245,0.9); /* warm ivory */
+            box-shadow: none;
+        }
+        .filter-select { appearance: none; -webkit-appearance:none; -moz-appearance:none; padding-right:1.25rem }
+        .filter-input::placeholder { color: rgba(92,61,30,0.35); }
+        .filter-input:focus, .filter-select:focus { outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,135,42,0.06) }
     .delivery-page {
         width: 100%;
     }
@@ -131,19 +199,35 @@
     }
     .action-cell form {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 0.5rem;
+        align-items: center;
     }
     .btn-action {
         border: none;
         border-radius: 999px;
-        padding: 0.65rem 0.95rem;
+        padding: 0.45rem 0.7rem;
         font-weight: 600;
+        font-size: 0.95rem;
         color: #fff;
         background: var(--gold);
         cursor: pointer;
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
     }
+    .btn-small { padding:0.4rem 0.7rem;border-radius:8px;border:none;background:var(--gold);color:#fff;font-weight:600 }
+    /* Back to Home small pill style to match filters */
+    .t-btn.primary, .btn-primary {
+        display: inline-block;
+        padding: 0.55rem 0.9rem;
+        border-radius: 10px;
+        background: rgba(255,250,245,0.98);
+        color: var(--brown);
+        border: 1px solid rgba(92,61,30,0.06);
+        text-decoration: none;
+        font-weight: 700;
+        box-shadow: none;
+    }
+    .t-btn.primary:hover, .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(92,61,30,0.06) }
     .btn-action:hover {
         transform: translateY(-1px);
         box-shadow: 0 12px 24px rgba(184,135,42,.18);
@@ -162,7 +246,9 @@
         .driver-table th,
         .driver-table td { padding: 0.85rem 0.9rem; }
         .driver-table { min-width: 720px; }
-        .action-cell form { flex-direction: column; align-items: stretch; }
+        /* Keep action buttons on one line; allow horizontal scrolling if needed */
+        .action-cell { overflow-x: auto; }
+        .action-cell form { flex-direction: row; flex-wrap: nowrap; }
     }
 </style>
 {% endblock %}
@@ -170,65 +256,198 @@
 {% block javascripts %}
     {{ parent() }}
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const buttons = document.querySelectorAll('.mark-delivered-btn');
-            if (!buttons.length) return;
+        // Live search, sort, filter with debounce and AJAX table updates
+        (function(){
+            const debounce = (fn, wait=250)=>{let t; return (...args)=>{clearTimeout(t); t=setTimeout(()=>fn(...args), wait);};};
 
-            buttons.forEach(function (btn) {
-                btn.addEventListener('click', function (e) {
-                    e.preventDefault();
+            const fetchData = async (opts={})=>{
+                const searchEl = document.getElementById('driver-search');
+                const statusEl = document.getElementById('driver-status');
+                const sortEl = document.getElementById('driver-sort');
+                const directionEl = document.getElementById('driver-direction');
+                const limitEl = document.getElementById('driver-limit');
 
-                    const url = btn.dataset.url;
-                    if (!url) {
-                        alert('Missing endpoint');
-                        return;
+                const params = {
+                    search: searchEl ? (searchEl.value || '') : '',
+                    status: statusEl ? (statusEl.value || '') : '',
+                    sort: sortEl ? (sortEl.value || 'created_at') : 'created_at',
+                    direction: directionEl ? (directionEl.value || 'DESC') : 'DESC',
+                    limit: limitEl ? (limitEl.value || 15) : 15,
+                    page: opts.page || {{ page|default(1) }}
+                };
+
+                const q = new URLSearchParams(params).toString();
+                try{
+                    const resp = await fetch('{{ path('app_driver_deliveries_data') }}' + '?' + q, { credentials: 'same-origin' });
+                    if (!resp.ok) throw new Error('Fetch failed');
+                    const data = await resp.json();
+                    const tbody = document.getElementById('driver-table-body');
+                    if (tbody) tbody.innerHTML = data.html;
+                    const total = data.total || 0;
+                    const limit = parseInt(params.limit,10)||15;
+                    const totalPages = Math.max(1, Math.ceil(total/limit));
+
+                    const prevBtn = document.querySelector('#page-prev');
+                    const nextBtn = document.querySelector('#page-next');
+                    if (prevBtn) {
+                        prevBtn.disabled = params.page <= 1;
+                        prevBtn.dataset.page = Math.max(1, params.page-1);
                     }
-
-                    const originalText = btn.textContent;
-                    btn.disabled = true;
-                    btn.textContent = 'Getting location...';
-
-                    if (!navigator.geolocation) {
-                        alert('Location access is required to confirm delivery');
-                        btn.disabled = false;
-                        btn.textContent = originalText;
-                        return;
+                    if (nextBtn) {
+                        nextBtn.disabled = params.page >= totalPages;
+                        nextBtn.dataset.page = Math.min(totalPages, params.page+1);
                     }
+                }catch(err){ console.error(err); }
+            };
 
-                    navigator.geolocation.getCurrentPosition(async function (pos) {
+            const debouncedFetch = debounce(fetchData, 250);
+
+            const attachMarkDelivered = ()=>{
+                const buttons = document.querySelectorAll('.mark-delivered-btn');
+                buttons.forEach(function (btn) {
+                    if (btn.dataset.bound) return; btn.dataset.bound = '1';
+                    btn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const url = btn.dataset.url;
+                        if (!url) { alert('Missing endpoint'); return; }
+                        const originalText = btn.textContent;
+                        btn.disabled = true; btn.textContent = 'Getting location...';
+                        if (!navigator.geolocation) { alert('Location access is required to confirm delivery'); btn.disabled=false; btn.textContent=originalText; return; }
+                        navigator.geolocation.getCurrentPosition(async function (pos) {
+                            try {
+                                const resp = await fetch(url, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                                    body: JSON.stringify({ latitude: pos?.coords?.latitude ?? null, longitude: pos?.coords?.longitude ?? null })
+                                });
+                                let data = {};
+                                try { data = await resp.json(); } catch (e) { /* ignore */ }
+                                if (!resp.ok || !data.success) {
+                                    alert(data.message || 'Failed to confirm delivery');
+                                    btn.disabled=false; btn.textContent=originalText;
+                                    return;
+                                }
+                                // success: update button and refresh table safely
+                                btn.textContent = 'Delivered';
+                                btn.classList.remove('btn-action');
+                                btn.classList.add('btn-success');
+                                // attempt to refresh the table; errors are caught inside fetchData
+                                fetchData();
+                            } catch (err) { console.error(err); alert('Failed to confirm delivery'); btn.disabled=false; btn.textContent=originalText; }
+                        }, function () { alert('Location access is required to confirm delivery'); btn.disabled=false; btn.textContent=originalText; }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                    });
+                });
+            };
+
+            const attachShareLocation = ()=>{
+                const buttons = document.querySelectorAll('.share-location-btn');
+                buttons.forEach(function (btn) {
+                    if (btn.dataset.bound) return; btn.dataset.bound = '1';
+                    btn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const url = btn.dataset.url;
+                        if (!url) { alert('Missing endpoint'); return; }
+                        const originalText = btn.textContent;
+                        btn.disabled = true; btn.textContent = 'Sharing...';
+                        if (!navigator.geolocation) { alert('Location access is required'); btn.disabled=false; btn.textContent=originalText; return; }
+                        navigator.geolocation.getCurrentPosition(async function (pos) {
+                            try {
+                                const resp = await fetch(url, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                                    body: JSON.stringify({ lat: pos?.coords?.latitude ?? null, lon: pos?.coords?.longitude ?? null })
+                                });
+                                let data = {};
+                                try { data = await resp.json(); } catch (e) { /* ignore */ }
+                                if (!resp.ok || !data.success) {
+                                    alert(data.message || 'Failed to share location');
+                                    btn.disabled=false; btn.textContent=originalText;
+                                    return;
+                                }
+                                btn.textContent = 'Location shared';
+                                setTimeout(() => { btn.disabled=false; btn.textContent=originalText; }, 1200);
+                            } catch (err) {
+                                console.error(err);
+                                alert('Failed to share location');
+                                btn.disabled=false; btn.textContent=originalText;
+                            }
+                        }, function () {
+                            alert('Location access is required');
+                            btn.disabled=false; btn.textContent=originalText;
+                        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                    });
+                });
+            };
+
+            const startAutoTracking = () => {
+                if (!navigator.geolocation) {
+                    console.warn('Geolocation not supported');
+                    return;
+                }
+
+                let lastSentAt = 0;
+                let lastCoords = null;
+
+                const shouldSend = (coords) => {
+                    const now = Date.now();
+                    if (now - lastSentAt < 5000) return false;
+                    const key = `${coords.latitude},${coords.longitude}`;
+                    if (key === lastCoords) return false;
+                    lastCoords = key;
+                    lastSentAt = now;
+                    return true;
+                };
+
+                navigator.geolocation.watchPosition(async function (pos) {
+                    const coords = pos?.coords;
+                    if (!coords) return;
+                    if (!shouldSend(coords)) return;
+
+                    const buttons = document.querySelectorAll('.share-location-btn');
+                    if (!buttons.length) return;
+
+                    const payload = JSON.stringify({
+                        lat: coords.latitude ?? null,
+                        lon: coords.longitude ?? null,
+                    });
+
+                    buttons.forEach(async (btn) => {
+                        const url = btn.dataset.url;
+                        if (!url) return;
                         try {
-                            const resp = await fetch(url, {
+                            await fetch(url, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 credentials: 'same-origin',
-                                body: JSON.stringify({
-                                    latitude: pos.coords.latitude,
-                                    longitude: pos.coords.longitude
-                                })
+                                body: payload,
                             });
-                            const data = await resp.json();
-
-                            if (!resp.ok || !data.success) {
-                                alert(data.message || 'Failed to confirm delivery');
-                                btn.disabled = false;
-                                btn.textContent = originalText;
-                                return;
-                            }
-
-                            location.reload();
                         } catch (err) {
-                            console.error(err);
-                            alert('Failed to confirm delivery');
-                            btn.disabled = false;
-                            btn.textContent = originalText;
+                            console.error('Auto tracking failed', err);
                         }
-                    }, function () {
-                        alert('Location access is required to confirm delivery');
-                        btn.disabled = false;
-                        btn.textContent = originalText;
-                    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                    });
+                }, function (err) {
+                    console.warn('Auto tracking disabled', err);
+                }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+            };
+
+            document.addEventListener('DOMContentLoaded', function () {
+                attachMarkDelivered();
+                attachShareLocation();
+                startAutoTracking();
+                ['driver-search','driver-status','driver-sort','driver-direction','driver-limit'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.addEventListener('input', debouncedFetch);
+                    el.addEventListener('change', debouncedFetch);
                 });
+                const prevBtn = document.getElementById('page-prev');
+                const nextBtn = document.getElementById('page-next');
+                if (prevBtn) prevBtn.addEventListener('click', function(){ fetchData({page: parseInt(this.dataset.page,10)||1}); });
+                if (nextBtn) nextBtn.addEventListener('click', function(){ fetchData({page: parseInt(this.dataset.page,10)||1}); });
+                const tbody = document.getElementById('driver-table-body');
+                const mo = new MutationObserver(()=>{ attachMarkDelivered(); });
+                mo.observe(tbody, { childList: true, subtree: true });
+                const mo2 = new MutationObserver(()=>{ attachShareLocation(); });
+                mo2.observe(tbody, { childList: true, subtree: true });
             });
-        });
+        })();
     </script>
 {% endblock %}

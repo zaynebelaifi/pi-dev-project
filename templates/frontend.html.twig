@@ -351,6 +351,64 @@
     .cta-box h3{ font-family:'Cormorant Garamond',serif; font-size:clamp(2.5rem,5vw,4.4rem); font-weight:300; position:relative; z-index:1; color:var(--espresso) }
     .cta-box p{ max-width:720px; margin:1rem auto 2rem; line-height:1.95; color:var(--text-2); position:relative; z-index:1 }
 
+    .feedback-section{ background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(244,237,225,.9)); }
+    .feedback-toolbar{ display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between; margin-bottom:2rem; }
+    .feedback-toggle, .feedback-filters{ display:flex; flex-wrap:wrap; gap:.6rem; }
+    .feedback-toggle-btn, .feedback-filter{
+      border:1px solid rgba(184,135,42,.2);
+      background:rgba(255,255,255,.85);
+      padding:.65rem 1.1rem;
+      border-radius:999px;
+      font-size:.72rem;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--brown);
+      cursor:pointer;
+      transition:.25s ease;
+      font-weight:600;
+    }
+    .feedback-toggle-btn.active, .feedback-filter.active{
+      background:linear-gradient(180deg,#e7bd63 0%, #d8a84a 50%, #b8872a 100%);
+      color:#fff;
+      border-color:rgba(255,255,255,.4);
+      box-shadow:0 10px 0 #8f651d,0 18px 30px rgba(184,135,42,.25);
+    }
+    .feedback-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1.4rem; }
+    .feedback-card{
+      background:rgba(255,255,255,.96);
+      border:1px solid rgba(184,135,42,.16);
+      border-radius:26px;
+      padding:1.6rem;
+      box-shadow:0 16px 34px rgba(92,61,30,.10);
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+      position:relative;
+    }
+    .feedback-card::after{ content:''; position:absolute; inset:10px; border:1px solid rgba(184,135,42,.08); border-radius:20px; pointer-events:none; }
+    .feedback-header{ display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+    .feedback-user{ display:flex; align-items:center; gap:.75rem; }
+    .feedback-avatar{
+      width:44px; height:44px; border-radius:50%;
+      background:linear-gradient(135deg, rgba(184,135,42,.35), rgba(255,255,255,.7));
+      display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--brown);
+      box-shadow:0 10px 22px rgba(184,135,42,.18);
+    }
+    .feedback-name{ font-weight:700; color:var(--espresso); }
+    .feedback-stars{ color:var(--gold); font-size:.9rem; letter-spacing:.12em; }
+    .feedback-badge{ display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .8rem; border-radius:999px; background:rgba(47,127,79,.14); color:#2f7f4f; font-size:.7rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+    .feedback-summary{ color:var(--text-2); font-size:1rem; line-height:1.7; font-weight:600; }
+    .feedback-review{ color:var(--text-3); line-height:1.8; }
+    .feedback-tags{ display:flex; flex-wrap:wrap; gap:.4rem; }
+    .feedback-pill{ padding:.35rem .7rem; border-radius:999px; background:rgba(184,135,42,.12); color:var(--brown); font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; }
+    .support-card{ border-left:4px solid #c04a3a; }
+    .support-meta{ display:flex; gap:.6rem; flex-wrap:wrap; font-size:.75rem; color:var(--text-3); }
+    .feedback-empty{ text-align:center; color:var(--text-3); margin-top:1.5rem; display:none; }
+
+    @media (max-width:1080px){
+      .feedback-grid{ grid-template-columns:1fr; }
+    }
+
     footer{ padding:5rem 0 2rem; border-top:1px solid var(--line); background:linear-gradient(180deg, #f5efe3 0%, #efe5d4 100%) }
     .footer-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:2rem}
     .footer-brand p,.footer-col a,.footer-col address{color:var(--text-2);line-height:2}
@@ -415,16 +473,19 @@
 
     .checkout-overlay{
       position:fixed; inset:0; background:rgba(34,20,10,.65); backdrop-filter:blur(10px);
-      display:flex; align-items:center; justify-content:center; z-index:3000;
+      display:flex; align-items:flex-start; justify-content:center; z-index:3000;
       opacity:0; pointer-events:none; transition:.35s ease; padding:1rem;
+      overflow-y:auto; -webkit-overflow-scrolling:touch;
     }
     .checkout-overlay.active{ opacity:1; pointer-events:auto; }
     .checkout-box{
       width:min(600px,100%);
+      max-height:90vh;
       background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,240,228,.98));
       border:1px solid rgba(184,135,42,.22); border-radius:30px; padding:2rem;
       box-shadow:0 30px 80px rgba(44,26,14,.22);
       transform:translateY(30px) scale(.96); transition:.35s ease; position:relative;
+      overflow-y:auto;
     }
     .checkout-overlay.active .checkout-box{ transform:translateY(0) scale(1); }
     .checkout-box h3{ font-family:'Cormorant Garamond',serif; font-size:2.3rem; color:var(--espresso); margin-bottom:.5rem; }
@@ -436,6 +497,13 @@
     .checkout-field input, .checkout-field textarea{ width:100%; border:1px solid rgba(184,135,42,.18); border-radius:18px; padding:1rem 1rem; font-family:'Jost',sans-serif; font-size:.95rem; outline:none; background:rgba(255,255,255,.95); }
     .checkout-field textarea{resize:vertical;min-height:100px}
     .checkout-field input:focus, .checkout-field textarea:focus{ border-color:var(--gold); box-shadow:0 0 0 4px rgba(184,135,42,.10); }
+    .checkout-location-panel{ margin-top:1rem; padding:1.2rem; border-radius:22px; background:rgba(255,255,255,.85); border:1px solid rgba(184,135,42,.14); }
+    .checkout-location-panel h4{ margin:0 0 .35rem; color:var(--brown); font-size:1rem; font-weight:700; }
+    .checkout-location-panel p{ margin:0 0 1rem; color:var(--text-2); font-size:.9rem; }
+    .checkout-location-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:1rem; }
+    .checkout-location-actions{ display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin-top:1rem; }
+    .checkout-locate-btn{ border:none; border-radius:999px; padding:.75rem 1rem; background:linear-gradient(135deg, #285943, #1e4332); color:#fff; font-weight:700; cursor:pointer; box-shadow:0 10px 22px rgba(30,67,50,.22); }
+    .checkout-location-help{ color:var(--text-2); font-size:.85rem; }
     .cart-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
     .cart-header h3{ font-family:'Cormorant Garamond',serif; font-size:2.3rem; color:var(--espresso); font-weight:500; }
     .cart-items{ display:flex; flex-direction:column; gap:1rem; margin-bottom:1.8rem; }
@@ -506,10 +574,25 @@
         <li><a href="#delivery">Delivery</a></li>
         <li><a href="#events">Events</a></li>
       </ul>
+      {% set user_role = app.request.session.get('user_role') %}
+      {% set user_name = app.request.session.get('user_name') %}
       <div class="nav-actions">
         <button class="cart-btn" id="openCart">Cart <span class="cart-badge" id="cartCount">0</span></button>
         <button class="profile-btn" id="openProfile">Profile</button>
         <a href="#" class="nav-btn" id="openBooking">Book Now</a>
+        {% if user_role == 'ROLE_ADMIN' %}
+          <a href="{{ path('app_admin_dashboard') }}" class="nav-btn">Admin</a>
+          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+        {% elseif user_role == 'ROLE_DELIVERY_MAN' %}
+          <a href="{{ path('app_driver_deliveries') }}" class="nav-btn">My Deliveries</a>
+          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+        {% elseif user_role == 'ROLE_CLIENT' %}
+          <a href="{{ path('app_profile') }}" class="nav-btn">My Profile</a>
+          <a href="{{ path('app_client_orders') }}" class="nav-btn">My Orders</a>
+          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+        {% else %}
+          <a href="{{ path('app_login') }}" class="nav-btn">Login</a>
+        {% endif %}
       </div>
     </div>
   </nav>
@@ -579,27 +662,61 @@
   <section id="menu-section">
     <div class="container">
       <div class="section-head reveal">
-        <div><small>Luxury Menu</small><h3>Signature <em>Flavours</em> of BIG 4</h3></div>
+        <div><small>✦ Luxury Menu ✦</small><h3>Signature <em>Flavours</em> of BIG 4</h3></div>
         <p>A polished menu designed for coffee lovers, brunch guests, and elegant dining moments.</p>
       </div>
-      <div class="menu-grid">
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80" alt="Espresso">
-          <div class="menu-card-content"><h4>Espresso</h4><p>Rich espresso, cappuccino, flat white, and handcrafted coffee selections with a refined finish.</p><span class="price">6 TND</span><button class="add-cart-btn" data-name="Espresso" data-price="6">Add to Cart</button></div>
-        </div>
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1000&q=80" alt="Desserts">
-          <div class="menu-card-content"><h4>Desserts</h4><p>Luxury cakes, pistachio pastries, chocolate creations, and elegant dessert presentations.</p><span class="price">12 TND</span><button class="add-cart-btn" data-name="Desserts" data-price="12">Add to Cart</button></div>
-        </div>
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=1000&q=80" alt="Brunch">
-          <div class="menu-card-content"><h4>Brunch</h4><p>Curated brunch plates with eggs, artisan breads, gourmet toppings, and fresh seasonal sides.</p><span class="price">22 TND</span><button class="add-cart-btn" data-name="Brunch" data-price="22">Add to Cart</button></div>
-        </div>
-        <div class="menu-card reveal">
-          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" alt="Signature Dishes">
-          <div class="menu-card-content"><h4>Signature Dishes</h4><p>Chef-inspired plates crafted for dinner, lounge evenings, and unforgettable dining experiences.</p><span class="price">28 TND</span><button class="add-cart-btn" data-name="Signature Dishes" data-price="28">Add to Cart</button></div>
-        </div>
-      </div>
+      {% if menuSections is defined and menuSections is not empty %}
+        {% set totalDishes = 0 %}
+        {% for section in menuSections %}
+          {% set totalDishes = totalDishes + (section.dishes is defined ? section.dishes|length : 0) %}
+        {% endfor %}
+
+        {% if totalDishes > 0 %}
+          <div style="margin:2rem 0 1.2rem;">
+            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:400;color:var(--espresso);margin:0;letter-spacing:.3px;">Main Menu</h4>
+            <p style="margin:.5rem 0 0;color:var(--text-2);font-size:.95rem;">All available dishes</p>
+          </div>
+          <div class="menu-paged-grid">
+            {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
+            {% for section in menuSections %}
+              {% if section.dishes is defined and section.dishes|length > 0 %}
+                {% for dish in section.dishes %}
+                  <div class="menu-card reveal compact">
+                    <div class="menu-card-inner">
+                      <div class="menu-thumb">
+                        <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
+                      </div>
+                      <div class="menu-card-content">
+                        <h4>{{ dish.name }}</h4>
+                        <p class="short-desc">{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
+                        <div class="menu-card-footer">
+                          <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
+                          <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}" style="padding:.7rem 1.2rem;font-size:.85rem;white-space:nowrap;">Add</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <div style="margin:2rem 0 1rem;">
+            <h5 style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:400;color:var(--espresso);margin:0 0 .8rem;letter-spacing:.2px;">Browse Categories</h5>
+            <div class="menu-categories">
+              {% for section in menuSections %}
+                {% if section.dishes is defined and section.dishes|length > 0 %}
+                  <a href="#menu-section" class="menu-category">{{ section.menu.title }} ({{ section.dishes|length }})</a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <p style="color:var(--text-2);">No menu items are available right now.</p>
+        {% endif %}
+      {% else %}
+        <p style="color:var(--text-2);">Menu loading... Please check back shortly.</p>
+      {% endif %}
     </div>
   </section>
 
@@ -633,6 +750,35 @@
         <div class="card reveal"><div class="number">02</div><h4>Premium Packaging</h4><p>Luxury-inspired packaging designed to keep your order elegant and intact from our lounge to your table.</p></div>
         <div class="card reveal"><div class="number">03</div><h4>Easy Ordering</h4><p>A seamless experience for coffee, desserts, and signature dishes whenever you want BIG 4 at home.</p></div>
       </div>
+    </div>
+  </section>
+
+  <!-- FEEDBACK -->
+  <section id="feedback" class="feedback-section">
+    <div class="container">
+      <div class="section-head reveal">
+        <div><small>Guest Voices</small><h3>AI-Verified <em>Testimonials</em></h3></div>
+        <p>Every review is analyzed by our AI feedback system to highlight standout experiences and flag support needs instantly.</p>
+      </div>
+      <div class="feedback-toolbar">
+        <div class="feedback-toggle">
+          <button class="feedback-toggle-btn active" data-view="testimonials">⭐ Testimonials</button>
+        </div>
+        <div class="feedback-filters">
+          <button class="feedback-filter active" data-filter="all">All</button>
+          <button class="feedback-filter" data-filter="5">5 Stars</button>
+          <button class="feedback-filter" data-filter="4">4 Stars</button>
+          <button class="feedback-filter" data-filter="fast">Fast Delivery</button>
+          <button class="feedback-filter" data-filter="packaging">Great Packaging</button>
+        </div>
+        <div class="feedback-filters" id="feedbackPager" style="margin-left:auto;">
+          <button class="feedback-filter" id="feedbackPrev">Prev</button>
+          <span id="feedbackPageLabel" style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);padding:.65rem .8rem;">Page 1</span>
+          <button class="feedback-filter" id="feedbackNext">Next</button>
+        </div>
+      </div>
+      <div class="feedback-grid" id="feedbackGrid"></div>
+      <div class="feedback-empty" id="feedbackEmpty">No feedback entries match your filters yet.</div>
     </div>
   </section>
 
@@ -807,6 +953,18 @@
         <div class="checkout-field"><label for="recipient_phone">Phone Number</label><input type="tel" id="recipient_phone" name="recipient_phone" placeholder="Recipient phone"></div>
         <div class="checkout-field"><label for="pickup_location">Pickup Location</label><input type="text" id="pickup_location" name="pickup_location" placeholder="Pickup address or branch"></div>
         <div class="checkout-field"><label for="delivery_notes">Delivery Notes</label><textarea id="delivery_notes" name="delivery_notes" rows="3" placeholder="Any delivery instructions"></textarea></div>
+        <div class="checkout-location-panel">
+          <h4>Location Coordinates</h4>
+          <p>Use your current coordinates for more accurate routing.</p>
+          <div class="checkout-location-grid">
+            <div class="checkout-field"><label for="checkout_latitude">Latitude</label><input type="number" id="checkout_latitude" name="current_latitude" step="any" placeholder="e.g., 36.8065"></div>
+            <div class="checkout-field"><label for="checkout_longitude">Longitude</label><input type="number" id="checkout_longitude" name="current_longitude" step="any" placeholder="e.g., 10.1815"></div>
+          </div>
+          <div class="checkout-location-actions">
+            <button type="button" id="getCheckoutLocation" class="checkout-locate-btn">Use Current Location</button>
+            <span class="checkout-location-help">Allow location access to fill these automatically.</span>
+          </div>
+        </div>
         <button type="submit" class="btn-primary" style="width:100%">Place Order</button>
       </form>
     </div>
@@ -880,6 +1038,9 @@
     const cartItemsInput      = document.getElementById('cartItemsInput');
     const cartTotalInput      = document.getElementById('cartTotalInput');
     const checkoutForm        = document.getElementById('checkoutForm');
+    const checkoutLat          = document.getElementById('checkout_latitude');
+    const checkoutLon          = document.getElementById('checkout_longitude');
+    const getCheckoutLocation  = document.getElementById('getCheckoutLocation');
 
     let cart = [];
 
@@ -936,6 +1097,177 @@
     closeCheckout.addEventListener('click', hideCheckout);
     checkoutPopup.addEventListener('click', (e)=>{ if(e.target===checkoutPopup) hideCheckout(); });
     checkoutForm.addEventListener('submit', function(){});
+
+    if (getCheckoutLocation) {
+      getCheckoutLocation.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported by this browser.');
+          return;
+        }
+        getCheckoutLocation.disabled = true;
+        getCheckoutLocation.textContent = 'Locating...';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (checkoutLat) checkoutLat.value = pos.coords.latitude.toFixed(6);
+            if (checkoutLon) checkoutLon.value = pos.coords.longitude.toFixed(6);
+            getCheckoutLocation.disabled = false;
+            getCheckoutLocation.textContent = 'Use Current Location';
+          },
+          () => {
+            alert('Unable to get your location. Please allow location access.');
+            getCheckoutLocation.disabled = false;
+            getCheckoutLocation.textContent = 'Use Current Location';
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      });
+    }
+
+    // FEEDBACK WIDGET
+    const API_BASE = '{{ feedbackBaseUrl|default('http://127.0.0.1:8001')|e('js') }}';
+    const feedbackGrid = document.getElementById('feedbackGrid');
+    const feedbackEmpty = document.getElementById('feedbackEmpty');
+    const filterButtons = document.querySelectorAll('.feedback-filter');
+    const toggleButtons = document.querySelectorAll('.feedback-toggle-btn');
+    const feedbackPager = document.getElementById('feedbackPager');
+    const feedbackPrev = document.getElementById('feedbackPrev');
+    const feedbackNext = document.getElementById('feedbackNext');
+    const feedbackPageLabel = document.getElementById('feedbackPageLabel');
+
+    const mockTestimonials = [
+      { id: 1, customer_name: 'Amira', review_text: 'Super fast delivery and elegant packaging.', summary: 'Fast delivery with premium presentation.', rating: 5, created_at: '2026-04-12T12:10:00' },
+      { id: 2, customer_name: 'Zayd', review_text: 'Coffee arrived hot and beautifully boxed.', summary: 'Warm coffee and beautiful boxing.', rating: 5, created_at: '2026-04-10T17:42:00' },
+      { id: 3, customer_name: 'Salma', review_text: 'Quick service with a smooth handoff.', summary: 'Efficient handoff and quick service.', rating: 4, created_at: '2026-04-08T09:15:00' }
+    ];
+
+    const feedbackState = {
+      view: 'testimonials',
+      filter: 'all',
+      page: 1,
+      pageSize: 3,
+      testimonials: [],
+      support: []
+    };
+
+    function starLine(rating){
+      const value = Math.max(1, Math.min(5, rating || 5));
+      return '★'.repeat(value) + '☆'.repeat(5 - value);
+    }
+
+    function tagMatches(item, filter){
+      if (filter === 'all') return true;
+      if (filter === '5') return (item.rating || 0) >= 5;
+      if (filter === '4') return (item.rating || 0) === 4;
+      const text = `${item.summary || ''} ${item.review_text || ''}`.toLowerCase();
+      if (filter === 'fast') return text.includes('fast') || text.includes('quick');
+      if (filter === 'packaging') return text.includes('package') || text.includes('boxing') || text.includes('packaging');
+      return true;
+    }
+
+    function renderFeedback(){
+      if (!feedbackGrid) return;
+      feedbackGrid.innerHTML = '';
+      const items = feedbackState.testimonials;
+      const filtered = items.filter(item => tagMatches(item, feedbackState.filter));
+
+      let paged = filtered;
+      const totalPages = Math.max(1, Math.ceil(filtered.length / feedbackState.pageSize));
+      if (feedbackState.page > totalPages) {
+        feedbackState.page = totalPages;
+      }
+      const start = (feedbackState.page - 1) * feedbackState.pageSize;
+      paged = filtered.slice(start, start + feedbackState.pageSize);
+
+      if (feedbackPager) {
+        feedbackPager.style.display = 'flex';
+      }
+      if (feedbackPageLabel) {
+        feedbackPageLabel.textContent = `Page ${feedbackState.page} of ${totalPages}`;
+      }
+      if (feedbackPrev) {
+        feedbackPrev.disabled = feedbackState.page <= 1;
+      }
+      if (feedbackNext) {
+        feedbackNext.disabled = feedbackState.page >= totalPages;
+      }
+
+      feedbackEmpty.style.display = paged.length ? 'none' : 'block';
+
+      paged.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'feedback-card' + (feedbackState.view === 'support' ? ' support-card' : '');
+        card.innerHTML = `
+          <div class="feedback-header">
+            <div class="feedback-user">
+              <div class="feedback-avatar">${(item.customer_name || 'G').slice(0,1)}</div>
+              <div>
+                <div class="feedback-name">${item.customer_name || 'Guest'}</div>
+                <div class="feedback-stars">${starLine(item.rating)}</div>
+              </div>
+            </div>
+            <span class="feedback-badge">AI Verified</span>
+          </div>
+          <div class="feedback-summary">${item.summary || ''}</div>
+          <div class="feedback-review">${item.review_text || ''}</div>
+          <div class="feedback-tags">
+            <span class="feedback-pill">${item.rating || 5} Stars</span>
+            <span class="feedback-pill">Verified</span>
+          </div>
+        `;
+        feedbackGrid.appendChild(card);
+      });
+    }
+
+    async function fetchJson(url, fallback){
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1800);
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!response.ok) throw new Error('Bad response');
+        const data = await response.json();
+        return Array.isArray(data) ? data : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    async function initFeedback(){
+      feedbackState.testimonials = await fetchJson(`${API_BASE}/testimonials`, mockTestimonials);
+      renderFeedback();
+    }
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        feedbackState.filter = btn.dataset.filter || 'all';
+        feedbackState.page = 1;
+        renderFeedback();
+      });
+    });
+
+    toggleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        toggleButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    if (feedbackPrev) {
+      feedbackPrev.addEventListener('click', () => {
+        feedbackState.page = Math.max(1, feedbackState.page - 1);
+        renderFeedback();
+      });
+    }
+    if (feedbackNext) {
+      feedbackNext.addEventListener('click', () => {
+        feedbackState.page += 1;
+        renderFeedback();
+      });
+    }
+
+    initFeedback();
 
     // ESC CLOSE
     document.addEventListener('keydown', (e)=>{

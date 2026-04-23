@@ -40,4 +40,30 @@ class UserRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function findOneByPhoneLoose(?string $phone): ?User
+    {
+        $normalized = preg_replace('/\D+/', '', (string) $phone);
+        if (!$normalized) {
+            return null;
+        }
+
+        $candidates = array_values(array_unique(array_filter([
+            $normalized,
+            '+' . $normalized,
+            str_starts_with($normalized, '216') ? substr($normalized, 3) : ('216' . $normalized),
+            str_starts_with($normalized, '216') ? ('+' . substr($normalized, 3)) : ('+216' . $normalized),
+        ])));
+
+        if ($candidates === []) {
+            return null;
+        }
+
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.phone IN (:phones)')
+            ->setParameter('phones', $candidates)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }
