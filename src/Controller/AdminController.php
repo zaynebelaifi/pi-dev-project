@@ -11,6 +11,7 @@ use App\Service\ExpiredIngredientWasteService;
 use App\Utils\AiStockInsightService;
 use App\Repository\UserRepository;
 use App\Repository\FleetCarRepository;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -57,6 +58,58 @@ final class AdminController extends AbstractController
         ]);
     }
 
+    #[Route('/diagnostics', name: 'app_admin_diagnostics', methods: ['GET'])]
+    public function diagnostics(Request $request, Connection $connection): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->json(['error' => 'unauthorized'], 403);
+        }
+
+        $dsn = (string) ($_ENV['MESSENGER_TRANSPORT_DSN'] ?? '');
+        $whatsappUrl = (string) ($_ENV['WHATSAPP_API_URL'] ?? '');
+        $whatsappToken = (string) ($_ENV['WHATSAPP_API_TOKEN'] ?? '');
+        $orsKey = (string) ($_ENV['ORS_API_KEY'] ?? '');
+        $restLat = (string) ($_ENV['RESTAURANT_LAT'] ?? '');
+        $restLon = (string) ($_ENV['RESTAURANT_LON'] ?? '');
+
+        $sm = $connection->createSchemaManager();
+        $tables = array_map(fn($t) => $t->getName(), $sm->listTables());
+
+        $checks = [
+            [
+                'label' => 'Messenger DSN',
+                'ok' => $dsn !== '',
+                'detail' => $dsn ? 'Configured' : 'Missing MESSENGER_TRANSPORT_DSN',
+            ],
+            [
+                'label' => 'WhatsApp API',
+                'ok' => $whatsappUrl !== '' && $whatsappToken !== '',
+                'detail' => ($whatsappUrl && $whatsappToken) ? 'Configured' : 'Missing WHATSAPP_API_URL or WHATSAPP_API_TOKEN',
+            ],
+            [
+                'label' => 'Mapping API',
+                'ok' => $orsKey !== '',
+                'detail' => $orsKey ? 'Configured' : 'Missing ORS_API_KEY',
+            ],
+            [
+                'label' => 'Restaurant Coordinates',
+                'ok' => $restLat !== '' && $restLon !== '',
+                'detail' => ($restLat && $restLon) ? 'Configured' : 'Missing RESTAURANT_LAT/RESTAURANT_LON',
+            ],
+            [
+                'label' => 'Messenger Queue Table',
+                'ok' => in_array('messenger_messages', $tables, true),
+                'detail' => in_array('messenger_messages', $tables, true) ? 'Table exists' : 'Missing messenger_messages table',
+            ],
+        ];
+
+        return $this->json([
+            'ok' => !in_array(false, array_column($checks, 'ok'), true),
+            'checks' => $checks,
+        ]);
+    }
+
     #[Route('/users', name: 'app_admin_users', methods: ['GET'])]
     public function users(Request $request, UserRepository $userRepository): Response
     {
@@ -69,6 +122,21 @@ final class AdminController extends AbstractController
 
         return $this->render('admin/users.html.twig', [
             'users' => $users,
+        ]);
+    }
+
+    #[Route('/support-queue', name: 'app_admin_support_queue', methods: ['GET'])]
+    public function supportQueue(Request $request): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $feedbackBaseUrl = rtrim((string) ($_ENV['FEEDBACK_AI_BASE_URL'] ?? 'http://127.0.0.1:8001'), '/');
+
+        return $this->render('admin/support_queue.html.twig', [
+            'feedbackBaseUrl' => $feedbackBaseUrl,
         ]);
     }
 
