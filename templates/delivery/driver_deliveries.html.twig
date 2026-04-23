@@ -44,7 +44,7 @@
                             <form method="post" action="{{ path('app_delivery_driver_status', {'id': delivery.delivery_id}) }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token('driver_status' ~ delivery.delivery_id) }}">
                                 <button type="submit" name="action" value="in_transit" class="btn-action">In Transit</button>
-                                <button type="submit" name="action" value="delivered" class="btn-action btn-success">Delivered</button>
+                                <button type="button" data-url="{{ path('app_delivery_mark_delivered', {'id': delivery.delivery_id}) }}" data-delivery-id="{{ delivery.delivery_id }}" class="btn-action btn-success mark-delivered-btn">Delivered</button>
                                 <button type="submit" name="action" value="cancel" class="btn-action btn-danger">Cancel</button>
                             </form>
                         </td>
@@ -165,4 +165,70 @@
         .action-cell form { flex-direction: column; align-items: stretch; }
     }
 </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const buttons = document.querySelectorAll('.mark-delivered-btn');
+            if (!buttons.length) return;
+
+            buttons.forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const url = btn.dataset.url;
+                    if (!url) {
+                        alert('Missing endpoint');
+                        return;
+                    }
+
+                    const originalText = btn.textContent;
+                    btn.disabled = true;
+                    btn.textContent = 'Getting location...';
+
+                    if (!navigator.geolocation) {
+                        alert('Location access is required to confirm delivery');
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(async function (pos) {
+                        try {
+                            const resp = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'same-origin',
+                                body: JSON.stringify({
+                                    latitude: pos.coords.latitude,
+                                    longitude: pos.coords.longitude
+                                })
+                            });
+                            const data = await resp.json();
+
+                            if (!resp.ok || !data.success) {
+                                alert(data.message || 'Failed to confirm delivery');
+                                btn.disabled = false;
+                                btn.textContent = originalText;
+                                return;
+                            }
+
+                            location.reload();
+                        } catch (err) {
+                            console.error(err);
+                            alert('Failed to confirm delivery');
+                            btn.disabled = false;
+                            btn.textContent = originalText;
+                        }
+                    }, function () {
+                        alert('Location access is required to confirm delivery');
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                });
+            });
+        });
+    </script>
 {% endblock %}

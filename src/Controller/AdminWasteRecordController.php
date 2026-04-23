@@ -6,6 +6,8 @@ use App\Entity\Ingredient;
 use App\Entity\Wasterecord;
 use App\Form\WasterecordType;
 use App\Repository\WasterecordRepository;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -25,13 +27,87 @@ final class AdminWasteRecordController extends AbstractController
             return $redirect;
         }
 
-        $search = trim((string) $request->query->get('q', ''));
+        $filterData = $this->extractFilters($request, $wasterecordRepository);
+        $records = $wasterecordRepository->findForAdminList(
+            $filterData['search'],
+            $filterData['sort'],
+            $filterData['dir'],
+            '' === $filterData['wasteType'] ? null : $filterData['wasteType'],
+            $filterData['dateFrom'],
+            $filterData['dateTo']
+        );
 
         return $this->render('admin/inventory/waste/index.html.twig', [
-            'records' => $wasterecordRepository->findForAdminList($search),
-            'search' => $search,
+            'records' => $records,
+            'search' => $filterData['search'],
+            'sort' => $filterData['sort'],
+            'dir' => 'ASC' === $filterData['dir'] ? 'ASC' : 'DESC',
+            'wasteType' => $filterData['wasteType'],
+            'wasteTypes' => $wasterecordRepository->findDistinctWasteTypes(),
+            'dateFrom' => $filterData['dateFromRaw'],
+            'dateTo' => $filterData['dateToRaw'],
             'totalWasted' => $wasterecordRepository->totalWastedQuantity(),
         ]);
+    }
+
+    #[Route('/export/pdf', name: 'admin_waste_export_pdf', methods: ['GET'])]
+    public function exportPdf(Request $request, WasterecordRepository $wasterecordRepository): Response
+    {
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
+        if (!class_exists(Dompdf::class)) {
+            $this->addFlash('error', 'PDF export dependency missing. Run composer require dompdf/dompdf.');
+
+            return $this->redirectToRoute('admin_waste_index', $request->query->all());
+        }
+
+        $filterData = $this->extractFilters($request, $wasterecordRepository);
+        $records = $wasterecordRepository->findForAdminList(
+            $filterData['search'],
+            $filterData['sort'],
+            $filterData['dir'],
+            '' === $filterData['wasteType'] ? null : $filterData['wasteType'],
+            $filterData['dateFrom'],
+            $filterData['dateTo']
+        );
+
+        if ([] === $records) {
+            $this->addFlash('error', 'No rows match the current filter set.');
+
+            return $this->redirectToRoute('admin_waste_index', $request->query->all());
+        }
+
+        $html = $this->renderView('admin/inventory/waste/export_pdf.html.twig', [
+            'records' => $records,
+            'generatedAt' => new \DateTimeImmutable(),
+            'filters' => [
+                'search' => $filterData['search'],
+                'wasteType' => $filterData['wasteType'] ?: 'All',
+                'dateFrom' => $filterData['dateFromRaw'] ?: 'Any',
+                'dateTo' => $filterData['dateToRaw'] ?: 'Any',
+                'sort' => $filterData['sort'],
+                'dir' => $filterData['dir'],
+            ],
+        ]);
+
+        $options = new Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', false);
+        $options->set('defaultFont', 'DejaVu Sans');
+
+        $dompdf = new Dompdf($options);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+
+        $filename = sprintf('waste-records-%s.pdf', (new \DateTimeImmutable())->format('Ymd-His'));
+        $response = new Response($dompdf->output());
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
+
+        return $response;
     }
 
     #[Route('/new', name: 'admin_waste_new', methods: ['GET', 'POST'])]
@@ -213,6 +289,46 @@ final class AdminWasteRecordController extends AbstractController
         if ((float) ($ingredient->getQuantityInStock() ?? 0) <= (float) ($ingredient->getMinStockLevel() ?? 0)) {
             $this->addFlash('error', sprintf('%s is now below minimum stock level.', $ingredient->getName()));
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function extractFilters(Request $request, WasterecordRepository $wasterecordRepository): array
+    {
+        $search = trim((string) $request->query->get('q', ''));
+        $sort = (string) $request->query->get('sort', 'date');
+        $dir = strtoupper((string) $request->query->get('dir', 'DESC'));
+        $wasteType = trim((string) $request->query->get('waste_type', ''));
+        $dateFromRaw = trim((string) $request->query->get('date_from', ''));
+        $dateToRaw = trim((string) $request->query->get('date_to', ''));
+
+        $allowedWasteTypes = $wasterecordRepository->findDistinctWasteTypes();
+        if ('' !== $wasteType && !in_array($wasteType, $allowedWasteTypes, true)) {
+            $wasteType = '';
+        }
+
+        return [
+            'search' => $search,
+            'sort' => $sort,
+            'dir' => 'ASC' === $dir ? 'ASC' : 'DESC',
+            'wasteType' => $wasteType,
+            'dateFromRaw' => $dateFromRaw,
+            'dateToRaw' => $dateToRaw,
+            'dateFrom' => $this->parseDate($dateFromRaw),
+            'dateTo' => $this->parseDate($dateToRaw),
+        ];
+    }
+
+    private function parseDate(string $value): ?\DateTimeImmutable
+    {
+        if ('' === $value) {
+            return null;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+
+        return $date instanceof \DateTimeImmutable ? $date : null;
     }
 
     private function denyUnlessAdmin(Request $request): ?RedirectResponse

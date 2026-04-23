@@ -14,6 +14,9 @@ class IngredientType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $isEditMode = (bool) ($options['is_edit_mode'] ?? false);
+        $today = (string) ($options['today'] ?? (new \DateTimeImmutable('today'))->format('Y-m-d'));
+
         $builder
             ->add('name', TextType::class, [
                 'label' => 'Ingredient name',
@@ -32,10 +35,11 @@ class IngredientType extends AbstractType
                 ],
             ])
             ->add('quantityInStock', NumberType::class, [
-                'label' => 'Quantity in stock',
+                'label' => 'Current quantity in stock',
                 'required' => true,
                 'scale' => 2,
                 'html5' => true,
+                'disabled' => $isEditMode,
                 'attr' => [
                     'min' => 0,
                     'step' => '0.01',
@@ -68,13 +72,38 @@ class IngredientType extends AbstractType
                 'label' => 'Expiry date',
                 'required' => true,
                 'widget' => 'single_text',
+                'attr' => [
+                    'min' => $today,
+                ],
             ]);
+
+        if ($isEditMode) {
+            $builder->add('decreaseQuantity', NumberType::class, [
+                'mapped' => false,
+                'required' => false,
+                'scale' => 2,
+                'html5' => true,
+                'label' => 'Quantity to decrease',
+                'empty_data' => '0',
+                'attr' => [
+                    'min' => 0,
+                    'step' => '0.01',
+                    'inputmode' => 'decimal',
+                    'placeholder' => '0.00',
+                ],
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Ingredient::class,
+            'is_edit_mode' => false,
+            'today' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
         ]);
+
+        $resolver->setAllowedTypes('is_edit_mode', 'bool');
+        $resolver->setAllowedTypes('today', 'string');
     }
 }

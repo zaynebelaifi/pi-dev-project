@@ -454,6 +454,74 @@ final class DeliveryController extends AbstractController
         ]);
     }
 
+    #[Route('/delivery/{id}/location', name: 'app_delivery_update_location', methods: ['POST'])]
+    public function updateLocation(Request $request, Delivery $delivery, EntityManagerInterface $em): Response
+    {
+        $data = json_decode($request->getContent() ?: '{}', true);
+        $lat = isset($data['lat']) ? (float)$data['lat'] : null;
+        $lon = isset($data['lon']) ? (float)$data['lon'] : null;
+        if ($lat === null || $lon === null) {
+            return $this->json(['success' => false, 'message' => 'Missing coordinates'], 400);
+        }
+        $delivery->setCurrentLatitude((string)$lat);
+        $delivery->setCurrentLongitude((string)$lon);
+        $em->flush();
+        return $this->json(['success' => true]);
+    }
+
+    #[Route('/delivery/{id}/mark-delivered', name: 'app_delivery_mark_delivered', methods: ['POST'])]
+    public function markDelivered(Request $request, Delivery $delivery, EntityManagerInterface $em): Response
+    {
+        $data = json_decode($request->getContent() ?: '', true);
+        $lat = is_array($data) && isset($data['latitude']) ? (float) $data['latitude'] : null;
+        $lon = is_array($data) && isset($data['longitude']) ? (float) $data['longitude'] : null;
+        if ($lat === null || $lon === null) {
+            return $this->json(['success' => false, 'message' => 'GPS coordinates are required'], 400);
+        }
+        // Ensure the requester is the assigned delivery man
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+            return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+        if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
+            return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
+        }
+
+        $restaurantLat = 35.03244783428717;
+        $restaurantLon = 9.470642415342553;
+
+        $distance = $this->haversineDistanceMeters($lat, $lon, $restaurantLat, $restaurantLon);
+        if ($distance > 50.0) {
+            $distanceMeters = (int) round($distance);
+            return $this->json([
+                'success' => false,
+                'message' => sprintf(
+                    'You must be within 50 meters of the restaurant (you are %dm away)',
+                    $distanceMeters
+                ),
+            ], 400);
+        }
+
+        $delivery->setStatus('DELIVERED');
+        $delivery->setActual_delivery_date(new \DateTimeImmutable());
+        $em->flush();
+
+        return $this->json(['success' => true]);
+    }
+
+    private function haversineDistanceMeters(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadius = 6371000.0;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2)
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
+            * sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
+    }
+
     private function refreshDeliveryManRating(DeliveryMan $deliveryMan, int $newRating): void
     {
         $currentRating = (float) $deliveryMan->getRating();
@@ -555,15 +623,34 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/driver', name: 'app_driver_deliveries', methods: ['GET'])]
-    public function driverDeliveries(Request $request, DeliveryRepository $deliveryRepository): Response
+    public function driverDeliveries(Request $request, DeliveryRepository $deliveryRepository, DeliveryManRepository $deliveryManRepository): Response
     {
-        if ($request->getSession()->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+        $session = $request->getSession();
+
+        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
             return $this->redirectToRoute('app_login');
         }
 
-        $deliveryManId = $request->getSession()->get('delivery_man_id');
+        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+        if ($deliveryManId <= 0) {
+            $driverEmail = strtolower(trim((string) $session->get('user_email', '')));
+            if ($driverEmail !== '') {
+                $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
+                    ->andWhere('LOWER(dm.email) = :email')
+                    ->setParameter('email', $driverEmail)
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+
+                if ($deliveryMan && $deliveryMan->getDelivery_man_id()) {
+                    $deliveryManId = $deliveryMan->getDelivery_man_id();
+                    $session->set('delivery_man_id', $deliveryManId);
+                }
+            }
+        }
+
         $deliveries = [];
-        if ($deliveryManId) {
+        if ($deliveryManId > 0) {
             $deliveries = $deliveryRepository->findByDeliveryManId($deliveryManId);
         }
 

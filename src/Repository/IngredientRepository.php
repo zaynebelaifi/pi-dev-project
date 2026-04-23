@@ -19,8 +19,22 @@ class IngredientRepository extends ServiceEntityRepository
     /**
      * @return Ingredient[]
      */
-    public function findForAdminList(?string $search = null): array
-    {
+    public function findForAdminList(
+        ?string $search = null,
+        string $sort = 'name',
+        string $dir = 'ASC',
+        ?string $stockStatus = null,
+        ?string $unit = null,
+        ?\DateTimeInterface $today = null
+    ): array {
+        $allowedSorts = ['name', 'quantityInStock', 'minStockLevel', 'unit', 'unitCost', 'expiryDate', 'createdAt'];
+        if (!\in_array($sort, $allowedSorts, true)) {
+            $sort = 'name';
+        }
+
+        $direction = \strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
+        $today = $today ?? new \DateTimeImmutable('today');
+
         $qb = $this->createQueryBuilder('i');
 
         if (null !== $search && '' !== trim($search)) {
@@ -29,10 +43,50 @@ class IngredientRepository extends ServiceEntityRepository
                 ->setParameter('q', '%'.mb_strtolower(trim($search)).'%');
         }
 
+        if (null !== $unit && '' !== trim($unit)) {
+            $qb
+                ->andWhere('LOWER(i.unit) = :unit')
+                ->setParameter('unit', mb_strtolower(trim($unit)));
+        }
+
+        if (null !== $stockStatus && '' !== trim($stockStatus)) {
+            $normalizedStatus = mb_strtolower(trim($stockStatus));
+            if ('low' === $normalizedStatus) {
+                $qb->andWhere('i.quantityInStock <= i.minStockLevel');
+            } elseif ('expired' === $normalizedStatus) {
+                $qb
+                    ->andWhere('i.expiryDate < :today')
+                    ->setParameter('today', $today->format('Y-m-d'));
+            } elseif ('healthy' === $normalizedStatus) {
+                $qb
+                    ->andWhere('i.quantityInStock > i.minStockLevel')
+                    ->andWhere('i.expiryDate >= :today')
+                    ->setParameter('today', $today->format('Y-m-d'));
+            }
+        }
+
         return $qb
-            ->orderBy('i.name', 'ASC')
+            ->orderBy('i.'.$sort, $direction)
+            ->addOrderBy('i.id', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return string[]
+     */
+    public function findDistinctUnits(): array
+    {
+        $rows = $this->createQueryBuilder('i')
+            ->select('DISTINCT i.unit AS unit')
+            ->where('i.unit IS NOT NULL')
+            ->andWhere('TRIM(i.unit) <> :empty')
+            ->setParameter('empty', '')
+            ->orderBy('i.unit', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_values(array_filter(array_map(static fn (array $row): string => (string) ($row['unit'] ?? ''), $rows)));
     }
 
     public function countLowStock(): int

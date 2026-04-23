@@ -11,10 +11,14 @@
         "doctrine/doctrine-bundle": "^2.16",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.5",
+<<<<<<< HEAD
         "gemini-api-php/client": "^1.7",
         "lexik/jwt-authentication-bundle": "^2.18",
         "nucleos/dompdf-bundle": "^4.3",
         "nyholm/psr7": "^1.8",
+=======
+        "dompdf/dompdf": "^3.0",
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpstan/phpdoc-parser": "^2.3",
         "symfony/asset": "6.4.*",

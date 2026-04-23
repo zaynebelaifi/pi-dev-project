@@ -4,7 +4,11 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
+<<<<<<< HEAD
     "content-hash": "a1d157ab315d5fe8454261461fe9cc99",
+=======
+    "content-hash": "c6e9ae1a1f67ce5970db64d421ae2c63",
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
     "packages": [
         {
             "name": "brick/math",
@@ -1269,6 +1273,7 @@
         },
         {
             "name": "dompdf/dompdf",
+<<<<<<< HEAD
             "version": "v3.1.5",
             "source": {
                 "type": "git",
@@ -1279,6 +1284,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/dompdf/dompdf/zipball/f11ead23a8a76d0ff9bbc6c7c8fd7e05ca328496",
                 "reference": "f11ead23a8a76d0ff9bbc6c7c8fd7e05ca328496",
+=======
+            "version": "v3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dompdf/dompdf.git",
+                "reference": "fbc7c5ee5d94f7a910b78b43feb7931b7f971b59"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dompdf/dompdf/zipball/fbc7c5ee5d94f7a910b78b43feb7931b7f971b59",
+                "reference": "fbc7c5ee5d94f7a910b78b43feb7931b7f971b59",
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
                 "shasum": ""
             },
             "require": {
@@ -1294,7 +1311,11 @@
                 "ext-json": "*",
                 "ext-zip": "*",
                 "mockery/mockery": "^1.3",
+<<<<<<< HEAD
                 "phpunit/phpunit": "^7.5 || ^8 || ^9 || ^10 || ^11",
+=======
+                "phpunit/phpunit": "^7.5 || ^8 || ^9 || ^10",
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
                 "squizlabs/php_codesniffer": "^3.5",
                 "symfony/process": "^4.4 || ^5.4 || ^6.2 || ^7.0"
             },
@@ -1327,9 +1348,15 @@
             "homepage": "https://github.com/dompdf/dompdf",
             "support": {
                 "issues": "https://github.com/dompdf/dompdf/issues",
+<<<<<<< HEAD
                 "source": "https://github.com/dompdf/dompdf/tree/v3.1.5"
             },
             "time": "2026-03-03T13:54:37+00:00"
+=======
+                "source": "https://github.com/dompdf/dompdf/tree/v3.0.0"
+            },
+            "time": "2024-04-29T14:01:28+00:00"
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
         },
         {
             "name": "dompdf/php-font-lib",
@@ -1490,6 +1517,7 @@
             "time": "2025-03-06T22:45:56+00:00"
         },
         {
+<<<<<<< HEAD
             "name": "gemini-api-php/client",
             "version": "v1.7.2",
             "source": {
@@ -1815,6 +1843,8 @@
             "time": "2023-02-13T12:30:12+00:00"
         },
         {
+=======
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
             "name": "masterminds/html5",
             "version": "2.10.0",
             "source": {
@@ -3127,6 +3157,7 @@
             "time": "2026-03-03T17:31:43+00:00"
         },
         {
+<<<<<<< HEAD
             "name": "spomky-labs/cbor-php",
             "version": "3.2.3",
             "source": {
@@ -3355,6 +3386,8 @@
             "time": "2022-11-25T16:15:06+00:00"
         },
         {
+=======
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
             "name": "symfony/asset",
             "version": "v6.4.24",
             "source": {
@@ -12128,5 +12161,9 @@
         "ext-iconv": "*"
     },
     "platform-dev": {},
+<<<<<<< HEAD
     "plugin-api-version": "2.6.0"
+=======
+    "plugin-api-version": "2.9.0"
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
 }
