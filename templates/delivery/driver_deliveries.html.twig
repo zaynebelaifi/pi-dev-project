@@ -338,8 +338,100 @@
                 });
             };
 
+            const attachShareLocation = ()=>{
+                const buttons = document.querySelectorAll('.share-location-btn');
+                buttons.forEach(function (btn) {
+                    if (btn.dataset.bound) return; btn.dataset.bound = '1';
+                    btn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const url = btn.dataset.url;
+                        if (!url) { alert('Missing endpoint'); return; }
+                        const originalText = btn.textContent;
+                        btn.disabled = true; btn.textContent = 'Sharing...';
+                        if (!navigator.geolocation) { alert('Location access is required'); btn.disabled=false; btn.textContent=originalText; return; }
+                        navigator.geolocation.getCurrentPosition(async function (pos) {
+                            try {
+                                const resp = await fetch(url, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                                    body: JSON.stringify({ lat: pos?.coords?.latitude ?? null, lon: pos?.coords?.longitude ?? null })
+                                });
+                                let data = {};
+                                try { data = await resp.json(); } catch (e) { /* ignore */ }
+                                if (!resp.ok || !data.success) {
+                                    alert(data.message || 'Failed to share location');
+                                    btn.disabled=false; btn.textContent=originalText;
+                                    return;
+                                }
+                                btn.textContent = 'Location shared';
+                                setTimeout(() => { btn.disabled=false; btn.textContent=originalText; }, 1200);
+                            } catch (err) {
+                                console.error(err);
+                                alert('Failed to share location');
+                                btn.disabled=false; btn.textContent=originalText;
+                            }
+                        }, function () {
+                            alert('Location access is required');
+                            btn.disabled=false; btn.textContent=originalText;
+                        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                    });
+                });
+            };
+
+            const startAutoTracking = () => {
+                if (!navigator.geolocation) {
+                    console.warn('Geolocation not supported');
+                    return;
+                }
+
+                let lastSentAt = 0;
+                let lastCoords = null;
+
+                const shouldSend = (coords) => {
+                    const now = Date.now();
+                    if (now - lastSentAt < 5000) return false;
+                    const key = `${coords.latitude},${coords.longitude}`;
+                    if (key === lastCoords) return false;
+                    lastCoords = key;
+                    lastSentAt = now;
+                    return true;
+                };
+
+                navigator.geolocation.watchPosition(async function (pos) {
+                    const coords = pos?.coords;
+                    if (!coords) return;
+                    if (!shouldSend(coords)) return;
+
+                    const buttons = document.querySelectorAll('.share-location-btn');
+                    if (!buttons.length) return;
+
+                    const payload = JSON.stringify({
+                        lat: coords.latitude ?? null,
+                        lon: coords.longitude ?? null,
+                    });
+
+                    buttons.forEach(async (btn) => {
+                        const url = btn.dataset.url;
+                        if (!url) return;
+                        try {
+                            await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'same-origin',
+                                body: payload,
+                            });
+                        } catch (err) {
+                            console.error('Auto tracking failed', err);
+                        }
+                    });
+                }, function (err) {
+                    console.warn('Auto tracking disabled', err);
+                }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+            };
+
             document.addEventListener('DOMContentLoaded', function () {
                 attachMarkDelivered();
+                attachShareLocation();
+                startAutoTracking();
                 ['driver-search','driver-status','driver-sort','driver-direction','driver-limit'].forEach(id => {
                     const el = document.getElementById(id);
                     if (!el) return;
@@ -353,6 +445,8 @@
                 const tbody = document.getElementById('driver-table-body');
                 const mo = new MutationObserver(()=>{ attachMarkDelivered(); });
                 mo.observe(tbody, { childList: true, subtree: true });
+                const mo2 = new MutationObserver(()=>{ attachShareLocation(); });
+                mo2.observe(tbody, { childList: true, subtree: true });
             });
         })();
     </script>

@@ -47,10 +47,10 @@ final class Version20260408192836 extends AbstractMigration
         } catch (\Throwable $e) {
             // constraint may not exist, ignore
         }
-        $this->addSql('DROP INDEX uk_order_id ON delivery');
-        $this->addSql('DROP INDEX idx_scheduled_date ON delivery');
-        $this->addSql('DROP INDEX idx_order_id ON delivery');
-        $this->addSql('DROP INDEX idx_status ON delivery');
+        $this->dropIndexIfExists('delivery', 'uk_order_id');
+        $this->dropIndexIfExists('delivery', 'idx_scheduled_date');
+        $this->dropIndexIfExists('delivery', 'idx_order_id');
+        $this->dropIndexIfExists('delivery', 'idx_status');
         try {
             $this->connection->executeStatement('ALTER TABLE delivery DROP FOREIGN KEY fk_delivery_man');
         } catch (\Throwable $e) {
@@ -61,59 +61,73 @@ final class Version20260408192836 extends AbstractMigration
         $this->addSql('ALTER TABLE delivery ADD CONSTRAINT FK_3781EC1048CD51AF FOREIGN KEY (fleet_car_id) REFERENCES fleet_car (car_id)');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_3781EC10F5AA79D0 ON delivery (license_plate)');
         $this->addSql('CREATE INDEX IDX_3781EC1048CD51AF ON delivery (fleet_car_id)');
-        $this->addSql('DROP INDEX idx_delivery_man_id ON delivery');
+        $this->dropIndexIfExists('delivery', 'idx_delivery_man_id');
         $this->addSql('CREATE INDEX IDX_3781EC10FD128646 ON delivery (delivery_man_id)');
         $this->addSql('ALTER TABLE delivery ADD CONSTRAINT fk_delivery_man FOREIGN KEY (delivery_man_id) REFERENCES delivery_man (delivery_man_id) ON DELETE SET NULL');
-        $this->addSql('DROP INDEX idx_status ON delivery_man');
-        $this->addSql('DROP INDEX phone ON delivery_man');
-        $this->addSql('DROP INDEX idx_phone ON delivery_man');
-        $this->addSql('DROP INDEX email ON delivery_man');
-        $this->addSql('DROP INDEX idx_vehicle_type ON delivery_man');
-        $this->addSql('DROP INDEX vehicle_number ON delivery_man');
+        $this->dropIndexIfExists('delivery_man', 'idx_status');
+        $this->dropIndexIfExists('delivery_man', 'phone');
+        $this->dropIndexIfExists('delivery_man', 'idx_phone');
+        $this->dropIndexIfExists('delivery_man', 'email');
+        $this->dropIndexIfExists('delivery_man', 'idx_vehicle_type');
+        $this->dropIndexIfExists('delivery_man', 'vehicle_number');
         $this->addSql('ALTER TABLE delivery_man CHANGE delivery_man_id delivery_man_id INT AUTO_INCREMENT NOT NULL, CHANGE name name VARCHAR(255) NOT NULL, CHANGE phone phone VARCHAR(255) NOT NULL, CHANGE email email VARCHAR(255) DEFAULT NULL, CHANGE vehicle_type vehicle_type VARCHAR(255) DEFAULT NULL, CHANGE vehicle_number vehicle_number VARCHAR(255) DEFAULT NULL, CHANGE status status VARCHAR(255) DEFAULT NULL, CHANGE salary salary NUMERIC(10, 0) DEFAULT NULL, CHANGE rating rating NUMERIC(10, 0) DEFAULT NULL, CHANGE created_at created_at DATETIME NOT NULL, CHANGE updated_at updated_at DATETIME NOT NULL');
         $this->addSql('ALTER TABLE dish DROP FOREIGN KEY fk_dish_menu');
         $this->addSql('ALTER TABLE dish DROP FOREIGN KEY fk_dish_menu');
         $this->addSql('ALTER TABLE dish CHANGE menu_id menu_id INT DEFAULT NULL, CHANGE name name VARCHAR(255) NOT NULL, CHANGE base_price base_price NUMERIC(10, 0) NOT NULL, CHANGE available available TINYINT(1) NOT NULL, CHANGE created_at created_at DATETIME NOT NULL, CHANGE updated_at updated_at DATETIME NOT NULL');
         $this->addSql('ALTER TABLE dish ADD CONSTRAINT FK_957D8CB8CCD7E912 FOREIGN KEY (menu_id) REFERENCES menu (id)');
-        $this->addSql('DROP INDEX fk_dish_menu ON dish');
+        $this->dropIndexIfExists('dish', 'fk_dish_menu');
         $this->addSql('CREATE INDEX IDX_957D8CB8CCD7E912 ON dish (menu_id)');
         $this->addSql('ALTER TABLE dish ADD CONSTRAINT fk_dish_menu FOREIGN KEY (menu_id) REFERENCES menu (id) ON UPDATE CASCADE ON DELETE CASCADE');
         $this->addSql('ALTER TABLE dish_ingredient CHANGE quantity_required quantity_required NUMERIC(10, 0) NOT NULL');
         $this->addSql('ALTER TABLE dish_ingredient ADD CONSTRAINT FK_77196056148EB0CB FOREIGN KEY (dish_id) REFERENCES dish (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE dish_ingredient ADD CONSTRAINT FK_77196056933FE08C FOREIGN KEY (ingredient_id) REFERENCES ingredient (id) ON DELETE CASCADE');
         $this->addSql('CREATE INDEX IDX_77196056148EB0CB ON dish_ingredient (dish_id)');
-        $this->addSql('DROP INDEX idx_dish_ingredient_ingredient ON dish_ingredient');
+        $this->dropIndexIfExists('dish_ingredient', 'idx_dish_ingredient_ingredient');
         $this->addSql('CREATE INDEX IDX_77196056933FE08C ON dish_ingredient (ingredient_id)');
-        $this->addSql('DROP INDEX uk_fleet_delivery_man ON fleet_car');
+        $this->dropIndexIfExists('fleet_car', 'uk_fleet_delivery_man');
         $this->addSql('ALTER TABLE fleet_car CHANGE car_id car_id INT AUTO_INCREMENT NOT NULL, CHANGE make make VARCHAR(255) NOT NULL, CHANGE model model VARCHAR(255) NOT NULL, CHANGE license_plate license_plate VARCHAR(255) NOT NULL, CHANGE vehicle_type vehicle_type VARCHAR(255) NOT NULL, CHANGE delivery_man_id delivery_man_id INT DEFAULT NULL');
         $this->addSql('ALTER TABLE food_donation_event DROP FOREIGN KEY fk_event_delivery');
         $this->addSql('ALTER TABLE food_donation_event DROP FOREIGN KEY fk_events_delivery');
-        $this->addSql('DROP INDEX idx_delivery_id ON food_donation_event');
-        $this->addSql('DROP INDEX idx_event_date ON food_donation_event');
-        $this->addSql('DROP INDEX idx_status ON food_donation_event');
+        $this->dropIndexIfExists('food_donation_event', 'idx_delivery_id');
+        $this->dropIndexIfExists('food_donation_event', 'idx_event_date');
+        $this->dropIndexIfExists('food_donation_event', 'idx_status');
         $this->addSql('ALTER TABLE food_donation_event CHANGE delivery_id delivery_id INT DEFAULT NULL, CHANGE charity_name charity_name VARCHAR(255) NOT NULL, CHANGE status status VARCHAR(255) DEFAULT NULL, CHANGE created_at created_at DATETIME NOT NULL, CHANGE updated_at updated_at DATETIME NOT NULL');
         $this->addSql('ALTER TABLE food_donation_items DROP FOREIGN KEY fk_items_event');
         $this->addSql('ALTER TABLE food_donation_items DROP FOREIGN KEY fk_items_dish');
-        $this->addSql('DROP INDEX idx_item_id ON food_donation_items');
-        $this->addSql('DROP INDEX IDX_54E57C7BBABCF7FB ON food_donation_items');
-        $this->addSql('DROP INDEX `primary` ON food_donation_items');
+        $this->dropIndexIfExists('food_donation_items', 'idx_item_id');
+        $this->dropIndexIfExists('food_donation_items', 'IDX_54E57C7BBABCF7FB');
+        $this->dropIndexIfExists('food_donation_items', 'primary');
         $this->addSql('ALTER TABLE food_donation_items CHANGE donation_event_id donation_event_id INT AUTO_INCREMENT NOT NULL');
         $this->addSql('ALTER TABLE food_donation_items ADD PRIMARY KEY (donation_event_id)');
-        $this->addSql('DROP INDEX idx_ingredient_expiry_stock ON ingredient');
+        $this->dropIndexIfExists('ingredient', 'idx_ingredient_expiry_stock');
         $this->addSql('ALTER TABLE ingredient CHANGE quantityInStock quantityInStock NUMERIC(10, 0) NOT NULL, CHANGE unit unit VARCHAR(255) NOT NULL, CHANGE minStockLevel minStockLevel NUMERIC(10, 0) NOT NULL, CHANGE unitCost unitCost NUMERIC(10, 0) NOT NULL');
         $this->addSql('ALTER TABLE menu ADD is_active TINYINT(1) NOT NULL, DROP isActive, CHANGE title title VARCHAR(255) NOT NULL, CHANGE created_at created_at DATETIME NOT NULL, CHANGE updated_at updated_at DATETIME NOT NULL');
         $this->addSql('ALTER TABLE sustainability_metrics DROP FOREIGN KEY fk_metrics_event');
-        $this->addSql('DROP INDEX idx_donation_event_id ON sustainability_metrics');
+        $this->dropIndexIfExists('sustainability_metrics', 'idx_donation_event_id');
         $this->addSql('ALTER TABLE sustainability_metrics CHANGE co2_saved_kg co2_saved_kg NUMERIC(10, 0) NOT NULL, CHANGE cost_saved cost_saved NUMERIC(10, 0) DEFAULT NULL, CHANGE calculated_at calculated_at DATETIME NOT NULL');
-        $this->addSql('DROP INDEX uk_email_role ON user');
+        $this->dropIndexIfExists('user', 'uk_email_role');
         $this->addSql('ALTER TABLE user ADD last_name VARCHAR(255) DEFAULT NULL, ADD banned TINYINT(1) DEFAULT 0 NOT NULL, CHANGE id id INT AUTO_INCREMENT NOT NULL, CHANGE password_hash password_hash VARCHAR(255) NOT NULL, CHANGE role role VARCHAR(255) NOT NULL, CHANGE reference_id reference_id INT DEFAULT NULL, CHANGE phone phone VARCHAR(255) DEFAULT NULL, CHANGE full_name first_name VARCHAR(255) DEFAULT NULL');
-        $this->addSql('DROP INDEX email ON user1');
+        $this->dropIndexIfExists('user1', 'email');
         $this->addSql('ALTER TABLE user1 CHANGE id id INT AUTO_INCREMENT NOT NULL, CHANGE name name VARCHAR(255) NOT NULL, CHANGE email email VARCHAR(255) NOT NULL, CHANGE role role VARCHAR(255) NOT NULL, CHANGE status status VARCHAR(255) NOT NULL');
-        $this->addSql('DROP INDEX idx_wasterecord_ingredient_date ON wasterecord');
+        $this->dropIndexIfExists('wasterecord', 'idx_wasterecord_ingredient_date');
         $this->addSql('ALTER TABLE wasterecord CHANGE quantityWasted quantityWasted NUMERIC(10, 0) NOT NULL');
         $this->addSql('ALTER TABLE wasterecord ADD CONSTRAINT FK_90F7A4D85B5CA8A5 FOREIGN KEY (ingredientId) REFERENCES ingredient (id)');
-        $this->addSql('DROP INDEX ingredientid ON wasterecord');
+        $this->dropIndexIfExists('wasterecord', 'ingredientid');
         $this->addSql('CREATE INDEX IDX_90F7A4D85B5CA8A5 ON wasterecord (ingredientId)');
+    }
+
+    private function dropIndexIfExists(string $table, string $index): void
+    {
+        try {
+            $schemaManager = $this->connection->createSchemaManager();
+            $indexes = $schemaManager->listTableIndexes($table);
+            if (!isset($indexes[$index])) {
+                return;
+            }
+            $this->addSql(sprintf('DROP INDEX %s ON %s', $index, $table));
+        } catch (\Throwable $e) {
+            // Ignore missing table/index
+        }
     }
 
     public function down(Schema $schema): void

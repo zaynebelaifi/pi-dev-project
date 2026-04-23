@@ -76,6 +76,8 @@ final class landingpageController extends AbstractController
             ['pageParameterName' => 'page']
         );
 
+        $feedbackBaseUrl = rtrim((string) ($_ENV['FEEDBACK_AI_BASE_URL'] ?? 'http://127.0.0.1:8001'), '/');
+
         return $this->render('base.html.twig', [
             'controller_name' => 'landingpageController',
             'menuSections'    => $menuSections,
@@ -83,6 +85,7 @@ final class landingpageController extends AbstractController
             'selectedMenuId'  => $selectedMenuId,
             'paginatedDishes' => $paginatedDishes,
             'availableTables' => $this->tableRepository->findBy(['status' => 'AVAILABLE']),
+            'feedbackBaseUrl' => $feedbackBaseUrl,
         ]);
     }
 

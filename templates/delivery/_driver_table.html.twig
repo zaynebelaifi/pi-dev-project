@@ -22,6 +22,7 @@
                 <form method="post" action="{{ path('app_delivery_driver_status', {'id': delivery.delivery_id}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('driver_status' ~ delivery.delivery_id) }}">
                     <button type="submit" name="action" value="in_transit" class="btn-action">In Transit</button>
+                    <button type="button" data-url="{{ path('app_delivery_update_location', {'id': delivery.delivery_id}) }}" class="btn-action share-location-btn">Share Location</button>
                     <button type="button" data-url="{{ path('app_delivery_mark_delivered', {'id': delivery.delivery_id}) }}" data-delivery-id="{{ delivery.delivery_id }}" class="btn-action btn-success mark-delivered-btn">Delivered</button>
                     <button type="submit" name="action" value="cancel" class="btn-action btn-danger">Cancel</button>
                 </form>
