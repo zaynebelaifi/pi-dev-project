@@ -64,6 +64,14 @@
                         <td><strong>Order Total:</strong></td>
                         <td>{{ delivery.order_total }} TND</td>
                     </tr>
+                    <tr>
+                        <td><strong>License Plate:</strong></td>
+                        <td>{{ delivery.license_plate ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Assigned Fleet Car:</strong></td>
+                        <td>{% if delivery.fleetCar %}{{ delivery.fleetCar.make }} {{ delivery.fleetCar.model }} ({{ delivery.fleetCar.license_plate }}){% else %}-{% endif %}</td>
+                    </tr>
                     {% if delivery.cart_items %}
                     <tr>
                         <td><strong>Items:</strong></td>

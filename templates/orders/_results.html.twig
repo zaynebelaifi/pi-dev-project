@@ -1,0 +1,96 @@
+<div class="stats-grid">
+    <div class="stat-card">
+        <h4>Pending Orders</h4>
+        <div class="stat-value">{{ pending }}</div>
+    </div>
+    <div class="stat-card">
+        <h4>Prepared Orders</h4>
+        <div class="stat-value">{{ prepared }}</div>
+    </div>
+    <div class="stat-card">
+        <h4>Delivered Orders</h4>
+        <div class="stat-value">{{ delivered }}</div>
+    </div>
+    <div class="stat-card">
+        <h4>Total Revenue</h4>
+        <div class="stat-value">{{ revenue|number_format(2) }} TND</div>
+    </div>
+</div>
+
+{% if orders|length > 0 %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Client ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Amount</th>
+                <th>Address / Delivery Info</th>
+                <th>Order Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td><strong>#{{ order.orderId }}</strong></td>
+                <td>{{ order.clientId }}</td>
+                <td>
+                    <span class="type-badge type-{{ order.orderType|lower }}">
+                        {{ order.orderType|replace({'_': ' '}) }}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge status-{{ order.status|lower }}">
+                        {{ order.status|replace({'_': ' '}) }}
+                    </span>
+                </td>
+                <td>{{ order.totalAmount|number_format(2) }} TND</td>
+                <td>
+                    {% if order.orderType == 'DELIVERY' %}
+                        {% set delivery = deliveries[order.orderId]|default(null) %}
+                        <div style="font-size: 0.85rem; line-height: 1.4;">
+                            {% if delivery %}
+                                <strong>👤 {{ delivery.recipientName }}</strong><br>
+                                <span style="color: var(--text-3);">📞 {{ delivery.recipientPhone }}</span><br>
+                                <span style="color: var(--text-3);">📍
+                                    {% if delivery.deliveryAddress|length > 25 %}
+                                        {{ delivery.deliveryAddress|slice(0, 25) }}...
+                                    {% else %}
+                                        {{ delivery.deliveryAddress }}
+                                    {% endif %}
+                                </span><br>
+                                <span style="color: var(--text-3); font-size: 0.8rem;">📌 Lat: {{ delivery.currentLatitude }}, Lng: {{ delivery.currentLongitude }}</span>
+                            {% else %}
+                                <em style="color: var(--text-3);">Delivery info pending...</em>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div style="color: var(--text-3); font-style: italic;">🍽️ Dine In Order</div>
+                    {% endif %}
+                </td>
+                <td>{{ order.orderDate|date('M d, Y') }}</td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{{ path('app_order_edit', {'id': order.orderId}) }}" class="btn-small btn-view">Edit</a>
+                        <form method="POST" action="{{ path('app_order_delete', {'id': order.orderId}) }}" style="display: inline;" onsubmit="return confirm('Are you sure?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ order.orderId) }}">
+                            <button type="submit" class="btn-small btn-delete">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="table-wrapper">
+    <div class="empty-state">
+        <h3>No Orders Found</h3>
+        <p>There are currently no orders matching your search criteria.</p>
+    </div>
+</div>
+{% endif %}

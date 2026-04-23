@@ -1,23 +1,23 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}BIG 4 — Ultra Luxury Coffee Lounge{% endblock %}</title>
+  <title>{% block title %}BIG 4 - Ultra Luxury Coffee Lounge{% endblock %}</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=1">
+  <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=3">
 </head>
 <body>
   <!-- NAV -->
   <nav id="nav">
     <div class="nav-inner">
       <a href="{{ path('app_home') }}" class="brand">
-        <img src="{{ asset('images/FB_IMG_1698958536626-removebg-preview (1).png') }}" alt="BIG 4 logo" onerror="this.style.display='none'">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="BIG 4 logo" style="display:none">
         <div>
           <h1>BIG 4</h1>
           <span>Coffee Lounge</span>
@@ -25,13 +25,16 @@
       </a>
 
       <ul class="nav-links">
-        <li><a href="{{ path('app_home') }}#menu-section">Menu</a></li>
-        <li><a href="{{ path('app_home') }}#delivery">Delivery</a></li>
-        <li><a href="{{ path('app_client_food_donation_calendar') }}">Events</a></li>
+        <li><a href="#menu-section">Menu</a></li>
+        <li><a href="#delivery">Delivery</a></li>
+        <li><a href="#events">Events</a></li>
       </ul>
 
       {% set user_role = app.request.session.get('user_role') %}
       {% set user_name = app.request.session.get('user_name') %}
+      {% set user_email = app.request.session.get('user_email') %}
+      {% set user_phone = app.request.session.get('user_phone') %}
+      {% set user_address = app.request.session.get('user_address') %}
       <div class="nav-actions">
         <button class="cart-btn" id="openCart">
           Cart <span class="cart-badge" id="cartCount">0</span>
@@ -40,14 +43,23 @@
         <a href="#" class="nav-btn" id="openBooking">Book Now</a>
         {% if user_role == 'ROLE_ADMIN' %}
           <a href="{{ path('app_admin_dashboard') }}" class="nav-btn">Admin</a>
-          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+          <form method="post" action="{{ path('app_logout') }}" style="display:inline-flex; margin:0;">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button type="submit" class="nav-btn" style="border:none;">Logout</button>
+          </form>
         {% elseif user_role == 'ROLE_DELIVERY_MAN' %}
           <a href="{{ path('app_driver_deliveries') }}" class="nav-btn">My Deliveries</a>
-          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+          <form method="post" action="{{ path('app_logout') }}" style="display:inline-flex; margin:0;">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button type="submit" class="nav-btn" style="border:none;">Logout</button>
+          </form>
         {% elseif user_role == 'ROLE_CLIENT' %}
           <a href="{{ path('app_profile') }}" class="nav-btn">My Profile</a>
           <a href="{{ path('app_client_orders') }}" class="nav-btn">My Orders</a>
-          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+          <form method="post" action="{{ path('app_logout') }}" style="display:inline-flex; margin:0;">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button type="submit" class="nav-btn" style="border:none;">Logout</button>
+          </form>
         {% else %}
           <a href="{{ path('app_login') }}" class="nav-btn">Login</a>
         {% endif %}
@@ -72,10 +84,10 @@
   <section class="hero" id="home">
     <div class="container hero-grid">
       <div class="reveal-left show">
-        <div class="eyebrow">Tunis • Elevated Dining & Coffee</div>
+        <div class="eyebrow">Tunis - Elevated Dining & Coffee</div>
         <h2>Where Coffee Meets <em>Luxury</em></h2>
         <div class="hero-sub">BIG 4 Coffee Lounge</div>
-        <p class="lead">A refined escape for coffee lovers, dinner guests, and late-evening conversations — designed with warmth, elegance, and unforgettable atmosphere.</p>
+        <p class="lead">A refined escape for coffee lovers, dinner guests, and late-evening conversations - designed with warmth, elegance, and unforgettable atmosphere.</p>
         <div class="hero-actions">
           <a href="#" class="btn-primary" id="openBooking2">Reserve a Table</a>
           <a href="#gallery" class="btn-secondary">Discover the Space</a>
@@ -104,7 +116,7 @@
       <div class="about-panel reveal-right">
         <small class="eyebrow" style="margin-bottom:1rem">Our Story</small>
         <h3 style="font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:300;line-height:1.05;color:var(--espresso)">A Space Crafted for <span style="color:var(--gold);font-style:italic">Taste & Atmosphere</span></h3>
-        <p>BIG 4 was imagined as more than a café — a destination where refined design, gourmet flavors, and ambient evenings come together. Every detail is curated to feel elegant, intimate, and memorable.</p>
+        <p>BIG 4 was imagined as more than a cafe - a destination where refined design, gourmet flavors, and ambient evenings come together. Every detail is curated to feel elegant, intimate, and memorable.</p>
         <div class="stats-grid">
           <div class="stat"><strong>2023</strong><span>Founded in Tunis</span></div>
           <div class="stat"><strong>1.2K+</strong><span>Loyal Guests</span></div>
@@ -123,7 +135,7 @@
           <small>Signature Offerings</small>
           <h3>Curated for a <em>Premium</em> Experience</h3>
         </div>
-        <p>Every service is designed to feel polished, elevated, and indulgent — whether you're dining in, reserving for a special night, or ordering from home.</p>
+        <p>Every service is designed to feel polished, elevated, and indulgent - whether you're dining in, reserving for a special night, or ordering from home.</p>
       </div>
 
       <div class="cards">
@@ -205,7 +217,7 @@
           <small>Visual Atmosphere</small>
           <h3>Inside the <em>BIG 4</em> Experience</h3>
         </div>
-        <p>Elegant interiors, signature drinks, and warm lighting — a destination designed to feel cinematic and unforgettable.</p>
+        <p>Elegant interiors, signature drinks, and warm lighting - a destination designed to feel cinematic and unforgettable.</p>
       </div>
       <div class="gallery-grid">
         <div class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80" alt="Luxury lounge interior"><span>Elegant Lounge Ambience</span></div>
@@ -245,12 +257,102 @@
           <small>Upcoming Moments</small>
           <h3>Events & <em>Exclusive Nights</em></h3>
         </div>
-        <p>Transform ordinary evenings into memorable occasions with curated live experiences, themed dinners, and social lounge nights.</p>
+        <p>Open the donation calendar, pick an event, and leave your rating directly from the event detail page.</p>
       </div>
       <div class="event-list">
-        <div class="event reveal"><div class="date"><strong>12</strong><span>Apr</span></div><div><h5>Barista Signature Night</h5><p>Live coffee artistry, tasting sessions, and a showcase of BIG 4’s signature creations.</p></div><div class="badge">Featured</div></div>
-        <div class="event reveal"><div class="date"><strong>19</strong><span>Apr</span></div><div><h5>Jazz Dinner Evening</h5><p>A warm candlelit atmosphere with soft live music, curated drinks, and a refined dinner service.</p></div><div class="badge">Live Music</div></div>
-        <div class="event reveal"><div class="date"><strong>26</strong><span>Apr</span></div><div><h5>Origin Coffee Masterclass</h5><p>An immersive tasting journey through exceptional beans, roast profiles, and brewing rituals.</p></div><div class="badge">Masterclass</div></div>
+        <a class="event event-card-link reveal" href="{{ path('app_client_food_donation_calendar') }}">
+          <div class="date">
+            <strong>All</strong>
+            <span>Calendar</span>
+          </div>
+          <div>
+            <h5>Food Donation Calendar</h5>
+            <p>Click anywhere on this card to open the calendar page.</p>
+          </div>
+        </a>
+
+        {% if donationEvents is defined and donationEvents is not empty %}
+          {% for event in donationEvents %}
+            {% set eventDate = event.eventDate %}
+            {% set eventStatus = event.status ?: 'Scheduled' %}
+            {% set eventStatusKey = eventStatus|lower %}
+            {% set eventStatusApiClass = eventStatusKey == 'in progress' ? 'in_progress' : eventStatusKey %}
+            <div class="event reveal" data-event-id="{{ event.donationEventId }}">
+              <div class="date">
+                <strong>{{ eventDate ? eventDate|date('d') : '--' }}</strong>
+                <span>{{ eventDate ? eventDate|date('M') : 'TBD' }}</span>
+              </div>
+              <div>
+                <h5>{{ event.charityName ?: ('Event #' ~ event.donationEventId) }}</h5>
+                <p>
+                  {{ eventDate ? eventDate|date('F j, Y H:i') : 'Date to be announced' }}
+                  · {{ event.totalQuantity }} items
+                  · <span data-registration-count-for="{{ event.donationEventId }}">{{ registrationCounts[event.donationEventId]|default(0) }}</span> registered
+                  · <span class="status status-{{ eventStatusApiClass }}" data-event-status>{{ eventStatus }}</span>
+                  {% if event.deliveryId %}· Delivery #{{ event.deliveryId }}{% endif %}
+                </p>
+                {% if isUserLoggedIn is defined and isUserLoggedIn and eventStatusKey == 'scheduled' %}
+                  <div class="event-inline-actions" data-register-wrapper data-registered="{{ event.donationEventId in (registeredEventIds|default([])) ? '1' : '0' }}">
+                    {% if event.donationEventId in (registeredEventIds|default([])) %}
+                      <span class="event-registered-btn">Registered</span>
+                    {% else %}
+                      <form method="post" action="{{ path('app_client_food_donation_register', {'id': event.donationEventId}) }}" class="js-event-register-form" data-event-id="{{ event.donationEventId }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('register-event' ~ event.donationEventId) }}">
+                        <button type="submit" class="event-register-btn-ui">Register</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="event reveal">
+            <div class="date"><strong>--</strong><span>--</span></div>
+            <div>
+              <h5>No donation events yet</h5>
+              <p>New food donation events will appear here as soon as they are created.</p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if isUserLoggedIn is defined and isUserLoggedIn %}
+        <div class="my-registered-events-cta">
+          <button type="button" class="btn-secondary" id="openMyRegisteredEvents">My Registered Events</button>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- AI RECOMMENDATIONS SECTION -->
+  <section class="recommended-events-section" id="ai-recommendations">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <small>Personalized With AI</small>
+          <h3><span class="ai-badge">AI Picks For You</span> Recommended <em>Events</em></h3>
+        </div>
+        <p class="recommended-subtitle">Based on events you have registered for before.</p>
+      </div>
+
+      <div
+        id="recommendations"
+        class="events-container"
+        data-authenticated="{{ isUserLoggedIn is defined and isUserLoggedIn ? '1' : '0' }}"
+        data-user-role="{{ app.request.session.get('user_role') ?: '' }}"
+      >
+        {% if isUserLoggedIn is defined and isUserLoggedIn %}
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Finding perfect events for you...</p>
+          </div>
+        {% else %}
+          <div class="recommendation-empty">
+            Login to see personalized AI event recommendations.
+            <div style="margin-top:.65rem;"><a href="{{ path('app_login') }}" class="rec-login-btn">Login to Register</a></div>
+          </div>
+        {% endif %}
       </div>
     </div>
   </section>
@@ -297,13 +399,13 @@
             Tunis, Tunisia<br>
             info@big4lounge.tn<br>
             +216 XX XXX XXX<br>
-            Daily · 8 AM — Midnight
+            Daily - 8 AM - Midnight
           </address>
         </div>
       </div>
       <div class="footer-bottom">
-        <span>© {{ "now"|date("Y") }} BIG 4 Coffee Lounge. All rights reserved.</span>
-        <span>Privacy Policy · Terms</span>
+        <span>&copy; {{ "now"|date("Y") }} BIG 4 Coffee Lounge. All rights reserved.</span>
+        <span>Privacy Policy - Terms</span>
       </div>
     </div>
   </footer>
@@ -350,15 +452,19 @@
       <h3>Your Profile</h3>
       <p>Welcome to BIG 4 Lounge. Your profile can be used for future reservations, loyalty rewards, and personalized dining experiences.</p>
 
-      <form class="booking-form" id="profileForm">
+      <form class="booking-form" id="profileForm" method="post" action="{{ path('app_profile_quick_save') }}" data-authenticated="{{ isUserLoggedIn is defined and isUserLoggedIn ? '1' : '0' }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('profile_quick_save') }}">
         <div class="full">
-          <input type="text" placeholder="Full Name">
+          <input type="text" name="full_name" placeholder="Full Name" value="{{ user_name ?: '' }}">
         </div>
         <div>
-          <input type="email" placeholder="Email Address">
+          <input type="email" name="email" placeholder="Email Address" value="{{ user_email ?: '' }}">
         </div>
         <div>
-          <input type="tel" placeholder="Phone Number">
+          <input type="tel" name="phone" placeholder="Phone Number" value="{{ user_phone ?: '' }}">
+        </div>
+        <div class="full">
+          <input type="text" name="address" placeholder="Address (optional)" value="{{ user_address ?: '' }}">
         </div>
         <div class="full">
           <button type="submit" class="btn-primary" style="width:100%">Save Profile</button>
@@ -366,6 +472,52 @@
       </form>
     </div>
   </div>
+
+  {% if isUserLoggedIn is defined and isUserLoggedIn %}
+    <div class="popup-overlay" id="myRegisteredEventsPopup">
+      <div class="popup-box my-events-popup-box">
+        <div class="my-events-popup-head">
+          <div>
+            <h3 style="margin:0 0 .25rem;">My Registered Events</h3>
+            <p style="margin:0;font-size:.82rem;color:var(--text-2);">Your current donation event registrations.</p>
+          </div>
+          <button class="close-popup" id="closeMyRegisteredEvents" style="position:static;flex-shrink:0;">&times;</button>
+        </div>
+
+        <div class="my-events-grid">
+          {% if myRegisteredEvents is defined and myRegisteredEvents is not empty %}
+            {% for event in myRegisteredEvents %}
+              {% set eventDate = event.eventDate %}
+              {% set eventStatus = event.status ?: 'Scheduled' %}
+              <article class="my-event-card">
+                <span class="my-event-date">{{ eventDate ? eventDate|date('M j, Y H:i') : 'Date TBD' }}</span>
+                <h4 class="my-event-title">{{ event.charityName ?: ('Event #' ~ event.donationEventId) }}</h4>
+                <p class="my-event-summary">
+                  {{ event.totalQuantity }} items · {{ eventStatus }} ·
+                  <span data-registration-count-for="{{ event.donationEventId }}">{{ registrationCounts[event.donationEventId]|default(0) }}</span> registered
+                </p>
+                <div class="event-inline-actions">
+                  <a class="event-register-btn-ui" href="{{ path('app_client_food_donation_show', {'id': event.donationEventId}) }}">View Details</a>
+                  <button
+                    type="button"
+                    class="event-register-btn-ui js-event-toggle-btn"
+                    data-event-id="{{ event.donationEventId }}"
+                    data-action="unregister"
+                    data-register-url="{{ path('app_client_food_donation_register', {'id': event.donationEventId}) }}"
+                    data-unregister-url="{{ path('app_client_food_donation_unregister', {'id': event.donationEventId}) }}"
+                    data-register-token="{{ csrf_token('register-event' ~ event.donationEventId) }}"
+                    data-unregister-token="{{ csrf_token('unregister-event' ~ event.donationEventId) }}"
+                  >Unregister</button>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-copy js-no-events-msg">You are not registered for any events yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
 
   <!-- CART DRAWER -->
   <div class="cart-overlay" id="cartOverlay">
@@ -397,6 +549,261 @@
 
   {% endblock %}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{{ asset('app.js') }}?v=1"></script>
+  <script src="{{ asset('app.js') }}?v=2"></script>
+  <script src="{{ asset('js/recommendations.js') }}?v=2"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const openBtn = document.getElementById('openMyRegisteredEvents');
+      const popup = document.getElementById('myRegisteredEventsPopup');
+      const closeBtn = document.getElementById('closeMyRegisteredEvents');
+
+      if (!openBtn || !popup || !closeBtn) {
+        return;
+      }
+
+      function openPopup() {
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closePopup() {
+        popup.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      openBtn.addEventListener('click', openPopup);
+      closeBtn.addEventListener('click', closePopup);
+
+      popup.addEventListener('click', function (event) {
+        if (event.target === popup) {
+          closePopup();
+        }
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          closePopup();
+        }
+      });
+    });
+  </script>
+  <script>
+    (function () {
+      const setRegistrationCount = (eventId, count) => {
+        document.querySelectorAll(`[data-registration-count-for="${eventId}"]`).forEach((node) => {
+          node.textContent = String(Number(count || 0));
+        });
+      };
+
+      const setButtonState = (button, action) => {
+        const normalized = action === 'register' ? 'register' : 'unregister';
+        button.dataset.action = normalized;
+        button.textContent = normalized === 'register' ? 'Register' : 'Unregister';
+
+        if (button.classList.contains('btn-register') || button.classList.contains('btn-unregister')) {
+          button.classList.toggle('btn-register', normalized === 'register');
+          button.classList.toggle('btn-unregister', normalized !== 'register');
+        }
+      };
+
+      const replaceEventCardRegisterState = (eventId, isRegistered, registerToken) => {
+        const wrapper = document.querySelector(`.event[data-event-id="${eventId}"] [data-register-wrapper]`);
+        if (!wrapper) {
+          return;
+        }
+
+        if (isRegistered) {
+          wrapper.dataset.registered = '1';
+          wrapper.innerHTML = '<span class="event-registered-btn">Registered</span>';
+          return;
+        }
+
+        wrapper.dataset.registered = '0';
+        wrapper.innerHTML = `
+          <form method="post" action="/client/food-donation/event/${eventId}/register" class="js-event-register-form" data-event-id="${eventId}">
+            <input type="hidden" name="_token" value="${registerToken}">
+            <button type="submit" class="event-register-btn-ui">Register</button>
+          </form>
+        `;
+      };
+
+      const postEventAction = async ({ url, token }) => {
+        const formData = new FormData();
+        formData.append('_token', token);
+
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+        });
+
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.message || 'Request failed.');
+        }
+
+        return payload;
+      };
+
+      document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('.js-event-register-form');
+        if (!form) {
+          return;
+        }
+
+        event.preventDefault();
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (!submitButton) {
+          return;
+        }
+
+        const eventId = Number(form.dataset.eventId || 0);
+        const registerToken = String(form.querySelector('input[name="_token"]')?.value || '');
+        const previousText = submitButton.textContent;
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Loading...';
+
+        try {
+          const payload = await postEventAction({
+            url: form.action,
+            token: registerToken,
+          });
+
+          setRegistrationCount(eventId, payload.registration_count ?? 0);
+          replaceEventCardRegisterState(eventId, true, registerToken);
+        } catch (error) {
+          submitButton.disabled = false;
+          submitButton.textContent = previousText;
+          window.alert(error instanceof Error ? error.message : 'Registration failed. Please try again.');
+        }
+      });
+
+      document.addEventListener('click', async (event) => {
+        const toggleButton = event.target.closest('.js-event-toggle-btn');
+        if (!toggleButton) {
+          return;
+        }
+
+        const eventId = Number(toggleButton.dataset.eventId || 0);
+        const action = String(toggleButton.dataset.action || 'unregister').toLowerCase();
+        const isRegisterAction = action === 'register';
+        const actionUrl = isRegisterAction ? toggleButton.dataset.registerUrl : toggleButton.dataset.unregisterUrl;
+        const token = isRegisterAction ? toggleButton.dataset.registerToken : toggleButton.dataset.unregisterToken;
+        const previousText = toggleButton.textContent;
+
+        if (!actionUrl || !token) {
+          return;
+        }
+
+        toggleButton.disabled = true;
+        toggleButton.textContent = 'Loading...';
+
+        try {
+          const payload = await postEventAction({ url: actionUrl, token });
+          const isNowRegistered = Boolean(payload.registered);
+
+          setRegistrationCount(eventId, payload.registration_count ?? 0);
+          setButtonState(toggleButton, isNowRegistered ? 'unregister' : 'register');
+          replaceEventCardRegisterState(eventId, isNowRegistered, String(toggleButton.dataset.registerToken || ''));
+
+          // If unregistered inside the My Registered Events popup, remove the card
+          if (!isNowRegistered) {
+            const card = toggleButton.closest('.my-event-card');
+            if (card) {
+              card.style.transition = 'opacity .25s, transform .25s';
+              card.style.opacity = '0';
+              card.style.transform = 'scale(.96)';
+              setTimeout(() => {
+                card.remove();
+                const grid = document.querySelector('#myRegisteredEventsPopup .my-events-grid');
+                if (grid && !grid.querySelector('.my-event-card')) {
+                  // Show empty state
+                  let msg = grid.querySelector('.js-no-events-msg');
+                  if (!msg) {
+                    msg = document.createElement('p');
+                    msg.className = 'empty-copy js-no-events-msg';
+                    grid.appendChild(msg);
+                  }
+                  msg.textContent = 'You have no registered events.';
+                  // Update the trigger button badge if present
+                  const badge = document.querySelector('.my-events-badge');
+                  if (badge) badge.textContent = '0';
+                }
+              }, 270);
+            }
+          }
+        } catch (error) {
+          toggleButton.textContent = previousText;
+          window.alert(error instanceof Error ? error.message : 'Action failed. Please try again.');
+        } finally {
+          toggleButton.disabled = false;
+        }
+      });
+    })();
+  </script>
+  <script>
+    (function () {
+      const STATUS_ENDPOINT = '/api/refresh-event-statuses';
+      const INTERVAL_MS = 30000;
+
+      const prettyLabel = (apiStatus) => {
+        const mapping = {
+          SCHEDULED: 'Scheduled',
+          IN_PROGRESS: 'In Progress',
+          ONGOING: 'Ongoing',
+          COMPLETED: 'Completed',
+          CANCELLED: 'Cancelled',
+        };
+
+        return mapping[apiStatus] || 'Scheduled';
+      };
+
+      const refreshStatuses = async () => {
+        try {
+          const response = await fetch(STATUS_ENDPOINT, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+
+          if (!response.ok) {
+            throw new Error('Refresh failed');
+          }
+
+          const data = await response.json();
+          if (!data || data.success !== true || !Array.isArray(data.events)) {
+            return;
+          }
+
+          data.events.forEach((eventItem) => {
+            const row = document.querySelector(`[data-event-id="${eventItem.id}"]`);
+            if (!row) {
+              return;
+            }
+
+            const apiStatus = String(eventItem.status || 'SCHEDULED').toUpperCase();
+            const statusNode = row.querySelector('[data-event-status]');
+            if (statusNode) {
+              statusNode.textContent = prettyLabel(apiStatus);
+              statusNode.className = `status status-${apiStatus.toLowerCase()}`;
+            }
+
+            const registerWrapper = row.querySelector('[data-register-wrapper]');
+            if (registerWrapper) {
+              registerWrapper.style.display = apiStatus === 'SCHEDULED' ? '' : 'none';
+            }
+          });
+        } catch (error) {
+          console.error('Home event refresh failed:', error);
+        }
+      };
+
+      refreshStatuses();
+      setInterval(refreshStatuses, INTERVAL_MS);
+    })();
+  </script>
 </body>
 </html>

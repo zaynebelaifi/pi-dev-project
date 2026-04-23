@@ -28,28 +28,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookingForm = document.getElementById('bookingForm');
 
     function showBooking(){
+      if(!bookingPopup){
+        return;
+      }
       bookingPopup.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
     function hideBooking(){
+      if(!bookingPopup){
+        return;
+      }
       bookingPopup.classList.remove('active');
       document.body.style.overflow = '';
     }
 
-    openBooking.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
-    openBooking2.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
-    closeBooking.addEventListener('click', hideBooking);
+    if(openBooking){
+      openBooking.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
+    }
+    if(openBooking2){
+      openBooking2.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
+    }
+    if(closeBooking){
+      closeBooking.addEventListener('click', hideBooking);
+    }
 
-    bookingPopup.addEventListener('click', (e)=>{
-      if(e.target === bookingPopup) hideBooking();
-    });
+    if(bookingPopup){
+      bookingPopup.addEventListener('click', (e)=>{
+        if(e.target === bookingPopup) hideBooking();
+      });
+    }
 
-    bookingForm.addEventListener('submit', function(e){
-      e.preventDefault();
-      alert("Your booking request has been submitted successfully!");
-      bookingForm.reset();
-      hideBooking();
-    });
+    if(bookingForm){
+      bookingForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        alert("Your booking request has been submitted successfully!");
+        bookingForm.reset();
+        hideBooking();
+      });
+    }
 
     // PROFILE POPUP
     const profilePopup = document.getElementById('profilePopup');
@@ -58,29 +74,103 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileForm = document.getElementById('profileForm');
 
     function showProfile(){
+      if(!profilePopup){
+        window.location.href = '/profile';
+        return;
+      }
       profilePopup.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
     function hideProfile(){
+      if(!profilePopup){
+        return;
+      }
       profilePopup.classList.remove('active');
       document.body.style.overflow = '';
     }
 
-    openProfile.addEventListener('click', showProfile);
-    closeProfile.addEventListener('click', hideProfile);
+    if(openProfile){
+      openProfile.addEventListener('click', showProfile);
+    }
+    if(closeProfile){
+      closeProfile.addEventListener('click', hideProfile);
+    }
 
-    profilePopup.addEventListener('click', (e)=>{
-      if(e.target === profilePopup) hideProfile();
-    });
+    if(profilePopup){
+      profilePopup.addEventListener('click', (e)=>{
+        if(e.target === profilePopup) hideProfile();
+      });
+    }
 
-    profileForm.addEventListener('submit', function(e){
-      e.preventDefault();
-      alert("Your profile has been saved successfully!");
-      profileForm.reset();
-      hideProfile();
-    });
+    if(profileForm){
+      profileForm.addEventListener('submit', async function(e){
+        e.preventDefault();
+
+        if(profileForm.dataset.authenticated !== '1'){
+          alert('Please sign in first.');
+          window.location.href = '/login';
+          return;
+        }
+
+        const submitBtn = profileForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.textContent : 'Save Profile';
+
+        try {
+          if(submitBtn){
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+          }
+
+          const response = await fetch(profileForm.action, {
+            method: 'POST',
+            body: new FormData(profileForm),
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+            },
+          });
+
+          const payload = await response.json();
+          if(!response.ok || !payload.success){
+            throw new Error(payload.message || 'Unable to save profile.');
+          }
+
+          const fullNameInput = profileForm.querySelector('input[name="full_name"]');
+          const phoneInput = profileForm.querySelector('input[name="phone"]');
+          const addressInput = profileForm.querySelector('input[name="address"]');
+          const emailInput = profileForm.querySelector('input[name="email"]');
+
+          if(fullNameInput && payload.profile && typeof payload.profile.fullName === 'string'){
+            fullNameInput.value = payload.profile.fullName;
+          }
+          if(phoneInput && payload.profile && typeof payload.profile.phone === 'string'){
+            phoneInput.value = payload.profile.phone;
+          }
+          if(addressInput && payload.profile && typeof payload.profile.address === 'string'){
+            addressInput.value = payload.profile.address;
+          }
+          if(emailInput && payload.profile && typeof payload.profile.email === 'string'){
+            emailInput.value = payload.profile.email;
+          }
+
+          alert(payload.message || 'Your profile has been saved successfully.');
+          hideProfile();
+        } catch(err){
+          alert(err instanceof Error ? err.message : 'Unable to save profile.');
+        } finally {
+          if(submitBtn){
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+        }
+      });
+    }
 
     // CART SYSTEM
+    const cartOverlay = document.getElementById('cartOverlay');
+    const openCart = document.getElementById('openCart');
+    const openCart2 = document.getElementById('openCart2');
+    const closeCart = document.getElementById('closeCart');
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotal = document.getElementById('cartTotal');
     const cartCount = document.getElementById('cartCount');
@@ -89,21 +179,35 @@ document.addEventListener('DOMContentLoaded', function() {
     let cart = [];
 
     function showCart(){
+      if(!cartOverlay){
+        return;
+      }
       cartOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
     function hideCart(){
+      if(!cartOverlay){
+        return;
+      }
       cartOverlay.classList.remove('active');
       document.body.style.overflow = '';
     }
 
-    openCart.addEventListener('click', showCart);
-    openCart2.addEventListener('click', showCart);
-    closeCart.addEventListener('click', hideCart);
+    if(openCart){
+      openCart.addEventListener('click', showCart);
+    }
+    if(openCart2){
+      openCart2.addEventListener('click', showCart);
+    }
+    if(closeCart){
+      closeCart.addEventListener('click', hideCart);
+    }
 
-    cartOverlay.addEventListener('click', (e)=>{
-      if(e.target === cartOverlay) hideCart();
-    });
+    if(cartOverlay){
+      cartOverlay.addEventListener('click', (e)=>{
+        if(e.target === cartOverlay) hideCart();
+      });
+    }
 
     document.querySelectorAll('.add-cart-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -119,6 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateCart(){
+      if(!cartItemsContainer || !cartTotal || !cartCount){
+        return;
+      }
       cartItemsContainer.innerHTML = '';
 
       if(cart.length === 0){
@@ -143,17 +250,38 @@ document.addEventListener('DOMContentLoaded', function() {
       cartCount.textContent = cart.length;
     }
 
-    checkoutBtn.addEventListener('click', ()=>{
-      if(cart.length === 0){
-        alert("Your cart is empty.");
-        return;
-      }
+    if(checkoutBtn){
+      checkoutBtn.addEventListener('click', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if(cart.length === 0){
+          alert("Your cart is empty.");
+          return;
+        }
 
-      const total = cart.reduce((sum, item)=> sum + item.price, 0);
-      document.getElementById('redirectCartItemsInput').value = JSON.stringify(cart);
-      document.getElementById('redirectCartTotalInput').value = total.toFixed(2);
-      document.getElementById('checkoutRedirectForm').submit();
-    });
+        const total = cart.reduce((sum, item)=> sum + item.price, 0);
+        const cartItemsInput = document.getElementById('redirectCartItemsInput');
+        const cartTotalInput = document.getElementById('redirectCartTotalInput');
+        if(cartItemsInput && cartTotalInput){
+          cartItemsInput.value = JSON.stringify(cart);
+          cartTotalInput.value = total.toFixed(2);
+        }
+        
+        // Hide the cart overlay
+        const cartOverlay = document.getElementById('cartOverlay');
+        if(cartOverlay){
+          cartOverlay.classList.remove('active');
+        }
+        
+        // Show order type selection modal
+        const modal = document.getElementById('orderTypeModal');
+        if(modal){
+          modal.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+        }
+      });
+    }
 
     function removeFromCart(index){
       cart.splice(index,1);
@@ -162,12 +290,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.removeFromCart = removeFromCart;
 
+    // ORDER TYPE MODAL
+    const orderTypeModal = document.getElementById('orderTypeModal');
+    const dineInBtn = document.getElementById('dineInBtn');
+    const deliveryBtn = document.getElementById('deliveryBtn');
+    const closeOrderTypeBtn = document.getElementById('closeOrderType');
+
+    function closeOrderTypeModal(){
+      if(orderTypeModal){
+        orderTypeModal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+
+    if(closeOrderTypeBtn){
+      closeOrderTypeBtn.addEventListener('click', closeOrderTypeModal);
+    }
+    
+    if(orderTypeModal){
+      orderTypeModal.addEventListener('click', (e)=>{
+        // Only close if clicking the background overlay, not the inner content
+        if(e.target === orderTypeModal) closeOrderTypeModal();
+      });
+    }
+
+    if(dineInBtn){
+      dineInBtn.addEventListener('click', ()=>{
+        document.getElementById('orderTypeInput').value = 'DINE_IN';
+        document.getElementById('checkoutRedirectForm').submit();
+      });
+    }
+
+    if(deliveryBtn){
+      deliveryBtn.addEventListener('click', ()=>{
+        document.getElementById('orderTypeInput').value = 'DELIVERY';
+        document.getElementById('checkoutRedirectForm').submit();
+      });
+    }
+
     // ESC CLOSE
     document.addEventListener('keydown', (e)=>{
       if(e.key === "Escape"){
         hideBooking();
         hideCart();
         hideProfile();
+        closeOrderTypeModal();
       }
     });
 });

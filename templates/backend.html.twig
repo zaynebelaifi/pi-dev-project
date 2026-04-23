@@ -46,8 +46,8 @@
 body{background:var(--ivory-2);color:var(--text);font-family:'Jost',sans-serif;font-weight:400;display:flex;min-height:100vh;overflow-x:hidden;}
 
 /* SIDEBAR */
-.sidebar{width:var(--sidebar-w);background:var(--ivory);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;box-shadow:2px 0 20px var(--shadow);overflow-y:auto;max-height:100vh;}
-.sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sidebar{width:var(--sidebar-w);background:var(--ivory);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;box-shadow:2px 0 20px var(--shadow);overflow-y:auto;}
+.sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
 .brand-badge{width:38px;height:38px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.1rem;color:var(--ivory);flex-shrink:0;}
 .brand-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);letter-spacing:.08em;line-height:1;font-weight:600;}
 .brand-sub{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);margin-top:2px;}
@@ -87,27 +87,14 @@ body{background:var(--ivory-2);color:var(--text);font-family:'Jost',sans-serif;f
 .topbar-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--espresso);font-weight:600;line-height:1;}
 .topbar-bc{font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-3);margin-top:2px;}
 .topbar-right{display:flex;align-items:center;gap:.85rem;}
-.t-btn{display:flex;align-items:center;gap:.35rem;padding:.55rem 1rem;border:1px solid var(--border-2);background:transparent;color:var(--text-2);font-size:.75rem;font-family:'Jost',sans-serif;font-weight:600;letter-spacing:.06em;cursor:pointer;border-radius:10px;text-decoration:none;transition:all .25s;}
+.t-btn{display:flex;align-items:center;gap:.35rem;padding:.42rem .95rem;border:1px solid var(--border-2);background:transparent;color:var(--text-2);font-size:.7rem;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.06em;cursor:pointer;border-radius:4px;text-decoration:none;transition:all .2s;}
 .t-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-wash);}
 .t-btn.primary{background:var(--gold);border-color:var(--gold);color:var(--ivory);font-weight:700;}
 .t-btn.primary:hover{background:var(--gold-2);border-color:var(--gold-2);color:var(--ivory);}
-.t-btn.secondary{background:var(--ivory);color:var(--text-2);border-color:var(--border-2);}
-.t-btn.secondary:hover{background:var(--ivory-3);}
 .t-div{width:1px;height:22px;background:var(--border);}
 .notif{position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-2);border-radius:6px;background:transparent;color:var(--text-2);cursor:pointer;font-size:1rem;transition:all .2s;}
 .notif:hover{border-color:var(--gold);color:var(--gold);}
 .notif-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--red);border:1px solid var(--ivory);}
-.sort-trigger{color:inherit;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:.2rem;}
-.sort-trigger::after{content:'↕';font-size:.7rem;color:var(--text-3);transition:transform .2s, color .2s;}
-.sort-trigger.sorted-asc::after{content:'▲';color:var(--gold);}
-.sort-trigger.sorted-desc::after{content:'▼';color:var(--gold);}
-.table-actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;}
-.mini-action{display:inline-flex;align-items:center;justify-content:center;padding:.45rem .85rem;border-radius:8px;border:1px solid transparent;background:var(--ivory-2);color:var(--text-2);font-size:.72rem;font-weight:600;text-decoration:none;transition:all .2s;}
-.mini-action:hover{border-color:var(--border-2);background:var(--gold-wash);color:var(--espresso);}
-.mini-action-danger{background:var(--red-bg);color:var(--red);border-color:rgba(217,64,64,.2);}
-.mini-action-danger:hover{background:rgba(217,64,64,.12);}
-.no-results{padding:1.4rem 1.5rem;color:var(--text-3);font-size:.85rem;text-align:center;}
-.no-results-row{background:transparent;}
 
 /* CONTENT */
 .content{padding:2rem;flex:1;}
@@ -227,10 +214,10 @@ tbody tr:hover .dots{color:var(--gold);}
 {% set activeRoute = app.request.attributes.get('_route') %}
 
 <aside class="sidebar">
-  <div class="sidebar-brand">
+  <a href="{{ path('app_home') }}" class="sidebar-brand">
     <div class="brand-badge">B</div>
     <div><div class="brand-name">BIG 4</div><div class="brand-sub">Admin Console</div></div>
-  </div>
+  </a>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Main</div>
     <a class="nav-item {{ activeRoute == 'app_admin_dashboard' ? 'active' : '' }}" href="{{ path('app_admin_dashboard') }}"><div class="nav-icon">🏠</div>Dashboard</a>
@@ -255,8 +242,11 @@ tbody tr:hover .dots{color:var(--gold);}
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Management</div>
-    <a class="nav-item" href="#"><div class="nav-icon">🛒</div>Orders<span class="nav-badge">23</span></a>
+    <a class="nav-item {{ activeRoute starts with 'app_order_' ? 'active' : '' }}" href="{{ path('app_order_index') }}"><div class="nav-icon">🛒</div>Orders</a>
     <a class="nav-item {{ activeRoute == 'app_delivery_man_index' ? 'active' : '' }}" href="{{ path('app_delivery_man_index') }}"><div class="nav-icon">👥</div>Delivery Men</a>
+    <a class="nav-item {{ activeRoute == 'fleet_dashboard' ? 'active' : '' }}" href="{{ path('fleet_dashboard') }}"><div class="nav-icon">🗺️</div>Fleet GPS</a>
+    <a class="nav-item {{ activeRoute == 'fleet_assignments_dashboard' ? 'active' : '' }}" href="{{ path('fleet_assignments_dashboard') }}"><div class="nav-icon">🔗</div>Fleet Assignments</a>
+    <a class="nav-item {{ activeRoute == 'app_user_insights' ? 'active' : '' }}" href="{{ path('app_user_insights') }}"><div class="nav-icon">🧠</div>User Insights</a>
     <a class="nav-item" href="#"><div class="nav-icon">⚙️</div>Settings</a>
   </div>
   <div class="sidebar-footer">

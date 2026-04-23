@@ -19,23 +19,78 @@ use Symfony\Component\Routing\Attribute\Route;
 final class FoodDonationItemController extends AbstractController
 {
     #[Route(name: 'app_food_donation_item_index', methods: ['GET'])]
-    public function index(Request $request, FoodDonationItemRepository $foodDonationItemRepository, DishRepository $dishRepository): Response
+    public function index(Request $request, FoodDonationItemRepository $foodDonationItemRepository, FoodDonationEventRepository $foodDonationEventRepository): Response
     {
         $search = trim((string) $request->query->get('q', ''));
         $sort = $request->query->get('sort', 'donation_event_id');
         $direction = $request->query->get('direction', 'asc');
 
-        $dishNames = [];
-        foreach ($dishRepository->findAll() as $dish) {
-            $dishNames[$dish->getId()] = $dish->getName();
+        $itemsForView = [];
+        $allEvents = $foodDonationEventRepository->findBy([], ['event_date' => 'ASC']);
+        $eventIds = array_values(array_filter(array_map(
+            static fn ($event): int => (int) ($event->getDonationEventId() ?? 0),
+            $allEvents
+        )));
+
+        $groupedItemsByEvent = $foodDonationItemRepository->findGroupedByEventIds($eventIds);
+
+        foreach ($allEvents as $event) {
+            $eventId = (int) ($event->getDonationEventId() ?? 0);
+            if ($eventId <= 0) {
+                continue;
+            }
+
+            $charityName = (string) ($event->getCharityName() ?? '');
+            $itemsForView[$eventId] = [
+                'donation_event_id' => $eventId,
+                'donationEvent' => $event,
+                'items' => [],
+                'search_text' => $eventId . ' ' . $charityName,
+            ];
+
+            foreach ($groupedItemsByEvent[$eventId] ?? [] as $groupedItem) {
+                $itemName = (string) ($groupedItem['dishName'] ?? 'Unknown');
+                $itemId = (int) ($groupedItem['itemId'] ?? 0);
+                $quantity = (int) ($groupedItem['quantity'] ?? 0);
+
+                $itemsForView[$eventId]['items'][] = [
+                    'assignment_id' => $itemId,
+                    'item_id' => $itemId,
+                    'quantity' => $quantity,
+                    'name' => $itemName,
+                ];
+
+                $itemsForView[$eventId]['search_text'] .= ' ' . $eventId . ' ' . $itemName . ' ' . $quantity;
+            }
         }
 
+        if ($search !== '') {
+            $searchLower = mb_strtolower($search);
+            $itemsForView = array_filter(
+                $itemsForView,
+                static fn (array $row): bool => str_contains(mb_strtolower((string) $row['search_text']), $searchLower)
+            );
+        }
+
+        $itemsForView = array_values($itemsForView);
+
+        usort($itemsForView, static function (array $a, array $b) use ($sort, $direction): int {
+            $multiplier = strtolower($direction) === 'desc' ? -1 : 1;
+            $aEvent = $a['donationEvent'];
+            $bEvent = $b['donationEvent'];
+
+            return match ($sort) {
+                'item_name' => $multiplier * strcmp((string) ($a['items'][0]['name'] ?? ''), (string) ($b['items'][0]['name'] ?? '')),
+                'quantity' => $multiplier * (array_sum(array_column($a['items'], 'quantity')) <=> array_sum(array_column($b['items'], 'quantity'))),
+                default => $multiplier * (((int) ($aEvent?->getDonationEventId() ?? 0)) <=> ((int) ($bEvent?->getDonationEventId() ?? 0))),
+            };
+        });
+
         return $this->render('admin/food_donation_item/index.html.twig', [
-            'food_donation_items' => $foodDonationItemRepository->findFilteredItems($search, $sort, $direction),
+            'food_donation_items' => $itemsForView,
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,
-            'dish_names' => $dishNames,
         ]);
     }
 

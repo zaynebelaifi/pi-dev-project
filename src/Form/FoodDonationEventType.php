@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\FoodDonationEvent;
+use App\Form\EventSubscriber\FoodDonationEventStatusSubscriber;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
@@ -20,8 +21,15 @@ class FoodDonationEventType extends AbstractType
                 'label' => 'Event Date & Time',
                 'widget' => 'single_text',
                 'required' => true,
+                'html5' => true,
+                'with_seconds' => false,
+                'model_timezone' => date_default_timezone_get(),
+                'view_timezone' => date_default_timezone_get(),
+                'invalid_message' => 'Event date/time cannot be in the past. Please choose a future date.',
                 'attr' => [
+                    'class' => 'js-event-datetime',
                     'min' => (new \DateTime())->format('Y-m-d\TH:i'),
+                    'step' => 60,
                 ],
             ])
             ->add('charity_name', TextType::class, [
@@ -33,14 +41,16 @@ class FoodDonationEventType extends AbstractType
             ])
             ->add('status', ChoiceType::class, [
                 'choices' => [
-                    'Scheduled' => 'SCHEDULED',
-                    'Pending' => 'PENDING',
-                    'Cancelled' => 'CANCELLED',
-                    'Completed' => 'COMPLETED',
+                    'Scheduled' => FoodDonationEvent::STATUS_SCHEDULED,
+                    'In Progress' => FoodDonationEvent::STATUS_IN_PROGRESS,
+                    'Ongoing' => FoodDonationEvent::STATUS_ONGOING,
+                    'Completed' => FoodDonationEvent::STATUS_COMPLETED,
+                    'Cancelled' => FoodDonationEvent::STATUS_CANCELLED,
                 ],
-                'placeholder' => 'Select status',
-                'required' => true,
-                'empty_data' => 'PENDING',
+                'required' => false,
+                'placeholder' => 'Auto (calculated from event date/time)',
+                'help' => 'Status is calculated automatically on submit. Only Cancelled is a manual override.',
+                'empty_data' => '',
             ])
             ->add('delivery_id', IntegerType::class, [
                 'required' => false,
@@ -51,6 +61,7 @@ class FoodDonationEventType extends AbstractType
                 'required' => false,
                 'label' => 'Calendar Event ID (Optional)',
             ])
+            ->addEventSubscriber(new FoodDonationEventStatusSubscriber())
         ;
     }
 

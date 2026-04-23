@@ -1,58 +1,399 @@
 {% extends 'backend.html.twig' %}
 
-{% block title %}Donation Items · BIG 4 Admin{% endblock %}
-{% block topbar_title %}Donation Items{% endblock %}
+{% block title %}Donation Items Overview · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Donation Items Overview{% endblock %}
 
 {% block body %}
-  <div class="sec-head">
-    <div>
-      <h2>Donation Items</h2>
-      <p>Manage items assigned to donation events, quantities, and reference IDs.</p>
+  <style>
+    .live-filter-form {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: .9rem;
+      margin-bottom: 1.45rem;
+      align-items: end;
+    }
+
+    .filter-card {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .filter-label {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .69rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      font-weight: 600;
+    }
+
+    .filter-icon {
+      font-size: .75rem;
+      line-height: 1;
+    }
+
+    .filter-control {
+      height: 52px;
+      border-radius: 12px;
+      border: 1px solid var(--border-2);
+      background: var(--ivory);
+      color: var(--text);
+      font-size: .9rem;
+      padding: .8rem 1rem;
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+      width: 100%;
+    }
+
+    .filter-control:focus {
+      border-color: rgba(184, 135, 42, .55);
+      box-shadow: 0 0 0 3px rgba(184, 135, 42, .12);
+      background: #fff;
+    }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: .45rem;
+      flex-wrap: wrap;
+      min-width: 200px;
+    }
+
+    .table-actions form,
+    .grouped-item-actions form {
+      margin: 0;
+    }
+
+    .table-actions .mini-action,
+    .grouped-item-actions .mini-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .38rem .7rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: transparent;
+      text-decoration: none;
+      font-size: .76rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      transition: all .2s ease;
+      color: var(--espresso);
+    }
+
+    .table-actions .mini-action:hover,
+    .grouped-item-actions .mini-action:hover {
+      border-color: rgba(184, 135, 42, .42);
+      background: rgba(184, 135, 42, .08);
+      color: var(--espresso);
+    }
+
+    .table-actions .mini-action-danger,
+    .grouped-item-actions .mini-action-danger {
+      border-color: #dfb6b1;
+      color: #8f1f1f;
+    }
+
+    .table-actions .mini-action-danger:hover,
+    .grouped-item-actions .mini-action-danger:hover {
+      border-color: #d89a93;
+      background: rgba(217, 64, 64, .08);
+      color: #7f1a1a;
+    }
+
+    .sort-trigger {
+      color: var(--text-3);
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      transition: color .2s ease;
+    }
+
+    .sort-trigger:hover,
+    .sort-trigger.sorted-asc,
+    .sort-trigger.sorted-desc {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+      .live-filter-form {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-control {
+        width: 100%;
+      }
+
+      .table-actions {
+        min-width: 0;
+      }
+    }
+
+    .items-overview-note {
+      margin: 0 0 1rem;
+      padding: .85rem 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(184, 135, 42, .22);
+      background: rgba(251, 244, 227, .95);
+      color: var(--text-2);
+      font-size: .82rem;
+      line-height: 1.5;
+    }
+
+    .grouped-item-list {
+      display: grid;
+      gap: .9rem;
+    }
+
+    .grouped-item-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: .8rem 1rem;
+      align-items: center;
+    }
+
+    .grouped-item-name {
+      font-weight: 500;
+      color: #081c34;
+    }
+
+    .grouped-item-qty {
+      color: #7f7f7f;
+      font-size: .8rem;
+      white-space: nowrap;
+    }
+
+    .grouped-item-actions {
+      display: inline-flex;
+      flex-wrap: nowrap;
+      gap: .45rem;
+      grid-column: 1 / -1;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .grouped-item-actions .mini-action {
+      min-width: 52px;
+    }
+
+    .grouped-actions-list {
+      gap: 1rem;
+      justify-items: start;
+    }
+
+    .donation-index-hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      padding: 1.5rem 1.8rem;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(251,244,227,.98) 0%, rgba(245,235,210,.85) 100%);
+      border: 1.5px solid rgba(184,135,42,.22);
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .donation-index-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 110% 50%, rgba(184,135,42,.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .donation-index-hero-copy { flex: 1 1 260px; position: relative; }
+    .donation-index-eyebrow {
+      font-size: .68rem;
+      letter-spacing: .19em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: .4rem;
+    }
+    .donation-index-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--espresso);
+      line-height: 1.15;
+      margin: 0 0 .45rem;
+    }
+    .donation-index-sub {
+      font-size: .83rem;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+    .donation-index-stats {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+      position: relative;
+    }
+    .donation-index-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 72px;
+    }
+    .donation-index-stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--espresso);
+      line-height: 1;
+    }
+    .donation-index-stat-label {
+      font-size: .63rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-top: .2rem;
+      text-align: center;
+    }
+    .donation-index-stat-sep {
+      width: 1px;
+      height: 36px;
+      background: rgba(184,135,42,.25);
+    }
+    @media (max-width: 680px) {
+      .donation-index-hero { flex-direction: column; }
+      .donation-index-stats { justify-content: flex-start; }
+    }
+  </style>
+
+  {# ── Module hero ─────────────────────────────────────────── #}
+  {% set totalItems = 0 %}
+  {% set totalEvents = food_donation_items|length %}
+  {% for itemGroup in food_donation_items %}
+    {% set totalItems = totalItems + itemGroup.items|length %}
+  {% endfor %}
+
+  <div class="donation-index-hero">
+    <div class="donation-index-hero-copy">
+      <p class="donation-index-eyebrow">BIG 4 · Admin · Donation Module</p>
+      <h2 class="donation-index-title">Donation Items Overview</h2>
+      <p class="donation-index-sub">Track, filter and manage every donated dish across all charity events. Click any row to inspect or edit a specific assignment.</p>
     </div>
-    <a href="{{ path('app_food_donation_item_new') }}" class="t-btn primary">+ Add Item</a>
+    <div class="donation-index-stats">
+      <div class="donation-index-stat">
+        <div class="donation-index-stat-value">{{ totalEvents }}</div>
+        <div class="donation-index-stat-label">Active Events</div>
+      </div>
+      <div class="donation-index-stat-sep"></div>
+      <div class="donation-index-stat">
+        <div class="donation-index-stat-value">{{ totalItems }}</div>
+        <div class="donation-index-stat-label">Total Assignments</div>
+      </div>
+    </div>
   </div>
 
-  <form method="get" class="list-filters live-filter-form" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
-    <input type="hidden" name="sort" value="{{ sort }}">
-    <input type="hidden" name="direction" value="{{ direction }}">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search donation items" class="search-input" data-live-search-input style="flex:1;min-width:240px;padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);">
+
+  <p class="items-overview-note">💡 To add items to an event, create or edit a donation event from the event management section.</p>
+
+  <form method="get" class="list-filters live-filter-form">
+    <div class="filter-card">
+      <label class="filter-label" for="itemSearch"><span class="filter-icon">🔎</span>Search</label>
+      <input id="itemSearch" type="text" name="q" value="{{ search }}" placeholder="Item ID, event ID, item name..." class="filter-control" data-live-search-input>
+    </div>
+    <div class="filter-card">
+      <label class="filter-label" for="itemSort"><span class="filter-icon">📋</span>Sort By</label>
+      <select id="itemSort" name="sort" class="filter-control" data-live-sort-filter>
+        <option value="donation_event_id" {{ sort == 'donation_event_id' ? 'selected' : '' }}>Donation Event</option>
+        <option value="item_id" {{ sort == 'item_id' ? 'selected' : '' }}>Item ID</option>
+        <option value="item_name" {{ sort == 'item_name' ? 'selected' : '' }}>Item Name</option>
+        <option value="quantity" {{ sort == 'quantity' ? 'selected' : '' }}>Quantity</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <label class="filter-label" for="itemDirection"><span class="filter-icon">📊</span>Order</label>
+      <select id="itemDirection" name="direction" class="filter-control" data-live-direction-filter>
+        <option value="desc" {{ direction == 'desc' ? 'selected' : '' }}>Newest First</option>
+        <option value="asc" {{ direction == 'asc' ? 'selected' : '' }}>Oldest First</option>
+      </select>
+    </div>
   </form>
 
   <div class="live-ajax-container" data-live-ajax-container>
     <div class="tbl-card">
       <div class="tbl-head">
         <div class="tbl-title">All Donation Items</div>
-        <div>{{ food_donation_items|length }} items</div>
+        <div>{{ food_donation_items|length }} events</div>
       </div>
     <table data-live-table>
       <thead>
         <tr>
-          <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'donation_event_id', direction: sort == 'donation_event_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="donationEventId" data-sort-type="number">Donation Event{% if sort == 'donation_event_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
-          <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'item_id', direction: sort == 'item_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="itemId" data-sort-type="number">Item ID{% if sort == 'item_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
+          <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'donation_event_id', direction: sort == 'donation_event_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="donationEventId" data-sort-type="number">Event / Charity{% if sort == 'donation_event_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
           <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'item_name', direction: sort == 'item_name' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="itemName" data-sort-type="text">Item Name{% if sort == 'item_name' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
           <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'quantity', direction: sort == 'quantity' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="quantity" data-sort-type="number">Quantity{% if sort == 'quantity' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        {% for item in food_donation_items %}
-          <tr data-search="{{ item.donation_event_id }} {{ item.item_id }} {{ dish_names[item.item_id] ?? 'Unknown' }} {{ item.quantity }}">
-            <td>{{ item.donation_event_id }}</td>
-            <td>{{ item.item_id }}</td>
-            <td data-sort-value="{{ dish_names[item.item_id] ?? 'Unknown' }}">{{ dish_names[item.item_id] ?? 'Unknown' }}</td>
-            <td data-sort-value="{{ item.quantity }}">{{ item.quantity }}</td>
-            <td class="table-actions">
-              <a class="mini-action" href="{{ path('app_food_donation_item_edit', {donation_event_id: item.donation_event_id, item_id: item.item_id}) }}">Edit</a>
-              <a class="mini-action" href="{{ path('app_food_donation_item_show', {donation_event_id: item.donation_event_id, item_id: item.item_id}) }}">View</a>
-              <form method="post" action="{{ path('app_food_donation_item_delete', {donation_event_id: item.donation_event_id, item_id: item.item_id}) }}" onsubmit="return confirm('Delete this donation item?');">
-                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ item.donation_event_id ~ '_' ~ item.item_id) }}">
-                <button class="mini-action mini-action-danger" type="submit">Delete</button>
-              </form>
+        {% for itemGroup in food_donation_items %}
+          <tr data-search="{{ itemGroup.donation_event_id }} {{ itemGroup.search_text|trim }}">
+            <td>
+              <div style="font-weight: 700; color: #081c34;">{{ itemGroup.donationEvent.charityName ?? 'Unknown charity' }}</div>
+              <div style="font-size: .76rem; color: #7f7f7f; margin-top: .2rem;">{{ itemGroup.donationEvent and itemGroup.donationEvent.eventDate ? itemGroup.donationEvent.eventDate|date('M j, Y') : 'No date' }}</div>
+            </td>
+            <td>
+              <div class="grouped-item-list">
+                {% if itemGroup.items is empty %}
+                  <div class="grouped-item-entry">
+                    <div class="grouped-item-name" style="color:#8e8e8e;">No items assigned yet</div>
+                  </div>
+                {% else %}
+                  {% for groupedItem in itemGroup.items %}
+                    <div class="grouped-item-entry">
+                      <div class="grouped-item-name">{{ groupedItem.name }}</div>
+                      <div class="grouped-item-qty">ID #{{ groupedItem.item_id }}</div>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              <div class="grouped-item-list">
+                {% if itemGroup.items is empty %}
+                  <div class="grouped-item-entry">
+                    <div class="grouped-item-qty" style="color:#8e8e8e;">0</div>
+                  </div>
+                {% else %}
+                  {% for groupedItem in itemGroup.items %}
+                    <div class="grouped-item-entry">
+                      <div class="grouped-item-qty">{{ groupedItem.quantity }}</div>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              <div class="grouped-item-list grouped-actions-list">
+                <div class="grouped-item-entry">
+                  <div class="grouped-item-actions">
+                    <a class="mini-action" href="{{ path('donation_item_show', {id: itemGroup.donation_event_id}) }}">View All</a>
+                    <a class="mini-action" href="{{ path('donation_item_edit', {id: itemGroup.donation_event_id}) }}">Edit All</a>
+                    <form method="post" action="{{ path('donation_item_delete_event', {id: itemGroup.donation_event_id}) }}" style="display:inline;" onsubmit="return confirm('Delete all donation items for this event? This cannot be undone.')">
+                      <input type="hidden" name="_token" value="{{ csrf_token('delete_event_' ~ itemGroup.donation_event_id) }}">
+                      <button type="submit" class="mini-action" style="color:#c0392b;border-color:#c0392b;background:none;cursor:pointer;">Delete</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
             </td>
           </tr>
         {% else %}
           <tr class="no-results-row">
-            <td colspan="4" class="no-results">No donation items found. Add an item to link it to a donation event.</td>
+            <td colspan="4" class="no-results">No donation items found yet.</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -63,8 +404,10 @@
 <script>
 (function(){
   const containerSelector = '[data-live-ajax-container]';
-  const container = document.querySelector(containerSelector);
-  if (!container) return;
+  if (!document.querySelector(containerSelector)) return;
+  let activeController = null;
+  let requestVersion = 0;
+  let lastRequestedUrl = '';
 
   const buildUrl = params => {
     const url = new URL(window.location.href);
@@ -79,17 +422,38 @@
   };
 
   const fetchContent = async url => {
+    if (url === lastRequestedUrl) {
+      return;
+    }
+    lastRequestedUrl = url;
+
+    if (activeController) {
+      activeController.abort();
+    }
+    activeController = new AbortController();
+    const currentVersion = ++requestVersion;
+
     try {
-      const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      const response = await fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: activeController.signal,
+      });
       if (!response.ok) throw new Error('Request failed');
       const html = await response.text();
+      if (currentVersion !== requestVersion) {
+        return;
+      }
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const newContainer = doc.querySelector(containerSelector);
-      if (newContainer) {
-        container.replaceWith(newContainer);
+      const currentContainer = document.querySelector(containerSelector);
+      if (newContainer && currentContainer) {
+        currentContainer.replaceWith(newContainer);
         bindAjax();
       }
     } catch (error) {
+      if (error && error.name === 'AbortError') {
+        return;
+      }
       console.error('Live item fetch failed', error);
     }
   };
@@ -113,6 +477,8 @@
     if (!form) return;
     let timeout;
     const searchInput = form.querySelector('[name="q"]');
+    const sortFilter = form.querySelector('[name="sort"]');
+    const directionFilter = form.querySelector('[name="direction"]');
 
     form.addEventListener('submit', event => {
       event.preventDefault();
@@ -122,14 +488,29 @@
     if (searchInput) {
       searchInput.addEventListener('input', () => {
         clearTimeout(timeout);
-        timeout = setTimeout(submitLiveFilter, 300);
+        timeout = setTimeout(submitLiveFilter, 180);
       });
+    }
+
+    if (sortFilter) {
+      sortFilter.addEventListener('change', submitLiveFilter);
+    }
+
+    if (directionFilter) {
+      directionFilter.addEventListener('change', submitLiveFilter);
     }
 
     document.querySelectorAll('.sort-trigger').forEach(link => {
       link.addEventListener('click', event => {
         event.preventDefault();
         const url = link.href;
+        const parsed = new URL(url, window.location.origin);
+        if (sortFilter) {
+          sortFilter.value = parsed.searchParams.get('sort') || sortFilter.value;
+        }
+        if (directionFilter) {
+          directionFilter.value = parsed.searchParams.get('direction') || directionFilter.value;
+        }
         fetchContent(url);
         history.replaceState({}, '', url);
       });
@@ -137,6 +518,7 @@
   };
 
   bindAjax();
+  lastRequestedUrl = window.location.href;
   window.addEventListener('popstate', () => fetchContent(window.location.href));
 })();
 </script>

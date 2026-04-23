@@ -118,5 +118,18 @@ class DeliveryRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function findByOrderIds(array $orderIds): array
+    {
+        if ($orderIds === []) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('d')
+            ->andWhere('d.order_id IN (:orderIds)')
+            ->setParameter('orderIds', array_values(array_unique($orderIds)))
+            ->getQuery()
+            ->getResult();
+    }
 }
 

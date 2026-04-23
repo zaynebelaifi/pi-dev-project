@@ -18,6 +18,9 @@
         <div class="form-group">
           {{ form_label(form.event_date) }}
           {{ form_widget(form.event_date) }}
+          <small class="datetime-hint">Choose a future date/time. Today is allowed only with a future time.</small>
+          <small class="datetime-min-note" data-event-datetime-min-note></small>
+          <small class="datetime-error" data-event-datetime-error hidden>Event date/time cannot be in the past. Please choose a future date.</small>
           {{ form_errors(form.event_date) }}
         </div>
         <div class="form-group">
@@ -91,6 +94,28 @@
     .menu-form-card .form-group input[type="date"] {
       min-height: 48px;
     }
+    .menu-form-card .datetime-hint {
+      display: block;
+      margin-top: .45rem;
+      font-size: .76rem;
+      color: var(--text-3);
+      line-height: 1.45;
+    }
+    .menu-form-card .datetime-error {
+      display: block;
+      margin-top: .45rem;
+      font-size: .78rem;
+      color: #b42318;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .menu-form-card .datetime-min-note {
+      display: block;
+      margin-top: .25rem;
+      font-size: .74rem;
+      color: var(--text-3);
+      line-height: 1.4;
+    }
     .menu-form-card .form-actions {
       margin-top: 1.5rem;
       display: flex;
@@ -101,4 +126,81 @@
       .menu-form-card { padding: 1.25rem 1.3rem; }
     }
   </style>
+
+  <script>
+    (function () {
+      const datetimeInput = document.querySelector('.js-event-datetime');
+      if (!datetimeInput) {
+        return;
+      }
+
+      const errorMessage = document.querySelector('[data-event-datetime-error]');
+      const minNote = document.querySelector('[data-event-datetime-min-note]');
+      const validationMessage = 'Event date/time cannot be in the past. Please choose a future date.';
+
+      const pad = (value) => String(value).padStart(2, '0');
+      const toLocalMinuteString = (date) => {
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      };
+
+      const validateDateTime = () => {
+        const now = new Date();
+        const minValue = toLocalMinuteString(now);
+        datetimeInput.min = minValue;
+        if (minNote) {
+          minNote.textContent = `Minimum allowed: ${minValue.replace('T', ' ')}`;
+        }
+
+        if (!datetimeInput.value) {
+          datetimeInput.setCustomValidity('');
+          if (errorMessage) {
+            errorMessage.hidden = true;
+          }
+          return true;
+        }
+
+        const selectedTime = datetimeInput.valueAsNumber;
+        const nowTime = Date.now();
+        if (!Number.isNaN(selectedTime) && selectedTime <= nowTime) {
+          datetimeInput.setCustomValidity(validationMessage);
+          if (errorMessage) {
+            errorMessage.hidden = false;
+          }
+          return false;
+        }
+
+        if (Number.isNaN(selectedTime) && datetimeInput.value) {
+          const parsed = new Date(datetimeInput.value);
+          if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= nowTime) {
+            datetimeInput.setCustomValidity(validationMessage);
+            if (errorMessage) {
+              errorMessage.hidden = false;
+            }
+            return false;
+          }
+        }
+
+        datetimeInput.setCustomValidity('');
+        if (errorMessage) {
+          errorMessage.hidden = true;
+        }
+        return true;
+      };
+
+      datetimeInput.addEventListener('input', validateDateTime);
+      datetimeInput.addEventListener('change', validateDateTime);
+
+      const form = datetimeInput.closest('form');
+      if (form) {
+        form.addEventListener('submit', (event) => {
+          if (!validateDateTime()) {
+            event.preventDefault();
+            datetimeInput.reportValidity();
+          }
+        });
+      }
+
+      validateDateTime();
+    })();
+  </script>
 {% endblock %}

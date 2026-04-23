@@ -25,10 +25,10 @@ class EventRating
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?User $user = null;
 
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $event_rating = null;
 
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $food_rating = null;
 
     #[ORM\Column(type: 'string', length: 500, nullable: true)]
@@ -71,7 +71,7 @@ class EventRating
         return $this->event_rating;
     }
 
-    public function setEvent_rating(int $event_rating): self
+    public function setEvent_rating(?int $event_rating): self
     {
         $this->event_rating = $event_rating;
 
@@ -83,7 +83,7 @@ class EventRating
         return $this->food_rating;
     }
 
-    public function setFood_rating(int $food_rating): self
+    public function setFood_rating(?int $food_rating): self
     {
         $this->food_rating = $food_rating;
 
@@ -132,7 +132,7 @@ class EventRating
         return $this->getEvent_rating();
     }
 
-    public function setEventRating(int $eventRating): self
+    public function setEventRating(?int $eventRating): self
     {
         return $this->setEvent_rating($eventRating);
     }
@@ -142,7 +142,7 @@ class EventRating
         return $this->getFood_rating();
     }
 
-    public function setFoodRating(int $foodRating): self
+    public function setFoodRating(?int $foodRating): self
     {
         return $this->setFood_rating($foodRating);
     }

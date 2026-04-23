@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\FoodDonationEvent;
 use App\Repository\FoodDonationEventRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -74,8 +75,8 @@ final class FoodDonationStatsController extends AbstractController
             sprintf("- Total Portions Donated: %d\n", $stats['totalPortions']) .
             sprintf("- Number of Charities: %d\n", $stats['charitiesHelpedCount']) .
             sprintf("- Top Charity: %s\n", $topCharity ?? 'N/A') .
-            sprintf("- Cancelled Events: %d\n", $statusCounts['CANCELLED'] ?? 0) .
-            sprintf("- Scheduled Events: %d\n", $statusCounts['SCHEDULED'] ?? 0) .
+            sprintf("- Cancelled Events: %d\n", $statusCounts[FoodDonationEvent::STATUS_CANCELLED] ?? 0) .
+            sprintf("- Scheduled Events: %d\n", $statusCounts[FoodDonationEvent::STATUS_SCHEDULED] ?? 0) .
             sprintf("- Events per month: [%s]\n", implode(', ', $monthlyList)) .
             "\nGive a concise, professional report in 3 short paragraphs.";
 
@@ -114,13 +115,19 @@ final class FoodDonationStatsController extends AbstractController
     private function formatEventsForCharts(array $events): array
     {
         $monthlyData = [];
-        $statusCount = ['SCHEDULED' => 0, 'CANCELLED' => 0, 'COMPLETED' => 0, 'PENDING' => 0];
+        $statusCount = [
+            FoodDonationEvent::STATUS_SCHEDULED => 0,
+            FoodDonationEvent::STATUS_ONGOING => 0,
+            FoodDonationEvent::STATUS_COMPLETED => 0,
+            FoodDonationEvent::STATUS_CANCELLED => 0,
+        ];
         $charityData = [];
+        $allEventDates = [];
 
         foreach ($events as $event) {
             $month = $event->getEventDate()?->format('Y-m') ?? 'Unknown';
             $charity = $event->getCharityName() ?? 'Unknown';
-            $status = $event->getStatus() ?? 'PENDING';
+            $status = $this->normalizeEventStatus((string) ($event->getStatus() ?? FoodDonationEvent::STATUS_SCHEDULED));
             $quantity = (int) ($event->getTotalQuantity() ?? 0);
 
             if (!isset($monthlyData[$month])) {
@@ -136,15 +143,28 @@ final class FoodDonationStatsController extends AbstractController
                 $charityData[$charity] = 0;
             }
             $charityData[$charity] += $quantity;
+
+            $allEventDates[] = [
+                'date' => $event->getEventDate()?->format('Y-m-d') ?? 'Unknown',
+                'quantity' => $quantity,
+            ];
         }
 
         ksort($monthlyData);
         arsort($charityData);
 
+        usort($allEventDates, static function (array $a, array $b): int {
+            return strcmp((string) $a['date'], (string) $b['date']);
+        });
+
         return [
             'monthly' => $monthlyData,
             'statusCount' => $statusCount,
             'charityData' => array_slice($charityData, 0, 5, true),
+            'allEventDates' => [
+                'labels' => array_map(static fn (array $row): string => (string) $row['date'], $allEventDates),
+                'quantities' => array_map(static fn (array $row): int => (int) $row['quantity'], $allEventDates),
+            ],
             'allEvents' => array_map(static function ($event) {
                 $date = $event->getEventDate()?->format('m/d') ?? '—';
                 $label = $date . ' - ' . ($event->getCharityName() ?? 'Unknown');
@@ -204,5 +224,17 @@ final class FoodDonationStatsController extends AbstractController
         }
 
         return $colorMap;
+    }
+
+    private function normalizeEventStatus(string $status): string
+    {
+        return match (strtolower(trim($status))) {
+            'scheduled' => FoodDonationEvent::STATUS_SCHEDULED,
+            'ongoing' => FoodDonationEvent::STATUS_ONGOING,
+            'completed' => FoodDonationEvent::STATUS_COMPLETED,
+            'cancelled' => FoodDonationEvent::STATUS_CANCELLED,
+            'pending' => FoodDonationEvent::STATUS_SCHEDULED,
+            default => FoodDonationEvent::STATUS_SCHEDULED,
+        };
     }
 }

@@ -138,30 +138,50 @@
     // Monthly Line Chart
     const monthlyCtx = document.getElementById('monthlyChart')?.getContext('2d');
     if (monthlyCtx) {
+      const detailedDateLabels = chartData.events.allEventDates?.labels || [];
+      const detailedDateValues = chartData.events.allEventDates?.quantities || [];
+
       new Chart(monthlyCtx, {
         type: 'line',
         data: {
-          labels: Object.keys(chartData.events.monthly),
+          labels: detailedDateLabels,
           datasets: [{
             label: 'Total Portions',
-            data: Object.values(chartData.events.monthly),
+            data: detailedDateValues,
             borderColor: '#3A7EC9',
-            backgroundColor: 'rgba(58, 126, 201, 0.1)',
-            tension: 0.4,
-            fill: true,
+            backgroundColor: 'rgba(58, 126, 201, 0.15)',
+            borderWidth: 3,
+            tension: 0,
+            fill: false,
             pointBackgroundColor: '#3A7EC9',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2,
-            pointRadius: 5,
+            pointRadius: 4,
+            pointHoverRadius: 6,
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: true } },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                color: '#5C3D1E',
+              },
+            },
+          },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#7A5C3A' } },
-            x: { ticks: { color: '#7A5C3A' } }
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#7A5C3A' },
+              grid: { color: 'rgba(92, 61, 30, 0.15)' },
+            },
+            x: {
+              ticks: { color: '#7A5C3A' },
+              grid: { color: 'rgba(92, 61, 30, 0.10)' },
+            },
           }
         }
       });

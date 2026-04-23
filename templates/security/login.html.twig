@@ -12,6 +12,10 @@
                 <p>Sign in to manage your deliveries, track orders, and keep everything running smoothly.</p>
             </div>
             <div class="auth-side">
+                {% for message in app.flashes('success') %}
+                    <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+
                 {% if error %}
                     <div class="alert alert-error">
                         {{ error }}
@@ -21,8 +25,15 @@
                 {{ form_start(form) }}
                     <div class="form-row">{{ form_row(form.email) }}</div>
                     <div class="form-row">{{ form_row(form.password) }}</div>
+                    <p class="auth-link-row">
+                        <a href="{{ path('app_forgot_password') }}">Forgot password?</a>
+                    </p>
                     <button type="submit" class="btn btn-primary">Sign In</button>
                 {{ form_end(form) }}
+
+                <div class="auth-divider"><span>or</span></div>
+                <button type="button" class="btn btn-faceid" id="faceid-login-btn">Sign In with Face ID</button>
+                <p class="faceid-status" id="faceid-login-status" aria-live="polite"></p>
 
                 <p class="auth-footer">
                     Don’t have an account? <a href="{{ path('app_register') }}">Sign Up</a>
@@ -128,10 +139,62 @@
     background: linear-gradient(135deg, #b27a1d 0%, #8a5b12 100%);
     transform: translateY(-1px);
 }
+.btn-faceid {
+    width: 100%;
+    margin-top: 0.65rem;
+    background: linear-gradient(135deg, #2f5ac7 0%, #1e3f9c 100%);
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(30, 63, 156, 0.25);
+}
+.btn-faceid:hover {
+    background: linear-gradient(135deg, #264aad 0%, #173178 100%);
+    transform: translateY(-1px);
+}
+.btn-faceid:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+.auth-divider {
+    position: relative;
+    margin: 1.2rem 0 0.9rem;
+    text-align: center;
+}
+.auth-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(184, 135, 42, 0.24);
+}
+.auth-divider span {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    padding: 0 0.8rem;
+    color: var(--text-2);
+    font-size: 0.9rem;
+}
+.faceid-status {
+    min-height: 1.2rem;
+    margin: 0.7rem 0 0;
+    color: var(--text-2);
+    font-size: 0.9rem;
+}
 .alert-error {
     background: #fff1f3;
     color: #842029;
     border: 1px solid #f5c2c7;
+    padding: 1rem 1.1rem;
+    border-radius: 16px;
+    margin-bottom: 1.25rem;
+}
+.alert-success {
+    background: #edf8f1;
+    color: #1f5e3b;
+    border: 1px solid #aad7be;
     padding: 1rem 1.1rem;
     border-radius: 16px;
     margin-bottom: 1.25rem;
@@ -147,6 +210,16 @@
     font-weight: 700;
     text-decoration: none;
 }
+.auth-link-row {
+    margin: -0.35rem 0 1rem;
+    text-align: right;
+}
+.auth-link-row a {
+    color: var(--gold);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.92rem;
+}
 @media (max-width: 680px) {
     .auth-card {
         border-radius: 26px;
@@ -159,4 +232,21 @@
     }
 }
 </style>
+
+<script src="{{ asset('js/webauthn-auth.js') }}?v=2"></script>
+<script>
+(() => {
+    if (!window.Big4WebauthnAuth) {
+        return;
+    }
+
+    window.Big4WebauthnAuth.init({
+        buttonId: 'faceid-login-btn',
+        statusId: 'faceid-login-status',
+        emailInputId: 'login_email',
+        startUrl: '{{ path('app_webauthn_auth_start') }}',
+        completeUrl: '{{ path('app_webauthn_auth_complete') }}'
+    });
+})();
+</script>
 {% endblock %}

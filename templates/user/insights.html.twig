@@ -1,0 +1,488 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}User Insights{% endblock %}
+{% block topbar_title %}User Insights{% endblock %}
+{% block topbar_breadcrumb %}BIG 4 · Admin · User Insights{% endblock %}
+
+{% block body %}
+<style>
+    .insights-hero {
+        background: linear-gradient(135deg, #f9f5ef 0%, #fff8eb 100%);
+        border: 1px solid rgba(184,135,42,.15);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 1.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    .insights-hero-icon {
+        font-size: 3rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+    .insights-hero h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--brown, #6b4f1e);
+        margin: 0 0 .35rem 0;
+    }
+    .insights-hero p {
+        color: #7a6a55;
+        margin: 0;
+        font-size: .95rem;
+    }
+
+    .control-bar {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: 14px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 1.75rem;
+        display: flex;
+        align-items: flex-end;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+    }
+    .control-bar .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+    }
+    .control-bar label {
+        font-size: .8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #7a6a55;
+    }
+    .control-bar input[type="number"] {
+        border: 1.5px solid #e3d9cc;
+        border-radius: 10px;
+        padding: .55rem 1rem;
+        font-size: .95rem;
+        width: 180px;
+        outline: none;
+        transition: border-color .2s;
+    }
+    .control-bar input[type="number"]:focus {
+        border-color: var(--brown, #b8872a);
+    }
+    .btn-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .65rem;
+    }
+    .insight-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .6rem 1.25rem;
+        border-radius: 10px;
+        border: none;
+        font-size: .88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity .2s, transform .1s;
+    }
+    .insight-btn:active { transform: scale(.97); }
+    .insight-btn:hover  { opacity: .88; }
+    .insight-btn.btn-stats   { background: #4f6ef7; color: #fff; }
+    .insight-btn.btn-inactive { background: #f5a623; color: #fff; }
+    .insight-btn.btn-loyalty { background: #2ecc71; color: #fff; }
+    .insight-btn.btn-ai      { background: #9b59b6; color: #fff; }
+
+    .status-banner {
+        border-radius: 12px;
+        padding: .85rem 1.25rem;
+        font-size: .9rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+    .status-banner.hidden   { display: none; }
+    .status-banner.loading  { background: #f0f4ff; color: #3a5bd9; border: 1px solid #c8d4ff; }
+    .status-banner.success  { background: #edfaf2; color: #1e7e4b; border: 1px solid #b6e8cb; }
+    .status-banner.error    { background: #fff0f0; color: #c0392b; border: 1px solid #f5c6c6; }
+
+    .result-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 1.25rem;
+        margin-bottom: 1.75rem;
+    }
+    @media (max-width: 1100px) { .result-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px)  { .result-grid { grid-template-columns: 1fr; } }
+
+    .result-kpi {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.07);
+        border-radius: 14px;
+        padding: 1.4rem 1.5rem;
+        position: relative;
+        overflow: hidden;
+        min-height: 110px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .result-kpi::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        border-radius: 14px 14px 0 0;
+    }
+    .result-kpi.stats-kpi::before   { background: #4f6ef7; }
+    .result-kpi.inactive-kpi::before { background: #f5a623; }
+    .result-kpi.loyalty-kpi::before  { background: #2ecc71; }
+    .result-kpi.ai-kpi::before       { background: #9b59b6; }
+
+    .kpi-label {
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #a0907a;
+        margin-bottom: .5rem;
+    }
+    .kpi-big {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: #2d2419;
+        line-height: 1;
+    }
+    .kpi-sub {
+        font-size: .82rem;
+        color: #7a6a55;
+        margin-top: .4rem;
+    }
+    .kpi-empty {
+        font-size: .88rem;
+        color: #bbb;
+        margin: auto 0;
+    }
+    .kpi-icon {
+        position: absolute;
+        top: 1.2rem; right: 1.2rem;
+        font-size: 1.6rem;
+        opacity: .18;
+    }
+
+    .inactive-list {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.07);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .inactive-list-head {
+        padding: 1rem 1.5rem;
+        font-size: .8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #7a6a55;
+        background: #faf7f2;
+        border-bottom: 1px solid rgba(0,0,0,.06);
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr;
+        gap: 1rem;
+    }
+    .inactive-list-row {
+        padding: .8rem 1.5rem;
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr;
+        gap: 1rem;
+        border-bottom: 1px solid rgba(0,0,0,.04);
+        font-size: .88rem;
+        align-items: center;
+    }
+    .inactive-list-row:last-child { border-bottom: none; }
+    .inactive-list-row:hover { background: #faf7f2; }
+
+    .ai-card {
+        background: linear-gradient(135deg, #f5f0ff 0%, #ede5ff 100%);
+        border: 1px solid #c9b8f0;
+        border-radius: 14px;
+        padding: 1.5rem 2rem;
+    }
+    .ai-card h4 {
+        font-size: .8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #7855b8;
+        margin: 0 0 .75rem 0;
+    }
+    .ai-message {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #2d2419;
+        margin-bottom: .5rem;
+    }
+    .ai-reason {
+        font-size: .88rem;
+        color: #6a5a7a;
+    }
+    .confidence-bar {
+        height: 6px;
+        background: #d9cef0;
+        border-radius: 99px;
+        margin-top: .85rem;
+        overflow: hidden;
+    }
+    .confidence-fill {
+        height: 100%;
+        background: #9b59b6;
+        border-radius: 99px;
+        transition: width .6s ease;
+    }
+</style>
+
+<div class="sec-head">
+    <div>
+        <h2>User Insights</h2>
+        <p class="sec-sub">Live analytics — statistics, loyalty, inactivity detection, and AI recommendations.</p>
+    </div>
+</div>
+
+<div class="insights-hero">
+    <div class="insights-hero-icon">🧠</div>
+    <div>
+        <h2>Advanced User Analytics</h2>
+        <p>The module auto-selects a relevant client profile, then fetches live data instantly.</p>
+    </div>
+</div>
+
+<div class="control-bar">
+    <div class="field-group">
+        <label for="userIdInput">Target User (Auto)</label>
+        <input type="number" id="userIdInput" min="1" value="{{ defaultUserId ?: '' }}" placeholder="Auto-selected" readonly>
+    </div>
+    <div class="field-group" style="min-width: 300px;">
+        <label for="targetUserLabel">Profile</label>
+        <input type="text" id="targetUserLabel" value="Loading default user..." readonly>
+    </div>
+    <div class="btn-row">
+        <button type="button" class="insight-btn btn-stats"   id="btnViewStatistics">📊 View Statistics</button>
+        <button type="button" class="insight-btn btn-inactive" id="btnInactiveUsers">💤 Inactive Users</button>
+        <button type="button" class="insight-btn btn-loyalty" id="btnLoyaltyScore">🏆 Loyalty Score</button>
+        <button type="button" class="insight-btn btn-ai"      id="btnAiRecommendation">✨ AI Recommendation</button>
+    </div>
+</div>
+
+<div id="statusBanner" class="status-banner hidden">
+    <span id="statusIcon"></span>
+    <span id="statusText"></span>
+</div>
+
+<div class="result-grid" id="kpiGrid">
+    <div class="result-kpi stats-kpi" id="kpiStats">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-label">Total Orders</div>
+        <div class="kpi-empty" id="kpiStatOrders">—</div>
+    </div>
+    <div class="result-kpi stats-kpi" id="kpiSpent">
+        <div class="kpi-icon">💳</div>
+        <div class="kpi-label">Total Spent</div>
+        <div class="kpi-empty" id="kpiStatSpent">—</div>
+    </div>
+    <div class="result-kpi loyalty-kpi" id="kpiLoyalty">
+        <div class="kpi-icon">🏆</div>
+        <div class="kpi-label">Loyalty Score</div>
+        <div class="kpi-empty" id="kpiLoyaltyVal">—</div>
+    </div>
+    <div class="result-kpi inactive-kpi" id="kpiInactive">
+        <div class="kpi-icon">💤</div>
+        <div class="kpi-label">Inactive Users</div>
+        <div class="kpi-empty" id="kpiInactiveVal">—</div>
+    </div>
+</div>
+
+<div id="inactiveSection" style="display:none; margin-bottom:1.75rem;">
+    <div class="inactive-list">
+        <div class="inactive-list-head">
+            <span>Name</span><span>Email</span><span>Role</span>
+        </div>
+        <div id="inactiveListBody"></div>
+    </div>
+</div>
+
+<div id="aiSection" style="display:none; margin-bottom:1.75rem;">
+    <div class="ai-card">
+        <h4>✨ AI Recommendation</h4>
+        <div class="ai-message" id="aiMessage"></div>
+        <div class="ai-reason"  id="aiReason"></div>
+        <div class="confidence-bar">
+            <div class="confidence-fill" id="aiConfidenceFill" style="width:0%"></div>
+        </div>
+        <div style="font-size:.78rem; color:#9b59b6; margin-top:.35rem;" id="aiConfidenceLabel"></div>
+    </div>
+</div>
+
+<script>
+(() => {
+    const userIdInput   = document.getElementById('userIdInput');
+    const targetUserLabel = document.getElementById('targetUserLabel');
+    const statusBanner  = document.getElementById('statusBanner');
+    const statusIcon    = document.getElementById('statusIcon');
+    const statusText    = document.getElementById('statusText');
+    let fallbackUserId = Number({{ defaultUserId ?: 0 }});
+    let loadingDefaultUser = false;
+
+    function setStatus(msg, type) {
+        statusBanner.className = 'status-banner ' + type;
+        statusIcon.textContent = type === 'loading' ? '⏳' : type === 'success' ? '✅' : '❌';
+        statusText.textContent = msg;
+    }
+    function hideStatus() { statusBanner.className = 'status-banner hidden'; }
+
+    function getUserId() {
+        const v = Number(userIdInput.value);
+        if (Number.isInteger(v) && v > 0) {
+            return v;
+        }
+
+        if (Number.isInteger(fallbackUserId) && fallbackUserId > 0) {
+            userIdInput.value = String(fallbackUserId);
+            return fallbackUserId;
+        }
+
+        setStatus('No default user was found. Please create at least one client account.', 'error');
+
+        return null;
+    }
+
+    function resetKpi(id, emptyId) {
+        document.getElementById(emptyId).innerHTML = '<span class="kpi-empty">—</span>';
+    }
+
+    async function apiFetch(url) {
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        return res.json();
+    }
+
+    async function resolveDefaultUser() {
+        if (loadingDefaultUser) {
+            return;
+        }
+
+        loadingDefaultUser = true;
+        try {
+            const payload = await apiFetch('/user/insights-api/default-target');
+            if (!payload.success || !payload.data || !payload.data.id) {
+                if (targetUserLabel) {
+                    targetUserLabel.value = 'No default client found';
+                }
+                return;
+            }
+
+            const target = payload.data;
+            fallbackUserId = Number(target.id);
+            userIdInput.value = String(target.id);
+
+            if (targetUserLabel) {
+                const targetName = target.fullName && target.fullName.trim() !== ''
+                    ? target.fullName
+                    : target.email;
+                targetUserLabel.value = `${targetName} (ID ${target.id})`;
+            }
+        } catch (error) {
+            if (targetUserLabel) {
+                targetUserLabel.value = 'Unable to resolve default client';
+            }
+        } finally {
+            loadingDefaultUser = false;
+        }
+    }
+
+    async function loadStatistics() {
+        const userId = getUserId(); if (!userId) return;
+        setStatus('Fetching statistics…', 'loading');
+        document.getElementById('inactiveSection').style.display = 'none';
+        document.getElementById('aiSection').style.display = 'none';
+        try {
+            const payload = await apiFetch(`/user/insights-api/${userId}/stats`);
+            if (!payload.success) { setStatus(payload.message || 'Error', 'error'); return; }
+            const d = payload.data;
+            document.getElementById('kpiStatOrders').innerHTML = `<div class="kpi-big">${d.totalOrders}</div><div class="kpi-sub">orders placed</div>`;
+            document.getElementById('kpiStatSpent').innerHTML  = `<div class="kpi-big">${parseFloat(d.totalSpent).toFixed(2)}</div><div class="kpi-sub">TND total spent</div>`;
+            setStatus('Statistics loaded for user #' + userId, 'success');
+        } catch(e) { setStatus('Network error: ' + e.message, 'error'); }
+    }
+
+    async function loadLoyalty() {
+        const userId = getUserId(); if (!userId) return;
+        setStatus('Calculating loyalty score…', 'loading');
+        document.getElementById('inactiveSection').style.display = 'none';
+        document.getElementById('aiSection').style.display = 'none';
+        try {
+            const payload = await apiFetch(`/user/insights-api/${userId}/loyalty-score`);
+            if (!payload.success) { setStatus(payload.message || 'Error', 'error'); return; }
+            const d = payload.data;
+            document.getElementById('kpiLoyaltyVal').innerHTML = `<div class="kpi-big">${d.loyaltyScore}</div><div class="kpi-sub">${d.formula}</div>`;
+            setStatus('Loyalty score calculated for user #' + userId, 'success');
+        } catch(e) { setStatus('Network error: ' + e.message, 'error'); }
+    }
+
+    async function loadRecommendation() {
+        const userId = getUserId(); if (!userId) return;
+        setStatus('Generating AI recommendation…', 'loading');
+        document.getElementById('inactiveSection').style.display = 'none';
+        try {
+            const payload = await apiFetch(`/user/insights-api/${userId}/recommendation`);
+            if (!payload.success) { setStatus(payload.message || 'Error', 'error'); return; }
+            const d = payload.data;
+            document.getElementById('aiMessage').textContent = d.message;
+            document.getElementById('aiReason').textContent  = d.reason || '';
+            const pct = Math.round((d.confidence || 0) * 100);
+            document.getElementById('aiConfidenceFill').style.width  = pct + '%';
+            document.getElementById('aiConfidenceLabel').textContent = 'Confidence: ' + pct + '%';
+            document.getElementById('aiSection').style.display = 'block';
+            setStatus('AI recommendation ready for user #' + userId, 'success');
+        } catch(e) { setStatus('Network error: ' + e.message, 'error'); }
+    }
+
+    document.getElementById('btnViewStatistics').addEventListener('click', loadStatistics);
+
+    document.getElementById('btnInactiveUsers').addEventListener('click', async () => {
+        setStatus('Detecting inactive users…', 'loading');
+        document.getElementById('aiSection').style.display = 'none';
+        try {
+            const payload = await apiFetch('/user/insights-api/inactive');
+            if (!payload.success) { setStatus(payload.message || 'Error', 'error'); return; }
+            const d = payload.data;
+            document.getElementById('kpiInactiveVal').innerHTML = `<div class="kpi-big">${d.count}</div><div class="kpi-sub">no orders in ${d.thresholdDays} days</div>`;
+            const body = document.getElementById('inactiveListBody');
+            body.innerHTML = '';
+            if (d.users.length === 0) {
+                body.innerHTML = '<div class="inactive-list-row" style="grid-template-columns:1fr;color:#aaa;">No inactive users found.</div>';
+            } else {
+                d.users.forEach(u => {
+                    const displayName = [u.firstName || '', u.lastName || ''].join(' ').trim() || u.fullName || 'Unnamed user';
+                    body.innerHTML += `<div class="inactive-list-row"><span>${displayName}</span><span style="color:#7a6a55">${u.email}</span><span style="text-transform:capitalize;">${u.role || 'Client'}</span></div>`;
+                });
+            }
+            document.getElementById('inactiveSection').style.display = 'block';
+            setStatus(d.count + ' inactive user(s) found (last ' + d.thresholdDays + ' days)', 'success');
+        } catch(e) { setStatus('Network error: ' + e.message, 'error'); }
+    });
+
+    document.getElementById('btnLoyaltyScore').addEventListener('click', loadLoyalty);
+
+    document.getElementById('btnAiRecommendation').addEventListener('click', loadRecommendation);
+
+    (async () => {
+        await resolveDefaultUser();
+        if (getUserId()) {
+            await loadStatistics();
+            await loadLoyalty();
+            await loadRecommendation();
+            hideStatus();
+        }
+    })();
+})();
+</script>
+{% endblock %}

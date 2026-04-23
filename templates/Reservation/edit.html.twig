@@ -1,0 +1,119 @@
+{% extends 'backend.html.twig' %}
+{% block title %}Edit Reservation · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Edit Reservation{% endblock %}
+
+{% block body %}
+  <div class="delivery-header">
+    <h2>Edit Reservation #{{ reservation.reservationId }}</h2>
+    <p>Update booking details using the same simpler admin form layout.</p>
+  </div>
+
+  <div class="delivery-table-card" style="max-width:720px;">
+    <div class="table-header">
+      <div class="table-title">Reservation Details</div>
+      <div class="table-count">#{{ reservation.reservationId }}</div>
+    </div>
+
+    <div style="padding:1.4rem 1.5rem;">
+      {{ form_start(form, {'action': path('app_reservation_edit', {id: reservation.reservationId}), 'method': 'POST'}) }}
+      <div class="reservation-form-grid">
+        <div class="reservation-field">
+          <label for="{{ form.clientId.vars.id }}">Client ID</label>
+          {{ form_widget(form.clientId, {'attr': {'class': 'reservation-input'}}) }}
+          {{ form_errors(form.clientId) }}
+        </div>
+
+        <div class="reservation-field">
+          <label for="{{ form.table.vars.id }}">Table</label>
+          {{ form_widget(form.table, {'attr': {'class': 'reservation-input'}}) }}
+          {{ form_errors(form.table) }}
+        </div>
+
+        <div class="reservation-field">
+          <label for="{{ form.reservationDate.vars.id }}">Date</label>
+          {{ form_widget(form.reservationDate, {'attr': {'class': 'reservation-input'}}) }}
+          {{ form_errors(form.reservationDate) }}
+        </div>
+
+        <div class="reservation-field">
+          <label for="{{ form.reservationTime.vars.id }}">Time</label>
+          {{ form_widget(form.reservationTime, {'attr': {'class': 'reservation-input'}}) }}
+          {{ form_errors(form.reservationTime) }}
+        </div>
+
+        <div class="reservation-field">
+          <label for="{{ form.numberOfGuests.vars.id }}">Number of Guests</label>
+          {{ form_widget(form.numberOfGuests, {'attr': {'class': 'reservation-input', 'min': 1, 'max': 8}}) }}
+          {{ form_errors(form.numberOfGuests) }}
+        </div>
+
+        <div class="reservation-field">
+          <label for="{{ form.status.vars.id }}">Status</label>
+          {{ form_widget(form.status, {'attr': {'class': 'reservation-input'}}) }}
+          {{ form_errors(form.status) }}
+        </div>
+      </div>
+
+      <div class="reservation-actions">
+        <a href="{{ path('app_reservation_index') }}" class="t-btn">Back</a>
+        <button type="submit" class="t-btn primary">Save Changes</button>
+      </div>
+      {{ form_end(form) }}
+    </div>
+  </div>
+
+  <style>
+    .reservation-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .reservation-field {
+      display: flex;
+      flex-direction: column;
+      gap: .45rem;
+    }
+    .reservation-field label {
+      font-size: .68rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      font-weight: 600;
+    }
+    .reservation-input {
+      width: 100%;
+      padding: .8rem .9rem;
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font-family: 'Jost', sans-serif;
+      font-size: .88rem;
+    }
+    .reservation-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(184,135,42,.12);
+    }
+    .reservation-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: .6rem;
+      margin-top: 1.4rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .reservation-field ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      color: var(--red);
+      font-size: .78rem;
+    }
+    @media (max-width: 760px) {
+      .reservation-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+{% endblock %}

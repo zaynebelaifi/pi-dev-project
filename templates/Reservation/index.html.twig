@@ -1,0 +1,204 @@
+{% extends 'backend.html.twig' %}
+{% block title %}Reservation Manager · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Reservation Manager{% endblock %}
+
+{% block body %}
+  <div class="delivery-header">
+    <h2>Reservation Manager</h2>
+    <p>View and manage table bookings with a simpler, consistent admin layout.</p>
+  </div>
+
+  <div class="filter-section" style="margin-bottom:1.5rem;">
+    <form method="get" action="{{ path('app_reservation_index') }}" class="list-filters" data-live-search="true">
+      <input type="text" name="search" value="{{ search }}" placeholder="Search by status or client ID">
+      <select name="sort">
+        <option value="reservationDate" {{ sort == 'reservationDate' ? 'selected' : '' }}>Sort: Date</option>
+        <option value="reservationTime" {{ sort == 'reservationTime' ? 'selected' : '' }}>Sort: Time</option>
+        <option value="clientId" {{ sort == 'clientId' ? 'selected' : '' }}>Sort: Client</option>
+        <option value="numberOfGuests" {{ sort == 'numberOfGuests' ? 'selected' : '' }}>Sort: Guests</option>
+        <option value="status" {{ sort == 'status' ? 'selected' : '' }}>Sort: Status</option>
+      </select>
+      <select name="direction">
+        <option value="DESC" {{ direction == 'DESC' ? 'selected' : '' }}>Desc</option>
+        <option value="ASC" {{ direction == 'ASC' ? 'selected' : '' }}>Asc</option>
+      </select>
+      <button type="button" class="t-btn" id="reservationReset">Reset</button>
+    </form>
+  </div>
+
+  {% for msg in app.flashes('success') %}
+    <div class="admin-flash admin-flash-success">{{ msg }}</div>
+  {% endfor %}
+
+  <div id="reservationResults">
+    {% include 'Reservation/_results.html.twig' with {
+      reservations: reservations,
+      search: search,
+      sort: sort,
+      direction: direction,
+      confirmed: confirmed,
+      cancelled: cancelled
+    } %}
+  </div>
+
+  <style>
+    .list-filters {
+      margin-top: .8rem;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .list-filters input[type="text"] {
+      min-width: 280px;
+      padding: .65rem .8rem;
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+    }
+    .list-filters select {
+      padding: .6rem .75rem;
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+      background: #fff;
+    }
+    .sort-link {
+      color: inherit;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .sort-link:hover { text-decoration: underline; }
+    .action-cell {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+    .mini-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .35rem .6rem;
+      border-radius: 7px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      color: var(--espresso);
+      text-decoration: none;
+      font-size: .78rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .mini-action:hover {
+      background: #f5f2ea;
+    }
+    .mini-action-danger {
+      border-color: #dfb6b1;
+      color: #8f1f1f;
+      background: #fff7f6;
+    }
+    .mini-action-danger:hover {
+      background: #fdeeee;
+    }
+  </style>
+  <script>
+    (() => {
+      const form = document.querySelector('.list-filters[data-live-search="true"]');
+      const resultsContainer = document.getElementById('reservationResults');
+      if (!form || !resultsContainer) return;
+
+      const input = form.querySelector('input[name="search"]');
+      const sort = form.querySelector('select[name="sort"]');
+      const dir = form.querySelector('select[name="direction"]');
+      const reset = document.getElementById('reservationReset');
+      let timer = null;
+
+      const setControlsFromParams = (params) => {
+        if (input) input.value = params.get('search') || '';
+        if (sort) sort.value = params.get('sort') || 'reservationDate';
+        if (dir) dir.value = params.get('direction') || 'DESC';
+      };
+
+      const fetchResults = async (params) => {
+        const queryString = params.toString();
+
+        try {
+          const response = await fetch(`${form.action}?${queryString}`, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Could not refresh reservations.');
+          }
+
+          const payload = await response.json();
+          if (!payload.success || typeof payload.resultsHtml !== 'string') {
+            throw new Error('Invalid response received.');
+          }
+
+          resultsContainer.innerHTML = payload.resultsHtml;
+          window.history.replaceState({}, '', `${form.action}?${queryString}`);
+        } catch (error) {
+          console.error('Live reservation refresh failed:', error);
+        }
+      };
+
+      const fetchFromForm = () => {
+        const params = new URLSearchParams(new FormData(form));
+        fetchResults(params);
+      };
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        fetchFromForm();
+      });
+
+      if (input) {
+        input.addEventListener('input', () => {
+          clearTimeout(timer);
+          timer = setTimeout(fetchFromForm, 300);
+        });
+      }
+
+      if (sort) sort.addEventListener('change', fetchFromForm);
+      if (dir) dir.addEventListener('change', fetchFromForm);
+
+      if (reset) {
+        reset.addEventListener('click', () => {
+          if (input) input.value = '';
+          if (sort) sort.value = 'reservationDate';
+          if (dir) dir.value = 'DESC';
+          fetchFromForm();
+        });
+      }
+
+      resultsContainer.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        const sortLink = target.closest('.sort-link');
+        if (!sortLink) {
+          return;
+        }
+
+        event.preventDefault();
+
+        const href = sortLink.getAttribute('href');
+        if (!href) {
+          return;
+        }
+
+        const url = new URL(href, window.location.origin);
+        const params = url.searchParams;
+        setControlsFromParams(params);
+        fetchResults(params);
+      });
+    })();
+  </script>
+{% endblock %}

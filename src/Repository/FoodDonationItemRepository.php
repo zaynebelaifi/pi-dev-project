@@ -62,6 +62,65 @@ class FoodDonationItemRepository extends ServiceEntityRepository
             ->getArrayResult();
     }
 
+    /**
+     * @param int[] $eventIds
+     * @return array<int, array<int, array{itemId: int, quantity: int, dishName: string}>>
+     */
+    public function findGroupedByEventIds(array $eventIds): array
+    {
+        if ($eventIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('f')
+            ->select('f.donation_event_id AS eventId', 'f.item_id AS itemId', 'f.quantity AS quantity', 'dish.name AS dishName')
+            ->leftJoin(Dish::class, 'dish', 'WITH', 'dish.id = f.item_id')
+            ->andWhere('f.donation_event_id IN (:eventIds)')
+            ->setParameter('eventIds', $eventIds)
+            ->orderBy('f.donation_event_id', 'ASC')
+            ->addOrderBy('dish.name', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $groupedItems = [];
+        foreach ($rows as $row) {
+            $eventId = (int) $row['eventId'];
+            $groupedItems[$eventId][] = [
+                'itemId' => (int) $row['itemId'],
+                'quantity' => (int) $row['quantity'],
+                'dishName' => (string) ($row['dishName'] ?? 'Unknown item'),
+            ];
+        }
+
+        return $groupedItems;
+    }
+
+    /**
+     * @param int[] $eventIds
+     * @return array<int, int>
+     */
+    public function countByEventIds(array $eventIds): array
+    {
+        if ($eventIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('f')
+            ->select('f.donation_event_id AS eventId, COUNT(f.item_id) AS itemsCount')
+            ->andWhere('f.donation_event_id IN (:eventIds)')
+            ->setParameter('eventIds', $eventIds)
+            ->groupBy('f.donation_event_id')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row['eventId']] = (int) $row['itemsCount'];
+        }
+
+        return $counts;
+    }
+
     //    /**
     //     * @return FoodDonationItem[] Returns an array of FoodDonationItem objects
     //     */

@@ -1,0 +1,73 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Add Table — BIG 4{% endblock %}
+{% block topbar_title %}Add New Table{% endblock %}
+
+{% block body %}
+
+<div class="sec-head">
+  <div>
+    <h2>Add New Table</h2>
+    <p class="sec-sub">Create a new table and define its capacity and availability.</p>
+  </div>
+  <a href="{{ path('table_index') }}" class="t-btn">← Back</a>
+</div>
+
+<div class="panel" style="max-width:540px;margin:auto;padding:2rem;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+
+{{ form_start(form) }}
+
+  <div style="display:flex;flex-direction:column;gap:1.4rem;">
+
+```
+<!-- Capacity -->
+<div>
+  <label style="font-size:.75rem;font-weight:600;color:var(--text-3);margin-bottom:.35rem;display:block;">
+    Capacity
+  </label>
+  {{ form_widget(form.capacity, {
+    'attr': {
+      'placeholder': 'e.g. 4 seats',
+      'style': 'width:100%;padding:.6rem .8rem;border:1px solid var(--border-2);border-radius:8px;background:var(--ivory);font-size:.85rem;transition:.2s;'
+    }
+  }) }}
+  <div style="color:var(--red);font-size:.7rem;margin-top:.25rem;">
+    {{ form_errors(form.capacity) }}
+  </div>
+</div>
+
+<!-- Status -->
+<div>
+  <label style="font-size:.75rem;font-weight:600;color:var(--text-3);margin-bottom:.35rem;display:block;">
+    Status
+  </label>
+  {{ form_widget(form.status, {
+    'attr': {
+      'style': 'width:100%;padding:.6rem .8rem;border:1px solid var(--border-2);border-radius:8px;background:var(--ivory);font-size:.85rem;'
+    }
+  }) }}
+  <div style="color:var(--red);font-size:.7rem;margin-top:.25rem;">
+    {{ form_errors(form.status) }}
+  </div>
+</div>
+
+<!-- Actions -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.2rem;">
+  <a href="{{ path('table_index') }}" 
+     style="font-size:.75rem;color:var(--text-3);text-decoration:none;">
+    Cancel
+  </a>
+
+  <button class="t-btn primary" 
+          style="padding:.5rem 1.2rem;font-size:.75rem;border-radius:8px;">
+    + Create Table
+  </button>
+</div>
+```
+
+  </div>
+
+{{ form_end(form) }}
+
+</div>
+{% endblock %}

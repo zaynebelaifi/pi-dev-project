@@ -10,6 +10,10 @@
                 <span class="auth-tag">BIG 4 Coffee Lounge</span>
                 <h1>Sign Up</h1>
                 <p>Create your account and keep every order, delivery, and menu request beautifully organized.</p>
+                <div class="faceid-flow-note">
+                    <strong>Face ID setup:</strong>
+                    Face ID is activated after your account is created and you are signed in. We will take you directly to the profile page to enable it on this device.
+                </div>
             </div>
             <div class="auth-side">
                 {{ form_start(form) }}
@@ -81,6 +85,19 @@
     color: var(--text-2);
     line-height: 1.7;
     max-width: 42rem;
+}
+.faceid-flow-note {
+    margin-top: 1.25rem;
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(47, 90, 199, 0.18);
+    background: linear-gradient(180deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.95));
+    color: #1e3f9c;
+    line-height: 1.6;
+}
+.faceid-flow-note strong {
+    display: inline-block;
+    margin-right: 0.35rem;
 }
 .auth-side {
     padding: 2rem;

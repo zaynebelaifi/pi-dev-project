@@ -241,6 +241,170 @@ class DeliveryMan
         return $this;
     }
 
+    // GPS and Fleet Management fields
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $latitude = null;
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude ? (float) $this->latitude : null;
+    }
+
+    public function setLatitude(?float $latitude): self
+    {
+        $this->latitude = $latitude;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $longitude = null;
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude ? (float) $this->longitude : null;
+    }
+
+    public function setLongitude(?float $longitude): self
+    {
+        $this->longitude = $longitude;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $last_location_update = null;
+
+    public function getLastLocationUpdate(): ?\DateTimeInterface
+    {
+        return $this->last_location_update;
+    }
+
+    public function setLastLocationUpdate(?\DateTimeInterface $last_location_update): self
+    {
+        $this->last_location_update = $last_location_update;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true, unique: true)]
+    private ?string $license_number = null;
+
+    public function getLicenseNumber(): ?string
+    {
+        return $this->license_number;
+    }
+
+    public function setLicenseNumber(?string $licenseNumber): self
+    {
+        $this->license_number = $licenseNumber;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $license_expiry_date = null;
+
+    public function getLicenseExpiryDate(): ?\DateTimeInterface
+    {
+        return $this->license_expiry_date;
+    }
+
+    public function setLicenseExpiryDate(?\DateTimeInterface $licenseExpiryDate): self
+    {
+        $this->license_expiry_date = $licenseExpiryDate;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $is_available = true;
+
+    public function isAvailable(): bool
+    {
+        return $this->is_available;
+    }
+
+    public function setIsAvailable(bool $isAvailable): self
+    {
+        $this->is_available = $isAvailable;
+
+        return $this;
+    }
+
+    #[ORM\ManyToOne(targetEntity: FleetCar::class, inversedBy: 'assigned_delivery_men')]
+    #[ORM\JoinColumn(name: 'current_car_id', referencedColumnName: 'car_id', nullable: true, onDelete: 'SET NULL')]
+    private ?FleetCar $currentCar = null;
+
+    public function getCurrentCar(): ?FleetCar
+    {
+        return $this->currentCar;
+    }
+
+    public function setCurrentCar(?FleetCar $currentCar): self
+    {
+        $this->currentCar = $currentCar;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $average_rating = null;
+
+    public function getAverageRating(): ?float
+    {
+        return $this->average_rating;
+    }
+
+    public function setAverageRating(?float $averageRating): self
+    {
+        $this->average_rating = $averageRating;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $total_deliveries = 0;
+
+    public function getTotalDeliveries(): int
+    {
+        return $this->total_deliveries;
+    }
+
+    public function setTotalDeliveries(int $totalDeliveries): self
+    {
+        $this->total_deliveries = max(0, $totalDeliveries);
+
+        return $this;
+    }
+
+    #[ORM\OneToMany(targetEntity: GPSLog::class, mappedBy: 'deliveryMan')]
+    private Collection $gps_logs;
+
+    /**
+     * @return Collection<int, GPSLog>
+     */
+    public function getGpsLogs(): Collection
+    {
+        if (!$this->gps_logs instanceof Collection) {
+            $this->gps_logs = new ArrayCollection();
+        }
+
+        return $this->gps_logs;
+    }
+
+    #[ORM\OneToMany(targetEntity: AssignmentHistory::class, mappedBy: 'deliveryMan')]
+    private Collection $assignment_history;
+
+    /**
+     * @return Collection<int, AssignmentHistory>
+     */
+    public function getAssignmentHistory(): Collection
+    {
+        if (!$this->assignment_history instanceof Collection) {
+            $this->assignment_history = new ArrayCollection();
+        }
+
+        return $this->assignment_history;
+    }
+
     // Symfony PropertyAccessor camelCase aliases for snake_case properties
     public function getId(): ?int { return $this->getDelivery_man_id(); }
     public function setId(int $id): self { return $this->setDelivery_man_id($id); }

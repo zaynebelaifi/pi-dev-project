@@ -92,7 +92,7 @@
   </section>
 
   <script>
-    const events = {{ eventsJson|raw }};
+    let events = {{ eventsJson|raw }};
     const calendarDays = document.getElementById('calendarDays');
     const currentMonthLabel = document.getElementById('currentMonthLabel');
     const selectedDateLabel = document.getElementById('selectedDateLabel');
@@ -117,12 +117,21 @@
     let currentDate = new Date();
     let selectedDay = null;
 
-    const groupedEvents = events.reduce((acc, event) => {
+    let groupedEvents = events.reduce((acc, event) => {
       if (!event.eventDateKey) return acc;
       acc[event.eventDateKey] = acc[event.eventDateKey] || [];
       acc[event.eventDateKey].push(event);
       return acc;
     }, {});
+
+    function recomputeGroupedEvents() {
+      groupedEvents = events.reduce((acc, event) => {
+        if (!event.eventDateKey) return acc;
+        acc[event.eventDateKey] = acc[event.eventDateKey] || [];
+        acc[event.eventDateKey].push(event);
+        return acc;
+      }, {});
+    }
 
     function formatShortLabel(text) {
       if (!text) return '';
@@ -251,6 +260,30 @@
     });
 
     renderCalendar(currentDate);
+
+    (function startCalendarPoller() {
+      const CALENDAR_INTERVAL_MS = 60000;
+      async function refreshCalendar() {
+        try {
+          const response = await fetch('/api/events/refresh-all', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+          const payload = await response.json();
+          if (!response.ok || !payload.success) return;
+          (payload.events || []).forEach((updated) => {
+            const idx = events.findIndex((e) => String(e.id) === String(updated.id));
+            if (idx !== -1) {
+              events[idx].status = updated.status;
+              if (updated.totalQuantity !== undefined) events[idx].totalQuantity = updated.totalQuantity;
+            }
+          });
+          recomputeGroupedEvents();
+          renderCalendar(currentDate);
+          if (selectedDay) selectDay(selectedDay);
+        } catch (_) {}
+      }
+      setInterval(refreshCalendar, CALENDAR_INTERVAL_MS);
+    }());
   </script>
 
   <style>
