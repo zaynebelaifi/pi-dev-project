@@ -10,6 +10,7 @@ use App\Repository\UserRepository;
 use App\Service\PaymentConfirmationMailer;
 use App\Service\StripeCheckoutService;
 use App\Service\TwilioVoiceConfirmationService;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -78,6 +79,7 @@ final class PaymentController extends AbstractController
         User1Repository $user1Repository,
         PaymentConfirmationMailer $paymentConfirmationMailer,
         TwilioVoiceConfirmationService $twilioVoiceConfirmationService,
+        LoggerInterface $logger,
     ): Response
     {
         $sessionId = (string) $request->query->get('session_id', '');
@@ -116,11 +118,18 @@ final class PaymentController extends AbstractController
                     $twilioVoiceConfirmationService->sendPaymentConfirmationCall($order, $recipientPhone, $recipientName);
                     $session->set($alreadySentVoiceKey, true);
                 } catch (\Throwable $e) {
-                    $this->addFlash('error', 'Payment was successful, but the voice confirmation call could not be sent: ' . $e->getMessage());
+                    $logger->warning('Failed to send payment voice confirmation call.', [
+                        'order_id' => $orderId,
+                        'client_id' => $order->getClientId(),
+                        'error' => $e->getMessage(),
+                    ]);
                 }
             }
         } else {
-            $this->addFlash('error', 'Payment was successful, but no customer phone number was available for the voice confirmation call.');
+            $logger->info('Skipping payment voice confirmation call because no customer phone number is available.', [
+                'order_id' => $orderId,
+                'client_id' => $order->getClientId(),
+            ]);
         }
 
         $message = 'Payment completed successfully.';

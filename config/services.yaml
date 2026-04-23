@@ -53,6 +53,7 @@ services:
             $fromPhoneNumber: '%env(string:TWILIO_FROM_PHONE_NUMBER)%'
             $sayVoice: '%env(string:TWILIO_SAY_VOICE)%'
             $sayLanguage: '%env(string:TWILIO_SAY_LANGUAGE)%'
+            $messageTemplate: '%env(string:TWILIO_PAYMENT_VOICE_TEMPLATE)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

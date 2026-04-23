@@ -14,6 +14,7 @@ final class TwilioVoiceConfirmationService
         private readonly string $fromPhoneNumber,
         private readonly string $sayVoice = 'alice',
         private readonly string $sayLanguage = 'en-US',
+        private readonly string $messageTemplate,
     ) {
     }
 
@@ -29,7 +30,7 @@ final class TwilioVoiceConfirmationService
             || trim($this->authToken) === ''
             || trim($this->fromPhoneNumber) === ''
         ) {
-            throw new \RuntimeException('Twilio voice confirmation is not configured. Add Twilio credentials to .env.local.');
+            throw new \RuntimeException('Twilio voice confirmation is not configured. Required Twilio credentials are missing.');
         }
 
         $from = $this->normalizePhoneNumber($this->fromPhoneNumber);
@@ -57,15 +58,23 @@ final class TwilioVoiceConfirmationService
     private function buildMessage(Order $order, ?string $recipientName): string
     {
         $name = trim((string) $recipientName);
-        $orderId = (int) ($order->getOrderId() ?? 0);
-        $amount = number_format((float) ($order->getTotalAmount() ?? 0), 2);
+        $orderId = $order->getOrderId();
+        if ($orderId === null || $orderId <= 0) {
+            throw new \RuntimeException('Voice confirmation call could not be sent because the order id is invalid.');
+        }
 
-        return sprintf(
-            'Hello %s. This is BIG 4 Coffee Lounge. Your payment for order number %d, amount %s Tunisian dinars, has been confirmed. Thank you.',
-            $name !== '' ? $name : 'there',
-            $orderId,
-            $amount
-        );
+        $totalAmount = (float) ($order->getTotalAmount() ?? 0);
+        if ($totalAmount <= 0) {
+            throw new \RuntimeException('Voice confirmation call could not be sent because the order amount is invalid.');
+        }
+
+        $amount = number_format($totalAmount, 2);
+
+        return strtr($this->messageTemplate, [
+            '%name%' => $name !== '' ? $name : 'there',
+            '%order_id%' => (string) $orderId,
+            '%amount%' => $amount,
+        ]);
     }
 
     private function normalizePhoneNumber(?string $phone): ?string
