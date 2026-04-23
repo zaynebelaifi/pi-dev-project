@@ -16,6 +16,7 @@ class Dish
     public function __construct()
     {
         $this->recipeLines = new ArrayCollection();
+        $this->donationEventItems = new ArrayCollection();
     }
 
     #[ORM\Id]
@@ -208,6 +209,12 @@ class Dish
     #[ORM\OneToMany(mappedBy: 'dish', targetEntity: DishIngredient::class, orphanRemoval: true)]
     private Collection $recipeLines;
 
+    /**
+     * @var Collection<int, DonationEventItem>
+     */
+    #[ORM\OneToMany(mappedBy: 'item', targetEntity: DonationEventItem::class, orphanRemoval: true)]
+    private Collection $donationEventItems;
+
     public function getUpdated_at(): ?\DateTimeInterface
     {
         return $this->updated_at;
@@ -241,6 +248,35 @@ class Dish
     {
         if ($this->recipeLines->removeElement($recipeLine) && $recipeLine->getDish() === $this) {
             $recipeLine->setDish(null);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DonationEventItem>
+     */
+    public function getDonationEventItems(): Collection
+    {
+        return $this->donationEventItems;
+    }
+
+    public function addDonationEventItem(DonationEventItem $donationEventItem): self
+    {
+        if (!$this->donationEventItems->contains($donationEventItem)) {
+            $this->donationEventItems->add($donationEventItem);
+            $donationEventItem->setItem($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDonationEventItem(DonationEventItem $donationEventItem): self
+    {
+        if ($this->donationEventItems->removeElement($donationEventItem)) {
+            if ($donationEventItem->getItem() === $this) {
+                $donationEventItem->setItem(null);
+            }
         }
 
         return $this;

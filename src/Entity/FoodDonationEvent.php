@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\FoodDonationEventRepository;
@@ -14,6 +15,12 @@ use App\Repository\FoodDonationEventRepository;
 #[ORM\HasLifecycleCallbacks]
 class FoodDonationEvent
 {
+    public const STATUS_SCHEDULED = 'Scheduled';
+    public const STATUS_IN_PROGRESS = 'In Progress';
+    public const STATUS_ONGOING = 'Ongoing';
+    public const STATUS_COMPLETED = 'Completed';
+    public const STATUS_CANCELLED = 'Cancelled';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -30,7 +37,7 @@ class FoodDonationEvent
         return $this;
     }
 
-    #[ORM\Column(type: 'date', nullable: false)]
+    #[ORM\Column(type: 'datetime', nullable: false)]
     #[Assert\NotNull(message: 'Event date is required.')]
     private ?\DateTimeInterface $event_date = null;
 
@@ -43,6 +50,24 @@ class FoodDonationEvent
     {
         $this->event_date = $event_date;
         return $this;
+    }
+
+    #[Assert\Callback]
+    public function validateEventDateTime(ExecutionContextInterface $context): void
+    {
+        if (!$this->event_date instanceof \DateTimeInterface) {
+            return;
+        }
+
+        $nowTimestamp = (new \DateTimeImmutable('now'))->getTimestamp();
+        $eventTimestamp = \DateTimeImmutable::createFromInterface($this->event_date)->getTimestamp();
+
+        if ($eventTimestamp <= $nowTimestamp) {
+            $context
+                ->buildViolation('Event date/time cannot be in the past. Please choose a future date.')
+                ->atPath('event_date')
+                ->addViolation();
+        }
     }
 
     #[ORM\Column(type: 'integer', nullable: false)]
@@ -82,10 +107,10 @@ class FoodDonationEvent
         return $this;
     }
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    #[ORM\Column(type: 'string', length: 50, nullable: false, options: ['default' => self::STATUS_SCHEDULED])]
     #[Assert\NotBlank(message: 'Status is required.')]
-    #[Assert\Choice(choices: ['SCHEDULED', 'PENDING', 'CANCELLED', 'COMPLETED'], message: 'Please select a valid status.')]
-    private ?string $status = 'PENDING';
+    #[Assert\Choice(choices: [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS, self::STATUS_ONGOING, self::STATUS_COMPLETED, self::STATUS_CANCELLED], message: 'Please select a valid status.')]
+    private ?string $status = self::STATUS_SCHEDULED;
 
     public function getStatus(): ?string
     {
@@ -96,6 +121,31 @@ class FoodDonationEvent
     {
         $this->status = $status;
         return $this;
+    }
+
+    public static function calculateAutoStatus(\DateTimeInterface $eventDate, ?\DateTimeInterface $referenceDate = null): string
+    {
+        $now = $referenceDate instanceof \DateTimeInterface
+            ? \DateTimeImmutable::createFromInterface($referenceDate)
+            : new \DateTimeImmutable('now');
+
+        $todayStart = $now->setTime(0, 0, 0);
+        $tomorrowStart = $todayStart->modify('+1 day');
+        $eventAt = \DateTimeImmutable::createFromInterface($eventDate);
+
+        if ($eventAt < $todayStart) {
+            return self::STATUS_COMPLETED;
+        }
+
+        if ($eventAt >= $tomorrowStart) {
+            return self::STATUS_SCHEDULED;
+        }
+
+        if ($now < $eventAt) {
+            return self::STATUS_IN_PROGRESS;
+        }
+
+        return self::STATUS_ONGOING;
     }
 
     #[ORM\Column(type: 'integer', nullable: true)]
@@ -148,6 +198,20 @@ class FoodDonationEvent
     #[ORM\Column(type: 'datetime', nullable: false)]
     private ?\DateTimeInterface $updated_at = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $sms_reminder_sent = false;
+
+    /**
+     * @var Collection<int, DonationEventItem>
+     */
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: DonationEventItem::class, orphanRemoval: true)]
+    private Collection $donationEventItems;
+
+    public function __construct()
+    {
+        $this->donationEventItems = new ArrayCollection();
+    }
+
     public function getUpdated_at(): ?\DateTimeInterface
     {
         return $this->updated_at;
@@ -156,6 +220,17 @@ class FoodDonationEvent
     public function setUpdated_at(\DateTimeInterface $updated_at): self
     {
         $this->updated_at = $updated_at;
+        return $this;
+    }
+
+    public function isSms_reminder_sent(): bool
+    {
+        return $this->sms_reminder_sent;
+    }
+
+    public function setSms_reminder_sent(bool $sms_reminder_sent): self
+    {
+        $this->sms_reminder_sent = $sms_reminder_sent;
         return $this;
     }
 
@@ -253,5 +328,44 @@ class FoodDonationEvent
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
         return $this->setUpdated_at($updatedAt);
+    }
+
+    public function isSmsReminderSent(): bool
+    {
+        return $this->isSms_reminder_sent();
+    }
+
+    public function setSmsReminderSent(bool $smsReminderSent): self
+    {
+        return $this->setSms_reminder_sent($smsReminderSent);
+    }
+
+    /**
+     * @return Collection<int, DonationEventItem>
+     */
+    public function getDonationEventItems(): Collection
+    {
+        return $this->donationEventItems;
+    }
+
+    public function addDonationEventItem(DonationEventItem $donationEventItem): self
+    {
+        if (!$this->donationEventItems->contains($donationEventItem)) {
+            $this->donationEventItems->add($donationEventItem);
+            $donationEventItem->setEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDonationEventItem(DonationEventItem $donationEventItem): self
+    {
+        if ($this->donationEventItems->removeElement($donationEventItem)) {
+            if ($donationEventItem->getEvent() === $this) {
+                $donationEventItem->setEvent(null);
+            }
+        }
+
+        return $this;
     }
 }

@@ -187,9 +187,25 @@ final class AdminController extends AbstractController
         $search = trim((string) $request->query->get('search', ''));
         $sort = $request->query->get('sort', 'created_at');
         $direction = $request->query->get('direction', 'DESC');
+        $deliveries = $deliveryRepository->searchAndSort($search, $sort, $direction);
+
+        $viewData = [
+            'deliveries' => $deliveries,
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+        ];
+
+        $isAjaxRequest = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        if ($isAjaxRequest) {
+            return new JsonResponse([
+                'success' => true,
+                'resultsHtml' => $this->renderView('admin/_deliveries_results.html.twig', $viewData),
+            ]);
+        }
 
         return $this->render('admin/deliveries.html.twig', [
-            'deliveries' => $deliveryRepository->searchAndSort($search, $sort, $direction),
+            'deliveries' => $deliveries,
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,
@@ -247,6 +263,18 @@ final class AdminController extends AbstractController
         }
 
         $search = trim((string) $request->query->get('search', ''));
+        $sort = (string) $request->query->get('sort', 'car_id');
+        $direction = strtoupper((string) $request->query->get('direction', 'DESC'));
+        $direction = $direction === 'ASC' ? 'ASC' : 'DESC';
+
+        $allowedSorts = [
+            'car_id' => 'c.car_id',
+            'make' => 'c.make',
+            'model' => 'c.model',
+            'license_plate' => 'c.license_plate',
+            'vehicle_type' => 'c.vehicle_type',
+        ];
+        $sortField = $allowedSorts[$sort] ?? 'c.car_id';
         
         $queryBuilder = $fleetCarRepository->createQueryBuilder('c');
         if ($search) {
@@ -254,12 +282,31 @@ final class AdminController extends AbstractController
                 ->where('c.make LIKE :search OR c.model LIKE :search OR c.license_plate LIKE :search OR c.vehicle_type LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
-        $vehicles = $queryBuilder->orderBy('c.car_id', 'DESC')->getQuery()->getResult();
 
-        return $this->render('admin/vehicles.html.twig', [
+        $vehicles = $queryBuilder->orderBy($sortField, $direction)->getQuery()->getResult();
+
+        $viewData = [
             'vehicles' => $vehicles,
             'deliveryMen' => $deliveryManRepository->findAll(),
             'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+        ];
+
+        $isAjaxRequest = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        if ($isAjaxRequest) {
+            return new JsonResponse([
+                'success' => true,
+                'resultsHtml' => $this->renderView('admin/_vehicles_results.html.twig', $viewData),
+            ]);
+        }
+
+        return $this->render('admin/vehicles.html.twig', [
+            'vehicles' => $vehicles,
+            'deliveryMen' => $viewData['deliveryMen'],
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
         ]);
     }
 

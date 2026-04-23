@@ -1,0 +1,81 @@
+{% if deliveries|length > 0 %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Recipient</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Assigned Car</th>
+                <th>License Plate</th>
+                <th>Driver</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for delivery in deliveries %}
+            <tr>
+                <td><strong>#{{ delivery.order_id }}</strong></td>
+                <td>{{ delivery.recipient_name }}</td>
+                <td>
+                    {% if delivery.delivery_address is not empty and delivery.delivery_address|length > 30 %}
+                        {{ delivery.delivery_address|slice(0, 30) }}...
+                    {% else %}
+                        {{ delivery.delivery_address }}
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="status-badge status-{{ delivery.status|lower }}">
+                        {{ delivery.status|replace({'_': ' '}) }}
+                    </span>
+                </td>
+                <td>
+                    {% if delivery.fleetCar %}
+                        {{ delivery.fleetCar.make }} {{ delivery.fleetCar.model }}
+                    {% else %}
+                        <em style="color: var(--text-3);">Unassigned</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if delivery.license_plate %}
+                        <code>{{ delivery.license_plate }}</code>
+                    {% else %}
+                        <em style="color: var(--text-3);">—</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if delivery.deliveryMan %}
+                        {{ delivery.deliveryMan.name }}
+                    {% else %}
+                        <em style="color: var(--text-3);">Unassigned</em>
+                    {% endif %}
+                </td>
+                <td>{{ delivery.created_at|date('M d, Y') }}</td>
+                <td>
+                    <div class="action-buttons">
+                        {% if not delivery.fleetCar %}
+                        <form method="POST" action="{{ path('app_admin_assign_car', {'id': delivery.delivery_id}) }}" style="display: inline;">
+                            <select name="car_id" class="filter-select" style="padding: 0.4rem; font-size: 0.75rem;" required>
+                                <option value="">Select Car</option>
+                            </select>
+                            <button type="submit" class="btn-small btn-assign">Assign</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ path('app_admin_remove_car', {'id': delivery.delivery_id}) }}" style="display: inline;">
+                            <button type="submit" class="btn-small btn-remove" onclick="return confirm('Remove car assignment?');">Remove Car</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="text-align: center; padding: 3rem; background: var(--ivory); border-radius: 12px; color: var(--text-3);">
+    <p>No deliveries found.</p>
+</div>
+{% endif %}

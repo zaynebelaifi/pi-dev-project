@@ -11,8 +11,14 @@
         "doctrine/doctrine-bundle": "^2.16",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.5",
+<<<<<<< HEAD
+        "gemini-api-php/client": "^1.7",
+        "lexik/jwt-authentication-bundle": "^2.18",
+        "nucleos/dompdf-bundle": "^4.3",
+        "nyholm/psr7": "^1.8",
+=======
         "dompdf/dompdf": "^3.0",
-        "knplabs/knp-paginator-bundle": "^6.10",
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpstan/phpdoc-parser": "^2.3",
         "symfony/asset": "6.4.*",
@@ -34,6 +40,7 @@
         "symfony/process": "6.4.*",
         "symfony/property-access": "6.4.*",
         "symfony/property-info": "6.4.*",
+        "symfony/rate-limiter": "6.4.*",
         "symfony/runtime": "6.4.*",
         "symfony/security-bundle": "6.4.*",
         "symfony/serializer": "6.4.*",
@@ -47,7 +54,9 @@
         "symfony/web-link": "6.4.*",
         "symfony/yaml": "6.4.*",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/twig": "^2.12|^3.0"
+        "twig/twig": "^2.12|^3.0",
+        "twilio/sdk": "*",
+        "web-auth/webauthn-symfony-bundle": "^5.2"
     },
     "config": {
         "allow-plugins": {

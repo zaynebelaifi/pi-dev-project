@@ -40,16 +40,41 @@ final class OrderController extends AbstractController
             $deliveryMap[$delivery->getOrderId()] = $delivery; // ✅
         }
 
+        $pending = $repo->countByStatus('PENDING');
+        $prepared = $repo->countByStatus('PREPARED');
+        $delivered = $repo->countByStatus('DELIVERED');
+        $revenue = $repo->getTotalRevenue();
+
+        $viewData = [
+            'orders' => $orders,
+            'deliveries' => $deliveryMap,
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+            'pending' => $pending,
+            'prepared' => $prepared,
+            'delivered' => $delivered,
+            'revenue' => $revenue,
+        ];
+
+        $isAjaxRequest = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        if ($isAjaxRequest) {
+            return new JsonResponse([
+                'success' => true,
+                'resultsHtml' => $this->renderView('orders/_results.html.twig', $viewData),
+            ]);
+        }
+
         return $this->render('orders/index.html.twig', [
             'orders'      => $orders,
             'deliveries'  => $deliveryMap,
             'search'      => $search,
             'sort'        => $sort,
             'direction'   => $direction,
-            'pending'     => $repo->countByStatus('PENDING'),
-            'prepared'    => $repo->countByStatus('PREPARED'),
-            'delivered'   => $repo->countByStatus('DELIVERED'),
-            'revenue'     => $repo->getTotalRevenue(),
+            'pending'     => $pending,
+            'prepared'    => $prepared,
+            'delivered'   => $delivered,
+            'revenue'     => $revenue,
         ]);
     }
 

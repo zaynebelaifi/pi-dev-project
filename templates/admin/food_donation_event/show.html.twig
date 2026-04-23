@@ -4,50 +4,296 @@
 {% block topbar_title %}Food Donation Events{% endblock %}
 
 {% block body %}
-  <div class="sec-head">
-    <div>
-      <h2>Donation Event Details</h2>
-      <p>Review donation event information including date, charity, quantity and delivery reference.</p>
+  <style>
+    .donation-index-hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      padding: 1.5rem 1.8rem;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(251,244,227,.98) 0%, rgba(245,235,210,.85) 100%);
+      border: 1.5px solid rgba(184,135,42,.22);
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .donation-index-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 110% 50%, rgba(184,135,42,.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .donation-index-hero-copy { flex: 1 1 260px; position: relative; }
+    .donation-index-eyebrow {
+      font-size: .68rem;
+      letter-spacing: .19em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: .4rem;
+    }
+    .donation-index-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--espresso);
+      line-height: 1.15;
+      margin: 0 0 .45rem;
+    }
+    .donation-index-sub {
+      font-size: .83rem;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+    .donation-index-stats {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+      position: relative;
+    }
+    .donation-index-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 72px;
+    }
+    .donation-index-stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--espresso);
+      line-height: 1;
+    }
+    .donation-index-stat-label {
+      font-size: .63rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-top: .2rem;
+      text-align: center;
+    }
+    .donation-index-stat-sep {
+      width: 1px;
+      height: 36px;
+      background: rgba(184,135,42,.25);
+    }
+    .event-detail-row { display: grid; grid-template-columns: 180px 1fr; gap: .5rem 1rem; align-items: start; padding: .85rem 0; border-bottom: 1px solid var(--border-2); }
+    .event-detail-row:last-child { border-bottom: none; }
+    .event-detail-label { font-size: .69rem; letter-spacing: .16em; text-transform: uppercase; color: var(--text-3); font-weight: 600; padding-top: .15rem; }
+    .event-detail-value { font-size: .93rem; color: var(--text); }
+    .event-item-list {
+      margin: 0;
+      padding-left: 1.1rem;
+      display: grid;
+      gap: .4rem;
+    }
+    .event-item-list li {
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .event-item-link {
+      color: #081c34;
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(8, 28, 52, .35);
+      transition: color .2s ease, border-color .2s ease;
+    }
+    .event-item-link:hover {
+      color: var(--gold);
+      border-color: rgba(184, 135, 42, .55);
+    }
+    .event-item-qty {
+      color: var(--text-3);
+      font-size: .8rem;
+      margin-left: .35rem;
+    }
+    .status-chip {
+      display: inline-block;
+      padding: .25rem .75rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .status-chip-scheduled  { background: rgba(122,92,46,.12);  color: #7a5c2e; border: 1px solid rgba(122,92,46,.25); }
+    .status-chip-in_progress{ background: rgba(181,122,27,.13); color: #b57a1b; border: 1px solid rgba(181,122,27,.26); }
+    .status-chip-ongoing    { background: rgba(36,111,134,.11); color: #246f86; border: 1px solid rgba(36,111,134,.24); }
+    .status-chip-completed  { background: rgba(46,110,126,.12); color: #2e6e7e; border: 1px solid rgba(46,110,126,.24); }
+    .status-chip-cancelled  { background: rgba(156,63,63,.11);  color: #9c3f3f; border: 1px solid rgba(156,63,63,.24); }
+    .mini-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .38rem .7rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: transparent;
+      text-decoration: none;
+      font-size: .76rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      transition: all .2s ease;
+      color: var(--espresso);
+    }
+    .mini-action:hover {
+      border-color: rgba(184,135,42,.42);
+      background: rgba(184,135,42,.08);
+      color: var(--espresso);
+    }
+    @media (max-width: 680px) {
+      .donation-index-hero { flex-direction: column; }
+      .donation-index-stats { justify-content: flex-start; }
+      .event-detail-row { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  {# ── Hero banner ─────────────────────────────────────────── #}
+  <div class="donation-index-hero">
+    <div class="donation-index-hero-copy">
+      <p class="donation-index-eyebrow">BIG 4 · Admin · Donation Module</p>
+      <h2 class="donation-index-title">{{ food_donation_event.charityName ?: 'Donation Event' }}</h2>
+      <p class="donation-index-sub">Full details for donation event #{{ food_donation_event.donationEventId }}. Live stats refresh every 60 seconds automatically.</p>
+    </div>
+    <div class="donation-index-stats">
+      <div class="donation-index-stat">
+        <div class="donation-index-stat-value" id="live-total-quantity">{{ food_donation_event.totalQuantity ?: '0' }}</div>
+        <div class="donation-index-stat-label">Total Qty</div>
+      </div>
+      <div class="donation-index-stat-sep"></div>
+      <div class="donation-index-stat">
+        <div class="donation-index-stat-value" id="live-registered-count">—</div>
+        <div class="donation-index-stat-label">Registered</div>
+      </div>
+      <div class="donation-index-stat-sep"></div>
+      <div class="donation-index-stat">
+        <div class="donation-index-stat-value" id="live-items-count">—</div>
+        <div class="donation-index-stat-label">Items</div>
+      </div>
     </div>
   </div>
 
-  <div class="table-card">
-    <table class="listing-table">
-      <tbody>
-        <tr>
-          <th>ID</th>
-          <td>{{ food_donation_event.donationEventId }}</td>
-        </tr>
-        <tr>
-          <th>Date</th>
-          <td>{{ food_donation_event.eventDate ? food_donation_event.eventDate|date('Y-m-d') : '—' }}</td>
-        </tr>
-        <tr>
-          <th>Charity</th>
-          <td>{{ food_donation_event.charityName }}</td>
-        </tr>
-        <tr>
-          <th>Total Quantity</th>
-          <td>{{ food_donation_event.totalQuantity }}</td>
-        </tr>
-        <tr>
-          <th>Status</th>
-          <td>{{ food_donation_event.status ?: '—' }}</td>
-        </tr>
-        <tr>
-          <th>Delivery ID</th>
-          <td>{{ food_donation_event.deliveryId ?: '—' }}</td>
-        </tr>
-        <tr>
-          <th>Calendar Event ID</th>
-          <td>{{ food_donation_event.calendarEventId ?: '—' }}</td>
-        </tr>
-      </tbody>
-    </table>
+  {# ── Detail card ─────────────────────────────────────────── #}
+  <div class="tbl-card">
+    <div class="tbl-head">
+      <div class="tbl-title">Event Information</div>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <a href="{{ path('app_food_donation_event_index') }}" class="mini-action">← Back</a>
+        <a href="{{ path('app_food_donation_event_edit', {'donation_event_id': food_donation_event.donationEventId}) }}" class="mini-action">Edit</a>
+      </div>
+    </div>
 
-    <div class="form-actions">
-      <a href="{{ path('app_food_donation_event_index') }}" class="t-btn secondary">Back to events</a>
-      <a href="{{ path('app_food_donation_event_edit', {'donation_event_id': food_donation_event.donationEventId}) }}" class="t-btn primary">Edit</a>
+    <div style="padding: 1rem 1.4rem 1.5rem;">
+      <div class="event-detail-row">
+        <div class="event-detail-label">Event ID</div>
+        <div class="event-detail-value">#{{ food_donation_event.donationEventId }}</div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Charity</div>
+        <div class="event-detail-value">{{ food_donation_event.charityName ?: '—' }}</div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Event Date</div>
+        <div class="event-detail-value">{{ food_donation_event.eventDate ? food_donation_event.eventDate|date('D, d M Y · H:i') : '—' }}</div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Status</div>
+        <div class="event-detail-value">
+          {% set rawStatus = food_donation_event.status|lower|replace({' ': '_'}) %}
+          <span id="live-status-badge" class="status-chip status-chip-{{ rawStatus }}">{{ food_donation_event.status ?: '—' }}</span>
+        </div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Total Quantity</div>
+        <div class="event-detail-value" id="live-total-quantity-row">{{ food_donation_event.totalQuantity ?: '0' }}</div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Registered Users</div>
+        <div class="event-detail-value" id="live-registered-count-row">—</div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Items Assigned</div>
+        <div class="event-detail-value" id="live-items-count-row">—</div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Assigned Item Names</div>
+        <div class="event-detail-value">
+          {% if eventItems is defined and eventItems is not empty %}
+            <ul class="event-item-list">
+              {% for assignedItem in eventItems %}
+                <li>
+                  <a class="event-item-link" href="{{ path('donation_item_edit', {id: food_donation_event.donationEventId}) }}">
+                    {{ assignedItem.name|default(assignedItem.dishName|default('Unnamed item')) }}
+                  </a>
+                  <span class="event-item-qty">x{{ assignedItem.quantity ?: 0 }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            —
+          {% endif %}
+        </div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Delivery ID</div>
+        <div class="event-detail-value">{{ food_donation_event.deliveryId ?: '—' }}</div>
+      </div>
+      <div class="event-detail-row">
+        <div class="event-detail-label">Calendar Event ID</div>
+        <div class="event-detail-value">{{ food_donation_event.calendarEventId ?: '—' }}</div>
+      </div>
     </div>
   </div>
+
+<script>
+(function () {
+  const eventId = {{ food_donation_event.donationEventId|default(0) }};
+  const INTERVAL_MS = 60000;
+
+  const chipClasses = ['status-chip-scheduled','status-chip-in_progress','status-chip-ongoing','status-chip-completed','status-chip-cancelled'];
+
+  async function refreshEventData() {
+    try {
+      const response = await fetch(`/api/events/refresh-all?ids=${eventId}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!data.success || !Array.isArray(data.events)) return;
+
+      const event = data.events.find((e) => Number(e.id) === eventId);
+      if (!event) return;
+
+      const badge = document.getElementById('live-status-badge');
+      if (badge) {
+        badge.classList.remove(...chipClasses);
+        badge.classList.add('status-chip-' + (event.status || '').toLowerCase());
+        badge.textContent = event.label || event.status;
+      }
+
+      const qty = event.totalQuantity ?? '—';
+      [document.getElementById('live-total-quantity'), document.getElementById('live-total-quantity-row')]
+        .forEach((el) => { if (el) el.textContent = qty; });
+
+      const reg = event.registeredCount ?? '—';
+      [document.getElementById('live-registered-count'), document.getElementById('live-registered-count-row')]
+        .forEach((el) => { if (el) el.textContent = reg; });
+
+      const items = event.itemsCount ?? '—';
+      [document.getElementById('live-items-count'), document.getElementById('live-items-count-row')]
+        .forEach((el) => { if (el) el.textContent = items; });
+    } catch (err) {
+      console.error('Event show refresh failed:', err);
+    }
+  }
+
+  refreshEventData();
+  setInterval(refreshEventData, INTERVAL_MS);
+})();
+</script>
 {% endblock %}

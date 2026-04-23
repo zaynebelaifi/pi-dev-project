@@ -8,6 +8,7 @@ use App\Repository\ReservationRepository;
 use App\Repository\RestaurantTableRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,14 +26,34 @@ final class ReservationController extends AbstractController
         $search    = trim((string) $request->query->get('search', ''));
         $sort      = $request->query->get('sort', 'reservationDate');
         $direction = $request->query->get('direction', 'DESC');
+        $reservations = $repo->searchAndSort($search, $sort, $direction);
+        $confirmed = $repo->countByStatus('CONFIRMED');
+        $cancelled = $repo->countByStatus('CANCELLED');
+
+        $viewData = [
+            'reservations' => $reservations,
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+            'confirmed' => $confirmed,
+            'cancelled' => $cancelled,
+        ];
+
+        $isAjaxRequest = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        if ($isAjaxRequest) {
+            return new JsonResponse([
+                'success' => true,
+                'resultsHtml' => $this->renderView('Reservation/_results.html.twig', $viewData),
+            ]);
+        }
 
         return $this->render('Reservation/index.html.twig', [
-            'reservations' => $repo->searchAndSort($search, $sort, $direction),
-            'search'       => $search,
-            'sort'         => $sort,
-            'direction'    => $direction,
-            'confirmed'    => $repo->countByStatus('CONFIRMED'),
-            'cancelled'    => $repo->countByStatus('CANCELLED'),
+            'reservations' => $reservations,
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+            'confirmed' => $confirmed,
+            'cancelled' => $cancelled,
         ]);
     }
 

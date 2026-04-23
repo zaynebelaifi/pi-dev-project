@@ -18,7 +18,7 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
-node_modules
-.conda/
-.venv-ai/
-ai_feedback/__pycache__/
+
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###

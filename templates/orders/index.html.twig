@@ -159,28 +159,9 @@
 </div>
 
 <!-- Statistics -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <h4>Pending Orders</h4>
-        <div class="stat-value">{{ pending }}</div>
-    </div>
-    <div class="stat-card">
-        <h4>Prepared Orders</h4>
-        <div class="stat-value">{{ prepared }}</div>
-    </div>
-    <div class="stat-card">
-        <h4>Delivered Orders</h4>
-        <div class="stat-value">{{ delivered }}</div>
-    </div>
-    <div class="stat-card">
-        <h4>Total Revenue</h4>
-        <div class="stat-value">{{ revenue|number_format(2) }} TND</div>
-    </div>
-</div>
-
 <!-- Filter Section -->
 <div class="filter-section">
-    <form method="GET" class="filter-controls">
+    <form method="GET" action="{{ path('app_order_index') }}" class="filter-controls" id="ordersFilterForm" data-live-filters="true">
         <div class="filter-group">
             <label class="filter-label">Search</label>
             <input type="text" name="search" class="filter-input" placeholder="Status, Type, Client ID, Address..." value="{{ search }}">
@@ -202,86 +183,95 @@
             </select>
         </div>
         <button type="submit" class="filter-btn">Filter</button>
+        <button type="button" class="filter-btn" id="ordersResetBtn" style="background: #ffffff; color: var(--espresso); border: 1.5px solid var(--border-2);">Reset</button>
     </form>
 </div>
 
-<!-- Orders Table -->
-{% if orders|length > 0 %}
-<div class="table-wrapper">
-    <table>
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Client ID</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Amount</th>
-                <th>Address / Delivery Info</th>
-                <th>Order Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for order in orders %}
-            <tr>
-                <td><strong>#{{ order.orderId }}</strong></td>                          {# ✅ #}
-                <td>{{ order.clientId }}</td>                                            {# ✅ #}
-                <td>
-                    <span class="type-badge type-{{ order.orderType|lower }}">          {# ✅ #}
-                        {{ order.orderType|replace({'_': ' '}) }}                       {# ✅ #}
-                    </span>
-                </td>
-                <td>
-                    <span class="status-badge status-{{ order.status|lower }}">
-                        {{ order.status|replace({'_': ' '}) }}
-                    </span>
-                </td>
-                <td>{{ order.totalAmount|number_format(2) }} TND</td>                   {# ✅ #}
-                <td>
-                    {% if order.orderType == 'DELIVERY' %}                              {# ✅ #}
-                        {% set delivery = deliveries[order.orderId]|default(null) %}    {# ✅ #}
-                        <div style="font-size: 0.85rem; line-height: 1.4;">
-                            {% if delivery %}
-                                <strong>👤 {{ delivery.recipientName }}</strong><br>    {# ✅ #}
-                                <span style="color: var(--text-3);">📞 {{ delivery.recipientPhone }}</span><br>  {# ✅ #}
-                                <span style="color: var(--text-3);">📍 
-                                    {% if delivery.deliveryAddress|length > 25 %}       {# ✅ #}
-                                        {{ delivery.deliveryAddress|slice(0, 25) }}...  {# ✅ #}
-                                    {% else %}
-                                        {{ delivery.deliveryAddress }}                  {# ✅ #}
-                                    {% endif %}
-                                </span><br>
-                                <span style="color: var(--text-3); font-size: 0.8rem;">📌 Lat: {{ delivery.currentLatitude }}, Lng: {{ delivery.currentLongitude }}</span>  {# ✅ #}
-                            {% else %}
-                                <em style="color: var(--text-3);">Delivery info pending...</em>
-                            {% endif %}
-                        </div>
-                    {% else %}
-                        <div style="color: var(--text-3); font-style: italic;">🍽️ Dine In Order</div>
-                    {% endif %}
-                </td>
-                <td>{{ order.orderDate|date('M d, Y') }}</td>                          {# ✅ #}
-                <td>
-                    <div class="action-buttons">
-                        <a href="{{ path('app_order_edit', {'id': order.orderId}) }}" class="btn-small btn-view">Edit</a>  {# ✅ #}
-                        <form method="POST" action="{{ path('app_order_delete', {'id': order.orderId}) }}" style="display: inline;" onsubmit="return confirm('Are you sure?');">  {# ✅ #}
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ order.orderId) }}">  {# ✅ #}
-                            <button type="submit" class="btn-small btn-delete">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div id="ordersResults">
+    {% include 'orders/_results.html.twig' with {
+        orders: orders,
+        deliveries: deliveries,
+        search: search,
+        sort: sort,
+        direction: direction,
+        pending: pending,
+        prepared: prepared,
+        delivered: delivered,
+        revenue: revenue
+    } %}
 </div>
-{% else %}
-<div class="table-wrapper">
-    <div class="empty-state">
-        <h3>No Orders Found</h3>
-        <p>There are currently no orders matching your search criteria.</p>
-    </div>
-</div>
-{% endif %}
+
+<script>
+(() => {
+    const form = document.getElementById('ordersFilterForm');
+    const resultsContainer = document.getElementById('ordersResults');
+    const resetButton = document.getElementById('ordersResetBtn');
+    if (!form || !resultsContainer) {
+        return;
+    }
+
+    const searchInput = form.querySelector('input[name="search"]');
+    const sortInput = form.querySelector('select[name="sort"]');
+    const directionInput = form.querySelector('select[name="direction"]');
+    let debounceTimer = null;
+
+    const refreshResults = async () => {
+        const params = new URLSearchParams(new FormData(form));
+        const query = params.toString();
+
+        try {
+            const response = await fetch(`${form.action}?${query}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load orders.');
+            }
+
+            const payload = await response.json();
+            if (!payload.success || typeof payload.resultsHtml !== 'string') {
+                throw new Error('Invalid orders payload.');
+            }
+
+            resultsContainer.innerHTML = payload.resultsHtml;
+            window.history.replaceState({}, '', `${form.action}?${query}`);
+        } catch (error) {
+            console.error('Orders live filter failed:', error);
+        }
+    };
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        refreshResults();
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(refreshResults, 300);
+        });
+    }
+
+    if (sortInput) {
+        sortInput.addEventListener('change', refreshResults);
+    }
+
+    if (directionInput) {
+        directionInput.addEventListener('change', refreshResults);
+    }
+
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            if (sortInput) sortInput.value = 'order_date';
+            if (directionInput) directionInput.value = 'DESC';
+            refreshResults();
+        });
+    }
+})();
+</script>
 
 {% endblock %}

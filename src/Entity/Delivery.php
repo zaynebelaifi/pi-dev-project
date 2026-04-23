@@ -419,6 +419,41 @@ class Delivery
         return $this;
     }
 
+    // GPS Destination fields for Fleet Management
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $destination_latitude = null;
+
+    public function getDestination_latitude(): ?float
+    {
+        return $this->destination_latitude ? (float) $this->destination_latitude : null;
+    }
+
+    public function setDestination_latitude(?float $destination_latitude): self
+    {
+        $this->destination_latitude = $destination_latitude;
+        return $this;
+    }
+
+    public function getDestinationLatitude(): ?float { return $this->getDestination_latitude(); }
+    public function setDestinationLatitude(?float $lat): self { return $this->setDestination_latitude($lat); }
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $destination_longitude = null;
+
+    public function getDestination_longitude(): ?float
+    {
+        return $this->destination_longitude ? (float) $this->destination_longitude : null;
+    }
+
+    public function setDestination_longitude(?float $destination_longitude): self
+    {
+        $this->destination_longitude = $destination_longitude;
+        return $this;
+    }
+
+    public function getDestinationLongitude(): ?float { return $this->getDestination_longitude(); }
+    public function setDestinationLongitude(?float $lon): self { return $this->setDestination_longitude($lon); }
+
     // Symfony PropertyAccessor camelCase aliases for snake_case properties
     public function getId(): ?int { return $this->getDelivery_id(); }
     public function setId(int $id): self { return $this->setDelivery_id($id); }

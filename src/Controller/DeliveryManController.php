@@ -14,6 +14,7 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,6 +32,22 @@ final class DeliveryManController extends AbstractController
         $search = trim((string) $request->query->get('search', ''));
         $sort = $request->query->get('sort', 'date_of_joining');
         $direction = $request->query->get('direction', 'DESC');
+        $deliveryMen = $deliveryManRepository->searchAndSort($search, $sort, $direction);
+
+        $viewData = [
+            'delivery_men' => $deliveryMen,
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+        ];
+
+        $isAjaxRequest = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        if ($isAjaxRequest) {
+            return new JsonResponse([
+                'success' => true,
+                'resultsHtml' => $this->renderView('delivery_man/_results.html.twig', $viewData),
+            ]);
+        }
 
         $qb = $deliveryManRepository->searchAndSortQueryBuilder($search, $sort, $direction);
         $page = max(1, (int) $request->query->get('page', 1));
@@ -43,8 +60,7 @@ final class DeliveryManController extends AbstractController
         );
 
         return $this->render('delivery_man/index.html.twig', [
-            'pagination' => $pagination,
-            'delivery_men' => $pagination->getItems(),
+            'delivery_men' => $deliveryMen,
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,

@@ -16,6 +16,30 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
+    /**
+     * @return User[]
+     */
+    public function findByNormalizedEmail(string $email): array
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('LOWER(u.email) = :email')
+            ->setParameter('email', strtolower(trim($email)))
+            ->orderBy('u.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return User[]
+     */
+    public function findUsersWithPhoneNumber(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere("(u.phone_number IS NOT NULL AND TRIM(u.phone_number) != '') OR (u.phone IS NOT NULL AND TRIM(u.phone) != '')")
+            ->getQuery()
+            ->getResult();
+    }
+
     //    /**
     //     * @return User[] Returns an array of User objects
     //     */

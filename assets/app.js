@@ -50,33 +50,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookingForm = document.getElementById('bookingForm');
 
     function showBooking(){
-      if (!bookingPopup) return;
+      if(!bookingPopup){
+        return;
+      }
       bookingPopup.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
     function hideBooking(){
-      if (!bookingPopup) return;
+      if(!bookingPopup){
+        return;
+      }
       bookingPopup.classList.remove('active');
       document.body.style.overflow = '';
     }
 
-    if (openBooking) {
+    if(openBooking){
       openBooking.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
     }
-    if (openBooking2) {
+    if(openBooking2){
       openBooking2.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
     }
-    if (closeBooking) {
+    if(closeBooking){
       closeBooking.addEventListener('click', hideBooking);
     }
 
-    if (bookingPopup) {
+    if(bookingPopup){
       bookingPopup.addEventListener('click', (e)=>{
         if(e.target === bookingPopup) hideBooking();
       });
     }
 
-    if (bookingForm) {
+    if(bookingForm){
       bookingForm.addEventListener('submit', function(e){
         e.preventDefault();
         alert("Your booking request has been submitted successfully!");
@@ -92,39 +96,103 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileForm = document.getElementById('profileForm');
 
     function showProfile(){
-      if (!profilePopup) return;
+      if(!profilePopup){
+        window.location.href = '/profile';
+        return;
+      }
       profilePopup.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
     function hideProfile(){
-      if (!profilePopup) return;
+      if(!profilePopup){
+        return;
+      }
       profilePopup.classList.remove('active');
       document.body.style.overflow = '';
     }
 
-    if (openProfile) {
+    if(openProfile){
       openProfile.addEventListener('click', showProfile);
     }
-    if (closeProfile) {
+    if(closeProfile){
       closeProfile.addEventListener('click', hideProfile);
     }
 
-    if (profilePopup) {
+    if(profilePopup){
       profilePopup.addEventListener('click', (e)=>{
         if(e.target === profilePopup) hideProfile();
       });
     }
 
-    if (profileForm) {
-      profileForm.addEventListener('submit', function(e){
+    if(profileForm){
+      profileForm.addEventListener('submit', async function(e){
         e.preventDefault();
-        alert("Your profile has been saved successfully!");
-        profileForm.reset();
-        hideProfile();
+
+        if(profileForm.dataset.authenticated !== '1'){
+          alert('Please sign in first.');
+          window.location.href = '/login';
+          return;
+        }
+
+        const submitBtn = profileForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.textContent : 'Save Profile';
+
+        try {
+          if(submitBtn){
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+          }
+
+          const response = await fetch(profileForm.action, {
+            method: 'POST',
+            body: new FormData(profileForm),
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+            },
+          });
+
+          const payload = await response.json();
+          if(!response.ok || !payload.success){
+            throw new Error(payload.message || 'Unable to save profile.');
+          }
+
+          const fullNameInput = profileForm.querySelector('input[name="full_name"]');
+          const phoneInput = profileForm.querySelector('input[name="phone"]');
+          const addressInput = profileForm.querySelector('input[name="address"]');
+          const emailInput = profileForm.querySelector('input[name="email"]');
+
+          if(fullNameInput && payload.profile && typeof payload.profile.fullName === 'string'){
+            fullNameInput.value = payload.profile.fullName;
+          }
+          if(phoneInput && payload.profile && typeof payload.profile.phone === 'string'){
+            phoneInput.value = payload.profile.phone;
+          }
+          if(addressInput && payload.profile && typeof payload.profile.address === 'string'){
+            addressInput.value = payload.profile.address;
+          }
+          if(emailInput && payload.profile && typeof payload.profile.email === 'string'){
+            emailInput.value = payload.profile.email;
+          }
+
+          alert(payload.message || 'Your profile has been saved successfully.');
+          hideProfile();
+        } catch(err){
+          alert(err instanceof Error ? err.message : 'Unable to save profile.');
+        } finally {
+          if(submitBtn){
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+        }
       });
     }
 
     // CART SYSTEM
+    const cartOverlay = document.getElementById('cartOverlay');
+    const openCart = document.getElementById('openCart');
+    const openCart2 = document.getElementById('openCart2');
+    const closeCart = document.getElementById('closeCart');
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotal = document.getElementById('cartTotal');
     const cartCount = document.getElementById('cartCount');
@@ -137,27 +205,31 @@ document.addEventListener('DOMContentLoaded', function() {
     let cart = [];
 
     function showCart(){
-      if (!cartOverlay) return;
+      if(!cartOverlay){
+        return;
+      }
       cartOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
     function hideCart(){
-      if (!cartOverlay) return;
+      if(!cartOverlay){
+        return;
+      }
       cartOverlay.classList.remove('active');
       document.body.style.overflow = '';
     }
 
-    if (openCart) {
+    if(openCart){
       openCart.addEventListener('click', showCart);
     }
-    if (openCart2) {
+    if(openCart2){
       openCart2.addEventListener('click', showCart);
     }
-    if (closeCart) {
+    if(closeCart){
       closeCart.addEventListener('click', hideCart);
     }
 
-    if (cartOverlay) {
+    if(cartOverlay){
       cartOverlay.addEventListener('click', (e)=>{
         if(e.target === cartOverlay) hideCart();
       });
@@ -192,7 +264,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateCart(){
-      if (!cartItemsContainer || !cartTotal || !cartCount) return;
+      if(!cartItemsContainer || !cartTotal || !cartCount){
+        return;
+      }
       cartItemsContainer.innerHTML = '';
 
       if(cart.length === 0){
@@ -217,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
       cartCount.textContent = cart.length;
     }
 
-    if (checkoutBtn) {
+    if(checkoutBtn){
       checkoutBtn.addEventListener('click', (e)=>{
         e.preventDefault();
         e.stopPropagation();
@@ -228,16 +302,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const total = cart.reduce((sum, item)=> sum + item.price, 0);
-        const redirectCartItemsInput = document.getElementById('redirectCartItemsInput');
-        const redirectCartTotalInput = document.getElementById('redirectCartTotalInput');
-        if (redirectCartItemsInput) {
-          redirectCartItemsInput.value = JSON.stringify(cart);
-        }
-        if (redirectCartTotalInput) {
-          redirectCartTotalInput.value = total.toFixed(2);
+        const cartItemsInput = document.getElementById('redirectCartItemsInput');
+        const cartTotalInput = document.getElementById('redirectCartTotalInput');
+        if(cartItemsInput && cartTotalInput){
+          cartItemsInput.value = JSON.stringify(cart);
+          cartTotalInput.value = total.toFixed(2);
         }
         
         // Hide the cart overlay
+        const cartOverlay = document.getElementById('cartOverlay');
         if(cartOverlay){
           cartOverlay.classList.remove('active');
         }

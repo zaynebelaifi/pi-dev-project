@@ -5,6 +5,881 @@
 {% block topbar_breadcrumb %}Big 4 · Admin · Donations · Events{% endblock %}
 
 {% block body %}
+<<<<<<< HEAD
+  <style>
+    .live-filter-form {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: .9rem;
+      margin-bottom: 1.45rem;
+      align-items: end;
+    }
+
+    .filter-card {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .filter-label {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .69rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      font-weight: 600;
+    }
+
+    .filter-icon {
+      font-size: .75rem;
+      line-height: 1;
+    }
+
+    .filter-control {
+      height: 52px;
+      border-radius: 12px;
+      border: 1px solid var(--border-2);
+      background: var(--ivory);
+      color: var(--text);
+      font-size: .9rem;
+      padding: .8rem 1rem;
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+      width: 100%;
+    }
+
+    .filter-control:focus {
+      border-color: rgba(184, 135, 42, .55);
+      box-shadow: 0 0 0 3px rgba(184, 135, 42, .12);
+      background: #fff;
+    }
+
+    .tbl-head {
+      padding: 1.2rem 1.6rem;
+    }
+
+    .tbl-head > div:last-child {
+      font-size: .83rem;
+      color: var(--text-2);
+      font-weight: 500;
+    }
+
+    .live-ajax-container,
+    .live-ajax-container .tbl-card {
+      overflow: visible;
+    }
+
+    table[data-live-table] {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table[data-live-table] thead th {
+      font-size: .59rem;
+      letter-spacing: .21em;
+      color: var(--text-3);
+      padding: .78rem 1.5rem;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    table[data-live-table] tbody td {
+      padding: 1rem 1.5rem;
+      vertical-align: middle;
+      font-size: .78rem;
+    }
+
+    .sort-trigger {
+      color: var(--text-3);
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      transition: color .2s ease;
+    }
+
+    .sort-trigger:hover,
+    .sort-trigger.sorted-asc,
+    .sort-trigger.sorted-desc {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: .45rem;
+      flex-wrap: wrap;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .event-items-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .3rem .58rem;
+      border-radius: 999px;
+      border: 1px solid rgba(184, 135, 42, .26);
+      background: rgba(184, 135, 42, .09);
+      color: var(--brown);
+      font-size: .62rem;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+      appearance: none;
+      font-family: inherit;
+    }
+
+    .event-items-badge.is-highlight {
+      border-color: rgba(201, 149, 42, .75);
+      background: rgba(201, 149, 42, .18);
+      color: #8b611b;
+      box-shadow: 0 0 0 2px rgba(201, 149, 42, .14);
+    }
+
+    .event-items-popup {
+      position: absolute;
+      top: calc(100% + .55rem);
+      left: 0;
+      background: #fff;
+      border: 1px solid #d6c6a3;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      padding: 1rem;
+      min-width: 220px;
+      max-height: min(260px, calc(100vh - 160px));
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+      scrollbar-width: auto;
+      scrollbar-color: rgba(201, 149, 42, .95) rgba(8, 28, 52, .08);
+      z-index: 9999;
+      display: none;
+    }
+
+    .event-items-popup.is-open {
+      display: block;
+    }
+
+    .event-items-popup.align-up {
+      top: auto;
+      bottom: calc(100% + .55rem);
+    }
+
+    .event-items-popup::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .event-items-popup::-webkit-scrollbar-track {
+      background: rgba(8, 28, 52, .08);
+      border-radius: 999px;
+    }
+
+    .event-items-popup::-webkit-scrollbar-thumb {
+      background: rgba(201, 149, 42, .82);
+      border-radius: 999px;
+      border: 2px solid rgba(8, 28, 52, .08);
+    }
+
+    .event-items-popup::-webkit-scrollbar-thumb:hover {
+      background: rgba(201, 149, 42, 1);
+    }
+
+    .event-items-popup-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+      margin-bottom: .65rem;
+    }
+
+    .event-items-popup-title {
+      margin: 0;
+      font-size: .82rem;
+      font-weight: 700;
+      color: #081c34;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .event-items-popup-close {
+      border: none;
+      background: transparent;
+      color: #081c34;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .event-items-popup-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: .45rem;
+    }
+
+    .event-items-popup-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: .6rem;
+      font-size: .8rem;
+      color: #081c34;
+    }
+
+    .event-items-popup-qty {
+      color: #c9952a;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .event-items-popup-empty {
+      margin: 0;
+      font-size: .8rem;
+      color: var(--text-2);
+    }
+
+    .table-actions form {
+      margin: 0;
+    }
+
+    .table-actions .action-edit,
+    .table-actions .action-view,
+    .table-actions .action-comments,
+    .table-actions .action-pdf,
+    .table-actions .action-delete {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .38rem .7rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-2);
+      background: transparent;
+      text-decoration: none;
+      font-size: .76rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    .table-actions .action-edit,
+    .table-actions .action-view,
+    .table-actions .action-comments,
+    .table-actions .action-pdf {
+      color: var(--espresso);
+    }
+
+    .table-actions .action-edit:hover,
+    .table-actions .action-view:hover,
+    .table-actions .action-comments:hover,
+    .table-actions .action-pdf:hover {
+      border-color: rgba(184, 135, 42, .42);
+      background: rgba(184, 135, 42, .08);
+      color: var(--espresso);
+    }
+
+    .table-actions .action-comments {
+      border-color: rgba(8, 28, 52, .2);
+      color: #0f3a67;
+    }
+
+    .table-actions .action-pdf {
+      border-color: rgba(8, 28, 52, .22);
+      font-size: .8rem;
+      padding: .34rem .64rem;
+    }
+
+    .table-actions .action-delete {
+      border-color: #dfb6b1;
+      color: #8f1f1f;
+    }
+
+    .table-actions .action-delete:hover {
+      border-color: #d89a93;
+      background: rgba(217, 64, 64, .08);
+      color: #7f1a1a;
+    }
+
+    .event-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .28rem .56rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: .66rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .event-status-scheduled {
+      background: rgba(46, 158, 106, .14);
+      border-color: rgba(46, 158, 106, .34);
+      color: #1f7a50;
+    }
+
+    .event-status-in-progress {
+      background: rgba(245, 158, 11, .14);
+      border-color: rgba(245, 158, 11, .34);
+      color: #b45309;
+    }
+
+    .event-status-ongoing {
+      background: rgba(59, 130, 246, .14);
+      border-color: rgba(59, 130, 246, .34);
+      color: #1f5fbf;
+    }
+
+    .event-status-completed {
+      background: rgba(107, 114, 128, .16);
+      border-color: rgba(107, 114, 128, .34);
+      color: #4b5563;
+    }
+
+    .event-status-cancelled {
+      background: rgba(217, 64, 64, .12);
+      border-color: rgba(217, 64, 64, .34);
+      color: #9f1f1f;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .28rem .56rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: .66rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .status-scheduled { background: #d4af37; color: #fff; border-color: #d4af37; }
+    .status-in_progress { background: #f39c12; color: #fff; border-color: #f39c12; }
+    .status-ongoing { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+    .status-completed { background: #27ae60; color: #fff; border-color: #27ae60; }
+    .status-cancelled { background: #7f8c8d; color: #fff; border-color: #7f8c8d; }
+
+    .no-results {
+      text-align: center;
+      padding: 2.2rem 1rem;
+      color: var(--text-2);
+      font-size: .84rem;
+    }
+
+    .assign-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 28, 52, .62);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1200;
+      padding: 1.1rem;
+    }
+
+    .assign-modal-overlay.active {
+      display: flex;
+    }
+
+    .assign-modal {
+      width: min(880px, 96vw);
+      height: min(88vh, 780px);
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid rgba(184, 135, 42, .24);
+      background: #f7efe0;
+      box-shadow: 0 24px 70px rgba(8, 28, 52, .32);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #assignItemsForm {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .assign-modal-head {
+      background: #081c34;
+      color: #f7efe0;
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .8rem;
+    }
+
+    .assign-modal-head h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .assign-modal-head p {
+      margin: .25rem 0 0;
+      font-size: .84rem;
+      color: rgba(247, 239, 224, .84);
+    }
+
+    .assign-modal-close {
+      border: none;
+      background: transparent;
+      color: #f7efe0;
+      font-size: 1.45rem;
+      line-height: 1;
+      cursor: pointer;
+      opacity: .85;
+      padding: 0 .25rem;
+    }
+
+    .assign-modal-close:hover {
+      opacity: 1;
+    }
+
+    .assign-modal-body {
+      padding: 1rem 1.25rem 1.15rem;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .65rem;
+      flex: 1;
+      min-height: 0;
+      max-height: calc(88vh - 190px);
+      scrollbar-gutter: stable;
+      scrollbar-width: auto;
+      scrollbar-color: rgba(201, 149, 42, 1) rgba(8, 28, 52, .08);
+      overscroll-behavior: contain;
+    }
+
+    .assign-modal-body::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .assign-modal-body::-webkit-scrollbar-track {
+      background: rgba(8, 28, 52, .08);
+      border-radius: 999px;
+    }
+
+    .assign-modal-body::-webkit-scrollbar-thumb {
+      background: rgba(201, 149, 42, .8);
+      border-radius: 999px;
+      border: 2px solid rgba(8, 28, 52, .08);
+    }
+
+    .assign-modal-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(201, 149, 42, 1);
+    }
+
+    .assign-item-row {
+      display: grid;
+      grid-template-columns: auto 1fr 135px;
+      gap: .85rem;
+      align-items: center;
+      background: rgba(255, 255, 255, .72);
+      border: 1px solid rgba(184, 135, 42, .2);
+      border-radius: 12px;
+      padding: .75rem .8rem;
+    }
+
+    .assign-item-name {
+      font-size: .88rem;
+      color: var(--espresso);
+      font-weight: 500;
+    }
+
+    .assign-item-check {
+      width: 18px;
+      height: 18px;
+      accent-color: #c9952a;
+      cursor: pointer;
+    }
+
+    .assign-item-qty {
+      width: 100%;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      color: var(--text);
+      font-size: .84rem;
+      padding: .45rem .65rem;
+      outline: none;
+    }
+
+    .assign-item-qty:focus {
+      border-color: rgba(184, 135, 42, .55);
+      box-shadow: 0 0 0 3px rgba(184, 135, 42, .12);
+    }
+
+    .assign-modal-actions {
+      border-top: 1px solid rgba(184, 135, 42, .22);
+      display: flex;
+      justify-content: flex-end;
+      gap: .65rem;
+      padding: .95rem 1.25rem 1.15rem;
+      background: rgba(255, 255, 255, .4);
+    }
+
+    .assign-btn {
+      border-radius: 10px;
+      border: 1px solid transparent;
+      font-size: .79rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      padding: .62rem 1rem;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    .assign-btn-save {
+      background: #c9952a;
+      border-color: #c9952a;
+      color: #fff;
+    }
+
+    .assign-btn-save:hover {
+      background: #b78522;
+      border-color: #b78522;
+    }
+
+    .assign-btn-skip {
+      background: transparent;
+      border-color: rgba(8, 28, 52, .22);
+      color: #081c34;
+    }
+
+    .assign-btn-skip:hover {
+      background: rgba(8, 28, 52, .07);
+    }
+
+    .assign-modal-empty {
+      padding: 1.3rem;
+      text-align: center;
+      color: var(--text-2);
+      font-size: .86rem;
+    }
+
+    .export-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 28, 52, .56);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1300;
+      padding: 1rem;
+    }
+
+    .export-modal-overlay.active {
+      display: flex;
+    }
+
+    .export-modal {
+      width: min(470px, 94vw);
+      border-radius: 16px;
+      border: 1px solid rgba(184, 135, 42, .26);
+      background: #f7efe0;
+      box-shadow: 0 24px 60px rgba(8, 28, 52, .28);
+      overflow: hidden;
+    }
+
+    .export-modal-head {
+      background: #081c34;
+      color: #f7efe0;
+      padding: 1rem 1.15rem .9rem;
+    }
+
+    .export-modal-head h3 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: .02em;
+      font-weight: 700;
+    }
+
+    .export-modal-body {
+      padding: 1rem 1.15rem 1.2rem;
+    }
+
+    .export-modal-body p {
+      margin: 0;
+      color: #081c34;
+      font-size: .92rem;
+    }
+
+    .export-event-name {
+      margin-top: .55rem;
+      font-size: .86rem;
+      color: #5c3d1e;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .export-modal-actions {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: .6rem;
+    }
+
+    .export-btn {
+      border-radius: 10px;
+      border: 1px solid transparent;
+      padding: .6rem .95rem;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s ease;
+    }
+
+    .export-btn-cancel {
+      background: transparent;
+      border-color: rgba(8, 28, 52, .24);
+      color: #081c34;
+    }
+
+    .export-btn-cancel:hover {
+      background: rgba(8, 28, 52, .08);
+    }
+
+    .export-btn-confirm {
+      background: #c9952a;
+      border-color: #c9952a;
+      color: #fff;
+    }
+
+    .export-btn-confirm:hover {
+      background: #b78522;
+      border-color: #b78522;
+      color: #fff;
+    }
+
+    .comments-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 28, 52, .62);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1320;
+      padding: 1rem;
+    }
+
+    .comments-modal-overlay.active {
+      display: flex;
+    }
+
+    .comments-modal {
+      width: min(760px, 96vw);
+      max-height: 88vh;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid rgba(184, 135, 42, .3);
+      background: #f7efe0;
+      box-shadow: 0 24px 66px rgba(8, 28, 52, .34);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comments-modal-head {
+      background: #081c34;
+      color: #f7efe0;
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .8rem;
+    }
+
+    .comments-modal-head h3 {
+      margin: 0;
+      font-size: 1.04rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .comments-modal-head p {
+      margin: .28rem 0 0;
+      font-size: .83rem;
+      color: rgba(247, 239, 224, .85);
+    }
+
+    .comments-modal-close {
+      border: none;
+      background: transparent;
+      color: #f7efe0;
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 .2rem;
+    }
+
+    .comments-modal-body {
+      padding: 1rem 1.2rem 1.1rem;
+      overflow-y: auto;
+      display: grid;
+      gap: .8rem;
+    }
+
+    .comments-loading,
+    .comments-empty {
+      border: 1px dashed rgba(8, 28, 52, .2);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .72);
+      padding: 1rem;
+      color: var(--text-2);
+      font-size: .86rem;
+    }
+
+    .comment-card {
+      border: 1px solid rgba(184, 135, 42, .25);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .86);
+      padding: .82rem .88rem;
+      display: grid;
+      gap: .6rem;
+    }
+
+    .comment-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .8rem;
+    }
+
+    .comment-user {
+      font-size: .88rem;
+      font-weight: 700;
+      color: #081c34;
+    }
+
+    .comment-date {
+      margin-top: .2rem;
+      font-size: .78rem;
+      color: var(--text-2);
+    }
+
+    .comment-meta {
+      display: inline-flex;
+      gap: .42rem;
+      flex-wrap: wrap;
+      font-size: .7rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .comment-meta span {
+      border: 1px solid rgba(184, 135, 42, .25);
+      border-radius: 999px;
+      padding: .24rem .5rem;
+      color: #5d4319;
+      background: rgba(201, 149, 42, .08);
+    }
+
+    .comment-text {
+      margin: 0;
+      color: #081c34;
+      font-size: .84rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+
+    .comment-delete-btn {
+      border: 1px solid rgba(217, 64, 64, .35);
+      border-radius: 8px;
+      background: rgba(217, 64, 64, .06);
+      color: #8f1f1f;
+      font-size: .74rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: .36rem .62rem;
+      cursor: pointer;
+    }
+
+    .comment-delete-btn:hover {
+      background: rgba(217, 64, 64, .12);
+    }
+
+    .comments-flash-holder {
+      position: fixed;
+      top: 84px;
+      right: 16px;
+      z-index: 1400;
+      display: grid;
+      gap: .45rem;
+    }
+
+    .comments-flash {
+      border-radius: 10px;
+      border: 1px solid transparent;
+      padding: .58rem .75rem;
+      font-size: .8rem;
+      min-width: 220px;
+      box-shadow: 0 10px 22px rgba(8, 28, 52, .18);
+      background: #fff;
+      color: #081c34;
+    }
+
+    .comments-flash.success {
+      background: #edf8f1;
+      border-color: #b4dac3;
+      color: #17683f;
+    }
+
+    .comments-flash.error {
+      background: #fff1f1;
+      border-color: #efc1c1;
+      color: #8e2a2a;
+    }
+
+    @media (max-width: 900px) {
+      .live-filter-form {
+        grid-template-columns: 1fr;
+      }
+
+      .assign-modal {
+        height: min(90vh, 720px);
+      }
+
+      .assign-modal-body {
+        max-height: calc(90vh - 190px);
+      }
+
+      .filter-control {
+        width: 100%;
+      }
+
+      .table-actions {
+        min-width: 0;
+      }
+
+=======
   {% set totalDonationQty = 0 %}
   {% for event in food_donation_events %}
     {% set totalDonationQty = totalDonationQty + (event.totalQuantity ?? 0) %}
@@ -143,6 +1018,7 @@
     }
     @media (max-width: 1100px) {
       .don-grid { grid-template-columns: 1fr; }
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
     }
   </style>
 
@@ -154,6 +1030,51 @@
     <a href="{{ path('app_food_donation_event_new') }}" class="t-btn primary">+ Create Event</a>
   </div>
 
+<<<<<<< HEAD
+  <form method="get" class="list-filters live-filter-form">
+    <div class="filter-card">
+      <label class="filter-label" for="eventSearch"><span class="filter-icon">🔎</span>Search</label>
+      <input id="eventSearch" type="text" name="q" value="{{ search }}" placeholder="Donation ID, charity, status..." class="filter-control" data-live-search-input>
+    </div>
+    <div class="filter-card">
+      <label class="filter-label" for="eventSort"><span class="filter-icon">📋</span>Sort By</label>
+      <select id="eventSort" name="sort" class="filter-control" data-live-sort-filter>
+        <option value="event_date" {{ sort == 'event_date' ? 'selected' : '' }}>Created Date</option>
+        <option value="donation_event_id" {{ sort == 'donation_event_id' ? 'selected' : '' }}>Donation ID</option>
+        <option value="total_quantity" {{ sort == 'total_quantity' ? 'selected' : '' }}>Quantity</option>
+        <option value="charity_name" {{ sort == 'charity_name' ? 'selected' : '' }}>Charity</option>
+        <option value="status" {{ sort == 'status' ? 'selected' : '' }}>Status</option>
+        <option value="updated_at" {{ sort == 'updated_at' ? 'selected' : '' }}>Updated At</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <label class="filter-label" for="eventDirection"><span class="filter-icon">📊</span>Order</label>
+      <select id="eventDirection" name="direction" class="filter-control" data-live-direction-filter>
+        <option value="desc" {{ direction == 'desc' ? 'selected' : '' }}>Newest First</option>
+        <option value="asc" {{ direction == 'asc' ? 'selected' : '' }}>Oldest First</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <label class="filter-label" for="eventStatus"><span class="filter-icon">🏷️</span>Status</label>
+      <select id="eventStatus" name="status" class="filter-control" data-live-status-filter>
+        <option value="">All statuses</option>
+        <option value="Scheduled" {{ status == 'Scheduled' ? 'selected' : '' }}>Scheduled</option>
+        <option value="In Progress" {{ status == 'In Progress' ? 'selected' : '' }}>In Progress</option>
+        <option value="Ongoing" {{ status == 'Ongoing' ? 'selected' : '' }}>Ongoing</option>
+        <option value="Completed" {{ status == 'Completed' ? 'selected' : '' }}>Completed</option>
+        <option value="Cancelled" {{ status == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
+      </select>
+    </div>
+  </form>
+
+  <div class="live-ajax-container" data-live-ajax-container>
+    <div class="tbl-card">
+      <div class="tbl-head">
+        <div class="tbl-title">All Donation Events</div>
+        <div>{{ food_donation_events|length }} events</div>
+      </div>
+    <table data-live-table>
+=======
   <div class="don-grid">
     <div class="don-stat">
       <div class="don-stat-lbl">Total Events</div>
@@ -200,6 +1121,7 @@
       <div>{{ food_donation_events|length }} events</div>
     </div>
     <table>
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
       <thead>
         <tr>
           <th><a href="{{ path('app_food_donation_event_index', {q: search, status: status, sort: 'donation_event_id', direction: sort == 'donation_event_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-link">ID{% if sort == 'donation_event_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
@@ -214,6 +1136,20 @@
       </thead>
       <tbody>
         {% for event in food_donation_events %}
+<<<<<<< HEAD
+          <tr data-event-id="{{ event.donationEventId }}" data-status="{{ event.status }}" data-search="{{ event.donationEventId }} {{ event.eventDate ? event.eventDate|date('Y-m-d H:i') : '' }} {{ event.totalQuantity }} {{ event.charityName }} {{ event.status }} {{ event.deliveryId }}">
+            {% set assignedCount = itemCountsByEvent[event.donationEventId] ?? 0 %}
+            {% set assignedItems = eventItemsMap[event.donationEventId] ?? [] %}
+            <td class="ord-id">#{{ event.donationEventId }}</td>
+            <td>{{ event.eventDate ? event.eventDate|date('Y-m-d H:i') : '—' }}</td>
+            <td>{{ event.totalQuantity }}</td>
+            <td>{{ event.charityName }}</td>
+            <td>
+              {% set eventStatus = event.status ?: 'Scheduled' %}
+              {% set statusLower = eventStatus|lower %}
+              {% set statusApiClass = statusLower == 'in progress' ? 'in_progress' : statusLower %}
+              <span class="event-status-badge status status-{{ statusApiClass }} {{ statusLower == 'cancelled' ? 'event-status-cancelled' : statusLower == 'completed' ? 'event-status-completed' : statusLower == 'ongoing' ? 'event-status-ongoing' : statusLower == 'in progress' ? 'event-status-in-progress' : 'event-status-scheduled' }}">{{ eventStatus }}</span>
+=======
           <tr>
             <td class="event-id">#{{ event.donationEventId }}</td>
             <td>{{ event.eventDate ? event.eventDate|date('Y-m-d') : '—' }}</td>
@@ -222,12 +1158,62 @@
             <td>
               {% set normalized = (event.status ?: 'UNKNOWN')|upper %}
               <span class="status-chip {{ normalized == 'PENDING' ? 'status-pending' : normalized == 'SCHEDULED' ? 'status-scheduled' : normalized == 'COMPLETED' ? 'status-completed' : normalized == 'CANCELLED' ? 'status-cancelled' : 'status-unknown' }}">{{ normalized }}</span>
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
             </td>
             <td>{% if event.deliveryId %}<span class="meta-pill">#{{ event.deliveryId }}</span>{% else %}<span class="meta-pill">Not linked</span>{% endif %}</td>
             <td>{{ event.updatedAt ? event.updatedAt|date('Y-m-d H:i') : '—' }}</td>
             <td class="table-actions">
+<<<<<<< HEAD
+              <button type="button" class="event-items-badge {{ (newEventId is defined and newEventId and newEventId == event.donationEventId) ? 'is-highlight' : '' }}" data-event-items-toggle data-event-id="{{ event.donationEventId }}" aria-expanded="false" aria-controls="popup-{{ event.donationEventId }}">{{ assignedCount }} items</button>
+              <div class="event-items-popup" id="popup-{{ event.donationEventId }}" data-event-items-popup data-event-id="{{ event.donationEventId }}">
+                <div class="event-items-popup-head">
+                  <h4 class="event-items-popup-title">Assigned Items</h4>
+                  <button type="button" class="event-items-popup-close" data-event-items-close aria-label="Close">&times;</button>
+                </div>
+                {% if assignedItems is not empty %}
+                  <ul class="event-items-popup-list">
+                    {% for assignedItem in assignedItems %}
+                      <li class="event-items-popup-item">
+                        <span>{{ assignedItem.dishName }}</span>
+                        <span class="event-items-popup-qty">× {{ assignedItem.quantity }}</span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p class="event-items-popup-empty">No items assigned yet</p>
+                {% endif %}
+              </div>
+              <a class="mini-action action-edit" href="{{ path('app_food_donation_event_edit', {donation_event_id: event.donationEventId}) }}">Edit</a>
+              <a class="mini-action action-view" href="{{ path('app_food_donation_event_show', {donation_event_id: event.donationEventId}) }}">View</a>
+              <button
+                type="button"
+                class="mini-action action-comments"
+                data-admin-comments-open
+                data-event-id="{{ event.donationEventId }}"
+                data-event-name="{{ (event.charityName ?: ('Event #' ~ event.donationEventId))|e('html_attr') }}"
+                data-comments-url="{{ path('app_admin_event_comments_ajax', {eventId: event.donationEventId}) }}"
+              >
+                Comments
+              </button>
+              <button
+                type="button"
+                class="mini-action action-pdf"
+                title="Export as PDF"
+                aria-label="Export as PDF"
+                data-export-pdf-open
+                data-export-url="{{ path('app_food_donation_event_export_pdf', {donation_event_id: event.donationEventId}) }}"
+                data-event-name="{{ ('Event #' ~ event.donationEventId ~ ' - ' ~ (event.charityName ?: 'BIG 4 Community'))|e('html_attr') }}"
+              >
+                📄
+              </button>
+              <form method="post" action="{{ path('app_food_donation_event_delete', {donation_event_id: event.donationEventId}) }}" onsubmit="return confirm('Delete this event?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.donationEventId) }}">
+                <button class="mini-action mini-action-danger action-delete" type="submit">Delete</button>
+              </form>
+=======
               <a class="mini-action" href="{{ path('app_food_donation_event_edit', {donation_event_id: event.donationEventId}) }}">Edit</a>
               <a class="mini-action" href="{{ path('app_food_donation_event_show', {donation_event_id: event.donationEventId}) }}">View</a>
+>>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
             </td>
           </tr>
         {% else %}
@@ -238,4 +1224,598 @@
       </tbody>
     </table>
   </div>
+</div>
+
+<div class="export-modal-overlay" id="exportPdfModal" aria-hidden="true">
+  <div class="export-modal" role="dialog" aria-modal="true" aria-labelledby="exportPdfTitle">
+    <div class="export-modal-head">
+      <h3 id="exportPdfTitle">Export Event PDF</h3>
+    </div>
+    <div class="export-modal-body">
+      <p>Export this event as PDF?</p>
+      <div class="export-event-name" id="exportEventName">-</div>
+      <div class="export-modal-actions">
+        <button type="button" class="export-btn export-btn-cancel" id="exportPdfCancel">Cancel</button>
+        <a href="#" class="export-btn export-btn-confirm" id="exportPdfConfirm">Export PDF</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% set modalEventId = newEventId is defined and newEventId ? newEventId : 0 %}
+<div class="assign-modal-overlay" id="assignItemsModal" aria-hidden="true" data-new-event-id="{{ modalEventId }}" data-action-template="{{ path('app_food_donation_event_assign_items', {id: '__ID__'}) }}">
+  <div class="assign-modal" role="dialog" aria-modal="true" aria-labelledby="assignItemsTitle">
+    <div class="assign-modal-head">
+      <div>
+        <h3 id="assignItemsTitle">✅ Event Created! Now Assign Items</h3>
+        <p>Select items and quantities to add to this event.</p>
+      </div>
+      <button type="button" class="assign-modal-close" id="assignItemsClose" aria-label="Close">&times;</button>
+    </div>
+
+    <form id="assignItemsForm" method="post" action="{{ modalEventId ? path('app_food_donation_event_assign_items', {id: modalEventId}) : '#' }}">
+      <input type="hidden" name="_token" value="{{ csrf_token('assign-items') }}" data-assign-token>
+      <div class="assign-modal-body">
+        {% if availableDishes is defined and availableDishes is not empty %}
+          {% for dish in availableDishes %}
+            <label class="assign-item-row">
+              <input class="assign-item-check" type="checkbox" name="items[{{ dish.id }}][selected]" value="1" data-assign-check>
+              <span class="assign-item-name">{{ dish.name }}</span>
+              <input class="assign-item-qty" type="number" min="1" value="1" name="items[{{ dish.id }}][quantity]" disabled data-assign-qty>
+            </label>
+          {% endfor %}
+        {% else %}
+          <div class="assign-modal-empty">No dishes available to assign right now.</div>
+        {% endif %}
+      </div>
+      <div class="assign-modal-actions">
+        <button type="button" class="assign-btn assign-btn-skip" id="assignItemsSkip">Skip for now</button>
+        <button type="submit" class="assign-btn assign-btn-save">Save Items</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="comments-modal-overlay" id="adminCommentsModal" aria-hidden="true">
+  <div class="comments-modal" role="dialog" aria-modal="true" aria-labelledby="adminCommentsTitle">
+    <div class="comments-modal-head">
+      <div>
+        <h3 id="adminCommentsTitle">Event Comments</h3>
+        <p id="adminCommentsSubtitle">Manage customer reviews for this event.</p>
+      </div>
+      <button type="button" class="comments-modal-close" id="adminCommentsClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="comments-modal-body" id="adminCommentsBody">
+      <div class="comments-loading">Loading comments...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const containerSelector = '[data-live-ajax-container]';
+  if (!document.querySelector(containerSelector)) return;
+  let activeController = null;
+  let requestVersion = 0;
+  let lastRequestedUrl = '';
+
+  const buildUrl = params => {
+    const url = new URL(window.location.href);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        url.searchParams.delete(key);
+      } else {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  };
+
+  const fetchContent = async url => {
+    if (url === lastRequestedUrl) {
+      return;
+    }
+    lastRequestedUrl = url;
+
+    if (activeController) {
+      activeController.abort();
+    }
+    activeController = new AbortController();
+    const currentVersion = ++requestVersion;
+
+    try {
+      const response = await fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        signal: activeController.signal,
+      });
+      if (!response.ok) throw new Error('Request failed');
+      const html = await response.text();
+      if (currentVersion !== requestVersion) {
+        return;
+      }
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const newContainer = doc.querySelector(containerSelector);
+      const currentContainer = document.querySelector(containerSelector);
+      if (newContainer && currentContainer) {
+        currentContainer.replaceWith(newContainer);
+        bindAjax();
+      }
+    } catch (error) {
+      if (error && error.name === 'AbortError') {
+        return;
+      }
+      console.error('Live event fetch failed', error);
+    }
+  };
+
+  const submitLiveFilter = () => {
+    const form = document.querySelector('.live-filter-form');
+    if (!form) return;
+    const formData = new FormData(form);
+    const params = {
+      q: formData.get('q')?.toString() ?? '',
+      status: formData.get('status')?.toString() ?? '',
+      sort: formData.get('sort')?.toString() ?? '{{ sort }}',
+      direction: formData.get('direction')?.toString() ?? '{{ direction }}'
+    };
+    const url = buildUrl(params);
+    fetchContent(url);
+    history.replaceState({}, '', url);
+  };
+
+  const bindAjax = () => {
+    const form = document.querySelector('.live-filter-form');
+    if (!form) return;
+    let timeout;
+    const searchInput = form.querySelector('[name="q"]');
+    const statusFilter = form.querySelector('[name="status"]');
+    const sortFilter = form.querySelector('[name="sort"]');
+    const directionFilter = form.querySelector('[name="direction"]');
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      submitLiveFilter();
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(submitLiveFilter, 180);
+      });
+    }
+
+    if (statusFilter) {
+      statusFilter.addEventListener('change', submitLiveFilter);
+    }
+
+    if (sortFilter) {
+      sortFilter.addEventListener('change', submitLiveFilter);
+    }
+
+    if (directionFilter) {
+      directionFilter.addEventListener('change', submitLiveFilter);
+    }
+
+    document.querySelectorAll('.sort-trigger').forEach(link => {
+      link.addEventListener('click', event => {
+        event.preventDefault();
+        const url = link.href;
+        const parsed = new URL(url, window.location.origin);
+        const sortInput = form.querySelector('select[name="sort"]');
+        const directionInput = form.querySelector('select[name="direction"]');
+        if (sortInput) {
+          sortInput.value = parsed.searchParams.get('sort') || sortInput.value;
+        }
+        if (directionInput) {
+          directionInput.value = parsed.searchParams.get('direction') || directionInput.value;
+        }
+        fetchContent(url);
+        history.replaceState({}, '', url);
+      });
+    });
+  };
+
+  bindAjax();
+  lastRequestedUrl = window.location.href;
+  window.addEventListener('popstate', () => fetchContent(window.location.href));
+})();
+
+(function(){
+  const closeAllPopups = () => {
+    document.querySelectorAll('[data-event-items-popup].is-open').forEach(popup => {
+      popup.classList.remove('is-open');
+      popup.classList.remove('align-up');
+    });
+    document.querySelectorAll('[data-event-items-toggle][aria-expanded="true"]').forEach(button => {
+      button.setAttribute('aria-expanded', 'false');
+    });
+  };
+
+  const positionPopup = popup => {
+    popup.classList.remove('align-up');
+    const rect = popup.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight - 16) {
+      popup.classList.add('align-up');
+    }
+  };
+
+  document.addEventListener('click', event => {
+    const closeButton = event.target.closest('[data-event-items-close]');
+    if (closeButton) {
+      closeAllPopups();
+      return;
+    }
+
+    const toggle = event.target.closest('[data-event-items-toggle]');
+    if (toggle) {
+      const eventId = toggle.dataset.eventId;
+      const popup = eventId ? document.getElementById(`popup-${eventId}`) : null;
+      const willOpen = popup && !popup.classList.contains('is-open');
+      closeAllPopups();
+      if (popup && willOpen) {
+        popup.classList.add('is-open');
+        positionPopup(popup);
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+      return;
+    }
+
+    if (!event.target.closest('[data-event-items-popup]')) {
+      closeAllPopups();
+    }
+  });
+})();
+
+(function(){
+  const modal = document.getElementById('exportPdfModal');
+  if (!modal) return;
+
+  const eventNameNode = document.getElementById('exportEventName');
+  const cancelBtn = document.getElementById('exportPdfCancel');
+  const confirmBtn = document.getElementById('exportPdfConfirm');
+
+  const showExportNotice = (message) => {
+    const notice = document.createElement('div');
+    notice.className = 'flash-message flash-success';
+    notice.textContent = message;
+    document.body.prepend(notice);
+
+    window.setTimeout(() => {
+      notice.remove();
+    }, 2200);
+  };
+
+  const closeModal = () => {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    if (confirmBtn) {
+      confirmBtn.href = '#';
+    }
+  };
+
+  const openModal = (eventName, exportUrl) => {
+    if (eventNameNode) {
+      eventNameNode.textContent = eventName || 'Unnamed event';
+    }
+    if (confirmBtn) {
+      confirmBtn.href = exportUrl || '#';
+    }
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+  };
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', closeModal);
+  }
+
+  modal.addEventListener('click', event => {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('click', event => {
+    const trigger = event.target.closest('[data-export-pdf-open]');
+    if (!trigger) {
+      return;
+    }
+
+    const eventName = trigger.getAttribute('data-event-name') || 'Unnamed event';
+    const exportUrl = trigger.getAttribute('data-export-url') || '#';
+    openModal(eventName, exportUrl);
+  });
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', event => {
+      const downloadUrl = confirmBtn.getAttribute('href') || '#';
+      event.preventDefault();
+      closeModal();
+      if (downloadUrl && downloadUrl !== '#') {
+        showExportNotice('Preparing PDF export...');
+        window.location.href = downloadUrl;
+      }
+    });
+  }
+})();
+
+(function(){
+  const modal = document.getElementById('assignItemsModal');
+  if (!modal) return;
+
+  const form = document.getElementById('assignItemsForm');
+  const closeBtn = document.getElementById('assignItemsClose');
+  const skipBtn = document.getElementById('assignItemsSkip');
+  const qsEventId = Number.parseInt(new URLSearchParams(window.location.search).get('newEventId') || '0', 10);
+  const modalEventId = Number.parseInt(modal.dataset.newEventId || '0', 10);
+  const eventId = qsEventId > 0 ? qsEventId : modalEventId;
+
+  const closeModal = () => {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('newEventId');
+    history.replaceState({}, '', url.toString());
+  };
+
+  const syncRows = () => {
+    modal.querySelectorAll('.assign-item-row').forEach((row) => {
+      const check = row.querySelector('[data-assign-check]');
+      const qty = row.querySelector('[data-assign-qty]');
+      if (!check || !qty) return;
+      qty.disabled = !check.checked;
+    });
+  };
+
+  modal.addEventListener('change', (event) => {
+    if (event.target && event.target.matches('[data-assign-check]')) {
+      syncRows();
+    }
+  });
+
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (skipBtn) skipBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  if (form) {
+    form.addEventListener('submit', () => {
+      form.querySelectorAll('[data-assign-qty]').forEach((qtyInput) => {
+        const row = qtyInput.closest('.assign-item-row');
+        const check = row ? row.querySelector('[data-assign-check]') : null;
+        if (!check || !check.checked) {
+          qtyInput.disabled = true;
+        }
+      });
+    });
+  }
+
+  if (eventId > 0 && form) {
+    const actionTemplate = modal.dataset.actionTemplate || '';
+    if (actionTemplate.includes('__ID__')) {
+      form.action = actionTemplate.replace('__ID__', String(eventId));
+    }
+    syncRows();
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+})();
+
+(function(){
+  const modal = document.getElementById('adminCommentsModal');
+  const closeBtn = document.getElementById('adminCommentsClose');
+  const subtitle = document.getElementById('adminCommentsSubtitle');
+  const body = document.getElementById('adminCommentsBody');
+  if (!modal || !closeBtn || !subtitle || !body) return;
+
+  const flashHolder = document.createElement('div');
+  flashHolder.className = 'comments-flash-holder';
+  document.body.appendChild(flashHolder);
+
+  const showFlash = (message, type = 'success') => {
+    const node = document.createElement('div');
+    node.className = `comments-flash ${type}`;
+    node.textContent = message;
+    flashHolder.appendChild(node);
+    window.setTimeout(() => node.remove(), 2400);
+  };
+
+  let activeEventId = null;
+  let activeCommentsUrl = null;
+
+  const closeModal = () => {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    body.innerHTML = '<div class="comments-loading">Loading comments...</div>';
+    activeEventId = null;
+    activeCommentsUrl = null;
+  };
+
+  const openModal = () => {
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+  };
+
+  const escapeHtml = (value) => {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const renderComments = (comments) => {
+    if (!Array.isArray(comments) || comments.length === 0) {
+      body.innerHTML = '<div class="comments-empty">No reviews found for this event.</div>';
+      return;
+    }
+
+    body.innerHTML = comments.map(comment => `
+      <article class="comment-card" data-admin-comment-id="${comment.id}">
+        <div class="comment-card-head">
+          <div>
+            <div class="comment-user">${escapeHtml(comment.userName)}</div>
+            <div class="comment-date">${escapeHtml(comment.date)}</div>
+          </div>
+          <button
+            type="button"
+            class="comment-delete-btn"
+            data-admin-comment-delete
+            data-review-id="${comment.id}"
+            data-delete-token="${escapeHtml(comment.deleteToken)}"
+          >
+            Delete
+          </button>
+        </div>
+        <div class="comment-meta">
+          <span>Event ${comment.eventRating !== null ? escapeHtml(comment.eventRating + '/5') : 'N/A'}</span>
+          <span>Food ${comment.foodRating !== null ? escapeHtml(comment.foodRating + '/5') : 'N/A'}</span>
+        </div>
+        <p class="comment-text">${escapeHtml(comment.comment || 'No comment provided.')}</p>
+      </article>
+    `).join('');
+  };
+
+  const loadComments = async () => {
+    if (!activeCommentsUrl) {
+      return;
+    }
+
+    body.innerHTML = '<div class="comments-loading">Loading comments...</div>';
+    try {
+      const response = await fetch(activeCommentsUrl, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) {
+        body.innerHTML = `<div class="comments-empty">${escapeHtml(payload.message || 'Unable to load comments.')}</div>`;
+        showFlash(payload.message || 'Unable to load comments.', 'error');
+        return;
+      }
+
+      renderComments(payload.comments || []);
+    } catch (error) {
+      console.error(error);
+      body.innerHTML = '<div class="comments-empty">Network error while loading comments.</div>';
+      showFlash('Network error while loading comments.', 'error');
+    }
+  };
+
+  const deleteComment = async (reviewId, token) => {
+    if (!activeEventId || !reviewId) {
+      return;
+    }
+
+    const confirmed = window.confirm('Delete this review?');
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const deleteUrl = `/admin/event/${activeEventId}/review/${reviewId}/delete`;
+      const payload = new URLSearchParams();
+      payload.set('_token', token || '');
+
+      const response = await fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        },
+        body: payload.toString(),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        showFlash(result.message || 'Unable to delete review.', 'error');
+        return;
+      }
+
+      const node = body.querySelector(`[data-admin-comment-id="${reviewId}"]`);
+      if (node) {
+        node.remove();
+      }
+
+      if (!body.querySelector('[data-admin-comment-id]')) {
+        body.innerHTML = '<div class="comments-empty">No reviews found for this event.</div>';
+      }
+
+      showFlash(result.message || 'Review deleted successfully', 'success');
+    } catch (error) {
+      console.error(error);
+      showFlash('Network error while deleting review.', 'error');
+    }
+  };
+
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', event => {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('click', event => {
+    const openTrigger = event.target.closest('[data-admin-comments-open]');
+    if (openTrigger) {
+      activeEventId = Number.parseInt(openTrigger.getAttribute('data-event-id') || '0', 10);
+      activeCommentsUrl = openTrigger.getAttribute('data-comments-url') || null;
+      const eventName = openTrigger.getAttribute('data-event-name') || `Event #${activeEventId}`;
+      subtitle.textContent = `Manage customer reviews for ${eventName}.`;
+      openModal();
+      loadComments();
+      return;
+    }
+
+    const deleteTrigger = event.target.closest('[data-admin-comment-delete]');
+    if (deleteTrigger) {
+      const reviewId = deleteTrigger.getAttribute('data-review-id');
+      const token = deleteTrigger.getAttribute('data-delete-token');
+      deleteComment(reviewId, token);
+    }
+  });
+})();
+
+(function(){
+  const STATUS_ENDPOINT = '/api/refresh-event-statuses';
+  const INTERVAL_MS = 60000;
+
+  const refreshStatuses = async () => {
+    try {
+      const response = await fetch(STATUS_ENDPOINT, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Refresh failed');
+      }
+
+      const data = await response.json();
+      if (!data || data.success !== true || !Array.isArray(data.events)) {
+        return;
+      }
+
+      data.events.forEach((eventItem) => {
+        const row = document.querySelector(`[data-event-id="${eventItem.id}"]`);
+        if (!row) {
+          return;
+        }
+
+        const statusBadge = row.querySelector('.status');
+        if (statusBadge) {
+          const apiStatus = String(eventItem.status || 'SCHEDULED').toUpperCase();
+          statusBadge.textContent = apiStatus;
+          statusBadge.className = `event-status-badge status status-${apiStatus.toLowerCase()}`;
+        }
+      });
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    }
+  };
+
+  refreshStatuses();
+  setInterval(refreshStatuses, INTERVAL_MS);
+})();
+</script>
 {% endblock %}
