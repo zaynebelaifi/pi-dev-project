@@ -18,6 +18,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
+use Symfony\UX\Chartjs\Model\Chart;
 
 #[Route('/admin')]
 final class AdminController extends AbstractController
@@ -317,6 +319,7 @@ final class AdminController extends AbstractController
     public function analytics(
         Request $request,
         AdminAnalyticsService $adminAnalyticsService,
+        ChartBuilderInterface $chartBuilder,
     ): Response
     {
         $session = $request->getSession();
@@ -335,7 +338,101 @@ final class AdminController extends AbstractController
             (string) $request->query->get('revenue_sort', 'revenue_desc')
         );
 
+        $viewData['wasteByTypePieChartObject'] = $this->buildPieChart(
+            $chartBuilder,
+            (array) ($viewData['wasteByTypeChart']['labels'] ?? []),
+            (array) ($viewData['wasteByTypeChart']['data'] ?? []),
+            ['#ef4444', '#f97316', '#f59e0b', '#14b8a6', '#3b82f6', '#8b5cf6', '#a855f7']
+        );
+        $viewData['stockHealthPieChartObject'] = $this->buildPieChart(
+            $chartBuilder,
+            (array) ($viewData['stockHealthChart']['labels'] ?? []),
+            (array) ($viewData['stockHealthChart']['data'] ?? []),
+            ['#22c55e', '#eab308', '#f97316', '#ef4444', '#64748b']
+        );
+        $viewData['topWastedIngredientsBarChartObject'] = $this->buildBarChart(
+            $chartBuilder,
+            (array) ($viewData['topWastedChart']['labels'] ?? []),
+            (array) ($viewData['topWastedChart']['data'] ?? []),
+            '#dc2626',
+            true
+        );
+        $viewData['revenueTrendBarChartObject'] = $this->buildBarChart(
+            $chartBuilder,
+            (array) ($viewData['revenueTrendChart']['labels'] ?? []),
+            (array) ($viewData['revenueTrendChart']['data'] ?? []),
+            '#b8872a',
+            false
+        );
+
         return $this->render('admin/analytics.html.twig', $viewData);
+    }
+
+    /**
+     * @param array<int, string> $labels
+     * @param array<int, float|int|string> $data
+     * @param array<int, string> $colors
+     */
+    private function buildPieChart(ChartBuilderInterface $chartBuilder, array $labels, array $data, array $colors): Chart
+    {
+        $chart = $chartBuilder->createChart(Chart::TYPE_PIE);
+        $chart->setData([
+            'labels' => $labels,
+            'datasets' => [[
+                'data' => array_map(static fn ($v): float => (float) $v, $data),
+                'backgroundColor' => $colors,
+                'borderWidth' => 1,
+                'borderColor' => '#fff',
+            ]],
+        ]);
+
+        $chart->setOptions([
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'plugins' => [
+                'legend' => [
+                    'position' => 'bottom',
+                    'labels' => [
+                        'boxWidth' => 14,
+                        'font' => ['size' => 11],
+                    ],
+                ],
+            ],
+        ]);
+
+        return $chart;
+    }
+
+    /**
+     * @param array<int, string> $labels
+     * @param array<int, float|int|string> $data
+     */
+    private function buildBarChart(ChartBuilderInterface $chartBuilder, array $labels, array $data, string $color, bool $horizontal): Chart
+    {
+        $chart = $chartBuilder->createChart(Chart::TYPE_BAR);
+        $chart->setData([
+            'labels' => $labels,
+            'datasets' => [[
+                'data' => array_map(static fn ($v): float => (float) $v, $data),
+                'backgroundColor' => $color,
+                'borderRadius' => 6,
+                'maxBarThickness' => 36,
+            ]],
+        ]);
+
+        $chart->setOptions([
+            'indexAxis' => $horizontal ? 'y' : 'x',
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'scales' => [
+                'y' => ['beginAtZero' => true],
+            ],
+            'plugins' => [
+                'legend' => ['display' => false],
+            ],
+        ]);
+
+        return $chart;
     }
 
     #[Route('/analytics/stock-chat', name: 'app_admin_stock_chat', methods: ['POST'])]

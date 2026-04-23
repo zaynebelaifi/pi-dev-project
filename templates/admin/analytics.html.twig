@@ -129,6 +129,11 @@
     min-height: 280px;
   }
 
+  .aa-canvas-wrap canvas {
+    width: 100% !important;
+    height: 280px !important;
+  }
+
   .aa-weather {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -305,22 +310,22 @@
   <div class="aa-grid">
     <section class="aa-panel">
       <div class="aa-head"><div class="aa-title">Waste by Type</div><div class="aa-sub">Pie Chart</div></div>
-      <div class="aa-body aa-canvas-wrap"><canvas id="wasteByTypePieChart"></canvas></div>
+      <div class="aa-body aa-canvas-wrap">{{ render_chart(wasteByTypePieChartObject) }}</div>
     </section>
 
     <section class="aa-panel">
       <div class="aa-head"><div class="aa-title">Stock Health</div><div class="aa-sub">Pie Chart</div></div>
-      <div class="aa-body aa-canvas-wrap"><canvas id="stockHealthPieChart"></canvas></div>
+      <div class="aa-body aa-canvas-wrap">{{ render_chart(stockHealthPieChartObject) }}</div>
     </section>
 
     <section class="aa-panel">
       <div class="aa-head"><div class="aa-title">Top Wasted Ingredients</div><div class="aa-sub">Bar Chart</div></div>
-      <div class="aa-body aa-canvas-wrap"><canvas id="topWastedIngredientsBarChart"></canvas></div>
+      <div class="aa-body aa-canvas-wrap">{{ render_chart(topWastedIngredientsBarChartObject) }}</div>
     </section>
 
     <section class="aa-panel">
       <div class="aa-head"><div class="aa-title">Revenue Trend</div><div class="aa-sub">Bar Chart</div></div>
-      <div class="aa-body aa-canvas-wrap"><canvas id="revenueTrendBarChart"></canvas></div>
+      <div class="aa-body aa-canvas-wrap">{{ render_chart(revenueTrendBarChartObject) }}</div>
     </section>
   </div>
 
@@ -427,104 +432,7 @@
   </section>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-  const wasteByTypeData = {{ wasteByTypeChart|json_encode|raw }};
-  const stockHealthData = {{ stockHealthChart|json_encode|raw }};
-  const topWastedData = {{ topWastedChart|json_encode|raw }};
-  const revenueTrendData = {{ revenueTrendChart|json_encode|raw }};
-
-  const renderPie = (canvasId, labels, data, colors) => {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas || !window.Chart) {
-      return;
-    }
-
-    new Chart(canvas, {
-      type: 'pie',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          backgroundColor: colors,
-          borderWidth: 1,
-          borderColor: '#fff',
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { boxWidth: 14, font: { size: 11 } },
-          },
-        },
-      },
-    });
-  };
-
-  const renderBar = (canvasId, labels, data, color, horizontal = false) => {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas || !window.Chart) {
-      return;
-    }
-
-    new Chart(canvas, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          backgroundColor: color,
-          borderRadius: 6,
-          maxBarThickness: 36,
-        }],
-      },
-      options: {
-        indexAxis: horizontal ? 'y' : 'x',
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true },
-        },
-        plugins: {
-          legend: { display: false },
-        },
-      },
-    });
-  };
-
-  renderPie(
-    'wasteByTypePieChart',
-    wasteByTypeData.labels || [],
-    wasteByTypeData.data || [],
-    ['#ef4444', '#f97316', '#f59e0b', '#14b8a6', '#3b82f6', '#8b5cf6', '#a855f7']
-  );
-
-  renderPie(
-    'stockHealthPieChart',
-    stockHealthData.labels || [],
-    stockHealthData.data || [],
-    ['#22c55e', '#eab308', '#f97316', '#ef4444', '#64748b']
-  );
-
-  renderBar(
-    'topWastedIngredientsBarChart',
-    topWastedData.labels || [],
-    topWastedData.data || [],
-    '#dc2626',
-    true
-  );
-
-  renderBar(
-    'revenueTrendBarChart',
-    revenueTrendData.labels || [],
-    revenueTrendData.data || [],
-    '#b8872a',
-    false
-  );
-
   ['wastePeriodCombo', 'revenuePeriodCombo', 'revenueSortCombo', 'revenueFromDatePicker', 'revenueToDatePicker']
     .forEach((id) => {
       const control = document.getElementById(id);
