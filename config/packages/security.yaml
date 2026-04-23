@@ -1,29 +1,76 @@
 security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        App\Entity\User:
+            algorithm: bcrypt
+            cost: 12
+
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
+        api_login:
+            pattern: ^/api/login$
+            stateless: true
+            security: false
+
+        event_status_refresh:
+            pattern: ^/api/(events/refresh-all|refresh-event-statuses|events/recommendations|events/\d+/register|user/role)$
+            stateless: true
+            security: false
+
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+
         main:
             lazy: true
-            provider: users_in_memory
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\LoginFormAuthenticator
+            entry_point: App\Security\LoginFormAuthenticator
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+            logout:
+                path: app_logout
+                target: app_login
+                invalidate_session: true
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 1209600
+                path: /
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
-
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
-
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+    # Ensure access to dashboard requires authenticated application user.
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/api/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/cars, roles: ROLE_ADMIN }
+        - { path: ^/api/assignments, roles: ROLE_ADMIN }
+        - { path: ^/api/audit-logs, roles: ROLE_ADMIN }
+        - { path: ^/api/statistics, roles: ROLE_ADMIN }
+        - { path: ^/api/gps, roles: [ROLE_ADMIN, ROLE_DELIVERY_MAN] }
+        - { path: ^/api/notifications, roles: ROLE_USER }
+        - { path: ^/api/driver, roles: ROLE_DELIVERY_MAN }
+        - { path: ^/api, roles: ROLE_USER }
+        - { path: ^/dashboard$, roles: ROLE_USER }
+        - { path: ^/webauthn/register, roles: ROLE_USER }
+
+when@prod:
+    security:
+        access_control:
+            - { path: ^/webauthn, requires_channel: https }
+            - { path: ^/login, requires_channel: https }
+            - { path: ^/register, requires_channel: https }
 
 when@test:
     security:
@@ -32,7 +79,7 @@ when@test:
             # important to generate secure password hashes. In tests however, secure hashes
             # are not important, waste resources and increase test times. The following
             # reduces the work factor to the lowest possible values.
-            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+            App\Entity\User:
                 algorithm: auto
                 cost: 4 # Lowest possible value for bcrypt
                 time_cost: 3 # Lowest possible value for argon

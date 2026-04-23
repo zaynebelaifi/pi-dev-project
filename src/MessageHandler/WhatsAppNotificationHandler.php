@@ -15,9 +15,19 @@ final class WhatsAppNotificationHandler implements MessageHandlerInterface
 
     public function __invoke(WhatsAppNotificationMessage $message): void
     {
-        $ok = $this->whatsApp->sendMessage($message->phone, $message->text);
-        if (!$ok) {
-            $this->logger->warning('Failed to send WhatsApp notification', ['delivery' => $message->deliveryId]);
+        if (trim($message->phone) === '') {
+            $this->logger->warning('WhatsApp notification skipped: no phone number for delivery {id}', ['id' => $message->deliveryId]);
+            return;
+        }
+        try {
+            $ok = $this->whatsApp->sendMessage($message->phone, $message->text, $message->template, $message->templateParams);
+            if (!$ok) {
+                $this->logger->warning('Failed to send WhatsApp notification', ['delivery' => $message->deliveryId]);
+                throw new \RuntimeException('WhatsApp send failed');
+            }
+        } catch (\Throwable $e) {
+            $this->logger->warning('Failed to send WhatsApp notification', ['delivery' => $message->deliveryId, 'error' => $e->getMessage()]);
+            throw $e;
         }
     }
 }

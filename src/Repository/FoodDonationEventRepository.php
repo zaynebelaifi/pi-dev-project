@@ -16,6 +16,25 @@ class FoodDonationEventRepository extends ServiceEntityRepository
         parent::__construct($registry, FoodDonationEvent::class);
     }
 
+    /**
+     * @return FoodDonationEvent[]
+     */
+    public function findEventsStartingWithinNextHourWithoutReminder(\DateTimeInterface $from, \DateTimeInterface $to): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.event_date >= :fromTime')
+            ->andWhere('e.event_date <= :toTime')
+            ->andWhere('e.sms_reminder_sent = :sent')
+            ->andWhere('LOWER(e.status) != :cancelled')
+            ->setParameter('fromTime', $from)
+            ->setParameter('toTime', $to)
+            ->setParameter('sent', false)
+            ->setParameter('cancelled', 'cancelled')
+            ->orderBy('e.event_date', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findFilteredEvents(?string $search, ?string $status, string $sort, string $direction): array
     {
         $qb = $this->createQueryBuilder('f');
@@ -49,6 +68,28 @@ class FoodDonationEventRepository extends ServiceEntityRepository
 
         $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
         $qb->orderBy('f.'.$sort, $direction);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @param int[] $excludeEventIds
+     * @return FoodDonationEvent[]
+     */
+    public function findRecommendationCandidates(array $excludeEventIds = [], int $limit = 12): array
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->andWhere('e.event_date >= :today')
+            ->andWhere('LOWER(e.status) IN (:statuses)')
+            ->setParameter('today', new \DateTimeImmutable('today'))
+            ->setParameter('statuses', ['scheduled', 'in progress', 'in_progress', 'pending'])
+            ->orderBy('e.event_date', 'ASC')
+            ->setMaxResults($limit);
+
+        if ($excludeEventIds !== []) {
+            $qb->andWhere('e.donation_event_id NOT IN (:excludeEventIds)')
+                ->setParameter('excludeEventIds', $excludeEventIds);
+        }
 
         return $qb->getQuery()->getResult();
     }

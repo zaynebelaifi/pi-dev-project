@@ -2,43 +2,104 @@
 
 {% block title %}Add Donation Item · BIG 4 Admin{% endblock %}
 {% block topbar_title %}Donation Items{% endblock %}
+{% block topbar_breadcrumb %}BIG 4 · Admin · Donation Items · New{% endblock %}
 
 {% block body %}
-  <div class="sec-head">
-    <div>
-      <h2>Add Donation Item</h2>
-      <p>Assign an item to a donation event and set the quantity to donate.</p>
-    </div>
-  </div>
+  <link rel="stylesheet" href="{{ asset('styles/donation_items.css') }}">
 
-  <div class="menu-form-card">
-    {{ form_start(form, {'attr': {'class': 'admin-form', 'novalidate': 'novalidate'}}) }}
-      {{ form_errors(form) }}
+  <section class="donation-item-page">
+    <div class="donation-edit-card">
+      <div class="donation-item-header">
+        <div>
+          <p class="donation-item-eyebrow">Professional Creator</p>
+          <h1 class="donation-item-title">Create Donation Item</h1>
+          <p class="donation-item-sub">Assign a dish to an event with a polished admin workflow and rich preview.</p>
+        </div>
+        <a class="donation-item-back" href="{{ path('app_food_donation_item_index') }}">← Back to Donation Items</a>
+      </div>
+
       {% if ingredient is defined and ingredient %}
-        <div class="form-note" style="margin-bottom:1rem;padding:.9rem 1rem;background:rgba(232,196,114,.12);border:1px solid rgba(184,135,42,.2);border-radius:10px;color:var(--text-2);">
-          Creating a donation item for wasted ingredient: <strong>{{ ingredient.name }}</strong>. Select the matching item and event, then set quantity.
+        <div class="donation-note-banner">
+          <span class="donation-note-icon">♻️</span>
+          <div>
+            <strong>Ingredient-linked creation</strong>
+            <p>Creating a donation item for wasted ingredient <strong>{{ ingredient.name }}</strong>. Choose the matching event and dish, then set the quantity.</p>
+          </div>
         </div>
       {% endif %}
-      <div class="menu-form-grid">
-        <div class="form-group">
-          {{ form_label(form.donation_event_id) }}
-          {{ form_widget(form.donation_event_id) }}
-          {{ form_errors(form.donation_event_id) }}
+
+      {{ form_start(form, {'attr': {'class': 'donation-form', 'novalidate': 'novalidate'}}) }}
+        {{ form_errors(form) }}
+
+        <div class="donation-form-grid">
+          <div class="form-group-pro">
+            {{ form_label(form.donation_event_id) }}
+            {{ form_widget(form.donation_event_id, {'attr': {'class': 'donation-form-control'}}) }}
+            {{ form_errors(form.donation_event_id) }}
+          </div>
+
+          <div class="form-group-pro">
+            {{ form_label(form.item_id) }}
+            {{ form_widget(form.item_id, {'attr': {'class': 'donation-form-control'}}) }}
+            {{ form_errors(form.item_id) }}
+          </div>
+
+          <div class="form-group-pro">
+            {{ form_label(form.quantity) }}
+            {{ form_widget(form.quantity, {'attr': {'class': 'donation-form-control', 'min': 1, 'max': 100}}) }}
+            {{ form_errors(form.quantity) }}
+          </div>
         </div>
-        <div class="form-group">
-          {{ form_label(form.item_id) }}
-          {{ form_widget(form.item_id) }}
-          {{ form_errors(form.item_id) }}
+
+        <div class="donation-edit-actions">
+          <a class="btn-action btn-secondary" href="{{ path('app_food_donation_item_index') }}">Cancel</a>
+          <button type="submit" class="btn-action btn-primary">Create Item</button>
         </div>
-        <div class="form-group">
-          {{ form_label(form.quantity) }}
-          {{ form_widget(form.quantity) }}
-          {{ form_errors(form.quantity) }}
-        </div>
+      {{ form_end(form) }}
+
+      <div class="preview-card" id="donationItemCreatePreview">
+        <h3>Creation Preview</h3>
+        <p><strong>Selected Event:</strong> <span data-preview-event>{{ form.donation_event_id.vars.choices[form.donation_event_id.vars.value] is defined ? form.donation_event_id.vars.choices[form.donation_event_id.vars.value].label : 'Choose an event' }}</span></p>
+        <p><strong>Selected Item:</strong> <span data-preview-item>{{ form.item_id.vars.choices[form.item_id.vars.value] is defined ? form.item_id.vars.choices[form.item_id.vars.value].label : 'Choose an item' }}</span></p>
+        <p><strong>Quantity:</strong> <span data-preview-qty>{{ form.quantity.vars.value ?: 1 }}</span></p>
       </div>
-      <div class="form-actions">
-        <button type="submit" class="t-btn primary">Create Item</button>
-      </div>
-    {{ form_end(form) }}
-  </div>
+    </div>
+  </section>
+
+  <script>
+    (() => {
+      const eventSelect = document.getElementById('{{ form.donation_event_id.vars.id }}');
+      const itemSelect = document.getElementById('{{ form.item_id.vars.id }}');
+      const qtyInput = document.getElementById('{{ form.quantity.vars.id }}');
+
+      const previewEvent = document.querySelector('[data-preview-event]');
+      const previewItem = document.querySelector('[data-preview-item]');
+      const previewQty = document.querySelector('[data-preview-qty]');
+
+      const refreshPreview = () => {
+        if (eventSelect && previewEvent) {
+          previewEvent.textContent = eventSelect.options[eventSelect.selectedIndex]?.text || 'Choose an event';
+        }
+
+        if (itemSelect && previewItem) {
+          previewItem.textContent = itemSelect.options[itemSelect.selectedIndex]?.text || 'Choose an item';
+        }
+
+        if (qtyInput && previewQty) {
+          previewQty.textContent = qtyInput.value || '1';
+        }
+      };
+
+      [eventSelect, itemSelect, qtyInput].forEach((element) => {
+        if (!element) {
+          return;
+        }
+
+        element.addEventListener('change', refreshPreview);
+        element.addEventListener('input', refreshPreview);
+      });
+
+      refreshPreview();
+    })();
+  </script>
 {% endblock %}

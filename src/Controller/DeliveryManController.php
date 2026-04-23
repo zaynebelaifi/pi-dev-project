@@ -6,11 +6,15 @@ use App\Entity\DeliveryMan;
 use App\Entity\User;
 use App\Form\DeliveryManType;
 use App\Repository\DeliveryManRepository;
+use Knp\Component\Pager\PaginatorInterface;
 use App\Repository\UserRepository;
 use App\Repository\DeliveryRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -19,7 +23,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class DeliveryManController extends AbstractController
 {
     #[Route(name: 'app_delivery_man_index', methods: ['GET'])]
-    public function index(Request $request, DeliveryManRepository $deliveryManRepository): Response
+    public function index(Request $request, DeliveryManRepository $deliveryManRepository, PaginatorInterface $paginator): Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
             return $this->redirectToRoute('app_login');
@@ -28,9 +32,35 @@ final class DeliveryManController extends AbstractController
         $search = trim((string) $request->query->get('search', ''));
         $sort = $request->query->get('sort', 'date_of_joining');
         $direction = $request->query->get('direction', 'DESC');
+        $deliveryMen = $deliveryManRepository->searchAndSort($search, $sort, $direction);
+
+        $viewData = [
+            'delivery_men' => $deliveryMen,
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+        ];
+
+        $isAjaxRequest = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        if ($isAjaxRequest) {
+            return new JsonResponse([
+                'success' => true,
+                'resultsHtml' => $this->renderView('delivery_man/_results.html.twig', $viewData),
+            ]);
+        }
+
+        $qb = $deliveryManRepository->searchAndSortQueryBuilder($search, $sort, $direction);
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = (int) $request->query->get('limit', 25);
+
+        $pagination = $paginator->paginate(
+            $qb,
+            $page,
+            $limit
+        );
 
         return $this->render('delivery_man/index.html.twig', [
-            'delivery_men' => $deliveryManRepository->searchAndSort($search, $sort, $direction),
+            'delivery_men' => $deliveryMen,
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,
@@ -49,14 +79,22 @@ final class DeliveryManController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+            $form->addError(new FormError('Please complete all required fields and fix invalid values.'));
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $deliveryMan->setCreated_at(new \DateTime());
             $deliveryMan->setUpdated_at(new \DateTime());
-            $entityManager->persist($deliveryMan);
-            $entityManager->flush();
+            try {
+                $entityManager->persist($deliveryMan);
+                $entityManager->flush();
+            } catch (UniqueConstraintViolationException $e) {
+                if ($form->has('phone')) {
+                    $form->get('phone')->addError(new FormError('This phone number is already used.'));
+                } else {
+                    $form->addError(new FormError('A delivery driver with this phone already exists.'));
+                }
+            }
 
             // Create or update a User account for this delivery driver so they can sign in
             $email = strtolower(trim((string) $deliveryMan->getEmail()));
@@ -135,14 +173,22 @@ final class DeliveryManController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+            $form->addError(new FormError('Please complete all required fields and fix invalid values.'));
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $deliveryMan->setUpdated_at(new \DateTime());
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_delivery_man_index', [], Response::HTTP_SEE_OTHER);
+            try {
+                $entityManager->flush();
+                return $this->redirectToRoute('app_delivery_man_index', [], Response::HTTP_SEE_OTHER);
+            } catch (UniqueConstraintViolationException $e) {
+                if ($form->has('phone')) {
+                    $form->get('phone')->addError(new FormError('This phone number is already used.'));
+                } else {
+                    $form->addError(new FormError('A delivery driver with this phone already exists.'));
+                }
+                // fall through to render form with inline errors
+            }
         }
 
         return $this->render('delivery_man/edit.html.twig', [

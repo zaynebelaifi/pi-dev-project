@@ -98,6 +98,246 @@ class FleetCar
         return $this;
     }
 
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $color = null;
+
+    public function getColor(): ?string
+    {
+        return $this->color;
+    }
+
+    public function setColor(?string $color): self
+    {
+        $this->color = $color;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $year = null;
+
+    public function getYear(): ?int
+    {
+        return $this->year;
+    }
+
+    public function setYear(?int $year): self
+    {
+        $this->year = $year;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
+    private ?string $fuel_type = null;
+
+    public function getFuelType(): ?string
+    {
+        return $this->fuel_type;
+    }
+
+    public function setFuelType(?string $fuelType): self
+    {
+        $this->fuel_type = $fuelType;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $mileage = null;
+
+    public function getMileage(): ?int
+    {
+        return $this->mileage;
+    }
+
+    public function setMileage(?int $mileage): self
+    {
+        $this->mileage = $mileage;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $registration_date = null;
+
+    public function getRegistrationDate(): ?\DateTimeInterface
+    {
+        return $this->registration_date;
+    }
+
+    public function setRegistrationDate(?\DateTimeInterface $registrationDate): self
+    {
+        $this->registration_date = $registrationDate;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $last_maintenance_date = null;
+
+    public function getLastMaintenanceDate(): ?\DateTimeInterface
+    {
+        return $this->last_maintenance_date;
+    }
+
+    public function setLastMaintenanceDate(?\DateTimeInterface $lastMaintenanceDate): self
+    {
+        $this->last_maintenance_date = $lastMaintenanceDate;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', length: 30, options: ['default' => 'AVAILABLE'])]
+    private string $status = 'AVAILABLE';
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = strtoupper(trim($status));
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $latitude = null;
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): self
+    {
+        $this->latitude = $latitude;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $longitude = null;
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): self
+    {
+        $this->longitude = $longitude;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $last_update = null;
+
+    public function getLastUpdate(): ?\DateTimeInterface
+    {
+        return $this->last_update;
+    }
+
+    public function setLastUpdate(?\DateTimeInterface $lastUpdate): self
+    {
+        $this->last_update = $lastUpdate;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $battery_level = null;
+
+    public function getBatteryLevel(): ?int
+    {
+        return $this->battery_level;
+    }
+
+    public function setBatteryLevel(?int $batteryLevel): self
+    {
+        $this->battery_level = $batteryLevel;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $fuel_level = null;
+
+    public function getFuelLevel(): ?int
+    {
+        return $this->fuel_level;
+    }
+
+    public function setFuelLevel(?int $fuelLevel): self
+    {
+        $this->fuel_level = $fuelLevel;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $is_active = true;
+
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    public function setIsActive(bool $isActive): self
+    {
+        $this->is_active = $isActive;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $created_at = null;
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(?\DateTimeInterface $createdAt): self
+    {
+        $this->created_at = $createdAt;
+
+        return $this;
+    }
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $updated_at = null;
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updated_at;
+    }
+
+    public function setUpdatedAt(?\DateTimeInterface $updatedAt): self
+    {
+        $this->updated_at = $updatedAt;
+
+        return $this;
+    }
+
+    #[ORM\OneToMany(targetEntity: DeliveryMan::class, mappedBy: 'currentCar')]
+    private Collection $assigned_delivery_men;
+
+    /**
+     * @return Collection<int, DeliveryMan>
+     */
+    public function getAssignedDeliveryMen(): Collection
+    {
+        if (!$this->assigned_delivery_men instanceof Collection) {
+            $this->assigned_delivery_men = new ArrayCollection();
+        }
+
+        return $this->assigned_delivery_men;
+    }
+
     // Symfony PropertyAccessor camelCase aliases for snake_case properties
     public function getId(): ?int { return $this->getCar_id(); }
     public function setId(int $id): self { return $this->setCar_id($id); }
@@ -113,4 +353,7 @@ class FleetCar
     
     public function getDeliveryManId(): ?int { return $this->getDelivery_man_id(); }
     public function setDeliveryManId(?int $id): self { return $this->setDelivery_man_id($id); }
+
+    public function getBrand(): ?string { return $this->getMake(); }
+    public function setBrand(string $brand): self { return $this->setMake($brand); }
 }

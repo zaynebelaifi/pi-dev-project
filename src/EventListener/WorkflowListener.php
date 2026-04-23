@@ -44,8 +44,18 @@ final class WorkflowListener implements EventSubscriberInterface
             try {
                 $phone = $subject->getRecipient_phone() ?? $subject->getRecipientPhone();
                 if ($phone) {
-                    $text = sprintf('Your order #%s status updated: %s', $subject->getOrder_id() ?? $subject->getOrderId(), strtoupper($transition));
-                    $this->bus->dispatch(new WhatsAppNotificationMessage((int) ($subject->getDelivery_id() ?? $subject->getDeliveryId()), (string) $phone, $text));
+                    $orderId = $subject->getOrder_id() ?? $subject->getOrderId();
+                    $recipientName = $subject->getRecipient_name() ?? $subject->getRecipientName() ?? 'Customer';
+
+                    if ($transition === 'delivered') {
+                        $template = 'delivery_confirmation_5';
+                        $params = [trim((string) $recipientName), (string) $orderId];
+                        $text = sprintf('Hi %s, your order #%s was delivered. The delivery man is waiting. Enjoy your meal!', $recipientName, $orderId);
+                        $this->bus->dispatch(new WhatsAppNotificationMessage((int) ($subject->getDelivery_id() ?? $subject->getDeliveryId()), (string) $phone, $text, $template, $params));
+                    } else {
+                        $text = sprintf('Your order #%s status updated: %s', $orderId, strtoupper($transition));
+                        $this->bus->dispatch(new WhatsAppNotificationMessage((int) ($subject->getDelivery_id() ?? $subject->getDeliveryId()), (string) $phone, $text));
+                    }
                 }
             } catch (\Throwable $e) {
                 $this->logger->error('WorkflowListener error: '.$e->getMessage());

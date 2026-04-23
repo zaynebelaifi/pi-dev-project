@@ -1,0 +1,212 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Support Queue - BIG 4{% endblock %}
+
+{% block topbar_title %}Support Queue{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Support Queue</h2>
+      <p class="sec-sub">Neutral and negative reviews routed by AI for manual follow-up.</p>
+    </div>
+    <a href="#" class="t-btn primary" id="supportQueueRefresh">Refresh</a>
+  </div>
+
+  <div class="tbl-head" style="margin-bottom:1rem; border-radius:10px;">
+    <div class="tbl-title">Filter & Sort</div>
+    <div class="tbl-filters" style="gap:.6rem; align-items:center;">
+      <input
+        id="supportQueueSearch"
+        type="search"
+        placeholder="Search order, customer, summary..."
+        style="height:34px; padding:0 .75rem; border:1px solid var(--border); border-radius:6px; font-size:.72rem; min-width:220px;"
+      />
+      <select
+        id="supportQueueSort"
+        style="height:34px; padding:0 .6rem; border:1px solid var(--border); border-radius:6px; font-size:.72rem;"
+      >
+        <option value="time_desc">Newest first</option>
+        <option value="time_asc">Oldest first</option>
+        <option value="sentiment">Sentiment</option>
+        <option value="customer">Customer</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="tbl-card" data-feedback-base="/feedback">
+    <div class="tbl-head">
+      <div class="tbl-title">AI-Routed Reviews (Neutral/Negative)</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Sentiment</th>
+          <th>Summary</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody id="supportQueueBody">
+        <tr>
+          <td colspan="5" style="color:var(--text-3)">Loading support queue...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const table = document.querySelector('.tbl-card[data-feedback-base]');
+      const body = document.getElementById('supportQueueBody');
+      const refresh = document.getElementById('supportQueueRefresh');
+      const searchInput = document.getElementById('supportQueueSearch');
+      const sortSelect = document.getElementById('supportQueueSort');
+      if (!table || !body) return;
+
+      const apiBase = table.getAttribute('data-feedback-base') || '';
+
+      const renderEmpty = (message) => {
+        body.innerHTML = '';
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 6;
+        cell.style.color = 'var(--text-3)';
+        cell.textContent = message;
+        row.appendChild(cell);
+        body.appendChild(row);
+      };
+
+      const renderRows = (rows) => {
+        body.innerHTML = '';
+        rows.forEach((item) => {
+          const row = document.createElement('tr');
+
+          const order = document.createElement('td');
+          order.innerHTML = `<span class="ord-id">${item.order_id || '-'}</span>`;
+
+          const customer = document.createElement('td');
+          customer.innerHTML = `<div class="cust-cell"><div class="av-sm">${(item.customer_name || 'C').slice(0,1)}</div><div><div class="cust-name">${item.customer_name || 'Customer'}</div><div class="cust-type">${item.customer_email || 'no-email'}</div></div></div>`;
+
+          const sentiment = document.createElement('td');
+          const sentimentValue = (item.sentiment || 'neutral').toLowerCase();
+          const badgeClass = sentimentValue === 'negative' ? 's-cancelled' : 's-preparing';
+          sentiment.innerHTML = `<span class="sbadge ${badgeClass}">${sentimentValue}</span>`;
+
+          const summary = document.createElement('td');
+          summary.textContent = item.summary || '-';
+
+          const time = document.createElement('td');
+          const createdAt = item.created_at ? new Date(item.created_at) : null;
+          time.textContent = createdAt ? createdAt.toLocaleString() : '-';
+          row.appendChild(order);
+          row.appendChild(customer);
+          row.appendChild(sentiment);
+          row.appendChild(summary);
+          row.appendChild(time);
+          body.appendChild(row);
+        });
+      };
+
+      const normalize = (value) => String(value || '').toLowerCase();
+
+      const applyFilters = (rows) => {
+        const query = normalize(searchInput ? searchInput.value : '');
+        let filtered = rows;
+
+        if (query) {
+          filtered = rows.filter((item) => {
+            const haystack = [
+              item.order_id,
+              item.customer_name,
+              item.customer_email,
+              item.summary,
+              item.review_text,
+              item.support_message,
+              item.sentiment,
+            ].map(normalize).join(' ');
+            return haystack.includes(query);
+          });
+        }
+
+        const sortValue = sortSelect ? sortSelect.value : 'time_desc';
+        filtered = [...filtered].sort((a, b) => {
+          if (sortValue === 'customer') {
+            return normalize(a.customer_name).localeCompare(normalize(b.customer_name));
+          }
+          if (sortValue === 'sentiment') {
+            return normalize(a.sentiment).localeCompare(normalize(b.sentiment));
+          }
+
+          const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return sortValue === 'time_asc' ? timeA - timeB : timeB - timeA;
+        });
+
+        return filtered;
+      };
+
+      let allRows = [];
+
+      const fetchSupportQueue = async () => {
+        renderEmpty('Loading support queue...');
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 2000);
+          const supportUrl = apiBase ? `${apiBase}/support-queue` : '/feedback/support-queue';
+          const response = await fetch(supportUrl, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!response.ok) throw new Error('Bad response');
+          const data = await response.json();
+          if (!Array.isArray(data) || data.length === 0) {
+            allRows = [];
+            renderEmpty('No support items yet.');
+            return;
+          }
+          allRows = data;
+          const filtered = applyFilters(allRows);
+          if (!filtered.length) {
+            renderEmpty('No support items match your search.');
+            return;
+          }
+          renderRows(filtered);
+        } catch (error) {
+          allRows = [];
+          renderEmpty('Support queue unavailable.');
+        }
+      };
+
+      if (refresh) {
+        refresh.addEventListener('click', (e) => {
+          e.preventDefault();
+          fetchSupportQueue();
+        });
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', () => {
+          const filtered = applyFilters(allRows);
+          if (!filtered.length) {
+            renderEmpty('No support items match your search.');
+            return;
+          }
+          renderRows(filtered);
+        });
+      }
+
+      if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+          const filtered = applyFilters(allRows);
+          if (!filtered.length) {
+            renderEmpty('No support items match your search.');
+            return;
+          }
+          renderRows(filtered);
+        });
+      }
+
+      fetchSupportQueue();
+    });
+  </script>
+{% endblock %}

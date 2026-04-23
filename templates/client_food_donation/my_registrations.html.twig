@@ -1,0 +1,147 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Registered Events · BIG 4{% endblock %}
+
+{% block body %}
+<section class="my-registrations-page">
+  <div class="container my-registrations-shell">
+    <div class="section-head reveal show">
+      <div>
+        <small>Your Activity</small>
+        <h3>My Registered <em>Events</em></h3>
+        <p>All food donation events you have signed up for.</p>
+      </div>
+      <a href="{{ path('app_client_food_donation_calendar') }}" class="btn-secondary">Back to Calendar</a>
+    </div>
+
+    {% if registrations is empty %}
+      <div class="my-reg-empty">
+        <p>You have not registered for any events yet.</p>
+        <a href="{{ path('app_client_food_donation_calendar') }}" class="btn-register-link">Browse Events</a>
+      </div>
+    {% else %}
+      <div class="my-reg-grid">
+        {% for registration in registrations %}
+          {% set ev = registration.event %}
+          {% set status = ev ? ev.status|lower : '' %}
+          <div class="my-reg-card">
+            <div class="my-reg-card-top">
+              <strong>{{ ev ? ev.charityName : 'Event' }}</strong>
+              <span class="status-pill status-{{ status == 'ongoing' ? 'ongoing' : status == 'completed' ? 'completed' : status == 'in progress' ? 'in-progress' : status == 'cancelled' ? 'cancelled' : 'scheduled' }}">
+                {{ ev ? ev.status : '—' }}
+              </span>
+            </div>
+            <div class="my-reg-meta">
+              <span>📅 {{ ev and ev.eventDate ? ev.eventDate|date('F j, Y H:i') : 'TBD' }}</span>
+              <span>📦 {{ ev ? ev.totalQuantity : 0 }} items</span>
+            </div>
+            <div class="my-reg-actions">
+              {% if ev %}
+                <a href="{{ path('app_client_food_donation_show', {id: ev.donationEventId}) }}" class="btn-view-link">View Event</a>
+                {% if status == 'scheduled' %}
+                  <button
+                    type="button"
+                    class="btn-unregister-sm js-event-toggle-btn"
+                    data-event-id="{{ ev.donationEventId }}"
+                    data-action="unregister"
+                    data-register-url="{{ path('app_client_food_donation_register', {id: ev.donationEventId}) }}"
+                    data-unregister-url="{{ path('app_client_food_donation_unregister', {id: ev.donationEventId}) }}"
+                    data-register-token="{{ csrf_token('register-event' ~ ev.donationEventId) }}"
+                    data-unregister-token="{{ csrf_token('unregister-event' ~ ev.donationEventId) }}"
+                  >Unregister</button>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<style>
+  .my-registrations-page {
+    padding: 118px 0 72px;
+    color: var(--text);
+  }
+  .my-registrations-shell {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .my-reg-empty {
+    background: rgba(255,255,255,.88);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 2.5rem;
+    text-align: center;
+    color: var(--text-2);
+  }
+  .my-reg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+  .my-reg-card {
+    background: rgba(255,255,255,.92);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 1.3rem 1.4rem;
+    box-shadow: var(--shadow);
+    display: grid;
+    gap: .8rem;
+  }
+  .my-reg-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: .8rem;
+  }
+  .my-reg-card-top strong {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    color: var(--espresso);
+  }
+  .my-reg-meta {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    font-size: .88rem;
+    color: var(--text-2);
+  }
+  .my-reg-actions {
+    display: flex;
+    gap: .65rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn-view-link,
+  .btn-register-link {
+    display: inline-flex;
+    align-items: center;
+    padding: .55rem 1.1rem;
+    border-radius: 30px;
+    background: linear-gradient(180deg, #d4a032, #b8881e);
+    color: #fff;
+    font-family: Georgia, serif;
+    font-size: .85rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 0 #8a6010;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-unregister-sm {
+    display: inline-flex;
+    align-items: center;
+    padding: .5rem 1rem;
+    border-radius: 30px;
+    background: transparent;
+    color: #b8881e;
+    border: 1.5px solid #b8881e;
+    font-family: Georgia, serif;
+    font-size: .85rem;
+    cursor: pointer;
+  }
+  .inline-form { margin: 0; }
+</style>
+{% endblock %}

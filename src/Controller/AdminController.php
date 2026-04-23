@@ -18,6 +18,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
+use Symfony\UX\Chartjs\Model\Chart;
 
 #[Route('/admin')]
 final class AdminController extends AbstractController
@@ -125,6 +127,21 @@ final class AdminController extends AbstractController
         ]);
     }
 
+    #[Route('/support-queue', name: 'app_admin_support_queue', methods: ['GET'])]
+    public function supportQueue(Request $request): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $feedbackBaseUrl = rtrim((string) ($_ENV['FEEDBACK_AI_BASE_URL'] ?? 'http://127.0.0.1:8001'), '/');
+
+        return $this->render('admin/support_queue.html.twig', [
+            'feedbackBaseUrl' => $feedbackBaseUrl,
+        ]);
+    }
+
     #[Route('/users/{id}/ban', name: 'app_admin_user_ban', methods: ['POST'])]
     public function banUser(int $id, Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager): Response
     {
@@ -170,9 +187,25 @@ final class AdminController extends AbstractController
         $search = trim((string) $request->query->get('search', ''));
         $sort = $request->query->get('sort', 'created_at');
         $direction = $request->query->get('direction', 'DESC');
+        $deliveries = $deliveryRepository->searchAndSort($search, $sort, $direction);
+
+        $viewData = [
+            'deliveries' => $deliveries,
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+        ];
+
+        $isAjaxRequest = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        if ($isAjaxRequest) {
+            return new JsonResponse([
+                'success' => true,
+                'resultsHtml' => $this->renderView('admin/_deliveries_results.html.twig', $viewData),
+            ]);
+        }
 
         return $this->render('admin/deliveries.html.twig', [
-            'deliveries' => $deliveryRepository->searchAndSort($search, $sort, $direction),
+            'deliveries' => $deliveries,
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,
@@ -230,6 +263,18 @@ final class AdminController extends AbstractController
         }
 
         $search = trim((string) $request->query->get('search', ''));
+        $sort = (string) $request->query->get('sort', 'car_id');
+        $direction = strtoupper((string) $request->query->get('direction', 'DESC'));
+        $direction = $direction === 'ASC' ? 'ASC' : 'DESC';
+
+        $allowedSorts = [
+            'car_id' => 'c.car_id',
+            'make' => 'c.make',
+            'model' => 'c.model',
+            'license_plate' => 'c.license_plate',
+            'vehicle_type' => 'c.vehicle_type',
+        ];
+        $sortField = $allowedSorts[$sort] ?? 'c.car_id';
         
         $queryBuilder = $fleetCarRepository->createQueryBuilder('c');
         if ($search) {
@@ -237,12 +282,31 @@ final class AdminController extends AbstractController
                 ->where('c.make LIKE :search OR c.model LIKE :search OR c.license_plate LIKE :search OR c.vehicle_type LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
-        $vehicles = $queryBuilder->orderBy('c.car_id', 'DESC')->getQuery()->getResult();
 
-        return $this->render('admin/vehicles.html.twig', [
+        $vehicles = $queryBuilder->orderBy($sortField, $direction)->getQuery()->getResult();
+
+        $viewData = [
             'vehicles' => $vehicles,
             'deliveryMen' => $deliveryManRepository->findAll(),
             'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
+        ];
+
+        $isAjaxRequest = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        if ($isAjaxRequest) {
+            return new JsonResponse([
+                'success' => true,
+                'resultsHtml' => $this->renderView('admin/_vehicles_results.html.twig', $viewData),
+            ]);
+        }
+
+        return $this->render('admin/vehicles.html.twig', [
+            'vehicles' => $vehicles,
+            'deliveryMen' => $viewData['deliveryMen'],
+            'search' => $search,
+            'sort' => $sort,
+            'direction' => $direction,
         ]);
     }
 
@@ -317,6 +381,7 @@ final class AdminController extends AbstractController
     public function analytics(
         Request $request,
         AdminAnalyticsService $adminAnalyticsService,
+        ChartBuilderInterface $chartBuilder,
     ): Response
     {
         $session = $request->getSession();
@@ -335,7 +400,101 @@ final class AdminController extends AbstractController
             (string) $request->query->get('revenue_sort', 'revenue_desc')
         );
 
+        $viewData['wasteByTypePieChartObject'] = $this->buildPieChart(
+            $chartBuilder,
+            (array) ($viewData['wasteByTypeChart']['labels'] ?? []),
+            (array) ($viewData['wasteByTypeChart']['data'] ?? []),
+            ['#ef4444', '#f97316', '#f59e0b', '#14b8a6', '#3b82f6', '#8b5cf6', '#a855f7']
+        );
+        $viewData['stockHealthPieChartObject'] = $this->buildPieChart(
+            $chartBuilder,
+            (array) ($viewData['stockHealthChart']['labels'] ?? []),
+            (array) ($viewData['stockHealthChart']['data'] ?? []),
+            ['#22c55e', '#eab308', '#f97316', '#ef4444', '#64748b']
+        );
+        $viewData['topWastedIngredientsBarChartObject'] = $this->buildBarChart(
+            $chartBuilder,
+            (array) ($viewData['topWastedChart']['labels'] ?? []),
+            (array) ($viewData['topWastedChart']['data'] ?? []),
+            '#dc2626',
+            true
+        );
+        $viewData['revenueTrendBarChartObject'] = $this->buildBarChart(
+            $chartBuilder,
+            (array) ($viewData['revenueTrendChart']['labels'] ?? []),
+            (array) ($viewData['revenueTrendChart']['data'] ?? []),
+            '#b8872a',
+            false
+        );
+
         return $this->render('admin/analytics.html.twig', $viewData);
+    }
+
+    /**
+     * @param array<int, string> $labels
+     * @param array<int, float|int|string> $data
+     * @param array<int, string> $colors
+     */
+    private function buildPieChart(ChartBuilderInterface $chartBuilder, array $labels, array $data, array $colors): Chart
+    {
+        $chart = $chartBuilder->createChart(Chart::TYPE_PIE);
+        $chart->setData([
+            'labels' => $labels,
+            'datasets' => [[
+                'data' => array_map(static fn ($v): float => (float) $v, $data),
+                'backgroundColor' => $colors,
+                'borderWidth' => 1,
+                'borderColor' => '#fff',
+            ]],
+        ]);
+
+        $chart->setOptions([
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'plugins' => [
+                'legend' => [
+                    'position' => 'bottom',
+                    'labels' => [
+                        'boxWidth' => 14,
+                        'font' => ['size' => 11],
+                    ],
+                ],
+            ],
+        ]);
+
+        return $chart;
+    }
+
+    /**
+     * @param array<int, string> $labels
+     * @param array<int, float|int|string> $data
+     */
+    private function buildBarChart(ChartBuilderInterface $chartBuilder, array $labels, array $data, string $color, bool $horizontal): Chart
+    {
+        $chart = $chartBuilder->createChart(Chart::TYPE_BAR);
+        $chart->setData([
+            'labels' => $labels,
+            'datasets' => [[
+                'data' => array_map(static fn ($v): float => (float) $v, $data),
+                'backgroundColor' => $color,
+                'borderRadius' => 6,
+                'maxBarThickness' => 36,
+            ]],
+        ]);
+
+        $chart->setOptions([
+            'indexAxis' => $horizontal ? 'y' : 'x',
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'scales' => [
+                'y' => ['beginAtZero' => true],
+            ],
+            'plugins' => [
+                'legend' => ['display' => false],
+            ],
+        ]);
+
+        return $chart;
     }
 
     #[Route('/analytics/stock-chat', name: 'app_admin_stock_chat', methods: ['POST'])]

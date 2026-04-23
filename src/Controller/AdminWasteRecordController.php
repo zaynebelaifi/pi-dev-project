@@ -95,15 +95,23 @@ final class AdminWasteRecordController extends AbstractController
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', false);
-        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isFontSubsettingEnabled', false);
+        $options->set('defaultFont', 'Helvetica');
 
-        $dompdf = new Dompdf($options);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->loadHtml($html);
-        $dompdf->render();
+        try {
+            $dompdf = new Dompdf($options);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->loadHtml($html);
+            $dompdf->render();
+            $pdfOutput = $dompdf->output();
+        } catch (\Throwable) {
+            $this->addFlash('error', 'Unable to generate PDF with the current content. Please simplify filters and retry.');
+
+            return $this->redirectToRoute('admin_waste_index', $request->query->all());
+        }
 
         $filename = sprintf('waste-records-%s.pdf', (new \DateTimeImmutable())->format('Ymd-His'));
-        $response = new Response($dompdf->output());
+        $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
         $response->headers->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
 

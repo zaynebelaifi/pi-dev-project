@@ -1,0 +1,265 @@
+﻿{% extends 'backend.html.twig' %}
+
+{% block title %}Edit Donation Item · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Edit Donation Item{% endblock %}
+{% block topbar_breadcrumb %}BIG 4 · Admin · Donation Items · Edit{% endblock %}
+
+{% block body %}
+{% set charity = event and event.charityName ? event.charityName : 'No event selected' %}
+{% set eventDate = event and event.eventDate ? event.eventDate|date('M j, Y') : 'N/A' %}
+{% set eventTime = event and event.eventDate ? event.eventDate|date('g:i A') : 'N/A' %}
+
+<div class="admin-container">
+
+    <div class="admin-header">
+        <h1>Edit Event Assignment</h1>
+        <p>Manage multiple items for event #{{ eventId }} in one save action.</p>
+    </div>
+
+    {{ form_start(form, {'attr': {'id': 'donationEventAssignmentForm'}}) }}
+
+    <div class="delivery-details">
+
+        <div class="detail-section">
+            <h3>Update Assignment</h3>
+            <table class="admin-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Donation Event</strong></td>
+                        <td>
+                            {{ form_widget(form.event, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.event) }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="items-collection" data-collection-holder data-prototype="{{ form_widget(form.lines.vars.prototype)|e('html_attr') }}">
+                {% for lineForm in form.lines %}
+                    <div class="item-row" data-item-row>
+                        <div class="item-field">
+                            <label>Item / Dish</label>
+                            {{ form_widget(lineForm.item, {'attr': {'class': 'form-control item-select'}}) }}
+                            {{ form_errors(lineForm.item) }}
+                        </div>
+                        <div class="item-field qty-field">
+                            <label>Quantity</label>
+                            {{ form_widget(lineForm.quantity, {'attr': {'class': 'form-control qty-input', 'min': 1}}) }}
+                            {{ form_errors(lineForm.quantity) }}
+                        </div>
+                        {{ form_widget(lineForm.assignmentId) }}
+                        <button type="button" class="btn btn-secondary remove-item-btn">Remove</button>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="section-actions">
+                <button type="button" id="addItemRowBtn" class="btn btn-secondary">Add Item</button>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h3>Current Details</h3>
+            <table class="admin-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Allocated Units</strong></td>
+                        <td><span class="status-badge status-quantity" id="currentAllocatedBadge">0 units</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Event Name</strong></td>
+                        <td id="previewEventName">{{ charity }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Charity</strong></td>
+                        <td><span class="status-badge status-charity" id="previewCharity">{{ charity }}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scheduled Date</strong></td>
+                        <td>{{ eventDate }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scheduled Time</strong></td>
+                        <td>{{ eventTime }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="detail-section">
+            <h3>Live Preview</h3>
+            <table class="admin-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Selected Event</strong></td>
+                        <td id="previewSelectedEvent">{{ charity }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Assigned Items</strong></td>
+                        <td><span id="previewItemCount">0 items</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <div class="validation-rules">
+                                <div class="rule-item">Event and item rows are saved together in one transaction.</div>
+                                <div class="rule-item">Quantity must be a positive integer for each selected item.</div>
+                                <div class="rule-item">Duplicate items are merged into one assignment with total quantity.</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="admin-actions">
+        <a href="{{ path('donation_item_show', {id: eventId}) }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" form="donationEventAssignmentForm" class="btn btn-primary">Save Changes</button>
+    </div>
+    {{ form_end(form) }}
+
+</div>
+
+<style>
+.admin-container { max-width: 980px; margin: 0 auto; padding: 1.5rem; }
+.admin-header { margin-bottom: 1.8rem; }
+.admin-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 2.1rem; font-weight: 700; color: var(--espresso); margin: 0 0 .3rem; }
+.admin-header p { font-size: .85rem; color: var(--text-3); letter-spacing: .06em; }
+.delivery-details { display: grid; gap: 1.5rem; }
+.detail-section { background: var(--ivory, #fdf8f0); border: 1.5px solid rgba(184,135,42,.38); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.detail-section h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 700; color: var(--gold, #b8872a); margin: 0 0 1.1rem; padding-bottom: .65rem; border-bottom: 1px solid rgba(184,135,42,.2); }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table td { padding: .85rem .5rem; font-size: .88rem; color: var(--text, #1a1a1a); border-bottom: 1px solid rgba(0,0,0,.05); vertical-align: top; }
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-table td:first-child { width: 38%; color: var(--text-2, #5a5a5a); font-weight: 600; }
+.form-control {
+    width: 100%;
+    padding: .6rem .85rem;
+    border: 1.5px solid rgba(184,135,42,.3);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+    font-size: .88rem;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+.form-control:focus {
+    border-color: rgba(184,135,42,.6);
+    box-shadow: 0 0 0 3px rgba(184,135,42,.12);
+}
+.status-badge { display: inline-flex; align-items: center; gap: .3rem; padding: .28rem .75rem; border-radius: 99px; font-size: .76rem; font-weight: 700; letter-spacing: .05em; }
+.status-charity  { background: rgba(184,135,42,.14); color: #7a5a15; border: 1.5px solid rgba(184,135,42,.3); }
+.status-quantity { background: rgba(30,120,60,.10); color: #1a5c30; border: 1.5px solid rgba(30,120,60,.25); }
+.validation-rules { display: flex; flex-direction: column; gap: .45rem; padding: .6rem 0; }
+.rule-item { font-size: .82rem; color: var(--text-2); line-height: 1.4; }
+.items-collection { display: grid; gap: .8rem; margin-top: 1rem; }
+.item-row { display: grid; grid-template-columns: 1fr 170px auto; gap: .7rem; align-items: end; padding: .8rem; border: 1px solid rgba(184,135,42,.22); border-radius: 8px; background: rgba(255,255,255,.65); }
+.item-field { display: flex; flex-direction: column; gap: .35rem; }
+.item-field label { font-size: .76rem; color: var(--text-3); font-weight: 600; }
+.section-actions { margin-top: .8rem; }
+.admin-actions { display: flex; gap: .9rem; margin-top: 1.8rem; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: .4rem; padding: .7rem 1.4rem; border: none; border-radius: 8px; text-decoration: none; font-size: .875rem; font-weight: 700; cursor: pointer; transition: all .25s; }
+.btn-primary { background: var(--gold, #b8872a); color: white; }
+.btn-primary:hover { background: #9a7122; }
+.btn-secondary { background: transparent; color: var(--espresso); border: 1.5px solid rgba(184,135,42,.38); }
+.btn-secondary:hover { background: rgba(184,135,42,.1); border-color: rgba(184,135,42,.6); }
+@media (max-width: 800px) {
+    .item-row { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+(() => {
+    const collectionHolder = document.querySelector('[data-collection-holder]');
+    const addButton = document.getElementById('addItemRowBtn');
+    const eventSelect = document.getElementById('{{ form.event.vars.id }}');
+
+    if (!collectionHolder || !addButton) {
+        return;
+    }
+
+    const refreshPreview = () => {
+        const qtyInputs = collectionHolder.querySelectorAll('.qty-input');
+        const itemSelects = collectionHolder.querySelectorAll('.item-select');
+
+        let totalQty = 0;
+        qtyInputs.forEach((input) => {
+            totalQty += parseInt(input.value || '0', 10);
+        });
+
+        const selectedItems = [...itemSelects].filter((select) => select.value !== '').length;
+        const eventText = eventSelect ? eventSelect.options[eventSelect.selectedIndex]?.text || 'N/A' : 'N/A';
+
+        const qtyBadge = document.getElementById('currentAllocatedBadge');
+        const previewCount = document.getElementById('previewItemCount');
+        const previewEvent = document.getElementById('previewSelectedEvent');
+        const previewEventName = document.getElementById('previewEventName');
+        const previewCharity = document.getElementById('previewCharity');
+
+        if (qtyBadge) qtyBadge.textContent = totalQty + ' units';
+        if (previewCount) previewCount.textContent = selectedItems + ' items';
+        if (previewEvent) previewEvent.textContent = eventText;
+        if (previewEventName) previewEventName.textContent = eventText;
+        if (previewCharity) previewCharity.textContent = eventText;
+    };
+
+    const wireRemoveButtons = () => {
+        collectionHolder.querySelectorAll('.remove-item-btn').forEach((btn) => {
+            btn.onclick = () => {
+                const rows = collectionHolder.querySelectorAll('[data-item-row]');
+                if (rows.length > 1) {
+                    btn.closest('[data-item-row]')?.remove();
+                    refreshPreview();
+                }
+            };
+        });
+    };
+
+    addButton.addEventListener('click', () => {
+        const index = collectionHolder.querySelectorAll('[data-item-row]').length;
+        const prototype = collectionHolder.dataset.prototype || '';
+        const formHtml = prototype.replace(/__name__/g, String(index));
+        const wrapper = document.createElement('div');
+        wrapper.className = 'item-row';
+        wrapper.setAttribute('data-item-row', '1');
+        wrapper.innerHTML = formHtml + '<button type="button" class="btn btn-secondary remove-item-btn">Remove</button>';
+        collectionHolder.appendChild(wrapper);
+        wireRemoveButtons();
+        wrapper.querySelectorAll('select, input').forEach((el) => {
+            el.classList.add('form-control');
+            if (el.name.endsWith('[quantity]')) {
+                el.classList.add('qty-input');
+                el.setAttribute('min', '1');
+            }
+            if (el.name.endsWith('[item]')) {
+                el.classList.add('item-select');
+            }
+            el.addEventListener('change', refreshPreview);
+            el.addEventListener('input', refreshPreview);
+        });
+        refreshPreview();
+    });
+
+    collectionHolder.querySelectorAll('select, input').forEach((el) => {
+        if (el.name.endsWith('[quantity]')) {
+            el.classList.add('qty-input');
+            el.setAttribute('min', '1');
+        }
+        if (el.name.endsWith('[item]')) {
+            el.classList.add('item-select');
+        }
+        el.classList.add('form-control');
+        el.addEventListener('change', refreshPreview);
+        el.addEventListener('input', refreshPreview);
+    });
+
+    if (eventSelect) {
+        eventSelect.addEventListener('change', refreshPreview);
+    }
+
+    wireRemoveButtons();
+    refreshPreview();
+})();
+</script>
+{% endblock %}

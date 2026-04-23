@@ -1,0 +1,47 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Food Donation Statistics · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Donation Statistics{% endblock %}
+
+{% block body %}
+  <div style="text-align: center; padding: 2rem 0;">
+    <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--espresso); margin-bottom: 0.5rem;">Donation Statistics & Charts</h1>
+    <p style="color: var(--text-2); font-size: 0.95rem; margin-bottom: 2.5rem;">View detailed charts about food donation events, charity performance, and more</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Line Chart Card -->
+    <div style="background: var(--ivory); border: 2px solid var(--blue); border-radius: 12px; padding: 1.8rem; text-align: center; transition: all 0.3s;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.8rem;">📈</div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 600; color: var(--espresso); margin-bottom: 0.5rem;">Line Chart</div>
+      <p style="font-size: 0.8rem; color: var(--text-2); line-height: 1.4;">Track monthly donation trends and portions distributed over time.</p>
+    </div>
+
+    <!-- Pie Chart Card -->
+    <div style="background: var(--ivory); border: 2px solid var(--green); border-radius: 12px; padding: 1.8rem; text-align: center; transition: all 0.3s;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.8rem;">🥧</div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 600; color: var(--espresso); margin-bottom: 0.5rem;">Pie Chart</div>
+      <p style="font-size: 0.8rem; color: var(--text-2); line-height: 1.4;">View event distribution across different statuses and outcomes.</p>
+    </div>
+
+    <!-- Bar Charts Card -->
+    <div style="background: var(--ivory); border: 2px solid var(--amber); border-radius: 12px; padding: 1.8rem; text-align: center; transition: all 0.3s;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.8rem;">📊</div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 600; color: var(--espresso); margin-bottom: 0.5rem;">Bar Charts</div>
+      <p style="font-size: 0.8rem; color: var(--text-2); line-height: 1.4;">Compare charity performance and portions per event with bar visualizations.</p>
+    </div>
+
+    <!-- Stats Table Card -->
+    <div style="background: var(--ivory); border: 2px solid var(--purple); border-radius: 12px; padding: 1.8rem; text-align: center; transition: all 0.3s;">
+      <div style="font-size: 2.5rem; margin-bottom: 0.8rem;">📋</div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 600; color: var(--espresso); margin-bottom: 0.5rem;">Stats Table</div>
+      <p style="font-size: 0.8rem; color: var(--text-2); line-height: 1.4;">Browse detailed statistics of all donation events in a sortable table.</p>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 3rem;">
+    <a href="{{ path('app_food_donation_stats_dashboard') }}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 2rem; background: #1e3a5f; color: white; border: none; border-radius: 10px; font-weight: 600; text-decoration: none; font-size: 0.85rem; cursor: pointer; transition: all 0.3s;">
+      📊 Open Full Charts and Report Dashboard
+    </a>
+  </div>
+{% endblock %}

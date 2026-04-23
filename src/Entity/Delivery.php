@@ -207,13 +207,71 @@ class Delivery
         return $this;
     }
 
+    #[ORM\Column(type: 'decimal', nullable: true)]
+    private ?string $driver_latitude = null;
+
+    public function getDriver_latitude(): ?string
+    {
+        return $this->driver_latitude;
+    }
+
+    public function setDriver_latitude(?string $driver_latitude): self
+    {
+        $this->driver_latitude = $driver_latitude;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'decimal', nullable: true)]
+    private ?string $driver_longitude = null;
+
+    public function getDriver_longitude(): ?string
+    {
+        return $this->driver_longitude;
+    }
+
+    public function setDriver_longitude(?string $driver_longitude): self
+    {
+        $this->driver_longitude = $driver_longitude;
+        return $this;
+    }
+
     #[ORM\Column(type: 'text', nullable: true)]
     #[Assert\Length(max: 1000, maxMessage: 'Delivery notes cannot be longer than {{ limit }} characters.')]
     private ?string $delivery_notes = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $candidate_delivery_men = null; // JSON array of delivery_man_id candidates
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $candidate_index = null;
+
     public function getDelivery_notes(): ?string
     {
         return $this->delivery_notes;
+    }
+
+    public function getCandidateDeliveryMen(): ?array
+    {
+        if (!$this->candidate_delivery_men) return null;
+        $data = json_decode($this->candidate_delivery_men, true);
+        return is_array($data) ? $data : null;
+    }
+
+    public function setCandidateDeliveryMen(?array $ids): self
+    {
+        $this->candidate_delivery_men = $ids ? json_encode(array_values($ids)) : null;
+        return $this;
+    }
+
+    public function getCandidateIndex(): ?int
+    {
+        return $this->candidate_index;
+    }
+
+    public function setCandidateIndex(?int $i): self
+    {
+        $this->candidate_index = $i;
+        return $this;
     }
 
     public function setDelivery_notes(?string $delivery_notes): self
@@ -361,6 +419,41 @@ class Delivery
         return $this;
     }
 
+    // GPS Destination fields for Fleet Management
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $destination_latitude = null;
+
+    public function getDestination_latitude(): ?float
+    {
+        return $this->destination_latitude ? (float) $this->destination_latitude : null;
+    }
+
+    public function setDestination_latitude(?float $destination_latitude): self
+    {
+        $this->destination_latitude = $destination_latitude;
+        return $this;
+    }
+
+    public function getDestinationLatitude(): ?float { return $this->getDestination_latitude(); }
+    public function setDestinationLatitude(?float $lat): self { return $this->setDestination_latitude($lat); }
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $destination_longitude = null;
+
+    public function getDestination_longitude(): ?float
+    {
+        return $this->destination_longitude ? (float) $this->destination_longitude : null;
+    }
+
+    public function setDestination_longitude(?float $destination_longitude): self
+    {
+        $this->destination_longitude = $destination_longitude;
+        return $this;
+    }
+
+    public function getDestinationLongitude(): ?float { return $this->getDestination_longitude(); }
+    public function setDestinationLongitude(?float $lon): self { return $this->setDestination_longitude($lon); }
+
     // Symfony PropertyAccessor camelCase aliases for snake_case properties
     public function getId(): ?int { return $this->getDelivery_id(); }
     public function setId(int $id): self { return $this->setDelivery_id($id); }
@@ -397,6 +490,12 @@ class Delivery
     
     public function getCurrentLongitude(): ?string { return $this->getCurrent_longitude(); }
     public function setCurrentLongitude(?string $lon): self { return $this->setCurrent_longitude($lon); }
+
+    public function getDriverLatitude(): ?string { return $this->getDriver_latitude(); }
+    public function setDriverLatitude(?string $lat): self { return $this->setDriver_latitude($lat); }
+
+    public function getDriverLongitude(): ?string { return $this->getDriver_longitude(); }
+    public function setDriverLongitude(?string $lon): self { return $this->setDriver_longitude($lon); }
     
     public function getDeliveryNotes(): ?string { return $this->getDelivery_notes(); }
     public function setDeliveryNotes(?string $notes): self { return $this->setDelivery_notes($notes); }
