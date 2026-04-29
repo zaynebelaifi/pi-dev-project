@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=3">
+  <link rel="stylesheet" href="/styles/app.css?v=4">
 </head>
 <body>
   <!-- NAV -->
@@ -35,6 +35,8 @@
       {% set user_email = app.request.session.get('user_email') %}
       {% set user_phone = app.request.session.get('user_phone') %}
       {% set user_address = app.request.session.get('user_address') %}
+      {% set is_customer = is_granted('ROLE_CUSTOMER') or is_granted('ROLE_CLIENT') %}
+      {% set is_authenticated = is_granted('IS_AUTHENTICATED_FULLY') %}
       <div class="nav-actions">
         <button class="cart-btn" id="openCart">
           Cart <span class="cart-badge" id="cartCount">0</span>
@@ -69,12 +71,12 @@
 
   <!-- FLASH MESSAGES -->
   {% for message in app.flashes('error') %}
-    <div class="flash-message flash-error">
+    <div class="flash-message flash-error" data-flash>
       {{ message }}
     </div>
   {% endfor %}
   {% for message in app.flashes('success') %}
-    <div class="flash-message flash-success">
+    <div class="flash-message flash-success" data-flash>
       {{ message }}
     </div>
   {% endfor %}
@@ -173,15 +175,6 @@
         {# Count total available dishes across sections #}
         {% set totalDishes = 0 %}
         {% for section in menuSections %}
-<<<<<<< HEAD
-          <div style="margin: 1.2rem 0 .7rem;">
-            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">
-              {{ section.menu.title }}
-            </h4>
-            {% if section.menu.description %}
-              <p style="margin:.25rem 0 0;color:var(--text-2);">{{ section.menu.description }}</p>
-            {% endif %}
-=======
           {% set totalDishes = totalDishes + (section.dishes is defined ? section.dishes|length : 0) %}
         {% endfor %}
 
@@ -190,7 +183,6 @@
           <div style="margin:1.2rem 0 .7rem;">
             <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">Main Menu</h4>
             <p style="margin:.25rem 0 0;color:var(--text-2);">All available dishes</p>
->>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
           </div>
 
           <div class="menu-grid">
@@ -336,15 +328,31 @@
                   · <span class="status status-{{ eventStatusApiClass }}" data-event-status>{{ eventStatus }}</span>
                   {% if event.deliveryId %}· Delivery #{{ event.deliveryId }}{% endif %}
                 </p>
-                {% if isUserLoggedIn is defined and isUserLoggedIn and eventStatusKey == 'scheduled' %}
-                  <div class="event-inline-actions" data-register-wrapper data-registered="{{ event.donationEventId in (registeredEventIds|default([])) ? '1' : '0' }}">
-                    {% if event.donationEventId in (registeredEventIds|default([])) %}
-                      <span class="event-registered-btn">Registered</span>
-                    {% else %}
-                      <form method="post" action="{{ path('app_client_food_donation_register', {'id': event.donationEventId}) }}" class="js-event-register-form" data-event-id="{{ event.donationEventId }}">
-                        <input type="hidden" name="_token" value="{{ csrf_token('register-event' ~ event.donationEventId) }}">
-                        <button type="submit" class="event-register-btn-ui">Register</button>
-                      </form>
+                {% if eventStatusKey == 'scheduled' %}
+                  <div
+                    class="event-inline-actions"
+                    data-register-wrapper
+                    data-registered="{{ event.donationEventId in (registeredEventIds|default([])) ? '1' : '0' }}"
+                    data-register-token="{{ csrf_token('register-event' ~ event.donationEventId) }}"
+                    data-unregister-token="{{ csrf_token('unregister-event' ~ event.donationEventId) }}"
+                  >
+                    {% if is_customer %}
+                      {% if event.donationEventId in (registeredEventIds|default([])) %}
+                        <div class="registered-badge">
+                          <span>Registered</span>
+                        </div>
+                      {% else %}
+                        <div class="register-status">
+                          <span class="status-badge">SCHEDULED</span>
+                          <span class="registered-count">0 registered</span>
+                        </div>
+                        <form method="post" action="{{ path('app_client_food_donation_register', {'id': event.donationEventId}) }}" class="js-event-register-form" data-event-id="{{ event.donationEventId }}">
+                          <input type="hidden" name="_token" value="{{ csrf_token('register-event' ~ event.donationEventId) }}">
+                          <button type="submit" class="event-register-btn-ui">Register</button>
+                        </form>
+                      {% endif %}
+                    {% elseif not is_authenticated %}
+                      <a href="{{ path('app_login') }}" class="event-register-btn-ui">Login to Register</a>
                     {% endif %}
                   </div>
                 {% endif %}
@@ -362,7 +370,7 @@
         {% endif %}
       </div>
 
-      {% if isUserLoggedIn is defined and isUserLoggedIn %}
+      {% if is_customer %}
         <div class="my-registered-events-cta">
           <button type="button" class="btn-secondary" id="openMyRegisteredEvents">My Registered Events</button>
         </div>
@@ -371,36 +379,31 @@
   </section>
 
   <!-- AI RECOMMENDATIONS SECTION -->
-  <section class="recommended-events-section" id="ai-recommendations">
-    <div class="container">
-      <div class="section-head reveal">
-        <div>
-          <small>Personalized With AI</small>
-          <h3><span class="ai-badge">AI Picks For You</span> Recommended <em>Events</em></h3>
+  {% if is_customer %}
+    <section class="recommended-events-section" id="ai-recommendations">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <small>Personalized With AI</small>
+            <h3><span class="ai-badge">AI Picks For You</span> Recommended <em>Events</em></h3>
+          </div>
+          <p class="recommended-subtitle">Based on events you have registered for before.</p>
         </div>
-        <p class="recommended-subtitle">Based on events you have registered for before.</p>
-      </div>
 
-      <div
-        id="recommendations"
-        class="events-container"
-        data-authenticated="{{ isUserLoggedIn is defined and isUserLoggedIn ? '1' : '0' }}"
-        data-user-role="{{ app.request.session.get('user_role') ?: '' }}"
-      >
-        {% if isUserLoggedIn is defined and isUserLoggedIn %}
-          <div class="loading-spinner">
-            <div class="spinner"></div>
-            <p>Finding perfect events for you...</p>
+        <div
+          id="recommendations"
+          data-recommended-events
+          class="event-list events-container"
+          data-authenticated="{{ is_authenticated ? '1' : '0' }}"
+          data-user-role="{{ is_customer ? 'ROLE_CUSTOMER' : (app.request.session.get('user_role') ?: '') }}"
+        >
+          <div class="event reveal">
+            <p>Loading recommendations...</p>
           </div>
-        {% else %}
-          <div class="recommendation-empty">
-            Login to see personalized AI event recommendations.
-            <div style="margin-top:.65rem;"><a href="{{ path('app_login') }}" class="rec-login-btn">Login to Register</a></div>
-          </div>
-        {% endif %}
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  {% endif %}
 
   <!-- CTA -->
   <section class="cta">
@@ -518,7 +521,7 @@
     </div>
   </div>
 
-  {% if isUserLoggedIn is defined and isUserLoggedIn %}
+  {% if is_customer %}
     <div class="popup-overlay" id="myRegisteredEventsPopup">
       <div class="popup-box my-events-popup-box">
         <div class="my-events-popup-head">
@@ -545,13 +548,9 @@
                   <a class="event-register-btn-ui" href="{{ path('app_client_food_donation_show', {'id': event.donationEventId}) }}">View Details</a>
                   <button
                     type="button"
-                    class="event-register-btn-ui js-event-toggle-btn"
+                    class="event-register-btn-ui js-unregister-btn"
                     data-event-id="{{ event.donationEventId }}"
-                    data-action="unregister"
-                    data-register-url="{{ path('app_client_food_donation_register', {'id': event.donationEventId}) }}"
-                    data-unregister-url="{{ path('app_client_food_donation_unregister', {'id': event.donationEventId}) }}"
-                    data-register-token="{{ csrf_token('register-event' ~ event.donationEventId) }}"
-                    data-unregister-token="{{ csrf_token('unregister-event' ~ event.donationEventId) }}"
+                    data-csrf="{{ csrf_token('unregister-event' ~ event.donationEventId) }}"
                   >Unregister</button>
                 </div>
               </article>
@@ -593,15 +592,56 @@
   </form>
 
   {% endblock %}
-<<<<<<< HEAD
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{{ asset('app.js') }}?v=2"></script>
-  <script src="{{ asset('js/recommendations.js') }}?v=2"></script>
-=======
 
   {% block javascripts %}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
->>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
+  <script src="{{ asset('app.js') }}?v=2"></script>
+  <script src="{{ asset('js/recommendations.js') }}?v=2"></script>
+  <script>
+    (function () {
+      const nav = document.getElementById('nav');
+      if (nav) {
+        window.addEventListener('scroll', () => {
+          nav.classList.toggle('scrolled', window.scrollY > 40);
+        });
+      }
+
+      const revealNodes = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+      if (!revealNodes.length) {
+        return;
+      }
+
+      if (!('IntersectionObserver' in window)) {
+        revealNodes.forEach((node) => node.classList.add('show'));
+        return;
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          entry.target.classList.add('show');
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.12 });
+
+      revealNodes.forEach((node) => observer.observe(node));
+    })();
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const flashMessages = document.querySelectorAll('[data-flash]');
+      flashMessages.forEach((msg) => {
+        window.setTimeout(() => {
+          msg.style.transition = 'opacity 0.3s ease';
+          msg.style.opacity = '0';
+          window.setTimeout(() => msg.remove(), 300);
+        }, 3000);
+      });
+    });
+  </script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const openBtn = document.getElementById('openMyRegisteredEvents');
@@ -615,6 +655,7 @@
       function openPopup() {
         popup.classList.add('active');
         document.body.style.overflow = 'hidden';
+        document.dispatchEvent(new CustomEvent('my-registrations:open'));
       }
 
       function closePopup() {
@@ -640,6 +681,29 @@
   </script>
   <script>
     (function () {
+      const REGISTRATION_STATE_ENDPOINT = '{{ path('app_client_food_donation_registration_state') }}';
+      const REGISTRATION_SYNC_MS = 15000;
+      const RECOMMENDATIONS_FADE_MS = 380;
+
+      const showToast = (message, type = 'success') => {
+        const toast = document.createElement('div');
+        toast.className = `flash-message ${type === 'error' ? 'flash-error' : 'flash-success'}`;
+        toast.textContent = String(message || 'Done.');
+        document.body.prepend(toast);
+        window.setTimeout(() => {
+          toast.remove();
+        }, 2600);
+      };
+
+      window.BIG4ShowToast = showToast;
+
+      const escapeHtml = (value) => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
       const setRegistrationCount = (eventId, count) => {
         document.querySelectorAll(`[data-registration-count-for="${eventId}"]`).forEach((node) => {
           node.textContent = String(Number(count || 0));
@@ -650,11 +714,9 @@
         const normalized = action === 'register' ? 'register' : 'unregister';
         button.dataset.action = normalized;
         button.textContent = normalized === 'register' ? 'Register' : 'Unregister';
-
-        if (button.classList.contains('btn-register') || button.classList.contains('btn-unregister')) {
-          button.classList.toggle('btn-register', normalized === 'register');
-          button.classList.toggle('btn-unregister', normalized !== 'register');
-        }
+        button.classList.toggle('btn-register', normalized === 'register');
+        button.classList.toggle('btn-unregister', normalized === 'unregister');
+        button.classList.toggle('btn-unregister-sm', normalized === 'unregister' && button.classList.contains('btn-unregister-sm'));
       };
 
       const replaceEventCardRegisterState = (eventId, isRegistered, registerToken) => {
@@ -663,19 +725,154 @@
           return;
         }
 
+        const currentToken = wrapper.querySelector('input[name="_token"]')?.value || '';
+        const effectiveToken = String(registerToken || currentToken || '');
+        const unregisterToken = String(wrapper.dataset.unregisterToken || '');
+        const registerUrl = `/client/food-donation/event/${eventId}/register`;
+        const unregisterUrl = `/client/food-donation/event/${eventId}/unregister`;
+
         if (isRegistered) {
           wrapper.dataset.registered = '1';
-          wrapper.innerHTML = '<span class="event-registered-btn">Registered</span>';
+          wrapper.innerHTML = `
+            <div class="registered-badge">
+              <span>Registered</span>
+            </div>
+          `;
           return;
         }
 
         wrapper.dataset.registered = '0';
         wrapper.innerHTML = `
           <form method="post" action="/client/food-donation/event/${eventId}/register" class="js-event-register-form" data-event-id="${eventId}">
-            <input type="hidden" name="_token" value="${registerToken}">
+            <input type="hidden" name="_token" value="${effectiveToken}">
             <button type="submit" class="event-register-btn-ui">Register</button>
           </form>
         `;
+      };
+
+      const renderMyRegisteredEvents = (events) => {
+        const grid = document.querySelector('#myRegisteredEventsPopup .my-events-grid');
+        if (!grid) {
+          return;
+        }
+
+        if (!Array.isArray(events) || events.length === 0) {
+          grid.innerHTML = '<p class="empty-copy js-no-events-msg">You have no registered events.</p>';
+          return;
+        }
+
+        grid.innerHTML = events.map((event) => {
+          const eventId = Number(event.id || 0);
+          return `
+            <article class="my-event-card">
+              <span class="my-event-date">${escapeHtml(event.event_date || 'Date TBD')}</span>
+              <h4 class="my-event-title">${escapeHtml(event.charity_name || ('Event #' + eventId))}</h4>
+              <p class="my-event-summary">
+                ${Number(event.total_quantity || 0)} items · ${escapeHtml(event.status || 'Scheduled')} ·
+                <span data-registration-count-for="${eventId}">${Number(event.registration_count || 0)}</span> registered
+              </p>
+              <div class="event-inline-actions">
+                <a class="event-register-btn-ui" href="${escapeHtml(event.view_url || '#')}">View Details</a>
+                <button
+                  type="button"
+                  class="event-register-btn-ui js-unregister-btn"
+                  data-event-id="${eventId}"
+                  data-unregister-url="${escapeHtml(event.unregister_url || '')}"
+                  data-csrf="${escapeHtml(event.unregister_token || '')}"
+                >Unregister</button>
+              </div>
+            </article>
+          `;
+        }).join('');
+      };
+
+      const updateMyRegistrationsPage = (eventId, isRegistered) => {
+        const card = document.querySelector(`.my-reg-card [data-event-id="${eventId}"]`)?.closest('.my-reg-card');
+        const grid = document.querySelector('.my-reg-grid');
+        const shell = document.querySelector('.my-registrations-shell');
+
+        if (!card) {
+          return;
+        }
+
+        if (!isRegistered) {
+          card.remove();
+        }
+
+        if (grid && grid.children.length === 0 && shell && !shell.querySelector('.my-reg-empty')) {
+          const empty = document.createElement('div');
+          empty.className = 'my-reg-empty';
+          empty.innerHTML = `
+            <p>You have not registered for any events yet.</p>
+            <a href="{{ path('app_client_food_donation_calendar') }}" class="btn-register-link">Browse Events</a>
+          `;
+          grid.remove();
+          shell.appendChild(empty);
+        }
+      };
+
+      const notifyRecommendationsRefresh = () => {
+        document.dispatchEvent(new CustomEvent('recommendations:refresh'));
+      };
+
+      const refreshRecommendedEvents = () => {
+        const recommendedSection = document.querySelector('[data-recommended-events]');
+        if (!recommendedSection) {
+          return;
+        }
+
+        recommendedSection.style.opacity = '0.6';
+        recommendedSection.style.pointerEvents = 'none';
+        notifyRecommendationsRefresh();
+
+        window.setTimeout(() => {
+          recommendedSection.style.opacity = '1';
+          recommendedSection.style.pointerEvents = 'auto';
+        }, RECOMMENDATIONS_FADE_MS);
+      };
+
+      const syncRegistrationState = async () => {
+        try {
+          const response = await fetch(REGISTRATION_STATE_ENDPOINT, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            return;
+          }
+
+          const payload = await response.json();
+          if (!payload || payload.success !== true) {
+            return;
+          }
+
+          const registrationCounts = payload.registration_counts || {};
+          Object.keys(registrationCounts).forEach((eventId) => {
+            setRegistrationCount(Number(eventId), registrationCounts[eventId]);
+          });
+
+          const registeredEventIds = new Set((payload.registered_event_ids || []).map((id) => Number(id)));
+          const eventMap = new Map((payload.my_events || []).map((event) => [Number(event.id || 0), event]));
+
+          document.querySelectorAll('.event[data-event-id]').forEach((eventNode) => {
+            const eventId = Number(eventNode.getAttribute('data-event-id') || 0);
+            if (!eventId) {
+              return;
+            }
+
+            const isRegistered = registeredEventIds.has(eventId);
+            const eventData = eventMap.get(eventId);
+            replaceEventCardRegisterState(eventId, isRegistered, String(eventData?.register_token || ''));
+          });
+
+          renderMyRegisteredEvents(payload.my_events || []);
+          refreshRecommendedEvents();
+        } catch (error) {
+          console.error('Registration sync failed:', error);
+        }
       };
 
       const postEventAction = async ({ url, token }) => {
@@ -727,14 +924,116 @@
 
           setRegistrationCount(eventId, payload.registration_count ?? 0);
           replaceEventCardRegisterState(eventId, true, registerToken);
+          showToast(payload.message || 'You are now registered for this event.', 'success');
+          await syncRegistrationState();
         } catch (error) {
           submitButton.disabled = false;
           submitButton.textContent = previousText;
-          window.alert(error instanceof Error ? error.message : 'Registration failed. Please try again.');
+          showToast(error instanceof Error ? error.message : 'Registration failed. Please try again.', 'error');
         }
       });
 
       document.addEventListener('click', async (event) => {
+        const modalUnregisterButton = event.target.closest('.js-unregister-btn');
+        if (modalUnregisterButton && modalUnregisterButton.closest('#myRegisteredEventsPopup')) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          const eventId = modalUnregisterButton.dataset.eventId;
+          const csrfToken = modalUnregisterButton.dataset.csrf || modalUnregisterButton.dataset.unregisterToken || '';
+          const eventTitle = modalUnregisterButton.closest('.my-event-card')?.querySelector('.my-event-title')?.textContent || 'this event';
+
+          if (!eventId || !csrfToken) {
+            showToast('Unable to unregister right now. Please refresh and try again.', 'error');
+            return;
+          }
+
+          const confirmModal = document.createElement('div');
+          confirmModal.className = 'custom-confirm-modal';
+          confirmModal.innerHTML = `
+            <div class="custom-confirm-box">
+              <h4>Unregister from "${escapeHtml(eventTitle)}"?</h4>
+              <p>You will be removed from this event.</p>
+              <div class="confirm-actions">
+                <button class="confirm-cancel-btn" type="button">Cancel</button>
+                <button class="confirm-proceed-btn" type="button">Unregister</button>
+              </div>
+            </div>
+          `;
+
+          document.body.appendChild(confirmModal);
+
+          const closeConfirmModal = () => {
+            if (confirmModal.parentNode) {
+              confirmModal.remove();
+            }
+          };
+
+          confirmModal.querySelector('.confirm-cancel-btn')?.addEventListener('click', closeConfirmModal);
+
+          confirmModal.querySelector('.confirm-proceed-btn')?.addEventListener('click', async () => {
+            modalUnregisterButton.disabled = true;
+            modalUnregisterButton.textContent = 'Unregistering...';
+
+            try {
+              const response = await fetch(
+                `{{ path('app_client_food_donation_unregister', {'id': 'PLACEHOLDER'}) }}`.replace('PLACEHOLDER', eventId),
+                {
+                  method: 'POST',
+                  headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json',
+                  },
+                  body: '_token=' + encodeURIComponent(csrfToken),
+                }
+              );
+
+              const payload = await response.json();
+              if (!response.ok || !payload.success) {
+                throw new Error(payload.message || 'Failed to unregister. Please try again.');
+              }
+
+              const numericEventId = Number(eventId);
+              setRegistrationCount(numericEventId, payload.registration_count ?? 0);
+
+              const card = modalUnregisterButton.closest('.my-event-card');
+              if (card) {
+                card.style.transition = 'opacity 0.3s ease';
+                card.style.opacity = '0';
+
+                window.setTimeout(() => {
+                  card.remove();
+                  const popupGrid = document.querySelector('#myRegisteredEventsPopup .my-events-grid');
+                  if (popupGrid && popupGrid.querySelectorAll('.my-event-card').length === 0) {
+                    popupGrid.innerHTML = '<p class="empty-copy js-no-events-msg">You are not registered for any events yet.</p>';
+                  }
+                }, 300);
+              }
+
+              replaceEventCardRegisterState(numericEventId, false, String(modalUnregisterButton.dataset.registerToken || ''));
+              updateMyRegistrationsPage(numericEventId, false);
+              showToast(payload.message || 'You have been unregistered from this event.', 'success');
+              refreshRecommendedEvents();
+              await syncRegistrationState();
+            } catch (error) {
+              modalUnregisterButton.disabled = false;
+              modalUnregisterButton.textContent = 'Unregister';
+              showToast(error instanceof Error ? error.message : 'An error occurred. Please try again.', 'error');
+            } finally {
+              closeConfirmModal();
+            }
+          });
+
+          confirmModal.addEventListener('click', (clickEvent) => {
+            if (clickEvent.target === confirmModal) {
+              closeConfirmModal();
+            }
+          });
+
+          return;
+        }
+
         const toggleButton = event.target.closest('.js-event-toggle-btn');
         if (!toggleButton) {
           return;
@@ -761,39 +1060,28 @@
           setRegistrationCount(eventId, payload.registration_count ?? 0);
           setButtonState(toggleButton, isNowRegistered ? 'unregister' : 'register');
           replaceEventCardRegisterState(eventId, isNowRegistered, String(toggleButton.dataset.registerToken || ''));
-
-          // If unregistered inside the My Registered Events popup, remove the card
-          if (!isNowRegistered) {
-            const card = toggleButton.closest('.my-event-card');
-            if (card) {
-              card.style.transition = 'opacity .25s, transform .25s';
-              card.style.opacity = '0';
-              card.style.transform = 'scale(.96)';
-              setTimeout(() => {
-                card.remove();
-                const grid = document.querySelector('#myRegisteredEventsPopup .my-events-grid');
-                if (grid && !grid.querySelector('.my-event-card')) {
-                  // Show empty state
-                  let msg = grid.querySelector('.js-no-events-msg');
-                  if (!msg) {
-                    msg = document.createElement('p');
-                    msg.className = 'empty-copy js-no-events-msg';
-                    grid.appendChild(msg);
-                  }
-                  msg.textContent = 'You have no registered events.';
-                  // Update the trigger button badge if present
-                  const badge = document.querySelector('.my-events-badge');
-                  if (badge) badge.textContent = '0';
-                }
-              }, 270);
-            }
-          }
+          updateMyRegistrationsPage(eventId, isNowRegistered);
+          showToast(payload.message || 'Registration updated.', 'success');
+          refreshRecommendedEvents();
+          await syncRegistrationState();
         } catch (error) {
           toggleButton.textContent = previousText;
-          window.alert(error instanceof Error ? error.message : 'Action failed. Please try again.');
+          showToast(error instanceof Error ? error.message : 'Action failed. Please try again.', 'error');
         } finally {
           toggleButton.disabled = false;
         }
+      });
+
+      syncRegistrationState();
+      window.setInterval(syncRegistrationState, REGISTRATION_SYNC_MS);
+
+      document.addEventListener('my-registrations:open', () => {
+        syncRegistrationState();
+      });
+
+      document.addEventListener('registration-state-changed', () => {
+        syncRegistrationState();
+        refreshRecommendedEvents();
       });
     })();
   </script>
@@ -856,10 +1144,6 @@
       setInterval(refreshStatuses, INTERVAL_MS);
     })();
   </script>
-<<<<<<< HEAD
-=======
   {% endblock %}
-
->>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
 </body>
 </html>

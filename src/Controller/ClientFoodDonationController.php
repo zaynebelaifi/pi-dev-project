@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ClientFoodDonationController extends AbstractController
 {
@@ -94,9 +95,9 @@ class ClientFoodDonationController extends AbstractController
         $currentUserId = $currentUser?->getId();
         $isAdmin = $request->getSession()->get('user_role') === 'ROLE_ADMIN';
 
-        $userRole = $request->getSession()->get('user_role');
-        $isCustomer = $userRole === 'ROLE_CLIENT';
-        $isAdmin = $userRole === 'ROLE_ADMIN';
+        $userRole = (string) $request->getSession()->get('user_role');
+        $isCustomer = $this->isCustomerGranted();
+        $isAdmin = $userRole === 'ROLE_ADMIN' || $this->isGranted('ROLE_ADMIN');
         $isRegistered = $isCustomer && $currentUser instanceof User
             ? $this->eventRegistrationRepository->isUserRegisteredForEvent((int) $currentUser->getId(), (int) $event->getDonationEventId())
             : false;
@@ -121,17 +122,86 @@ class ClientFoodDonationController extends AbstractController
     #[Route('/client/food-donation/my-registrations', name: 'app_client_food_donation_my_registrations')]
     public function myRegistrations(Request $request): Response
     {
-        $userRole = $request->getSession()->get('user_role');
         $user = $this->resolveCurrentUser($request);
 
-        if (!$user instanceof User || $userRole !== 'ROLE_CLIENT') {
+        if (!$this->isGranted('IS_AUTHENTICATED_FULLY') || !$user instanceof User) {
             return $this->redirectToRoute('app_login');
+        }
+
+        if (!$this->isCustomerGranted()) {
+            throw $this->createAccessDeniedException('Only customers can view registered events.');
         }
 
         $registrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
 
         return $this->render('client_food_donation/my_registrations.html.twig', [
             'registrations' => $registrations,
+        ]);
+    }
+
+    #[Route('/api/client/food-donation/registrations-state', name: 'app_client_food_donation_registration_state', methods: ['GET'])]
+    public function registrationState(Request $request): JsonResponse
+    {
+        $user = $this->resolveCurrentUser($request);
+
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Please log in to manage registrations.',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (!$this->isCustomerUser($user, $request)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Only customers can manage event registrations.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $events = $this->foodDonationEventRepository->findBy([], ['event_date' => 'ASC']);
+        $eventIds = [];
+        foreach ($events as $event) {
+            if ($event instanceof FoodDonationEvent && $event->getDonationEventId() !== null) {
+                $eventIds[] = (int) $event->getDonationEventId();
+            }
+        }
+
+        $registeredIds = $this->eventRegistrationRepository->findRegisteredEventIdsForUserId((int) $user->getId(), $eventIds);
+        $registrationCounts = $this->eventRegistrationRepository->countByEventIds($eventIds);
+
+        $myRegistrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
+        $myEvents = [];
+        foreach ($myRegistrations as $registration) {
+            if (!$registration instanceof EventRegistration) {
+                continue;
+            }
+
+            $event = $registration->getEvent();
+            if (!$event instanceof FoodDonationEvent || $event->getDonationEventId() === null) {
+                continue;
+            }
+
+            $eventId = (int) $event->getDonationEventId();
+            $myEvents[] = [
+                'id' => $eventId,
+                'charity_name' => (string) ($event->getCharityName() ?? ('Event #' . $eventId)),
+                'event_date' => $event->getEventDate()?->format('M j, Y H:i') ?? 'Date TBD',
+                'status' => (string) ($event->getStatus() ?? FoodDonationEvent::STATUS_SCHEDULED),
+                'total_quantity' => (int) ($event->getTotalQuantity() ?? 0),
+                'registration_count' => (int) ($registrationCounts[$eventId] ?? 0),
+                'view_url' => $this->generateUrl('app_client_food_donation_show', ['id' => $eventId]),
+                'register_url' => $this->generateUrl('app_client_food_donation_register', ['id' => $eventId]),
+                'unregister_url' => $this->generateUrl('app_client_food_donation_unregister', ['id' => $eventId]),
+                'register_token' => $this->csrfTokenManager->getToken('register-event' . $eventId)->getValue(),
+                'unregister_token' => $this->csrfTokenManager->getToken('unregister-event' . $eventId)->getValue(),
+            ];
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'registered_event_ids' => $registeredIds,
+            'registration_counts' => $registrationCounts,
+            'my_events' => $myEvents,
         ]);
     }
 
@@ -151,9 +221,8 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_client_food_donation_calendar');
         }
 
-        $userRole = $request->getSession()->get('user_role');
         $user = $this->resolveCurrentUser($request);
-        if (!$user instanceof User) {
+        if (!$this->isGranted('IS_AUTHENTICATED_FULLY') || !$user instanceof User) {
             if ($isAjaxRequest) {
                 return new JsonResponse(['success' => false, 'message' => 'Please log in to register for events.'], Response::HTTP_UNAUTHORIZED);
             }
@@ -163,7 +232,7 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        if ($userRole !== 'ROLE_CLIENT') {
+        if (!$this->isCustomerGranted()) {
             if ($isAjaxRequest) {
                 return new JsonResponse(['success' => false, 'message' => 'Only customers can register for events.'], Response::HTTP_FORBIDDEN);
             }
@@ -256,7 +325,7 @@ class ClientFoodDonationController extends AbstractController
         }
 
         $user = $this->resolveCurrentUser($request);
-        if (!$user instanceof User) {
+        if (!$this->isGranted('IS_AUTHENTICATED_FULLY') || !$user instanceof User) {
             if ($isAjaxRequest) {
                 return new JsonResponse(['success' => false, 'message' => 'Please log in to manage registrations.'], Response::HTTP_UNAUTHORIZED);
             }
@@ -266,8 +335,7 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $userRole = $request->getSession()->get('user_role');
-        if ($userRole !== 'ROLE_CLIENT') {
+        if (!$this->isCustomerGranted()) {
             if ($isAjaxRequest) {
                 return new JsonResponse(['success' => false, 'message' => 'Only customers can manage event registrations.'], Response::HTTP_FORBIDDEN);
             }
@@ -312,8 +380,6 @@ class ClientFoodDonationController extends AbstractController
         $this->entityManager->flush();
 
         $registrationCount = (int) ($this->eventRegistrationRepository->countByEventIds([(int) $event->getDonationEventId()])[(int) $event->getDonationEventId()] ?? 0);
-
-        $this->addFlash('success', 'You have been unregistered from this event.');
 
         if ($isAjaxRequest) {
             return new JsonResponse([
@@ -412,6 +478,157 @@ class ClientFoodDonationController extends AbstractController
 
         $this->addFlash('success', 'Your rating has been submitted successfully');
         return $this->redirectToRoute('app_client_food_donation_show', ['id' => $id]);
+    }
+
+    #[Route('/client/food-donation/recommendations', name: 'app_client_food_donation_recommendations', methods: ['GET'])]
+    #[Route('/api/client/recommended-events', name: 'app_api_recommended_events', methods: ['GET'])]
+    public function recommendedEvents(Request $request, HttpClientInterface $httpClient): JsonResponse
+    {
+        $user = $this->resolveCurrentUser($request);
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'success' => false,
+                'events' => [],
+                'message' => 'Not logged in',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (!$this->isCustomerUser($user, $request)) {
+            return new JsonResponse([
+                'success' => false,
+                'events' => [],
+                'message' => 'Recommendations are available for customer accounts only.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $registrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
+        $registeredEvents = [];
+        foreach ($registrations as $registration) {
+            if (!$registration instanceof EventRegistration) {
+                continue;
+            }
+
+            $event = $registration->getEvent();
+            if (!$event instanceof FoodDonationEvent || $event->getDonationEventId() === null) {
+                continue;
+            }
+
+            $registeredEvents[(int) $event->getDonationEventId()] = $event;
+        }
+
+        if ($registeredEvents === []) {
+            return new JsonResponse([
+                'success' => true,
+                'events' => [],
+                'message' => 'Register for your first event to get personalized recommendations!',
+            ]);
+        }
+
+        $registeredIds = array_keys($registeredEvents);
+        $candidateEvents = $this->foodDonationEventRepository->findRecommendationCandidates($registeredIds, 24);
+
+        if ($candidateEvents === []) {
+            return new JsonResponse([
+                'success' => true,
+                'events' => [],
+                'message' => 'No upcoming scheduled events are available right now.',
+            ]);
+        }
+
+        $prompt = $this->buildRecommendationPrompt(array_values($registeredEvents), $candidateEvents);
+
+        $aiRowsByEventId = [];
+        try {
+            $apiKey = trim((string) $this->getParameter('anthropic_api_key'));
+            if ($apiKey !== '') {
+                $response = $httpClient->request('POST', 'https://models.inference.ai.azure.com/chat/completions', [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'Content-Type' => 'application/json',
+                    ],
+                    'json' => [
+                        'model' => 'gpt-4o',
+                        'messages' => [
+                            ['role' => 'user', 'content' => $prompt],
+                        ],
+                        'temperature' => 0.7,
+                        'max_tokens' => 700,
+                    ],
+                    'timeout' => 25,
+                ]);
+
+                $payload = $response->toArray(false);
+                $rawContent = $this->extractRecommendationResponseText($payload);
+                $parsedRecommendations = $this->decodeRecommendationArray($rawContent);
+
+                foreach ($parsedRecommendations as $row) {
+                    $eventId = (int) ($row['id'] ?? 0);
+                    $reason = trim((string) ($row['reason'] ?? 'Recommended for you based on your registration history.'));
+                    if ($eventId > 0) {
+                        $aiRowsByEventId[$eventId] = [
+                            'reason' => $reason !== '' ? $reason : 'Recommended for you based on your registration history.',
+                            'match' => max(1, min(100, (int) ($row['matchPercentage'] ?? $row['match'] ?? $row['score'] ?? 0))),
+                        ];
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            $aiRowsByEventId = [];
+        }
+
+        if ($aiRowsByEventId === []) {
+            $baseMatch = 90;
+            foreach (array_slice($candidateEvents, 0, 3) as $fallbackEvent) {
+                if (!$fallbackEvent instanceof FoodDonationEvent || $fallbackEvent->getDonationEventId() === null) {
+                    continue;
+                }
+
+                $aiRowsByEventId[(int) $fallbackEvent->getDonationEventId()] = [
+                    'reason' => 'Recommended based on your previous registrations and upcoming scheduled matches.',
+                    'match' => max(72, $baseMatch),
+                ];
+                $baseMatch -= 7;
+            }
+        }
+
+        $recommendedEvents = [];
+        foreach (array_slice(array_keys($aiRowsByEventId), 0, 3) as $recommendedEventId) {
+            $event = $this->foodDonationEventRepository->find((int) $recommendedEventId);
+            if (!$event instanceof FoodDonationEvent) {
+                continue;
+            }
+
+            if (in_array((int) ($event->getDonationEventId() ?? 0), $registeredIds, true)) {
+                continue;
+            }
+
+            $status = $this->normalizeEventStatus($event->getStatus());
+            if ($status !== FoodDonationEvent::STATUS_SCHEDULED) {
+                continue;
+            }
+
+            $recommendedEvents[] = [
+                'donationEventId' => (int) ($event->getDonationEventId() ?? 0),
+                'charityName' => (string) ($event->getCharityName() ?? ('Event #' . $recommendedEventId)),
+                'eventDate' => $event->getEventDate()?->format(DATE_ATOM),
+                'status' => (string) ($event->getStatus() ?? FoodDonationEvent::STATUS_SCHEDULED),
+                'totalQuantity' => (int) ($event->getTotalQuantity() ?? 0),
+                'deliveryId' => $event->getDeliveryId(),
+                'aiReason' => (string) (($aiRowsByEventId[$recommendedEventId]['reason'] ?? 'Recommended for you based on your registration history.')),
+                'matchPercentage' => (int) (($aiRowsByEventId[$recommendedEventId]['match'] ?? 80)),
+                'viewUrl' => $this->generateUrl('app_client_food_donation_show', ['id' => $recommendedEventId]),
+                'registerUrl' => $this->generateUrl('app_client_food_donation_register', ['id' => $recommendedEventId]),
+                'registerToken' => $this->csrfTokenManager->getToken('register-event' . $recommendedEventId)->getValue(),
+            ];
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'events' => array_values($recommendedEvents),
+            'message' => $recommendedEvents === []
+                ? 'Register for your first event to get personalized recommendations!'
+                : 'Recommendations loaded successfully.',
+        ]);
     }
 
     #[Route('/event/{eventId}/review/{reviewId}/edit', name: 'app_event_review_edit_ajax', methods: ['POST'])]
@@ -593,6 +810,121 @@ class ClientFoodDonationController extends AbstractController
         }
 
         return $this->userRepository->find((int) $sessionUserId);
+    }
+
+    /**
+     * @param FoodDonationEvent[] $registeredEvents
+     * @param FoodDonationEvent[] $candidateEvents
+     */
+    private function buildRecommendationPrompt(array $registeredEvents, array $candidateEvents): string
+    {
+        $registeredLines = array_map(static function (FoodDonationEvent $event): string {
+            return sprintf(
+                '- %s (%s, %s, quantity: %d)',
+                (string) ($event->getCharityName() ?? ('Event #' . $event->getDonationEventId())),
+                $event->getEventDate()?->format('F j, Y H:i') ?? 'Date TBD',
+                (string) ($event->getStatus() ?? FoodDonationEvent::STATUS_SCHEDULED),
+                (int) ($event->getTotalQuantity() ?? 0)
+            );
+        }, $registeredEvents);
+
+        $candidateLines = array_map(static function (FoodDonationEvent $event): string {
+            return sprintf(
+                '- id: %d | charity: %s | date: %s | status: %s | quantity: %d',
+                (int) ($event->getDonationEventId() ?? 0),
+                (string) ($event->getCharityName() ?? ('Event #' . $event->getDonationEventId())),
+                $event->getEventDate()?->format('F j, Y H:i') ?? 'Date TBD',
+                (string) ($event->getStatus() ?? FoodDonationEvent::STATUS_SCHEDULED),
+                (int) ($event->getTotalQuantity() ?? 0)
+            );
+        }, $candidateEvents);
+
+        return "User has registered for:\n"
+            . implode("\n", $registeredLines)
+            . "\n\nAll available events in database:\n"
+            . implode("\n", $candidateLines)
+            . "\n\nBased on this user's donation event history, recommend 3 upcoming scheduled food donation events they have not registered for yet. "
+            . "For each recommendation explain in one short sentence why it matches their interests. Consider charity names, date proximity, status and quantities.\n\n"
+            . "Return ONLY a valid JSON array, no markdown, no extra text:\n"
+            . "[\n"
+            . "  {\"id\": 1, \"charity\": \"charity name\", \"reason\": \"brief 1-line reason why\", \"matchPercentage\": 85},\n"
+            . "  {\"id\": 2, \"charity\": \"charity name\", \"reason\": \"brief reason\", \"matchPercentage\": 80}\n"
+            . "]";
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function extractRecommendationResponseText(array $payload): string
+    {
+        $content = $payload['choices'][0]['message']['content'] ?? '';
+        if (is_string($content)) {
+            return $content;
+        }
+
+        if (is_array($content)) {
+            $parts = [];
+            foreach ($content as $entry) {
+                if (is_array($entry) && isset($entry['text']) && is_string($entry['text'])) {
+                    $parts[] = $entry['text'];
+                }
+            }
+
+            return implode("\n", $parts);
+        }
+
+        return '';
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function decodeRecommendationArray(string $rawContent): array
+    {
+        $content = trim($rawContent);
+        if ($content === '') {
+            return [];
+        }
+
+        $content = preg_replace('/^```(?:json)?\s*/i', '', $content) ?? $content;
+        $content = preg_replace('/\s*```$/', '', $content) ?? $content;
+        $content = trim($content);
+
+        $firstBracket = strpos($content, '[');
+        $lastBracket = strrpos($content, ']');
+        if ($firstBracket !== false && $lastBracket !== false && $lastBracket >= $firstBracket) {
+            $content = substr($content, $firstBracket, $lastBracket - $firstBracket + 1);
+        }
+
+        $decoded = json_decode($content, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($decoded as $row) {
+            if (is_array($row)) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
+    }
+
+    private function isCustomerGranted(): bool
+    {
+        return $this->isGranted('ROLE_CUSTOMER') || $this->isGranted('ROLE_CLIENT');
+    }
+
+    private function isCustomerUser(User $user, Request $request): bool
+    {
+        $role = strtoupper(trim((string) ($user->getRole() ?? '')));
+        if (in_array($role, ['ROLE_CLIENT', 'ROLE_CUSTOMER'], true)) {
+            return true;
+        }
+
+        $sessionRole = strtoupper(trim((string) $request->getSession()->get('user_role')));
+        return in_array($sessionRole, ['ROLE_CLIENT', 'ROLE_CUSTOMER'], true);
     }
 
     private function canRateForStatus(string $status): bool

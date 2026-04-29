@@ -19,12 +19,12 @@
 
         {# ── Role-based action buttons ── #}
         <div class="event-registration-actions">
-          {% if isCustomer is defined and isCustomer %}
-            {# Customer: register / unregister #}
+          {% if is_granted('ROLE_CUSTOMER') or is_granted('ROLE_CLIENT') %}
             {% if statusLower == 'scheduled' %}
               <button
                 type="button"
                 class="{{ isRegistered is defined and isRegistered ? 'btn-unregister' : 'btn-register' }} js-event-toggle-btn"
+                data-register-button
                 data-event-id="{{ event.donationEventId }}"
                 data-action="{{ isRegistered is defined and isRegistered ? 'unregister' : 'register' }}"
                 data-register-url="{{ path('app_client_food_donation_register', {id: event.donationEventId}) }}"
@@ -38,11 +38,9 @@
             <a href="{{ path('app_client_food_donation_my_registrations') }}" class="btn-my-events">
               My Registered Events
             </a>
-          {% elseif currentUserId is not defined or currentUserId is null %}
-            {# Guest: prompt login #}
+          {% elseif not is_granted('IS_AUTHENTICATED_FULLY') %}
             <a href="{{ path('app_login') }}" class="btn-login">Login to Register</a>
           {% endif %}
-          {# Admins and delivery men: no action buttons rendered #}
         </div>
       </div>
 
@@ -1086,7 +1084,7 @@
       CANCELLED: 'status-cancelled',
     };
 
-    const canRegister = (status) => status === 'SCHEDULED' || status === 'IN_PROGRESS';
+    const canRegister = (status) => status === 'SCHEDULED';
 
     async function refreshEventShow() {
       try {

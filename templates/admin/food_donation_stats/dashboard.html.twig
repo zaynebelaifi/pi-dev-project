@@ -300,7 +300,9 @@
           .replace(/^- /gm, '• ')
           .replace(/\n/g, '<br>');
         reportDiv.innerHTML = formatted;
-        aiReportStatus.textContent = 'Report generated successfully.';
+        aiReportStatus.textContent = result.usedFallback
+          ? (`Report generated with fallback. ${result.fallbackReason || ''}`.trim())
+          : 'Report generated successfully.';
       } catch (error) {
         aiReportOutput.innerHTML = `Error generating report: ${error.message}`;
         aiReportStatus.textContent = 'Failed to generate report.';

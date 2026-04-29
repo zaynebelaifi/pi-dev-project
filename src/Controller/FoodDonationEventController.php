@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nucleos\DompdfBundle\Wrapper\DompdfWrapperInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -129,7 +130,10 @@ final class FoodDonationEventController extends AbstractController
     #[Route('/{donation_event_id}', name: 'app_food_donation_event_show', methods: ['GET'])]
     public function show(Request $request, FoodDonationEvent $foodDonationEvent): Response
     {
-<<<<<<< HEAD
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         $eventId = (int) ($foodDonationEvent->getDonationEventId() ?? 0);
         $rawItems = $eventId > 0 ? $this->foodDonationItemRepository->findByDonationEventId($eventId) : [];
         $eventItems = array_map(static fn (array $item): array => [
@@ -137,11 +141,6 @@ final class FoodDonationEventController extends AbstractController
             'quantity' => (int) ($item['quantity'] ?? 0),
             'itemId' => (int) ($item['itemId'] ?? 0),
         ], $rawItems);
-=======
-        if ($redirect = $this->denyUnlessAdmin($request)) {
-            return $redirect;
-        }
->>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
 
         return $this->render('admin/food_donation_event/show.html.twig', [
             'food_donation_event' => $foodDonationEvent,
@@ -193,16 +192,38 @@ final class FoodDonationEventController extends AbstractController
             return $redirect;
         }
 
-        if ($this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $request->request->get('_token'))) {
-            $entityManager->remove($foodDonationEvent);
-            $entityManager->flush();
-            $this->addFlash('success', 'Donation event deleted successfully.');
+        $isAjax = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        $token = (string) $request->request->get('_token', '');
+
+        if (!$this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $token)) {
+            if ($isAjax) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Invalid security token. Please refresh and try again.',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $this->addFlash('error', 'Invalid security token. Please refresh and try again.');
+
+            return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
         }
+
+        $entityManager->remove($foodDonationEvent);
+        $entityManager->flush();
+
+        if ($isAjax) {
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Donation event deleted successfully.',
+                'eventId' => (int) $foodDonationEvent->getDonationEventId(),
+            ]);
+        }
+
+        $this->addFlash('success', 'Donation event deleted successfully.');
 
         return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
     }
 
-<<<<<<< HEAD
     #[Route('/{donation_event_id}/export-pdf', name: 'app_food_donation_event_export_pdf', methods: ['GET'])]
     public function exportPdf(FoodDonationEvent $foodDonationEvent): Response
     {
@@ -251,6 +272,26 @@ final class FoodDonationEventController extends AbstractController
             $selectedItems = [];
         }
 
+        $selectedCount = 0;
+        foreach ($selectedItems as $itemData) {
+            if (is_array($itemData) && isset($itemData['selected']) && (string) $itemData['selected'] === '1') {
+                $selectedCount++;
+            }
+        }
+
+        $maxItems = max(0, (int) ($event->getTotalQuantity() ?? 0));
+        if ($selectedCount > $maxItems) {
+            $this->addFlash('error', sprintf(
+                'You can only assign up to %d items for this event. You selected %d.',
+                $maxItems,
+                $selectedCount
+            ));
+
+            return $this->redirectToRoute('app_food_donation_event_index', [
+                'newEventId' => $event->getDonationEventId(),
+            ]);
+        }
+
         $addedCount = 0;
         foreach ($selectedItems as $itemId => $itemData) {
             if (!is_array($itemData)) {
@@ -297,7 +338,8 @@ final class FoodDonationEventController extends AbstractController
         }
 
         return $this->redirectToRoute('app_food_donation_event_index');
-=======
+    }
+
     private function denyUnlessAdmin(Request $request): ?Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
@@ -305,6 +347,5 @@ final class FoodDonationEventController extends AbstractController
         }
 
         return null;
->>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
     }
 }

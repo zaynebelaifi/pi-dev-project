@@ -46,9 +46,6 @@ final class FoodDonationStatsController extends AbstractController
     public function aiReport(HttpClientInterface $httpClient, FoodDonationEventRepository $eventRepository): JsonResponse
     {
         $apiKey = $this->getParameter('anthropic_api_key');
-        if (!$apiKey) {
-            return new JsonResponse(['error' => 'API key is not configured.'], 500);
-        }
 
         $events = $eventRepository->findAll();
         $chartEvents = $this->formatEventsForCharts($events);
@@ -80,6 +77,16 @@ final class FoodDonationStatsController extends AbstractController
             sprintf("- Events per month: [%s]\n", implode(', ', $monthlyList)) .
             "\nGive a concise, professional report in 3 short paragraphs.";
 
+        $fallbackReport = $this->buildLocalDonationReport($stats, $chartEvents, $topCharity, $monthlyList);
+
+        if (!$apiKey) {
+            return new JsonResponse([
+                'report' => $fallbackReport,
+                'usedFallback' => true,
+                'fallbackReason' => 'AI API key is missing, generated local report.',
+            ]);
+        }
+
         try {
             $response = $httpClient->request('POST', 'https://models.inference.ai.azure.com/chat/completions', [
                 'headers' => [
@@ -103,14 +110,88 @@ final class FoodDonationStatsController extends AbstractController
             ]);
 
             $result = $response->toArray(false);
-            $aiText = $result['choices'][0]['message']['content'] ?? 'No response returned from AI.';
+                $aiText = $this->extractAiText($result);
 
-            return new JsonResponse(['report' => $aiText]);
+                if ($aiText === '') {
+                    $providerError = '';
+                    if (isset($result['error']['message']) && is_string($result['error']['message'])) {
+                        $providerError = trim($result['error']['message']);
+                    }
+
+                    return new JsonResponse([
+                        'report' => $fallbackReport,
+                        'usedFallback' => true,
+                        'fallbackReason' => $providerError !== ''
+                            ? ('AI did not return report text: ' . $providerError)
+                            : 'AI did not return report text. Generated local report.',
+                    ]);
+                }
+
+                return new JsonResponse([
+                    'report' => $aiText,
+                    'usedFallback' => false,
+                    'fallbackReason' => '',
+                ]);
 
         } catch (\Exception $e) {
-            return new JsonResponse(['error' => 'AI request failed: ' . $e->getMessage()], 500);
+                return new JsonResponse([
+                    'report' => $fallbackReport,
+                    'usedFallback' => true,
+                    'fallbackReason' => 'AI request failed: ' . $e->getMessage(),
+                ]);
         }
     }
+
+        /**
+         * @param array<string, mixed> $stats
+         * @param array<string, mixed> $chartEvents
+         * @param array<int, string> $monthlyList
+         */
+        private function buildLocalDonationReport(array $stats, array $chartEvents, ?string $topCharity, array $monthlyList): string
+        {
+            $totalEvents = (int) ($stats['totalEvents'] ?? 0);
+            $totalPortions = (int) ($stats['totalPortions'] ?? 0);
+            $charitiesCount = (int) ($stats['charitiesHelpedCount'] ?? 0);
+            $avgPortions = (float) ($stats['avgPortionsPerEvent'] ?? 0);
+
+            $statusCounts = is_array($chartEvents['statusCount'] ?? null) ? $chartEvents['statusCount'] : [];
+            $scheduled = (int) ($statusCounts[FoodDonationEvent::STATUS_SCHEDULED] ?? 0);
+            $ongoing = (int) ($statusCounts[FoodDonationEvent::STATUS_ONGOING] ?? 0);
+            $completed = (int) ($statusCounts[FoodDonationEvent::STATUS_COMPLETED] ?? 0);
+            $cancelled = (int) ($statusCounts[FoodDonationEvent::STATUS_CANCELLED] ?? 0);
+
+            $completionRate = $totalEvents > 0 ? round(($completed / $totalEvents) * 100, 1) : 0.0;
+            $cancellationRate = $totalEvents > 0 ? round(($cancelled / $totalEvents) * 100, 1) : 0.0;
+
+            $trendSummary = 'No monthly trend available yet.';
+            if (count($monthlyList) > 0) {
+                $trendSummary = implode(', ', array_slice($monthlyList, -4));
+            }
+
+            $paragraph1 = sprintf(
+                'Performance summary: %d donation events delivered %d total portions to %d charities, with an average of %.1f portions per event. The current top charity is %s.',
+                $totalEvents,
+                $totalPortions,
+                $charitiesCount,
+                $avgPortions,
+                $topCharity ?? 'not yet established'
+            );
+
+            $paragraph2 = sprintf(
+                'Key highlights: Completed events are %d (%.1f%%), ongoing are %d, scheduled are %d, and cancelled are %d (%.1f%%). Recent monthly totals show: %s.',
+                $completed,
+                $completionRate,
+                $ongoing,
+                $scheduled,
+                $cancelled,
+                $cancellationRate,
+                $trendSummary
+            );
+
+            $paragraph3 = 'Actionable recommendations: prioritize converting scheduled events into completed deliveries, review cancellation causes for route or capacity constraints, and replicate operating patterns from top-performing charities and months to improve consistency.';
+
+            return $paragraph1."\n\n".$paragraph2."\n\n".$paragraph3;
+        }
 
     private function formatEventsForCharts(array $events): array
     {
@@ -225,6 +306,36 @@ final class FoodDonationStatsController extends AbstractController
 
         return $colorMap;
     }
+
+        private function extractAiText(array $result): string
+        {
+            if (isset($result['choices'][0]['message']['content'])) {
+                $content = $result['choices'][0]['message']['content'];
+                if (is_string($content)) {
+                    return trim($content);
+                }
+
+                if (is_array($content)) {
+                    $parts = [];
+                    foreach ($content as $chunk) {
+                        if (is_array($chunk) && isset($chunk['text']) && is_string($chunk['text'])) {
+                            $parts[] = $chunk['text'];
+                        }
+                    }
+                    return trim(implode("\n", $parts));
+                }
+            }
+
+            if (isset($result['choices'][0]['text']) && is_string($result['choices'][0]['text'])) {
+                return trim($result['choices'][0]['text']);
+            }
+
+            if (isset($result['output_text']) && is_string($result['output_text'])) {
+                return trim($result['output_text']);
+            }
+
+            return '';
+        }
 
     private function normalizeEventStatus(string $status): string
     {

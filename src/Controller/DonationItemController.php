@@ -8,10 +8,12 @@ use App\Form\EventItemAssignmentType;
 use App\Form\Model\EventItemAssignmentData;
 use App\Form\Model\EventItemAssignmentLineData;
 use App\Repository\DonationEventItemRepository;
+use App\Repository\DishRepository;
 use App\Repository\FoodDonationEventRepository;
 use App\Repository\FoodDonationItemRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,6 +21,7 @@ final class DonationItemController extends AbstractController
 {
     public function __construct(
         private readonly DonationEventItemRepository $donationEventItemRepository,
+        private readonly DishRepository $dishRepository,
         private readonly FoodDonationEventRepository $foodDonationEventRepository,
         private readonly FoodDonationItemRepository $foodDonationItemRepository,
         private readonly EntityManagerInterface $entityManager,
@@ -34,7 +37,7 @@ final class DonationItemController extends AbstractController
             throw $this->createNotFoundException('Donation event not found.');
         }
 
-        $assignedItems = $this->donationEventItemRepository->findGroupedItemsForEvent($eventId);
+        $assignedItems = $this->resolveAssignedItemsForEvent($eventId);
         $totalItems = count($assignedItems);
         $totalQuantity = array_sum(array_map(static fn (array $row): int => $row['quantity'], $assignedItems));
 
@@ -59,16 +62,38 @@ final class DonationItemController extends AbstractController
         $assignmentData->event = $event;
 
         $currentAssignments = $this->donationEventItemRepository->findByEventOrdered($eventId);
-        foreach ($currentAssignments as $assignment) {
-            $line = new EventItemAssignmentLineData();
-            $line->assignmentId = $assignment->getId();
-            $line->item = $assignment->getItem();
-            $line->quantity = $assignment->getQuantity();
-            $assignmentData->lines[] = $line;
+        if ($currentAssignments !== []) {
+            foreach ($currentAssignments as $assignment) {
+                $line = new EventItemAssignmentLineData();
+                $line->assignmentId = $assignment->getId();
+                $line->item = $assignment->getItem();
+                $line->quantity = $assignment->getQuantity();
+                $assignmentData->lines[] = $line;
+            }
+        } else {
+            $legacyItems = $this->foodDonationItemRepository->findByDonationEventId($eventId);
+            foreach ($legacyItems as $legacyItem) {
+                $dishId = (int) ($legacyItem['itemId'] ?? 0);
+                if ($dishId <= 0) {
+                    continue;
+                }
+
+                $dish = $this->dishRepository->find($dishId);
+                if ($dish === null) {
+                    continue;
+                }
+
+                $line = new EventItemAssignmentLineData();
+                $line->assignmentId = null;
+                $line->item = $dish;
+                $line->quantity = max(1, (int) ($legacyItem['quantity'] ?? 1));
+                $assignmentData->lines[] = $line;
+            }
         }
 
         if ($assignmentData->lines === []) {
-            $assignmentData->lines[] = new EventItemAssignmentLineData();
+            $line = new EventItemAssignmentLineData();
+            $assignmentData->lines[] = $line;
         }
 
         $form = $this->createForm(EventItemAssignmentType::class, $assignmentData);
@@ -162,7 +187,21 @@ final class DonationItemController extends AbstractController
     {
         $eventId = $this->parseEventId($id);
         $token = (string) $request->request->get('_token', '');
+        if ($token === '') {
+            parse_str((string) $request->getContent(), $parsedBody);
+            $token = is_array($parsedBody) ? (string) ($parsedBody['_token'] ?? '') : '';
+        }
+
+        $isAjax = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+
         if (!$this->isCsrfTokenValid('delete_event_'.$eventId, $token)) {
+            if ($isAjax) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Invalid security token. Please refresh and try again.',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
             $this->addFlash('error', 'Invalid request token.');
             return $this->redirectToRoute('app_food_donation_item_index');
         }
@@ -179,6 +218,14 @@ final class DonationItemController extends AbstractController
 
         $this->entityManager->flush();
 
+        if ($isAjax) {
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Items deleted successfully',
+                'eventId' => $eventId,
+            ]);
+        }
+
         $this->addFlash('success', 'All donation items for this event have been deleted.');
 
         return $this->redirectToRoute('app_food_donation_item_index');
@@ -191,6 +238,26 @@ final class DonationItemController extends AbstractController
         }
 
         return (int) $id;
+    }
+
+    /**
+     * @return array<int, array{assignmentId:int, itemId:int, quantity:int, name:string}>
+     */
+    private function resolveAssignedItemsForEvent(int $eventId): array
+    {
+        $assignmentRows = $this->donationEventItemRepository->findGroupedItemsForEvent($eventId);
+        if ($assignmentRows !== []) {
+            return $assignmentRows;
+        }
+
+        $legacyRows = $this->foodDonationItemRepository->findByDonationEventId($eventId);
+
+        return array_values(array_map(static fn (array $row): array => [
+            'assignmentId' => 0,
+            'itemId' => (int) ($row['itemId'] ?? 0),
+            'quantity' => (int) ($row['quantity'] ?? 0),
+            'name' => (string) ($row['dishName'] ?? 'Unnamed item'),
+        ], $legacyRows));
     }
 
     /**

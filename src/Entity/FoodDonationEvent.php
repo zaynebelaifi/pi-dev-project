@@ -207,9 +207,16 @@ class FoodDonationEvent
     #[ORM\OneToMany(mappedBy: 'event', targetEntity: DonationEventItem::class, orphanRemoval: true)]
     private Collection $donationEventItems;
 
+    /**
+     * @var Collection<int, EventRegistration>
+     */
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: EventRegistration::class, orphanRemoval: true)]
+    private Collection $eventRegistrations;
+
     public function __construct()
     {
         $this->donationEventItems = new ArrayCollection();
+        $this->eventRegistrations = new ArrayCollection();
     }
 
     public function getUpdated_at(): ?\DateTimeInterface
@@ -318,6 +325,14 @@ class FoodDonationEvent
     public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         return $this->setCreated_at($createdAt);
+    }
+
+    /**
+     * @return Collection<int, EventRegistration>
+     */
+    public function getEventRegistrations(): Collection
+    {
+        return $this->eventRegistrations;
     }
 
     public function getUpdatedAt(): ?\DateTimeInterface

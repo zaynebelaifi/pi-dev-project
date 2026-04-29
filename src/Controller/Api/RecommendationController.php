@@ -23,9 +23,8 @@ final class RecommendationController extends AbstractController
     {
         $session = $this->requestStack->getSession();
         $sessionUserId = $session->get('user_id');
-        $userRole = (string) ($session->get('user_role') ?? '');
 
-        if (!is_numeric($sessionUserId)) {
+        if (!$this->isGranted('IS_AUTHENTICATED_FULLY') || !is_numeric($sessionUserId)) {
             return $this->json([
                 'success' => false,
                 'authenticated' => false,
@@ -35,15 +34,15 @@ final class RecommendationController extends AbstractController
             ]);
         }
 
-        if ($userRole !== 'ROLE_CLIENT') {
+        if (!$this->isGranted('ROLE_CUSTOMER') && !$this->isGranted('ROLE_CLIENT')) {
             return $this->json([
-                'success' => true,
+                'success' => false,
                 'authenticated' => true,
-                'role' => $userRole,
+                'role' => 'restricted',
                 'recommendations' => [],
                 'total' => 0,
                 'message' => 'Recommendations are available for customer accounts only.',
-            ]);
+            ], 403);
         }
 
         $user = $this->userRepository->find((int) $sessionUserId);

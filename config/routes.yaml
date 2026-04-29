@@ -21,3 +21,8 @@ donation_item_delete_event:
     path: /admin/donation-items/{id}/delete-event
     controller: App\Controller\DonationItemController::deleteEvent
     methods: [POST]
+
+donation_item_delete_event_api:
+    path: /api/donation-items/delete-by-event/{id}
+    controller: App\Controller\DonationItemController::deleteEvent
+    methods: [DELETE]

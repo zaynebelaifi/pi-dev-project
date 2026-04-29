@@ -30,16 +30,15 @@ final class EventRegistrationController extends AbstractController
     {
         $session = $this->requestStack->getSession();
         $sessionUserId = $session->get('user_id');
-        $role = (string) ($session->get('user_role') ?? '');
 
-        if (!is_numeric($sessionUserId)) {
+        if (!$this->isGranted('IS_AUTHENTICATED_FULLY') || !is_numeric($sessionUserId)) {
             return $this->json([
                 'success' => false,
                 'message' => 'Please log in to register for events.',
             ], 401);
         }
 
-        if ($role !== 'ROLE_CLIENT') {
+        if (!$this->isGranted('ROLE_CUSTOMER') && !$this->isGranted('ROLE_CLIENT')) {
             return $this->json([
                 'success' => false,
                 'message' => 'Only customers can register for events.',
