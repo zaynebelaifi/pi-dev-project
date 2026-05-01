@@ -40,6 +40,7 @@ class WeatherImpactService
                         'timezone' => 'auto',
                     ],
                     'timeout' => 8,
+                    'max_duration' => 8,
                 ]);
 
                 $payload = $response->toArray(false);

@@ -1,0 +1,437 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Fleet Management - GPS Dashboard{% endblock %}
+{% block topbar_title %}Fleet Management{% endblock %}
+{% block topbar_breadcrumb %}BIG 4 · Admin · Fleet GPS Dashboard{% endblock %}
+
+{% block body %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+    .fleet-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 1.5rem;
+        margin-bottom: 1.75rem;
+    }
+
+    @media (max-width: 1200px) {
+        .fleet-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .map-card {
+        background: #fff;
+        border: 1px solid rgba(184,135,42,.15);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(92,61,30,.08);
+    }
+
+    #fleet-map {
+        width: 100%;
+        height: 500px;
+        border-radius: 16px;
+    }
+
+    .control-panel {
+        background: #fff;
+        border: 1px solid rgba(184,135,42,.15);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-shadow: 0 2px 8px rgba(92,61,30,.08);
+    }
+
+    .control-panel h3 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #7C4FC4;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-fleet {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: opacity .2s, transform .1s;
+    }
+
+    .btn-fleet:active { transform: scale(.97); }
+    .btn-fleet:hover  { opacity: .85; }
+
+    .btn-refresh   { background: #3A7EC9; color: #fff; }
+    .btn-assign    { background: #2E9E6A; color: #fff; }
+    .btn-optimize  { background: #C87D20; color: #fff; }
+
+    .suggestions-panel {
+        background: #fff;
+        border: 1px solid rgba(184,135,42,.15);
+        border-radius: 16px;
+        padding: 1.25rem;
+        display: none;
+        overflow-y: auto;
+        max-height: 600px;
+        box-shadow: 0 2px 8px rgba(92,61,30,.08);
+        margin-top: 1rem;
+    }
+
+    .suggestions-panel.visible {
+        display: block;
+    }
+
+    .suggestion-item {
+        padding: 0.85rem;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid #999;
+        border-radius: 6px;
+        background: #f9f6f0;
+    }
+
+    .suggestion-item.success { border-left-color: #2E9E6A; background: rgba(46,158,106,.1); }
+    .suggestion-item.warning { border-left-color: #C87D20; background: rgba(200,125,32,.1); }
+    .suggestion-item.danger  { border-left-color: #D94040; background: rgba(217,64,64,.1); }
+    .suggestion-item.info    { border-left-color: #3A7EC9; background: rgba(58,126,201,.1); }
+
+    .suggestion-icon {
+        font-size: 1.4rem;
+        line-height: 1;
+        margin-bottom: 0.4rem;
+    }
+
+    .suggestion-title {
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 0.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #2C1A0E;
+    }
+
+    .suggestion-msg {
+        font-size: 0.8rem;
+        color: #7A5C3A;
+    }
+
+    .delivery-counter {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 1rem;
+        background: #FBF4E3;
+        border-radius: 10px;
+        border-left: 4px solid #B8872A;
+        font-size: 0.9rem;
+    }
+
+    .delivery-counter .count {
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: #B8872A;
+    }
+
+    .status-banner {
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: none;
+    }
+
+    .status-banner.visible {
+        display: block;
+    }
+
+    .status-banner.loading  { background: #c8d4ff; color: #3a5bd9; }
+    .status-banner.success  { background: #edfaf2; color: #1e7e4b; }
+    .status-banner.error    { background: #fff0f0; color: #c0392b; }
+
+    .marker-info {
+        font-size: 0.85rem;
+    }
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.visible {
+        display: flex;
+    }
+
+    .modal-content {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 14px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 400px;
+        position: relative;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 1rem; right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #7A5C3A;
+    }
+
+    .modal-close:hover { color: #2C1A0E; }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+        color: #2C1A0E;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        border: 1.5px solid #E5D9C3;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #B8872A;
+        box-shadow: 0 0 0 3px rgba(184,135,42,.1);
+    }
+
+    .btn-modal-submit {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        background: #2E9E6A;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-modal-submit:hover { opacity: .9; }
+</style>
+
+<div class="sec-head">
+    <div>
+        <h2>Fleet Management - GPS Dashboard</h2>
+        <p class="sec-sub">Real-time delivery fleet tracking, assignments, and optimization.</p>
+    </div>
+</div>
+
+<div id="statusBanner" class="status-banner"></div>
+
+<div class="fleet-container">
+    <!-- Map Column -->
+    <div>
+        <div class="map-card">
+            <div id="fleet-map"></div>
+        </div>
+    </div>
+
+    <!-- Control Panel Column -->
+    <div>
+        <div class="control-panel">
+            <h3>⚙️ Controls</h3>
+            <button type="button" class="btn-fleet btn-refresh" id="btnRefreshMap">🔄 Refresh Map</button>
+            <button type="button" class="btn-fleet btn-assign" id="btnAssignNearest">📍 Assign Nearest</button>
+            <button type="button" class="btn-fleet btn-optimize" id="btnOptimize">🚀 Optimize</button>
+        </div>
+
+        <div class="suggestions-panel" id="suggestionsPanel">
+            <h3 style="margin-top: 0;">💡 Suggestions</h3>
+            <div id="suggestionsList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Assignment Modal -->
+<div class="modal-overlay" id="assignmentModal">
+    <div class="modal-content">
+        <button type="button" class="modal-close" onclick="document.getElementById('assignmentModal').classList.remove('visible')">✕</button>
+        <h2 style="margin-bottom: 1rem;">📍 Assign Delivery</h2>
+        <div class="form-group">
+            <label for="destLat">Destination Latitude:</label>
+            <input type="number" id="destLat" step="0.000001" placeholder="36.8065" value="36.8065">
+        </div>
+        <div class="form-group">
+            <label for="destLng">Destination Longitude:</label>
+            <input type="number" id="destLng" step="0.000001" placeholder="10.1815" value="10.1815">
+        </div>
+        <button type="button" class="btn-modal-submit" onclick="window.fleetApp.assignDelivery()">Assign Delivery</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+window.fleetApp = (() => {
+    let map = null;
+    const markers = {};
+
+    function initMap() {
+        if (map) return;
+        
+        map = L.map('fleet-map').setView([{{ tunis_lat }}, {{ tunis_lng }}], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 19,
+        }).addTo(map);
+    }
+
+    function showStatus(msg, type = 'loading') {
+        const banner = document.getElementById('statusBanner');
+        banner.className = 'status-banner visible ' + type;
+        banner.textContent = msg;
+        setTimeout(() => banner.classList.remove('visible'), type === 'error' ? 5000 : 3000);
+    }
+
+    async function loadDeliveryMen() {
+        initMap();
+        showStatus('Loading delivery men locations...', 'loading');
+
+        try {
+            const res = await fetch('/api/fleet/locations');
+            const payload = await res.json();
+            
+            if (!payload.success) throw new Error(payload.message);
+
+            // Clear old markers
+            Object.values(markers).forEach(m => map.removeLayer(m));
+            Object.keys(markers).forEach(k => delete markers[k]);
+
+            // Add new markers
+            payload.data.forEach(dm => {
+                if (!dm.latitude || !dm.longitude) return;
+                
+                const color = dm.status === 'active' ? '#2E9E6A' : '#999';
+                const marker = L.circleMarker([dm.latitude, dm.longitude], {
+                    radius: 8,
+                    fillColor: color,
+                    color: color,
+                    weight: 2,
+                    opacity: 0.8,
+                    fillOpacity: 0.7,
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div class="marker-info">
+                        <strong>${dm.name}</strong><br>
+                        📞 ${dm.phone}<br>
+                        🚗 ${dm.vehicleType || 'N/A'}<br>
+                        ⏰ ${dm.lastUpdate || 'No update'}<br>
+                        Status: ${dm.status}
+                    </div>
+                `);
+
+                markers[dm.id] = marker;
+            });
+
+            showStatus(`✅ ${payload.count} delivery men loaded`, 'success');
+        } catch (err) {
+            showStatus('❌ ' + err.message, 'error');
+        }
+    }
+
+    async function optimizeFleet() {
+        showStatus('Calculating optimization suggestions...', 'loading');
+
+        try {
+            const res = await fetch('/api/fleet/optimization');
+            const payload = await res.json();
+            
+            if (!payload.success) throw new Error(payload.message);
+
+            const panel = document.getElementById('suggestionsPanel');
+            const list = document.getElementById('suggestionsList');
+            list.innerHTML = '';
+
+            payload.data.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item ' + s.type;
+                div.innerHTML = `
+                    <div class="suggestion-icon">${s.icon}</div>
+                    <div class="suggestion-title">${s.title}</div>
+                    <div class="suggestion-msg">${s.message}</div>
+                `;
+                list.appendChild(div);
+            });
+
+            panel.classList.add('visible');
+            showStatus('✅ Fleet optimization complete', 'success');
+        } catch (err) {
+            showStatus('❌ ' + err.message, 'error');
+        }
+    }
+
+    function assignDelivery() {
+        const lat = parseFloat(document.getElementById('destLat').value);
+        const lng = parseFloat(document.getElementById('destLng').value);
+
+        if (!lat || !lng) {
+            showStatus('❌ Invalid coordinates', 'error');
+            return;
+        }
+
+        showStatus('Assigning delivery...', 'loading');
+
+        fetch('/api/fleet/assign-nearest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                destinationLatitude: lat,
+                destinationLongitude: lng,
+            }),
+        })
+        .then(r => r.json())
+        .then(payload => {
+            if (!payload.success) throw new Error(payload.message);
+            
+            document.getElementById('assignmentModal').classList.remove('visible');
+            showStatus(`✅ Assigned to ${payload.assignedTo.name} - ETA: ${payload.eta}`, 'success');
+            loadDeliveryMen();
+        })
+        .catch(err => showStatus('❌ ' + err.message, 'error'));
+    }
+
+    // Auto-refresh every 30 seconds
+    setInterval(loadDeliveryMen, 30000);
+
+    // Event listeners
+    document.getElementById('btnRefreshMap').addEventListener('click', loadDeliveryMen);
+    document.getElementById('btnOptimize').addEventListener('click', optimizeFleet);
+    document.getElementById('btnAssignNearest').addEventListener('click', () => {
+        document.getElementById('assignmentModal').classList.add('visible');
+    });
+
+    // Load on init
+    loadDeliveryMen();
+
+    return { assignDelivery };
+})();
+</script>
+{% endblock %}

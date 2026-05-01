@@ -151,8 +151,8 @@
   <!-- NAV -->
   <nav id="nav">
     <div class="nav-inner">
-      <a href="{{ path('app_landingpage') }}" class="brand">
-        <img src="{{ asset('images/FB_IMG_1698958536626-removebg-preview (1).png') }}" alt="BIG 4 logo" onerror="this.style.display='none'">
+      <a href="{{ path('app_home') }}" class="brand">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="BIG 4 logo" style="display:none">
         <div>
           <h1>BIG 4</h1>
           <span>Admin Panel</span>
@@ -162,10 +162,12 @@
       <ul class="nav-links">
         <li><a href="{{ path('app_delivery_index') }}">Deliveries</a></li>
         <li><a href="{{ path('app_delivery_man_index') }}">Delivery Men</a></li>
+        <li><a href="{{ path('app_admin_api_jwt_debug') }}">API JWT Debug</a></li>
         <li><a href="{{ path('app_landingpage') }}">Home</a></li>
       </ul>
 
       <div class="nav-actions">
+        <a href="{{ path('app_profile') }}" class="nav-btn">My Profile</a>
         <a href="{{ path('app_landingpage') }}" class="nav-btn">Back to Site</a>
       </div>
     </div>
@@ -181,6 +183,6 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{{ asset('app.js') }}"></script>
+  <script src="{{ asset('app.js') }}?v=2"></script>
 </body>
 </html>

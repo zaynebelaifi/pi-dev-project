@@ -16,13 +16,26 @@ return [
         'path' => './assets/app.js',
         'entrypoint' => true,
     ],
+    'admin' => [
+        'path' => './assets/admin.js',
+        'entrypoint' => true,
+    ],
     '@hotwired/stimulus' => [
-        'version' => '3.2.2',
+        'path' => './assets/vendor/@hotwired/stimulus/stimulus.index.js',
     ],
     '@symfony/stimulus-bundle' => [
         'path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js',
     ],
     '@hotwired/turbo' => [
-        'version' => '7.3.0',
+        'path' => './assets/vendor/@hotwired/turbo/turbo.index.js',
+    ],
+    'chart.js' => [
+        'path' => './assets/vendor/chart.js/chart.js.index.js',
+    ],
+    '@kurkle/color' => [
+        'path' => './assets/vendor/@kurkle/color/color.index.js',
+    ],
+    '@symfony/ux-chartjs' => [
+        'path' => './assets/vendor/@symfony/ux-chartjs/ux-chartjs.index.js',
     ],
 ];

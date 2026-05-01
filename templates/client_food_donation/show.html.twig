@@ -1,0 +1,1128 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ event.charityName }} · Donation Event{% endblock %}
+
+{% block body %}
+  <section class="event-detail-page">
+    <div class="container event-detail-shell">
+      <div class="event-page-header section-head reveal show">
+        <div>
+          <small>Community Donations</small>
+          <h3>{{ event.charityName }} <em>Event</em></h3>
+          <p>Review the event details, see community feedback, and leave your own rating without switching to another page.</p>
+        </div>
+        <div class="event-header-actions">
+          <a href="{{ path('app_client_food_donation_calendar') }}" class="btn-secondary">Back to Calendar</a>
+          {% set statusLower = normalizedStatus|lower %}
+          <span id="live-status-pill" class="status-pill {{ statusLower == 'completed' ? 'status-completed' : statusLower == 'ongoing' ? 'status-ongoing' : statusLower == 'in progress' ? 'status-in-progress' : statusLower == 'scheduled' ? 'status-scheduled' : 'status-cancelled' }}">{{ normalizedStatus }}</span>
+        </div>
+
+        {# ── Role-based action buttons ── #}
+        <div class="event-registration-actions">
+          {% if isCustomer is defined and isCustomer %}
+            {# Customer: register / unregister #}
+            {% if statusLower == 'scheduled' %}
+              <button
+                type="button"
+                class="{{ isRegistered is defined and isRegistered ? 'btn-unregister' : 'btn-register' }} js-event-toggle-btn"
+                data-event-id="{{ event.donationEventId }}"
+                data-action="{{ isRegistered is defined and isRegistered ? 'unregister' : 'register' }}"
+                data-register-url="{{ path('app_client_food_donation_register', {id: event.donationEventId}) }}"
+                data-unregister-url="{{ path('app_client_food_donation_unregister', {id: event.donationEventId}) }}"
+                data-register-token="{{ csrf_token('register-event' ~ event.donationEventId) }}"
+                data-unregister-token="{{ csrf_token('unregister-event' ~ event.donationEventId) }}"
+              >{{ isRegistered is defined and isRegistered ? 'Unregister' : 'Register' }}</button>
+            {% else %}
+              <span id="registration-closed-notice" class="registration-closed">Registration {{ statusLower == 'completed' or statusLower == 'cancelled' ? 'closed' : 'not yet open' }}</span>
+            {% endif %}
+            <a href="{{ path('app_client_food_donation_my_registrations') }}" class="btn-my-events">
+              My Registered Events
+            </a>
+          {% elseif currentUserId is not defined or currentUserId is null %}
+            {# Guest: prompt login #}
+            <a href="{{ path('app_login') }}" class="btn-login">Login to Register</a>
+          {% endif %}
+          {# Admins and delivery men: no action buttons rendered #}
+        </div>
+      </div>
+
+      <div class="event-summary-strip reveal show">
+        <article>
+          <span>Date</span>
+          <strong>{{ event.eventDate ? event.eventDate|date('F j, Y H:i') : 'TBD' }}</strong>
+        </article>
+        <article>
+          <span>Total Items</span>
+          <strong>{{ event.totalQuantity }}</strong>
+        </article>
+        <article>
+          <span>Delivery ID</span>
+          <strong>{{ event.deliveryId ?: 'Not assigned' }}</strong>
+        </article>
+        <article>
+          <span>Reviews</span>
+          <strong>{{ ratingCount }}</strong>
+        </article>
+      </div>
+
+      <div class="event-content-grid">
+        <div class="event-main-column">
+          <section class="event-panel reveal show">
+            <div class="panel-heading">
+              <h4>Community Ratings</h4>
+              <p>Live scores based on submitted visitor feedback.</p>
+            </div>
+            <div class="metrics-grid">
+              <article class="metric-card">
+                <span>Event Rating</span>
+                <strong>{{ averageEventRating ? averageEventRating ~ '/5' : 'No ratings yet' }}</strong>
+              </article>
+              <article class="metric-card">
+                <span>Food Rating</span>
+                <strong>{{ averageFoodRating ? averageFoodRating ~ '/5' : 'No ratings yet' }}</strong>
+              </article>
+              <article class="metric-card">
+                <span>Total Reviews</span>
+                <strong>{{ ratingCount }}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="event-panel reveal show">
+            <div class="panel-heading">
+              <h4>Customer Reviews</h4>
+              <p>Recent feedback from visitors and guests.</p>
+            </div>
+            <div class="reviews-stack">
+              {% if ratings is not empty %}
+                {% for rating in ratings %}
+                  {% set isOwner = currentUserId and rating.user and rating.user.id == currentUserId %}
+                  <article class="review-entry" data-review-entry data-review-id="{{ rating.ratingId }}">
+                    <div class="review-entry-top">
+                      <div>
+                        <strong>
+                          {% if rating.user %}
+                            {{ rating.user.firstName ? rating.user.firstName ~ ' ' ~ (rating.user.lastName ?: '') : rating.user.email }}
+                          {% else %}
+                            Guest Reviewer
+                          {% endif %}
+                        </strong>
+                        <span>{{ rating.createdAt ? rating.createdAt|date('M j, Y') : 'Recently' }}</span>
+                      </div>
+                      <div class="review-scores">
+                        <span data-review-event-rating>Event {{ rating.eventRating is not null ? rating.eventRating ~ '/5' : 'N/A' }}</span>
+                        <span data-review-food-rating>Food {{ rating.foodRating is not null ? rating.foodRating ~ '/5' : 'N/A' }}</span>
+                      </div>
+                    </div>
+                    <p data-review-comment>{{ rating.comment ?: 'No comment provided.' }}</p>
+                    {% if isOwner %}
+                      <div class="review-entry-actions">
+                        <button
+                          type="button"
+                          class="review-action-btn review-action-edit"
+                          data-review-edit-open
+                          data-review-id="{{ rating.ratingId }}"
+                          data-review-event-rating="{{ rating.eventRating ?? '' }}"
+                          data-review-food-rating="{{ rating.foodRating ?? '' }}"
+                          data-review-comment="{{ (rating.comment ?? '')|e('html_attr') }}"
+                          data-edit-url="{{ path('app_event_review_edit_ajax', {eventId: event.donationEventId, reviewId: rating.ratingId}) }}"
+                          data-csrf-token="{{ csrf_token('edit-review' ~ rating.ratingId) }}"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          class="review-action-btn review-action-delete"
+                          data-review-delete-open
+                          data-review-id="{{ rating.ratingId }}"
+                          data-delete-url="{{ path('app_event_review_delete_ajax', {eventId: event.donationEventId, reviewId: rating.ratingId}) }}"
+                          data-csrf-token="{{ csrf_token('delete-review' ~ rating.ratingId) }}"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    {% endif %}
+                  </article>
+                {% endfor %}
+              {% else %}
+                <p class="empty-copy">No reviews yet. Be the first to rate this event.</p>
+              {% endif %}
+            </div>
+          </section>
+        </div>
+
+        <aside class="event-side-column">
+          <section class="event-panel reveal show">
+            <div class="panel-heading">
+              <h4>Available Dishes</h4>
+              <p>Items currently linked to this donation event.</p>
+            </div>
+            <div class="dish-stack">
+              {% if availableDishes is not empty %}
+                {% for dish in availableDishes %}
+                  <article class="dish-card">
+                    <strong>{{ dish.dishName ?: 'Item #' ~ dish.itemId }}</strong>
+                    <span>Quantity: {{ dish.quantity }}</span>
+                  </article>
+                {% endfor %}
+              {% else %}
+                <p class="empty-copy">No dishes listed for this event.</p>
+              {% endif %}
+            </div>
+          </section>
+
+          <section class="event-panel rate-panel reveal show">
+            <div class="panel-heading">
+              <h4>Rate This Event</h4>
+              <p>Signed-out visitors can submit as guests. Signed-in users keep their identity attached.</p>
+            </div>
+
+            {% if isCancelled %}
+              <div class="rating-notice rating-notice-cancelled">Event was cancelled. Rating is unavailable, but you can still leave a comment.</div>
+            {% elseif canRate %}
+              <div class="rating-notice rating-notice-success">
+                {{ statusLower == 'ongoing' ? 'Full rating form available now!' : 'Thank you! Rate this event.' }}
+              </div>
+            {% else %}
+              <div class="rating-notice rating-notice-waiting">Rating available when event is Ongoing or Completed.</div>
+              <div class="rating-note">Comment available now, rating later.</div>
+            {% endif %}
+
+            <form method="post" action="{{ path('app_client_food_donation_rate', {'id': event.donationEventId}) }}" class="rating-form">
+              <input type="hidden" name="_token" value="{{ csrf_token('rate-event' ~ event.donationEventId) }}">
+
+              <fieldset class="form-row rating-group">
+                <legend>Event Rating</legend>
+                {% if canRate %}
+                  <div class="star-picker">
+                    {% for value in 5..1 %}
+                      <input type="radio" id="eventRating{{ value }}" name="eventRating" value="{{ value }}" {{ value == 5 ? 'checked' : '' }}>
+                      <label for="eventRating{{ value }}" title="{{ value }} stars">★</label>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <div class="star-picker disabled" aria-hidden="true">
+                    {% for value in 5..1 %}
+                      <span class="star-disabled">★</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </fieldset>
+
+              <fieldset class="form-row rating-group">
+                <legend>Food Rating</legend>
+                {% if canRate %}
+                  <div class="star-picker">
+                    {% for value in 5..1 %}
+                      <input type="radio" id="foodRating{{ value }}" name="foodRating" value="{{ value }}" {{ value == 5 ? 'checked' : '' }}>
+                      <label for="foodRating{{ value }}" title="{{ value }} stars">★</label>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <div class="star-picker disabled" aria-hidden="true">
+                    {% for value in 5..1 %}
+                      <span class="star-disabled">★</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </fieldset>
+
+              <div class="form-row">
+                <label for="comment">Comment</label>
+                <textarea id="comment" name="comment" rows="4" placeholder="Share what worked well, what stood out, or what could improve."></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary">
+                {% if isCancelled %}
+                  Submit Comment
+                {% elseif canRate %}
+                  Submit Rating
+                {% else %}
+                  Submit Comment
+                {% endif %}
+              </button>
+            </form>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <div class="review-modal-overlay" id="reviewEditModal" aria-hidden="true">
+    <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="reviewEditModalTitle">
+      <div class="review-modal-head">
+        <h4 id="reviewEditModalTitle">Edit Review</h4>
+        <button type="button" class="review-modal-close" data-review-edit-cancel>&times;</button>
+      </div>
+      <div class="review-modal-body">
+        <form id="reviewEditForm" class="review-edit-form">
+          <input type="hidden" name="_token" id="reviewEditToken">
+          <div class="form-row">
+            <label>Event Rating</label>
+            <div class="inline-star-picker" data-inline-star-group="eventRating">
+              {% for value in 1..5 %}
+                <button type="button" class="inline-star" data-inline-star-value="{{ value }}">★</button>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="form-row">
+            <label>Food Rating</label>
+            <div class="inline-star-picker" data-inline-star-group="foodRating">
+              {% for value in 1..5 %}
+                <button type="button" class="inline-star" data-inline-star-value="{{ value }}">★</button>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="reviewEditComment">Comment</label>
+            <textarea id="reviewEditComment" rows="4" required></textarea>
+          </div>
+          <div class="review-modal-actions">
+            <button type="button" class="btn-secondary" data-review-edit-cancel>Cancel</button>
+            <button type="submit" class="btn-primary" id="reviewEditSubmitBtn">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="review-modal-overlay" id="reviewDeleteModal" aria-hidden="true">
+    <div class="review-modal review-modal-small" role="dialog" aria-modal="true" aria-labelledby="reviewDeleteModalTitle">
+      <div class="review-modal-head">
+        <h4 id="reviewDeleteModalTitle">Delete Review</h4>
+        <button type="button" class="review-modal-close" data-review-delete-cancel>&times;</button>
+      </div>
+      <div class="review-modal-body">
+        <p class="review-modal-copy">Are you sure you want to delete your review?</p>
+        <div class="review-modal-actions">
+          <button type="button" class="btn-secondary" data-review-delete-cancel>Cancel</button>
+          <button type="button" class="btn-danger" id="reviewDeleteConfirmBtn">Confirm Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .event-detail-page {
+      padding: 118px 0 72px;
+      color: var(--text);
+    }
+    .event-detail-shell {
+      display: grid;
+      gap: 1.4rem;
+    }
+    .event-page-header {
+      align-items: end;
+      gap: 1.2rem;
+      margin-bottom: 0;
+    }
+    .event-page-header p {
+      max-width: 620px;
+    }
+    .event-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .9rem;
+      flex-wrap: wrap;
+    }
+    .event-summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .event-summary-strip article,
+    .event-panel {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    .event-summary-strip article {
+      padding: 1.15rem 1.2rem;
+    }
+    .event-summary-strip span,
+    .metric-card span,
+    .dish-card span,
+    .review-entry-top span,
+    .panel-heading p,
+    .empty-copy,
+    .rating-form label,
+    .rating-group legend {
+      color: var(--text-2);
+    }
+    .event-summary-strip span {
+      display: block;
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: .55rem;
+    }
+    .event-summary-strip strong {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      color: var(--espresso);
+      font-weight: 600;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .8rem 1.05rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .status-scheduled { background: #8d6c2f; color: #fff; }
+    .status-in-progress { background: #b57a1b; color: #fff; }
+    .status-ongoing { background: #246f86; color: #fff; }
+    .status-pending { background: #a88a5f; color: #fff; }
+    .status-completed { background: #2e6e7e; color: #fff; }
+    .status-cancelled { background: #9c3f3f; color: #fff; }
+    /* ── Registration action buttons ── */
+    .event-registration-actions {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .event-action-form { margin: 0; }
+    .btn-register,
+    .btn-login,
+    .btn-my-events {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .65rem 1.35rem;
+      border-radius: 30px;
+      background: linear-gradient(180deg, #d4a032, #b8881e);
+      color: #fff;
+      border: none;
+      font-family: Georgia, serif;
+      font-size: .88rem;
+      font-weight: 600;
+      box-shadow: 0 2px 0 #8a6010;
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: .04em;
+      transition: opacity .18s ease, transform .12s ease;
+    }
+    .btn-register:hover,
+    .btn-login:hover,
+    .btn-my-events:hover { opacity: .88; transform: translateY(1px); }
+    .btn-unregister {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .62rem 1.3rem;
+      border-radius: 30px;
+      background: transparent;
+      color: #b8881e;
+      border: 1.5px solid #b8881e;
+      font-family: Georgia, serif;
+      font-size: .88rem;
+      cursor: pointer;
+      letter-spacing: .04em;
+      transition: opacity .18s ease;
+    }
+    .btn-unregister:hover { opacity: .78; }
+    .registration-closed {
+      font-size: .82rem;
+      color: var(--text-2);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: .6rem 1rem;
+      border: 1px dashed var(--line-2);
+      border-radius: 30px;
+    }
+    .event-content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, .9fr);
+      gap: 1.2rem;
+      align-items: start;
+    }
+    .event-main-column,
+    .event-side-column {
+      display: grid;
+      gap: 1.2rem;
+    }
+    .event-panel {
+      padding: 1.35rem;
+    }
+    .panel-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .panel-heading h4 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      color: var(--espresso);
+      margin: 0;
+    }
+    .panel-heading p {
+      max-width: 380px;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .metrics-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .metric-card,
+    .dish-card,
+    .review-entry {
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,244,231,.88));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+    }
+    .metric-card {
+      padding: 1rem;
+    }
+    .metric-card span {
+      display: block;
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: .55rem;
+    }
+    .metric-card strong {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.65rem;
+      color: var(--espresso);
+      font-weight: 600;
+    }
+    .reviews-stack,
+    .dish-stack {
+      display: grid;
+      gap: .9rem;
+    }
+    .review-entry {
+      padding: 1rem 1.05rem;
+    }
+    .review-entry-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: .9rem;
+      margin-bottom: .6rem;
+    }
+    .review-entry strong {
+      display: block;
+      color: var(--espresso);
+      margin-bottom: .18rem;
+    }
+    .review-entry-top span {
+      font-size: .86rem;
+    }
+    .review-scores {
+      display: inline-flex;
+      gap: .55rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .review-scores span {
+      padding: .4rem .7rem;
+      border-radius: 999px;
+      background: var(--gold-pale);
+      color: var(--brown);
+      font-size: .74rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .review-entry p,
+    .empty-copy {
+      margin: 0;
+      line-height: 1.75;
+    }
+    .review-entry-actions {
+      margin-top: .8rem;
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .review-action-btn {
+      border: 1px solid var(--line-2);
+      background: #fff;
+      color: var(--espresso);
+      border-radius: 999px;
+      font-size: .74rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: .36rem .7rem;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .review-action-btn:hover {
+      border-color: rgba(184, 135, 42, .42);
+      background: rgba(184, 135, 42, .08);
+    }
+    .review-action-delete {
+      border-color: rgba(217, 64, 64, .28);
+      color: #9f1f1f;
+    }
+    .review-action-delete:hover {
+      border-color: rgba(217, 64, 64, .46);
+      background: rgba(217, 64, 64, .1);
+    }
+    .dish-card {
+      padding: .95rem 1rem;
+    }
+    .dish-card strong {
+      display: block;
+      margin-bottom: .3rem;
+      color: var(--espresso);
+    }
+    .rating-form {
+      display: grid;
+      gap: 1rem;
+    }
+    .form-row {
+      margin-bottom: 1rem;
+    }
+    .rating-form label,
+    .rating-group legend {
+      display: block;
+      margin-bottom: .55rem;
+      font-weight: 600;
+    }
+    .rating-form textarea {
+      width: 100%;
+      border: 1px solid var(--line-2);
+      border-radius: 18px;
+      padding: 1rem 1.05rem;
+      font-family: inherit;
+      color: var(--espresso);
+      background: #fff;
+    }
+    .rating-form textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+    .rating-group {
+      border: 0;
+      padding: 0;
+      margin: 0;
+    }
+    .star-picker {
+      display: inline-flex;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      gap: .3rem;
+    }
+    .star-picker input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .star-picker label {
+      font-size: 2rem;
+      line-height: 1;
+      color: #d8cbb0;
+      cursor: pointer;
+      margin: 0;
+      transition: color .18s ease, transform .18s ease;
+    }
+    .star-picker label:hover,
+    .star-picker label:hover ~ label,
+    .star-picker input:checked + label,
+    .star-picker input:checked + label ~ label {
+      color: var(--gold);
+      transform: translateY(-1px);
+    }
+    .rate-panel .btn-primary {
+      width: 100%;
+      text-align: center;
+    }
+    .rate-panel .btn-primary:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+      filter: grayscale(.3);
+    }
+    .rating-notice,
+    .rating-note {
+      margin-bottom: .9rem;
+      padding: .7rem .85rem;
+      border-radius: 12px;
+      font-size: .9rem;
+      line-height: 1.45;
+    }
+    .rating-notice {
+      border: 1px solid var(--line-2);
+      background: #fff;
+      color: var(--espresso);
+    }
+    .rating-notice-waiting {
+      border-color: #d8c19e;
+      background: #f9f1e2;
+      color: #6c4b15;
+    }
+    .rating-notice-success {
+      border-color: #aad7be;
+      background: #edf8f1;
+      color: #1f5e3b;
+    }
+    .rating-notice-cancelled {
+      border-color: #efb8b8;
+      background: #fff1f1;
+      color: #8c2f2f;
+      font-weight: 600;
+    }
+    .rating-note {
+      border: 1px dashed var(--line-2);
+      background: rgba(255,255,255,.86);
+      color: var(--text-2);
+    }
+    .star-picker.disabled {
+      opacity: .55;
+      gap: .22rem;
+      pointer-events: none;
+    }
+    .star-disabled {
+      display: inline-block;
+      font-size: 2rem;
+      line-height: 1;
+      color: #d8cbb0;
+      user-select: none;
+    }
+    .review-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 28, 52, .52);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2100;
+      padding: 1rem;
+    }
+    .review-modal-overlay.active {
+      display: flex;
+    }
+    .review-modal {
+      width: min(520px, 95vw);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f7efe0;
+      border: 1px solid rgba(184, 135, 42, .26);
+      box-shadow: 0 24px 64px rgba(8, 28, 52, .34);
+    }
+    .review-modal-small {
+      width: min(420px, 95vw);
+    }
+    .review-modal-head {
+      background: #081c34;
+      color: #f7efe0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .8rem;
+      padding: .95rem 1.1rem;
+    }
+    .review-modal-head h4 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: .02em;
+    }
+    .review-modal-close {
+      border: none;
+      background: transparent;
+      color: #f7efe0;
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .review-modal-body {
+      padding: 1rem 1.1rem 1.2rem;
+    }
+    .inline-star-picker {
+      display: inline-flex;
+      gap: .25rem;
+    }
+    .inline-star {
+      border: none;
+      background: transparent;
+      font-size: 1.7rem;
+      line-height: 1;
+      color: #d8cbb0;
+      cursor: pointer;
+      padding: 0;
+    }
+    .inline-star.is-selected {
+      color: var(--gold);
+    }
+    .review-edit-form textarea {
+      width: 100%;
+      min-height: 120px;
+      border-radius: 14px;
+      border: 1px solid var(--line-2);
+      padding: .8rem .9rem;
+      font-family: inherit;
+      resize: vertical;
+    }
+    .review-modal-actions {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: .6rem;
+    }
+    .btn-danger {
+      border: 1px solid rgba(217, 64, 64, .32);
+      background: #d94040;
+      color: #fff;
+      border-radius: 10px;
+      padding: .55rem .88rem;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-danger:hover {
+      background: #c53434;
+    }
+    .review-modal-copy {
+      margin: 0;
+      color: var(--espresso);
+      line-height: 1.6;
+    }
+    .ajax-flash-holder {
+      position: fixed;
+      top: 84px;
+      right: 16px;
+      z-index: 2300;
+      display: grid;
+      gap: .5rem;
+    }
+    .ajax-flash {
+      border-radius: 12px;
+      padding: .68rem .85rem;
+      font-size: .84rem;
+      border: 1px solid transparent;
+      box-shadow: 0 10px 24px rgba(8, 28, 52, .18);
+      background: #fff;
+      color: #081c34;
+      min-width: 240px;
+    }
+    .ajax-flash.success {
+      border-color: #b4dac3;
+      background: #effaf3;
+      color: #17683f;
+    }
+    .ajax-flash.error {
+      border-color: #efc1c1;
+      background: #fff1f1;
+      color: #8e2a2a;
+    }
+
+    @media (max-width: 980px) {
+      .event-summary-strip,
+      .metrics-grid,
+      .event-content-grid {
+        grid-template-columns: 1fr;
+      }
+      .panel-heading,
+      .review-entry-top,
+      .event-page-header {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+      .event-header-actions {
+        justify-content: flex-start;
+      }
+      .review-scores {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .event-detail-page {
+        padding: 102px 0 56px;
+      }
+      .event-panel,
+      .event-summary-strip article {
+        padding: 1rem;
+      }
+      .panel-heading h4 {
+        font-size: 1.7rem;
+      }
+    }
+  </style>
+
+  <script>
+    (function () {
+      const flashHolder = document.createElement('div');
+      flashHolder.className = 'ajax-flash-holder';
+      document.body.appendChild(flashHolder);
+
+      const showFlash = (message, type = 'success') => {
+        const node = document.createElement('div');
+        node.className = `ajax-flash ${type}`;
+        node.textContent = message;
+        flashHolder.appendChild(node);
+        window.setTimeout(() => node.remove(), 2600);
+      };
+
+      const editModal = document.getElementById('reviewEditModal');
+      const deleteModal = document.getElementById('reviewDeleteModal');
+      const editForm = document.getElementById('reviewEditForm');
+      const editSubmitBtn = document.getElementById('reviewEditSubmitBtn');
+      const deleteConfirmBtn = document.getElementById('reviewDeleteConfirmBtn');
+      const editTokenInput = document.getElementById('reviewEditToken');
+      const editCommentInput = document.getElementById('reviewEditComment');
+
+      if (!editModal || !deleteModal || !editForm || !deleteConfirmBtn || !editTokenInput || !editCommentInput) {
+        return;
+      }
+
+      let activeEditContext = null;
+      let activeDeleteContext = null;
+      const starState = {
+        eventRating: null,
+        foodRating: null,
+      };
+
+      const setModalVisible = (modal, isVisible) => {
+        modal.classList.toggle('active', isVisible);
+        modal.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+      };
+
+      const paintStars = () => {
+        document.querySelectorAll('[data-inline-star-group]').forEach(group => {
+          const name = group.getAttribute('data-inline-star-group');
+          const selected = starState[name] ?? 0;
+          group.querySelectorAll('[data-inline-star-value]').forEach(button => {
+            const value = Number.parseInt(button.getAttribute('data-inline-star-value') || '0', 10);
+            button.classList.toggle('is-selected', value <= selected);
+          });
+        });
+      };
+
+      document.querySelectorAll('[data-inline-star-group]').forEach(group => {
+        group.addEventListener('click', event => {
+          const button = event.target.closest('[data-inline-star-value]');
+          if (!button) {
+            return;
+          }
+          const name = group.getAttribute('data-inline-star-group');
+          starState[name] = Number.parseInt(button.getAttribute('data-inline-star-value') || '0', 10) || null;
+          paintStars();
+        });
+      });
+
+      const closeEditModal = () => {
+        setModalVisible(editModal, false);
+        activeEditContext = null;
+      };
+
+      const closeDeleteModal = () => {
+        setModalVisible(deleteModal, false);
+        activeDeleteContext = null;
+      };
+
+      document.querySelectorAll('[data-review-edit-cancel]').forEach(btn => btn.addEventListener('click', closeEditModal));
+      document.querySelectorAll('[data-review-delete-cancel]').forEach(btn => btn.addEventListener('click', closeDeleteModal));
+
+      editModal.addEventListener('click', event => {
+        if (event.target === editModal) {
+          closeEditModal();
+        }
+      });
+
+      deleteModal.addEventListener('click', event => {
+        if (event.target === deleteModal) {
+          closeDeleteModal();
+        }
+      });
+
+      document.addEventListener('click', event => {
+        const editTrigger = event.target.closest('[data-review-edit-open]');
+        if (editTrigger) {
+          activeEditContext = {
+            reviewId: editTrigger.getAttribute('data-review-id'),
+            editUrl: editTrigger.getAttribute('data-edit-url'),
+          };
+
+          starState.eventRating = Number.parseInt(editTrigger.getAttribute('data-review-event-rating') || '', 10) || null;
+          starState.foodRating = Number.parseInt(editTrigger.getAttribute('data-review-food-rating') || '', 10) || null;
+          editTokenInput.value = editTrigger.getAttribute('data-csrf-token') || '';
+          editCommentInput.value = editTrigger.getAttribute('data-review-comment') || '';
+          paintStars();
+          setModalVisible(editModal, true);
+          return;
+        }
+
+        const deleteTrigger = event.target.closest('[data-review-delete-open]');
+        if (deleteTrigger) {
+          activeDeleteContext = {
+            reviewId: deleteTrigger.getAttribute('data-review-id'),
+            deleteUrl: deleteTrigger.getAttribute('data-delete-url'),
+            token: deleteTrigger.getAttribute('data-csrf-token') || '',
+          };
+          setModalVisible(deleteModal, true);
+        }
+      });
+
+      editForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!activeEditContext || !activeEditContext.editUrl) {
+          return;
+        }
+
+        const payload = new URLSearchParams();
+        payload.set('_token', editTokenInput.value || '');
+        payload.set('eventRating', starState.eventRating ?? '');
+        payload.set('foodRating', starState.foodRating ?? '');
+        payload.set('comment', editCommentInput.value.trim());
+
+        editSubmitBtn.disabled = true;
+        try {
+          const response = await fetch(activeEditContext.editUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: payload.toString(),
+          });
+
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            showFlash(result.message || 'Unable to update review.', 'error');
+            return;
+          }
+
+          const reviewId = activeEditContext.reviewId;
+          const entry = document.querySelector(`[data-review-entry][data-review-id="${reviewId}"]`);
+          if (entry && result.review) {
+            const eventRatingNode = entry.querySelector('[data-review-event-rating]');
+            const foodRatingNode = entry.querySelector('[data-review-food-rating]');
+            const commentNode = entry.querySelector('[data-review-comment]');
+            if (eventRatingNode) {
+              eventRatingNode.textContent = `Event ${result.review.eventRating !== null ? `${result.review.eventRating}/5` : 'N/A'}`;
+            }
+            if (foodRatingNode) {
+              foodRatingNode.textContent = `Food ${result.review.foodRating !== null ? `${result.review.foodRating}/5` : 'N/A'}`;
+            }
+            if (commentNode) {
+              commentNode.textContent = result.review.comment && result.review.comment.trim() !== '' ? result.review.comment : 'No comment provided.';
+            }
+
+            const editBtn = entry.querySelector('[data-review-edit-open]');
+            if (editBtn) {
+              editBtn.setAttribute('data-review-event-rating', result.review.eventRating ?? '');
+              editBtn.setAttribute('data-review-food-rating', result.review.foodRating ?? '');
+              editBtn.setAttribute('data-review-comment', result.review.comment ?? '');
+            }
+          }
+
+          showFlash(result.message || 'Review updated successfully', 'success');
+          closeEditModal();
+        } catch (error) {
+          console.error(error);
+          showFlash('Network error while updating review.', 'error');
+        } finally {
+          editSubmitBtn.disabled = false;
+        }
+      });
+
+      deleteConfirmBtn.addEventListener('click', async () => {
+        if (!activeDeleteContext || !activeDeleteContext.deleteUrl) {
+          return;
+        }
+
+        deleteConfirmBtn.disabled = true;
+        try {
+          const payload = new URLSearchParams();
+          payload.set('_token', activeDeleteContext.token || '');
+
+          const response = await fetch(activeDeleteContext.deleteUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: payload.toString(),
+          });
+
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            showFlash(result.message || 'Unable to delete review.', 'error');
+            return;
+          }
+
+          const entry = document.querySelector(`[data-review-entry][data-review-id="${activeDeleteContext.reviewId}"]`);
+          if (entry) {
+            entry.remove();
+          }
+
+          showFlash(result.message || 'Review deleted successfully', 'success');
+          closeDeleteModal();
+        } catch (error) {
+          console.error(error);
+          showFlash('Network error while deleting review.', 'error');
+        } finally {
+          deleteConfirmBtn.disabled = false;
+        }
+      });
+    })();
+  </script>
+
+  <script>
+  (function () {
+    const eventId = {{ event.donationEventId|default(0) }};
+    const INTERVAL_MS = 60000;
+
+    const statusClassMap = {
+      SCHEDULED: 'status-scheduled',
+      IN_PROGRESS: 'status-in-progress',
+      ONGOING: 'status-ongoing',
+      COMPLETED: 'status-completed',
+      CANCELLED: 'status-cancelled',
+    };
+
+    const canRegister = (status) => status === 'SCHEDULED' || status === 'IN_PROGRESS';
+
+    async function refreshEventShow() {
+      try {
+        const response = await fetch(`/api/events/refresh-all?ids=${eventId}`, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!data.success || !Array.isArray(data.events)) return;
+
+        const ev = data.events.find((e) => Number(e.id) === eventId);
+        if (!ev) return;
+
+        // Status pill
+        const pill = document.getElementById('live-status-pill');
+        if (pill) {
+          pill.textContent = ev.label || ev.status;
+          pill.className = 'status-pill ' + (statusClassMap[ev.status] || 'status-scheduled');
+        }
+
+        // Register button visibility
+        const registerBtn = document.querySelector('[data-register-button]');
+        if (registerBtn) {
+          registerBtn.style.display = canRegister(ev.status) ? '' : 'none';
+        }
+        const closedNotice = document.getElementById('registration-closed-notice');
+        if (closedNotice) {
+          closedNotice.style.display = canRegister(ev.status) ? 'none' : '';
+        }
+      } catch (err) {
+        console.error('Client show refresh failed:', err);
+      }
+    }
+
+    refreshEventShow();
+    setInterval(refreshEventShow, INTERVAL_MS);
+  })();
+  </script>
+{% endblock %}
