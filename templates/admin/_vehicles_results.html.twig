@@ -1,0 +1,70 @@
+{% if vehicles|length > 0 %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Make & Model</th>
+                <th>License Plate</th>
+                <th>Vehicle Type</th>
+                <th>Assigned Driver</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vehicle in vehicles %}
+            <tr>
+                <td><strong>{{ vehicle.make }} {{ vehicle.model }}</strong></td>
+                <td><code>{{ vehicle.licensePlate }}</code></td>
+                <td>{{ vehicle.vehicleType|capitalize }}</td>
+                <td>
+                    {% set assigned_driver = null %}
+                    {% for driver in deliveryMen %}
+                        {% if driver.delivery_man_id == vehicle.delivery_man_id %}
+                            {% set assigned_driver = driver %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if assigned_driver %}
+                        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                            <span class="driver-badge">{{ assigned_driver.name }}</span>
+                            <small style="color: var(--text-3);">{{ assigned_driver.vehicle_type ? assigned_driver.vehicle_type|capitalize : 'No vehicle type' }} {{ assigned_driver.vehicle_number ? '• ' ~ assigned_driver.vehicle_number : '' }}</small>
+                        </div>
+                    {% else %}
+                        <span class="unassigned">— Not assigned</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        {% if vehicle.delivery_man_id %}
+                        <form method="POST" action="{{ path('app_admin_unassign_driver', {'id': vehicle.car_id}) }}" style="display: inline;">
+                            <button type="submit" class="btn-small btn-unassign" onclick="return confirm('Unassign this vehicle?');">Unassign</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ path('app_admin_assign_driver', {'id': vehicle.car_id}) }}" class="assignment-form">
+                            <select name="driver_id" required onchange="this.form.submit();">
+                                <option value="">Assign Driver</option>
+                                {% for driver in deliveryMen %}
+                                    <option value="{{ driver.delivery_man_id }}">{{ driver.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        {% endif %}
+
+                        <a href="{{ path('app_fleet_car_edit', {'car_id': vehicle.car_id}) }}" class="btn-small btn-edit">Edit</a>
+
+                        <form method="POST" action="{{ path('app_fleet_car_delete', {'car_id': vehicle.car_id}) }}" style="display: inline;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ vehicle.car_id) }}">
+                            <button type="submit" class="btn-small btn-delete" onclick="return confirm('Delete this vehicle?');">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="text-align: center; padding: 3rem; background: var(--ivory); border-radius: 12px; color: var(--text-3);">
+    <p>No vehicles found. <a href="{{ path('app_fleet_car_new') }}" style="color: var(--gold); font-weight: 600;">Add your first vehicle</a></p>
+</div>
+{% endif %}

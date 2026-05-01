@@ -3,3 +3,21 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+donation_item_show:
+    path: /admin/donation-items/{id}
+    controller: App\Controller\DonationItemController::show
+
+donation_item_edit:
+    path: /admin/donation-items/{id}/edit
+    controller: App\Controller\DonationItemController::edit
+
+donation_item_remove:
+    path: /admin/donation-items/{id}/remove-item/{assignmentId}
+    controller: App\Controller\DonationItemController::removeItem
+    methods: [POST]
+
+donation_item_delete_event:
+    path: /admin/donation-items/{id}/delete-event
+    controller: App\Controller\DonationItemController::deleteEvent
+    methods: [POST]

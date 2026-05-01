@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ eventTitle }}</title>
+  <style>
+    @page {
+      margin: 24px;
+    }
+
+    body {
+      font-family: DejaVu Sans, sans-serif;
+      color: #1f2f44;
+      font-size: 12px;
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .brand-bar {
+      background: #081c34;
+      color: #f7efe0;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .brand-subtitle {
+      margin: 2px 0 0;
+      color: #ddc28a;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .event-title {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: #081c34;
+      font-weight: 700;
+    }
+
+    .meta-grid {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+
+    .meta-grid td {
+      border: 1px solid #d9c6a0;
+      padding: 8px;
+      vertical-align: top;
+      width: 50%;
+    }
+
+    .meta-label {
+      margin: 0 0 3px;
+      font-size: 10px;
+      color: #7b6850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .meta-value {
+      margin: 0;
+      font-size: 13px;
+      color: #1f2f44;
+      font-weight: 600;
+    }
+
+    .section-title {
+      margin: 12px 0 8px;
+      font-size: 13px;
+      color: #081c34;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .items-table th,
+    .items-table td {
+      border: 1px solid #d9c6a0;
+      padding: 7px 8px;
+      text-align: left;
+    }
+
+    .items-table th {
+      background: #f4ebd8;
+      color: #081c34;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .items-table td:last-child,
+    .items-table th:last-child {
+      width: 95px;
+      text-align: right;
+    }
+
+    .empty-note {
+      border: 1px dashed #d9c6a0;
+      padding: 10px;
+      color: #6f604c;
+      background: #faf5eb;
+    }
+
+    .footer {
+      margin-top: 16px;
+      font-size: 10px;
+      color: #7b6850;
+      border-top: 1px solid #e4d5b8;
+      padding-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="brand-bar">
+    <p class="brand-title">BIG 4 Admin</p>
+    <p class="brand-subtitle">Food Donation Event Report</p>
+  </div>
+
+  <h1 class="event-title">{{ eventTitle }}</h1>
+
+  <table class="meta-grid">
+    <tr>
+      <td>
+        <p class="meta-label">Event Date & Time</p>
+        <p class="meta-value">{{ event.eventDate ? event.eventDate|date('Y-m-d H:i') : 'Not set' }}</p>
+      </td>
+      <td>
+        <p class="meta-label">Charity Name</p>
+        <p class="meta-value">{{ event.charityName ?: 'N/A' }}</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p class="meta-label">Total Quantity</p>
+        <p class="meta-value">{{ event.totalQuantity ?? 0 }}</p>
+      </td>
+      <td>
+        <p class="meta-label">Event Status</p>
+        <p class="meta-value">{{ event.status ?: 'Unknown' }}</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p class="meta-label">Registered Users</p>
+        <p class="meta-value">{{ registeredUsersCount }}</p>
+      </td>
+      <td>
+        <p class="meta-label">Event ID</p>
+        <p class="meta-value">#{{ event.donationEventId }}</p>
+      </td>
+    </tr>
+  </table>
+
+  <h2 class="section-title">Assigned Items</h2>
+
+  {% if items is not empty %}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.dishName ?: ('Item #' ~ item.itemId) }}</td>
+            <td>{{ item.quantity }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty-note">No items are currently assigned to this event.</p>
+  {% endif %}
+
+  <p class="footer">
+    Generated on {{ "now"|date('Y-m-d H:i') }} by BIG 4 Admin.
+  </p>
+</body>
+</html>

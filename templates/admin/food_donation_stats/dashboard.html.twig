@@ -1,0 +1,312 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Food Donation Dashboard · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block body %}
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: var(--espresso); margin: 0;">Food Donation Statistics and Charts</h1>
+    <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+      <button onclick="location.reload()" class="t-btn" style="padding: 0.6rem 1.2rem;">🔄 Refresh Data</button>
+      <button id="openAiReportModal" type="button" class="t-btn primary" style="padding: 0.6rem 1.2rem;">✨ AI Report</button>
+      <a href="{{ path('app_admin_dashboard') }}" class="t-btn secondary" style="padding: 0.6rem 1.2rem;">🏠 Back to Home</a>
+    </div>
+  </div>
+
+  <div id="aiReportModal" style="display:none;position:fixed;inset:0;background:rgba(16,13,10,0.4);z-index:1000;align-items:center;justify-content:center;padding:2rem;">
+    <div style="background:var(--ivory);border-radius:18px;max-width:960px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.16);overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1.4rem 1.6rem;background:var(--gold-wash);border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:1.15rem;font-weight:700;color:var(--espresso);">🤖 AI Donation Report</div>
+          <div style="font-size:0.85rem;color:var(--text-3);margin-top:0.25rem;">Powered by Claude (Anthropic)</div>
+        </div>
+        <button id="closeAiReportModal" style="background:transparent;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-2);">✕</button>
+      </div>
+      <div style="padding:1.6rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">
+          <div style="background:var(--ivory-2);border:1px solid var(--border);border-radius:12px;padding:1rem;">
+            <div style="font-size:0.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.45rem;">Total Events</div>
+            <div style="font-size:1.35rem;font-weight:700;color:var(--espresso);">{{ stats.totalEvents }}</div>
+          </div>
+          <div style="background:var(--ivory-2);border:1px solid var(--border);border-radius:12px;padding:1rem;">
+            <div style="font-size:0.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.45rem;">Total Portions</div>
+            <div style="font-size:1.35rem;font-weight:700;color:var(--espresso);">{{ stats.totalPortions }}</div>
+          </div>
+          <div style="background:var(--ivory-2);border:1px solid var(--border);border-radius:12px;padding:1rem;">
+            <div style="font-size:0.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.45rem;">Charities</div>
+            <div style="font-size:1.35rem;font-weight:700;color:var(--espresso);">{{ stats.charitiesHelpedCount }}</div>
+          </div>
+          <div style="background:var(--ivory-2);border:1px solid var(--border);border-radius:12px;padding:1rem;">
+            <div style="font-size:0.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.45rem;">Top Charity</div>
+            <div id="ai-top-charity" style="font-size:1.05rem;font-weight:700;color:var(--espresso);">Loading…</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div id="aiReportText" style="font-family: 'Georgia', serif; font-size: 14px; line-height: 1.8; color: #2c3e50; background: linear-gradient(135deg, #fdfcfb 0%, #f8f6f0 100%); border: 1px solid #e8dcc8; border-radius: 12px; padding: 20px 24px; min-height: 200px; max-height: 320px; overflow-y: auto; white-space: pre-wrap; box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);">Click Generate AI Report to get a smart analysis...</div>
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button id="generateAiReport" type="button" class="t-btn primary" style="padding:0.85rem 1.3rem;">Generate AI Report</button>
+            <span id="aiReportStatus" style="font-size:0.9rem;color:var(--text-3);">Ready to generate.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+    <div style="background: var(--ivory); border-left: 4px solid var(--green); border-radius: 8px; padding: 1.3rem 1.5rem;">
+      <div style="font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-3); margin-bottom: 0.8rem;">Total Events</div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--espresso);"><span id="kpi-events">{{ stats.totalEvents }}</span></div>
+    </div>
+    <div style="background: var(--ivory); border-left: 4px solid var(--blue); border-radius: 8px; padding: 1.3rem 1.5rem;">
+      <div style="font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-3); margin-bottom: 0.8rem;">Total Portions</div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--espresso);"><span id="kpi-portions">{{ stats.totalPortions }}</span></div>
+    </div>
+    <div style="background: var(--ivory); border-left: 4px solid var(--amber); border-radius: 8px; padding: 1.3rem 1.5rem;">
+      <div style="font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-3); margin-bottom: 0.8rem;">Charities Helped</div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--espresso);"><span id="kpi-charities">{{ stats.charitiesHelpedCount }}</span></div>
+    </div>
+    <div style="background: var(--ivory); border-left: 4px solid var(--purple); border-radius: 8px; padding: 1.3rem 1.5rem;">
+      <div style="font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-3); margin-bottom: 0.8rem;">Avg Portions/Event</div>
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--espresso);"><span id="kpi-avg">{{ stats.avgPortionsPerEvent }}</span></div>
+    </div>
+  </div>
+
+  <!-- Charts Grid -->
+  <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Monthly Line Chart -->
+    <div style="background: var(--ivory); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; position: relative; height: 350px;">
+      <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--espresso); margin-bottom: 1rem;">Monthly Donations</h3>
+      <canvas id="monthlyChart" style="display: block;"></canvas>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Top Charities Bar Chart -->
+    <div style="background: var(--ivory); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;">
+      <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--espresso); margin-bottom: 1rem;">Top Charities by Portions</h3>
+      <canvas id="charitiesChart" height="80"></canvas>
+    </div>
+
+    <!-- Portions Per Event Bar Chart -->
+    <div style="background: var(--ivory); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;">
+      <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--espresso); margin-bottom: 1rem;">Portions per Event</h3>
+      <canvas id="eventsChart" height="80"></canvas>
+    </div>
+  </div>
+
+  <!-- Stats Table -->
+  <div style="background: var(--ivory); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem;">
+    <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--espresso); margin-bottom: 1rem;">All Events</h3>
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border);">
+            <th style="text-align: left; padding: 0.8rem; font-weight: 600; color: var(--text); font-size: 0.8rem;">Date</th>
+            <th style="text-align: left; padding: 0.8rem; font-weight: 600; color: var(--text); font-size: 0.8rem;">Charity Name</th>
+            <th style="text-align: left; padding: 0.8rem; font-weight: 600; color: var(--text); font-size: 0.8rem;">Portions</th>
+            <th style="text-align: left; padding: 0.8rem; font-weight: 600; color: var(--text); font-size: 0.8rem;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events | sort((a, b) => b.eventDate <=> a.eventDate) %}
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 0.8rem; font-size: 0.8rem; color: var(--text-2);">{{ event.eventDate ? event.eventDate|date('Y-m-d') : '—' }}</td>
+              <td style="padding: 0.8rem; font-size: 0.8rem; color: var(--text-2);">{{ event.charityName ?? '—' }}</td>
+              <td style="padding: 0.8rem; font-size: 0.8rem; color: var(--text-2);">{{ event.totalQuantity ?? '—' }}</td>
+              <td style="padding: 0.8rem;">
+                <span style="display: inline-block; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
+                  {% if event.status == 'SCHEDULED' %}background: var(--amber-bg); color: var(--amber);{% elseif event.status == 'CANCELLED' %}background: var(--red-bg); color: var(--red);{% elseif event.status == 'COMPLETED' %}background: var(--green-bg); color: var(--green);{% else %}background: var(--blue-bg); color: var(--blue);{% endif %}
+                ">{{ event.status ?? 'PENDING' }}</span>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4" style="padding: 1.2rem; text-align: center; color: var(--text-3); font-size: 0.9rem;">No events found</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  <script>
+    const chartData = {{ chartData | raw }};
+    const charityColorMap = {{ charityColorMap | raw }};
+
+    // Monthly Line Chart
+    const monthlyCtx = document.getElementById('monthlyChart')?.getContext('2d');
+    if (monthlyCtx) {
+      const detailedDateLabels = chartData.events.allEventDates?.labels || [];
+      const detailedDateValues = chartData.events.allEventDates?.quantities || [];
+
+      new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+          labels: detailedDateLabels,
+          datasets: [{
+            label: 'Total Portions',
+            data: detailedDateValues,
+            borderColor: '#3A7EC9',
+            backgroundColor: 'rgba(58, 126, 201, 0.15)',
+            borderWidth: 3,
+            tension: 0,
+            fill: false,
+            pointBackgroundColor: '#3A7EC9',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                color: '#5C3D1E',
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#7A5C3A' },
+              grid: { color: 'rgba(92, 61, 30, 0.15)' },
+            },
+            x: {
+              ticks: { color: '#7A5C3A' },
+              grid: { color: 'rgba(92, 61, 30, 0.10)' },
+            },
+          }
+        }
+      });
+    }
+
+    // Top Charities Bar Chart - Use consistent charity colors
+    const charitiesCtx = document.getElementById('charitiesChart')?.getContext('2d');
+    if (charitiesCtx) {
+      const charityLabels = Object.keys(chartData.events.charityData);
+      const charityValues = Object.values(chartData.events.charityData);
+      const charityBackgroundColors = charityLabels.map(charity => charityColorMap[charity] || '#999');
+      
+      new Chart(charitiesCtx, {
+        type: 'bar',
+        data: {
+          labels: charityLabels,
+          datasets: [{
+            label: 'Portions',
+            data: charityValues,
+            backgroundColor: charityBackgroundColors
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // Portions Per Event Bar Chart - Use consistent charity colors based on charity name
+    const eventsCtx = document.getElementById('eventsChart')?.getContext('2d');
+    if (eventsCtx) {
+      const eventLabels = chartData.events.allEvents.map(e => e.label);
+      const eventValues = chartData.events.allEvents.map(e => e.quantity);
+      // Extract charity name from label (format: "MM/dd - Charity Name") and get its color
+      const eventBackgroundColors = eventLabels.map(label => {
+        const charityName = label.split(' - ').slice(1).join(' - ');
+        return charityColorMap[charityName] || '#999';
+      });
+      
+      new Chart(eventsCtx, {
+        type: 'bar',
+        data: {
+          labels: eventLabels,
+          datasets: [{
+            label: 'Portions',
+            data: eventValues,
+            backgroundColor: eventBackgroundColors
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    const aiReportUrl = '{{ path('app_food_donation_ai_report') }}';
+    const aiModal = document.getElementById('aiReportModal');
+    const openAiButton = document.getElementById('openAiReportModal');
+    const closeAiButton = document.getElementById('closeAiReportModal');
+    const generateAiReportButton = document.getElementById('generateAiReport');
+    const aiReportOutput = document.getElementById('aiReportText');
+    const aiReportStatus = document.getElementById('aiReportStatus');
+    const aiTopCharity = document.getElementById('ai-top-charity');
+
+    if (aiTopCharity) {
+      const topCharity = Object.entries(chartData.events.charityData)[0];
+      aiTopCharity.textContent = topCharity ? `${topCharity[0]} with ${topCharity[1]} portions` : 'N/A';
+    }
+
+    openAiButton?.addEventListener('click', () => {
+      if (aiModal) {
+        aiModal.style.display = 'flex';
+      }
+    });
+
+    closeAiButton?.addEventListener('click', () => {
+      if (aiModal) {
+        aiModal.style.display = 'none';
+      }
+    });
+
+    generateAiReportButton?.addEventListener('click', async () => {
+      if (!generateAiReportButton || !aiReportStatus || !aiReportOutput) {
+        return;
+      }
+
+      generateAiReportButton.disabled = true;
+      aiReportStatus.textContent = 'Generating AI report...';
+      aiReportOutput.innerHTML = 'Generating AI report, please wait...';
+
+      try {
+        const response = await fetch(aiReportUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({}),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Unknown error');
+        }
+
+        const reportDiv = document.getElementById('aiReportText');
+        let formatted = result.report
+          .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#1a1a2e; font-size:15px;">$1</strong>')
+          .replace(/^- /gm, '• ')
+          .replace(/\n/g, '<br>');
+        reportDiv.innerHTML = formatted;
+        aiReportStatus.textContent = 'Report generated successfully.';
+      } catch (error) {
+        aiReportOutput.innerHTML = `Error generating report: ${error.message}`;
+        aiReportStatus.textContent = 'Failed to generate report.';
+      } finally {
+        generateAiReportButton.disabled = false;
+      }
+    });
+  </script>
+{% endblock %}

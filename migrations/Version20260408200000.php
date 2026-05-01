@@ -20,11 +20,8 @@ final class Version20260408200000 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // Check if columns exist before adding them
-        try {
-            $this->addSql('ALTER TABLE user ADD COLUMN first_name VARCHAR(255) DEFAULT NULL, ADD COLUMN last_name VARCHAR(255) DEFAULT NULL, ADD COLUMN phone VARCHAR(255) DEFAULT NULL, ADD COLUMN address VARCHAR(255) DEFAULT NULL, ADD COLUMN banned TINYINT(1) DEFAULT 0 NOT NULL');
-        } catch (\Exception $e) {
-            // Columns might already exist
-        }
+        // Use IF NOT EXISTS to avoid failing when columns are already present
+        $this->addSql('ALTER TABLE `user` ADD COLUMN IF NOT EXISTS first_name VARCHAR(255) DEFAULT NULL, ADD COLUMN IF NOT EXISTS last_name VARCHAR(255) DEFAULT NULL, ADD COLUMN IF NOT EXISTS phone VARCHAR(255) DEFAULT NULL, ADD COLUMN IF NOT EXISTS address VARCHAR(255) DEFAULT NULL, ADD COLUMN IF NOT EXISTS banned TINYINT(1) DEFAULT 0 NOT NULL');
     }
 
     public function down(Schema $schema): void

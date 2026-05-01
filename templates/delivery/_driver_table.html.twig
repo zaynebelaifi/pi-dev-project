@@ -1,0 +1,34 @@
+{% for delivery in deliveries %}
+    <tr>
+        <td>{{ delivery.order_id }}</td>
+        <td>{{ delivery.recipient_name }}<br><span class="meta-text">{{ delivery.recipient_phone }}</span></td>
+        <td>{{ delivery.delivery_address }}</td>
+        <td>{{ delivery.status }}</td>
+        <td>{{ delivery.pickup_location }}</td>
+        <td>{{ delivery.order_total }} TND</td>
+        <td>{{ delivery.created_at ? delivery.created_at|date('Y-m-d H:i') : '-' }}</td>
+        <td class="action-cell">
+            {% set myId = app.session.get('delivery_man_id') %}
+            {% if delivery.status == 'PENDING_ASSIGNMENT' and delivery.deliveryMan and delivery.deliveryMan.delivery_man_id == myId %}
+                <form method="post" action="{{ path('app_delivery_candidate_accept', {'id': delivery.delivery_id}) }}" style="display:inline-block;margin-right:.5rem;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('candidate_accept' ~ delivery.delivery_id) }}">
+                    <button type="submit" class="btn-action" onclick="return confirm('Are you sure you want to accept this delivery?');">Accept</button>
+                </form>
+                <form method="post" action="{{ path('app_delivery_candidate_decline', {'id': delivery.delivery_id}) }}" style="display:inline-block;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('candidate_decline' ~ delivery.delivery_id) }}">
+                    <button type="submit" class="btn-action btn-danger" onclick="return confirm('Are you sure you want to decline this delivery? It will be offered to the next candidate.');">Decline</button>
+                </form>
+            {% else %}
+                <form method="post" action="{{ path('app_delivery_driver_status', {'id': delivery.delivery_id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('driver_status' ~ delivery.delivery_id) }}">
+                    <button type="submit" name="action" value="in_transit" class="btn-action">In Transit</button>
+                    <button type="button" data-url="{{ path('app_delivery_update_location', {'id': delivery.delivery_id}) }}" class="btn-action share-location-btn">Share Location</button>
+                    <button type="button" data-url="{{ path('app_delivery_mark_delivered', {'id': delivery.delivery_id}) }}" data-delivery-id="{{ delivery.delivery_id }}" class="btn-action btn-success mark-delivered-btn">Delivered</button>
+                    <button type="submit" name="action" value="cancel" class="btn-action btn-danger">Cancel</button>
+                </form>
+            {% endif %}
+        </td>
+    </tr>
+{% else %}
+    <tr><td colspan="8" style="text-align:center; padding:2rem;">No deliveries found.</td></tr>
+{% endfor %}

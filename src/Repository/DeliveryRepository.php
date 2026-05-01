@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Delivery;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\DBAL\Connection;
 
 /**
  * @extends ServiceEntityRepository<Delivery>
@@ -14,6 +15,33 @@ class DeliveryRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Delivery::class);
+    }
+
+    /**
+     * Find nearby pending orders by coordinates within radius meters.
+     * Returns array of Delivery objects.
+     */
+    public function findNearbyOrdersByCoords(float $lat, float $lon, int $radiusMeters = 1000): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT * FROM delivery WHERE status IN ("PENDING","ASSIGNED") AND current_latitude IS NOT NULL AND current_longitude IS NOT NULL';
+        $rows = $conn->fetchAllAssociative($sql);
+        $result = [];
+        foreach ($rows as $r) {
+            $dLat = (float)$r['current_latitude'];
+            $dLon = (float)$r['current_longitude'];
+            // simple haversine
+            $earthRadius = 6371000;
+            $dLatR = deg2rad($dLat - $lat);
+            $dLonR = deg2rad($dLon - $lon);
+            $a = sin($dLatR/2) * sin($dLatR/2) + cos(deg2rad($lat)) * cos(deg2rad($dLat)) * sin($dLonR/2) * sin($dLonR/2);
+            $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+            $dist = $earthRadius * $c;
+            if ($dist <= $radiusMeters) {
+                $result[] = $this->find($r['delivery_id']);
+            }
+        }
+        return $result;
     }
 
     //    /**
@@ -117,6 +145,101 @@ class DeliveryRepository extends ServiceEntityRepository
         $qb->orderBy($sort, $direction);
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Return QueryBuilder for search+sort to allow external pagination.
+     */
+    public function searchAndSortQueryBuilder(?string $search, ?string $sortField, ?string $sortDirection, ?int $deliveryManId = null, ?string $status = null)
+    {
+        $allowedSorts = [
+            'delivery_id' => 'd.delivery_id',
+            'order_id' => 'd.order_id',
+            'status' => 'd.status',
+            'created_at' => 'd.created_at',
+            'recipient_name' => 'd.recipient_name',
+        ];
+
+        $direction = strtoupper($sortDirection ?? 'DESC');
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            $direction = 'DESC';
+        }
+
+        $qb = $this->createQueryBuilder('d');
+
+        if ($deliveryManId !== null) {
+            $qb->join('d.deliveryMan', 'dm')
+               ->andWhere('dm.delivery_man_id = :did')
+               ->setParameter('did', $deliveryManId);
+        }
+
+        if ($status) {
+            $qb->andWhere('d.status = :status')->setParameter('status', $status);
+        }
+
+        if ($search) {
+            $qb->andWhere('d.order_id LIKE :search OR d.delivery_address LIKE :search OR d.recipient_name LIKE :search OR d.recipient_phone LIKE :search OR d.status LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        $sort = $allowedSorts[$sortField] ?? 'd.created_at';
+        $qb->orderBy($sort, $direction);
+
+        return $qb;
+    }
+
+    /**
+     * Paginated search + sort for driver deliveries.
+     * Returns ['results' => Delivery[], 'total' => int]
+     */
+    public function searchAndSortPaginated(?string $search, ?string $sortField, ?string $sortDirection, int $page = 1, int $limit = 15, ?int $deliveryManId = null, ?string $status = null): array
+    {
+        $allowedSorts = [
+            'delivery_id' => 'd.delivery_id',
+            'order_id' => 'd.order_id',
+            'status' => 'd.status',
+            'created_at' => 'd.created_at',
+            'recipient_name' => 'd.recipient_name',
+        ];
+
+        $direction = strtoupper($sortDirection ?? 'DESC');
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            $direction = 'DESC';
+        }
+
+        $qb = $this->createQueryBuilder('d');
+
+        if ($deliveryManId !== null) {
+            $qb->join('d.deliveryMan', 'dm')
+               ->andWhere('dm.delivery_man_id = :did')
+               ->setParameter('did', $deliveryManId);
+        }
+
+        if ($status) {
+            $qb->andWhere('d.status = :status')->setParameter('status', $status);
+        }
+
+        if ($search) {
+            $qb->andWhere('d.order_id LIKE :search OR d.delivery_address LIKE :search OR d.recipient_name LIKE :search OR d.recipient_phone LIKE :search OR d.status LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        $sort = $allowedSorts[$sortField] ?? 'd.created_at';
+        $qb->orderBy($sort, $direction);
+
+        // count
+        $countQb = clone $qb;
+        $countQb->select('COUNT(d.delivery_id)');
+        $total = (int) $countQb->getQuery()->getSingleScalarResult();
+
+        $page = max(1, $page);
+        $limit = max(1, min(100, $limit));
+        $qb->setFirstResult(($page - 1) * $limit)
+           ->setMaxResults($limit);
+
+        $results = $qb->getQuery()->getResult();
+
+        return ['results' => $results, 'total' => $total];
     }
 
     public function findByOrderIds(array $orderIds): array

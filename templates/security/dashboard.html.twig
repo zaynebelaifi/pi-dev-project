@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - BIG 4{% endblock %}
+
+{% block body %}
+<div class="auth-page" style="min-height: calc(100vh - 120px); display:flex; align-items:center; justify-content:center; padding:2rem 1rem;">
+    <div class="auth-card" style="max-width:720px; width:100%; background:rgba(255,255,255,.96); border-radius:28px; border:1px solid rgba(209,184,120,.2); box-shadow:0 28px 80px rgba(141,109,57,.12); overflow:hidden;">
+        <div style="padding:2.2rem 2rem; background:linear-gradient(135deg, rgba(255,243,205,.95), rgba(255,244,222,.9)); border-bottom:1px solid rgba(209,184,120,.2);">
+            <h1 style="margin:0; color:var(--brown);">Dashboard</h1>
+            <p style="margin:0.9rem 0 0; color:var(--text-2);">You are authenticated. This area is protected by Symfony Security.</p>
+        </div>
+
+        <div style="padding:2rem; display:grid; gap:1rem;">
+            <a class="btn btn-primary" href="{{ path('app_profile') }}" style="text-decoration:none; text-align:center;">Open My Profile</a>
+            <a class="btn btn-primary" href="{{ path('app_home') }}" style="text-decoration:none; text-align:center;">Go to Home</a>
+            <form method="post" action="{{ path('app_logout') }}" style="margin:0;">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                <button type="submit" class="btn btn-primary" style="text-decoration:none; text-align:center;">Logout</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
