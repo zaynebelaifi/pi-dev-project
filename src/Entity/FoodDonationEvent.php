@@ -201,15 +201,25 @@ class FoodDonationEvent
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $sms_reminder_sent = false;
 
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $reminder_sent_at = null;
+
     /**
      * @var Collection<int, DonationEventItem>
      */
     #[ORM\OneToMany(mappedBy: 'event', targetEntity: DonationEventItem::class, orphanRemoval: true)]
     private Collection $donationEventItems;
 
+    /**
+     * @var Collection<int, EventRegistration>
+     */
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: EventRegistration::class, orphanRemoval: true)]
+    private Collection $eventRegistrations;
+
     public function __construct()
     {
         $this->donationEventItems = new ArrayCollection();
+        $this->eventRegistrations = new ArrayCollection();
     }
 
     public function getUpdated_at(): ?\DateTimeInterface
@@ -231,6 +241,17 @@ class FoodDonationEvent
     public function setSms_reminder_sent(bool $sms_reminder_sent): self
     {
         $this->sms_reminder_sent = $sms_reminder_sent;
+        return $this;
+    }
+
+    public function getReminder_sent_at(): ?\DateTimeImmutable
+    {
+        return $this->reminder_sent_at;
+    }
+
+    public function setReminder_sent_at(?\DateTimeImmutable $reminder_sent_at): self
+    {
+        $this->reminder_sent_at = $reminder_sent_at;
         return $this;
     }
 
@@ -320,6 +341,14 @@ class FoodDonationEvent
         return $this->setCreated_at($createdAt);
     }
 
+    /**
+     * @return Collection<int, EventRegistration>
+     */
+    public function getEventRegistrations(): Collection
+    {
+        return $this->eventRegistrations;
+    }
+
     public function getUpdatedAt(): ?\DateTimeInterface
     {
         return $this->getUpdated_at();
@@ -338,6 +367,16 @@ class FoodDonationEvent
     public function setSmsReminderSent(bool $smsReminderSent): self
     {
         return $this->setSms_reminder_sent($smsReminderSent);
+    }
+
+    public function getReminderSentAt(): ?\DateTimeImmutable
+    {
+        return $this->getReminder_sent_at();
+    }
+
+    public function setReminderSentAt(?\DateTimeImmutable $reminderSentAt): self
+    {
+        return $this->setReminder_sent_at($reminderSentAt);
     }
 
     /**

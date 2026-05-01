@@ -60,10 +60,12 @@
                             <td><span class="status-badge status-quantity">{{ row.quantity }} units</span></td>
                             <td>
                                 <a class="mini-link" href="{{ path('donation_item_edit', {id: eventId}) }}">Edit</a>
-                                <form method="post" action="{{ path('donation_item_remove', {id: eventId, assignmentId: row.assignmentId}) }}" class="inline-form" onsubmit="return confirm('Remove this assigned item?');">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('remove_item_' ~ row.assignmentId) }}">
-                                    <button type="submit" class="mini-link mini-link-danger">Remove</button>
-                                </form>
+                                {% if row.assignmentId > 0 %}
+                                    <form method="post" action="{{ path('donation_item_remove', {id: eventId, assignmentId: row.assignmentId}) }}" class="inline-form" onsubmit="return confirm('Remove this assigned item?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('remove_item_' ~ row.assignmentId) }}">
+                                        <button type="submit" class="mini-link mini-link-danger">Remove</button>
+                                    </form>
+                                {% endif %}
                             </td>
                         </tr>
                     {% else %}

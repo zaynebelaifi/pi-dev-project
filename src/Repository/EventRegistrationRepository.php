@@ -13,6 +13,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class EventRegistrationRepository extends ServiceEntityRepository
 {
+    /**
+     * @var string[]
+     */
+    private const CUSTOMER_ROLES = ['role_client', 'role_customer'];
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, EventRegistration::class);
@@ -143,5 +148,72 @@ class EventRegistrationRepository extends ServiceEntityRepository
         }
 
         return $users;
+    }
+
+    /**
+     * @return User[]
+     */
+    public function findRegisteredCustomerUsersForEventId(int $eventId): array
+    {
+        if ($eventId <= 0) {
+            return [];
+        }
+
+        // Keep EventRegistration (r) as the root alias to avoid DQL semantic errors,
+        // while eagerly loading related user and event rows used for filtering.
+        $rows = $this->createQueryBuilder('r')
+            ->innerJoin('r.user', 'u')
+            ->addSelect('u')
+            ->andWhere('IDENTITY(r.event) = :eventId')
+            ->andWhere('LOWER(u.role) IN (:customerRoles)')
+            ->andWhere("(u.phone_number IS NOT NULL AND TRIM(u.phone_number) != '') OR (u.phone IS NOT NULL AND TRIM(u.phone) != '')")
+            ->setParameter('eventId', $eventId)
+            ->setParameter('customerRoles', self::CUSTOMER_ROLES)
+            ->orderBy('u.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        // Dedupe users in PHP by id to return a clean User[] result.
+        $usersById = [];
+        foreach ($rows as $registration) {
+            if (!$registration instanceof EventRegistration) {
+                continue;
+            }
+
+            $user = $registration->getUser();
+            if (!$user instanceof User || $user->getId() === null) {
+                continue;
+            }
+
+            $usersById[$user->getId()] = $user;
+        }
+
+        ksort($usersById);
+
+        return array_values($usersById);
+    }
+
+    /**
+     * @return EventRegistration[]
+     */
+    public function findRegistrationsNeedingReminder(\DateTimeInterface $from, \DateTimeInterface $to): array
+    {
+        return $this->createQueryBuilder('r')
+            ->innerJoin('r.event', 'e')
+            ->addSelect('e')
+            ->innerJoin('r.user', 'u')
+            ->addSelect('u')
+            ->andWhere('e.event_date >= :fromTime')
+            ->andWhere('e.event_date <= :toTime')
+            ->andWhere('r.reminder_sent_at IS NULL')
+            ->andWhere('LOWER(u.role) IN (:customerRoles)')
+            ->andWhere('LOWER(e.status) != :cancelled')
+            ->setParameter('fromTime', $from)
+            ->setParameter('toTime', $to)
+            ->setParameter('customerRoles', self::CUSTOMER_ROLES)
+            ->setParameter('cancelled', 'cancelled')
+            ->orderBy('e.event_date', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 }

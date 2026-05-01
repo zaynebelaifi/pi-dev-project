@@ -2,22 +2,27 @@
 
 namespace App\Controller;
 
+use App\Event\EventCreatedEvent;
+use App\Event\EventUpdatedEvent;
 use App\Entity\FoodDonationEvent;
 use App\Entity\FoodDonationItem;
+use App\Entity\User;
 use App\Form\FoodDonationEventType;
 use App\Repository\DishRepository;
 use App\Repository\EventRegistrationRepository;
 use App\Repository\FoodDonationEventRepository;
 use App\Repository\FoodDonationItemRepository;
-use App\Service\TwilioSmsService;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Nucleos\DompdfBundle\Wrapper\DompdfWrapperInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[Route('/food/donation/event')]
 final class FoodDonationEventController extends AbstractController
@@ -27,10 +32,10 @@ final class FoodDonationEventController extends AbstractController
         private FoodDonationItemRepository $foodDonationItemRepository,
         private EventRegistrationRepository $eventRegistrationRepository,
         private DishRepository $dishRepository,
-        private TwilioSmsService $twilioSmsService,
+        private UserRepository $userRepository,
         private EntityManagerInterface $entityManager,
         private DompdfWrapperInterface $dompdf,
-        private LoggerInterface $logger,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -90,29 +95,8 @@ final class FoodDonationEventController extends AbstractController
             $this->entityManager->persist($foodDonationEvent);
             $this->entityManager->flush();
 
-            $this->logger->info('Event created, calling SMS service', [
-                'eventId' => (int) ($foodDonationEvent->getDonationEventId() ?? 0),
-                'charityName' => (string) ($foodDonationEvent->getCharityName() ?? ''),
-            ]);
-
-            try {
-                $smsResult = $this->twilioSmsService->sendEventCreatedSms($foodDonationEvent);
-                $this->logger->info('Event created SMS service returned', [
-                    'eventId' => (int) ($foodDonationEvent->getDonationEventId() ?? 0),
-                    'result' => $smsResult,
-                ]);
-
-                if ((int) ($smsResult['failed'] ?? 0) > 0) {
-                    $this->addFlash('warning', 'Event created, but some SMS notifications failed to send.');
-                }
-            } catch (\Throwable $exception) {
-                $this->logger->error('Event created SMS service failed', [
-                    'eventId' => (int) ($foodDonationEvent->getDonationEventId() ?? 0),
-                    'error' => $exception->getMessage(),
-                    'exception' => get_class($exception),
-                ]);
-                $this->addFlash('warning', 'Event created, but SMS notifications could not be sent.');
-            }
+            $organizer = $this->resolveCurrentUser($request);
+            $this->eventDispatcher->dispatch(new EventCreatedEvent($foodDonationEvent, $organizer));
 
             $this->addFlash('success', 'Donation event created successfully.');
             return $this->redirectToRoute('app_food_donation_event_index', [
@@ -129,7 +113,10 @@ final class FoodDonationEventController extends AbstractController
     #[Route('/{donation_event_id}', name: 'app_food_donation_event_show', methods: ['GET'])]
     public function show(Request $request, FoodDonationEvent $foodDonationEvent): Response
     {
-<<<<<<< HEAD
+        if ($redirect = $this->denyUnlessAdmin($request)) {
+            return $redirect;
+        }
+
         $eventId = (int) ($foodDonationEvent->getDonationEventId() ?? 0);
         $rawItems = $eventId > 0 ? $this->foodDonationItemRepository->findByDonationEventId($eventId) : [];
         $eventItems = array_map(static fn (array $item): array => [
@@ -137,11 +124,6 @@ final class FoodDonationEventController extends AbstractController
             'quantity' => (int) ($item['quantity'] ?? 0),
             'itemId' => (int) ($item['itemId'] ?? 0),
         ], $rawItems);
-=======
-        if ($redirect = $this->denyUnlessAdmin($request)) {
-            return $redirect;
-        }
->>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
 
         return $this->render('admin/food_donation_event/show.html.twig', [
             'food_donation_event' => $foodDonationEvent,
@@ -156,6 +138,9 @@ final class FoodDonationEventController extends AbstractController
             return $redirect;
         }
 
+        $isAjax = $request->isXmlHttpRequest()
+            || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+
         $form = $this->createForm(FoodDonationEventType::class, $foodDonationEvent);
         $form->handleRequest($request);
 
@@ -164,17 +149,46 @@ final class FoodDonationEventController extends AbstractController
             $foodDonationEvent->setSmsReminderSent(false);
             $entityManager->flush();
 
-            try {
-                $smsResult = $this->twilioSmsService->sendEventEditedSms($foodDonationEvent);
-                if ((int) ($smsResult['failed'] ?? 0) > 0) {
-                    $this->addFlash('warning', 'Event updated, but some SMS notifications failed to send.');
+            $organizer = $this->resolveCurrentUser($request);
+            $updatedEvent = new EventUpdatedEvent($foodDonationEvent, $organizer);
+            $this->eventDispatcher->dispatch($updatedEvent);
+
+            if ($isAjax) {
+                if (!$updatedEvent->isSmsDispatchSuccessful()) {
+                    return new JsonResponse([
+                        'success' => false,
+                        'message' => $updatedEvent->getSmsErrorMessage() ?? 'Event saved but SMS delivery failed. Please retry before choosing items.',
+                        'sms' => [
+                            'recipientCount' => $updatedEvent->getSmsRecipientCount(),
+                            'sentCount' => $updatedEvent->getSmsSentCount(),
+                        ],
+                    ], Response::HTTP_CONFLICT);
                 }
-            } catch (\Throwable) {
-                $this->addFlash('warning', 'Event updated, but SMS notifications could not be sent.');
+
+                return new JsonResponse([
+                    'success' => true,
+                    'message' => 'Donation event updated successfully.',
+                    'eventId' => (int) $foodDonationEvent->getDonationEventId(),
+                    'sms' => [
+                        'recipientCount' => $updatedEvent->getSmsRecipientCount(),
+                        'sentCount' => $updatedEvent->getSmsSentCount(),
+                    ],
+                    'redirectUrl' => $this->generateUrl('app_food_donation_event_index', [
+                        'newEventId' => $foodDonationEvent->getDonationEventId(),
+                    ]),
+                ]);
             }
 
             $this->addFlash('success', 'Donation event updated successfully.');
             return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        if ($isAjax && $form->isSubmitted()) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Please fix the highlighted fields and try again.',
+                'errors' => $this->collectFormErrors($form),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         return $this->render('admin/food_donation_event/edit.html.twig', [
@@ -193,16 +207,38 @@ final class FoodDonationEventController extends AbstractController
             return $redirect;
         }
 
-        if ($this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $request->request->get('_token'))) {
-            $entityManager->remove($foodDonationEvent);
-            $entityManager->flush();
-            $this->addFlash('success', 'Donation event deleted successfully.');
+        $isAjax = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
+        $token = (string) $request->request->get('_token', '');
+
+        if (!$this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $token)) {
+            if ($isAjax) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Invalid security token. Please refresh and try again.',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $this->addFlash('error', 'Invalid security token. Please refresh and try again.');
+
+            return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
         }
+
+        $entityManager->remove($foodDonationEvent);
+        $entityManager->flush();
+
+        if ($isAjax) {
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Donation event deleted successfully.',
+                'eventId' => (int) $foodDonationEvent->getDonationEventId(),
+            ]);
+        }
+
+        $this->addFlash('success', 'Donation event deleted successfully.');
 
         return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
     }
 
-<<<<<<< HEAD
     #[Route('/{donation_event_id}/export-pdf', name: 'app_food_donation_event_export_pdf', methods: ['GET'])]
     public function exportPdf(FoodDonationEvent $foodDonationEvent): Response
     {
@@ -251,6 +287,26 @@ final class FoodDonationEventController extends AbstractController
             $selectedItems = [];
         }
 
+        $selectedCount = 0;
+        foreach ($selectedItems as $itemData) {
+            if (is_array($itemData) && isset($itemData['selected']) && (string) $itemData['selected'] === '1') {
+                $selectedCount++;
+            }
+        }
+
+        $maxItems = max(0, (int) ($event->getTotalQuantity() ?? 0));
+        if ($selectedCount > $maxItems) {
+            $this->addFlash('error', sprintf(
+                'You can only assign up to %d items for this event. You selected %d.',
+                $maxItems,
+                $selectedCount
+            ));
+
+            return $this->redirectToRoute('app_food_donation_event_index', [
+                'newEventId' => $event->getDonationEventId(),
+            ]);
+        }
+
         $addedCount = 0;
         foreach ($selectedItems as $itemId => $itemData) {
             if (!is_array($itemData)) {
@@ -297,7 +353,8 @@ final class FoodDonationEventController extends AbstractController
         }
 
         return $this->redirectToRoute('app_food_donation_event_index');
-=======
+    }
+
     private function denyUnlessAdmin(Request $request): ?Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
@@ -305,6 +362,45 @@ final class FoodDonationEventController extends AbstractController
         }
 
         return null;
->>>>>>> ca885d35be836dd5c79d91d70d89d96a3c7663bc
+    }
+
+    private function resolveCurrentUser(Request $request): ?User
+    {
+        $securityUser = $this->getUser();
+        if ($securityUser instanceof User) {
+            return $securityUser;
+        }
+
+        $sessionUserId = $request->getSession()->get('user_id');
+        if (!is_numeric($sessionUserId)) {
+            return null;
+        }
+
+        return $this->userRepository->find((int) $sessionUserId);
+    }
+
+    /**
+     * @return array<string, string[]>
+     */
+    private function collectFormErrors(FormInterface $form): array
+    {
+        $errors = [];
+
+        foreach ($form->getErrors(true, true) as $error) {
+            $origin = $error->getOrigin();
+            if ($origin === null) {
+                continue;
+            }
+
+            $field = $origin->getName();
+            if ($field === $form->getName()) {
+                $field = '_form';
+            }
+
+            $errors[$field] ??= [];
+            $errors[$field][] = $error->getMessage();
+        }
+
+        return $errors;
     }
 }

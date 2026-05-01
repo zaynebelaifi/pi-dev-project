@@ -26,6 +26,9 @@ class EventRegistration
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $created_at = null;
 
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $reminder_sent_at = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -63,6 +66,18 @@ class EventRegistration
     public function setCreatedAt(\DateTimeImmutable $createdAt): self
     {
         $this->created_at = $createdAt;
+
+        return $this;
+    }
+
+    public function getReminderSentAt(): ?\DateTimeImmutable
+    {
+        return $this->reminder_sent_at;
+    }
+
+    public function setReminderSentAt(?\DateTimeImmutable $reminderSentAt): self
+    {
+        $this->reminder_sent_at = $reminderSentAt;
 
         return $this;
     }

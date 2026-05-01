@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Entity\EventRegistration;
 use App\Entity\FoodDonationEvent;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -70,6 +72,20 @@ class FoodDonationEventRepository extends ServiceEntityRepository
         $qb->orderBy('f.'.$sort, $direction);
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return FoodDonationEvent[]
+     */
+    public function findByRegisteredUser(User $user): array
+    {
+        return $this->createQueryBuilder('e')
+            ->innerJoin(EventRegistration::class, 'er', 'WITH', 'er.event = e')
+            ->andWhere('er.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('e.event_date', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 
     /**

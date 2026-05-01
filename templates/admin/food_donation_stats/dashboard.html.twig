@@ -18,7 +18,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1.4rem 1.6rem;background:var(--gold-wash);border-bottom:1px solid var(--border);">
         <div>
           <div style="font-size:1.15rem;font-weight:700;color:var(--espresso);">🤖 AI Donation Report</div>
-          <div style="font-size:0.85rem;color:var(--text-3);margin-top:0.25rem;">Powered by Claude (Anthropic)</div>
+          <div style="font-size:0.85rem;color:var(--text-3);margin-top:0.25rem;">Powered by GitHub Models</div>
         </div>
         <button id="closeAiReportModal" style="background:transparent;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-2);">✕</button>
       </div>
@@ -300,7 +300,9 @@
           .replace(/^- /gm, '• ')
           .replace(/\n/g, '<br>');
         reportDiv.innerHTML = formatted;
-        aiReportStatus.textContent = 'Report generated successfully.';
+        aiReportStatus.textContent = result.usedFallback
+          ? (`Report generated with fallback. ${result.fallbackReason || ''}`.trim())
+          : 'Report generated successfully.';
       } catch (error) {
         aiReportOutput.innerHTML = `Error generating report: ${error.message}`;
         aiReportStatus.textContent = 'Failed to generate report.';

@@ -38,7 +38,7 @@
             <div class="my-reg-actions">
               {% if ev %}
                 <a href="{{ path('app_client_food_donation_show', {id: ev.donationEventId}) }}" class="btn-view-link">View Event</a>
-                {% if status == 'scheduled' %}
+                {% if (is_granted('ROLE_CUSTOMER') or is_granted('ROLE_CLIENT')) and status == 'scheduled' %}
                   <button
                     type="button"
                     class="btn-unregister-sm js-event-toggle-btn"

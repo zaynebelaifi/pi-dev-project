@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Repository\FoodDonationEventRepository;
+use App\Repository\EventRegistrationRepository;
 use App\Service\TwilioSmsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -18,9 +18,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class SendEventRemindersCommand extends Command
 {
     public function __construct(
-        private FoodDonationEventRepository $foodDonationEventRepository,
-        private TwilioSmsService $twilioSmsService,
-        private EntityManagerInterface $entityManager,
+        private readonly EventRegistrationRepository $eventRegistrationRepository,
+        private readonly TwilioSmsService $twilioSmsService,
+        private readonly EntityManagerInterface $entityManager,
     ) {
         parent::__construct();
     }
@@ -31,10 +31,10 @@ class SendEventRemindersCommand extends Command
         $now = new \DateTimeImmutable('now');
         $oneHourLater = $now->modify('+1 hour');
 
-        $events = $this->foodDonationEventRepository
-            ->findEventsStartingWithinNextHourWithoutReminder($now, $oneHourLater);
+        $registrations = $this->eventRegistrationRepository
+            ->findRegistrationsNeedingReminder($now, $oneHourLater);
 
-        if ($events === []) {
+        if ($registrations === []) {
             $io->success('No upcoming events require SMS reminders.');
             return Command::SUCCESS;
         }
@@ -43,31 +43,59 @@ class SendEventRemindersCommand extends Command
         $totalFailed = 0;
         $totalSkipped = 0;
 
-        foreach ($events as $event) {
-            $result = $this->twilioSmsService->sendEventReminderSms($event);
-            $totalSent += (int) ($result['sent'] ?? 0);
-            $totalFailed += (int) ($result['failed'] ?? 0);
-            $totalSkipped += (int) ($result['skipped'] ?? 0);
+        foreach ($registrations as $registration) {
+            $event = $registration->getEvent();
+            $user = $registration->getUser();
+            if ($event === null || $user === null || $event->getDonationEventId() === null) {
+                $totalSkipped++;
+                continue;
+            }
 
-            if ((int) ($result['failed'] ?? 0) === 0) {
+            $eventId = (int) $event->getDonationEventId();
+            $eventName = (string) ($event->getCharityName() ?? ('Event #' . $eventId));
+            $eventDate = $event->getEventDate()?->format('Y-m-d H:i') ?? 'Date TBD';
+            $message = sprintf("Reminder: '%s' starts in 1 hour! (%s)", $eventName, $eventDate);
+            $phone = trim((string) ($user->getPhoneNumber() ?: $user->getPhone()));
+
+            if ($phone === '') {
+                $totalSkipped++;
+                continue;
+            }
+
+            $isSent = false;
+            try {
+                $isSent = $this->twilioSmsService->sendMessage($phone, $message);
+            } catch (\Throwable) {
+                $isSent = false;
+            }
+
+            if ($isSent) {
+                $registration->setReminderSentAt($now);
+                if ($event->getReminderSentAt() === null) {
+                    $event->setReminderSentAt($now);
+                }
                 $event->setSmsReminderSent(true);
+                $totalSent++;
+            } else {
+                $totalFailed++;
             }
 
             $io->writeln(sprintf(
-                'Event #%d (%s): sent=%d failed=%d skipped=%d',
-                (int) ($event->getDonationEventId() ?? 0),
+                'Event #%d (%s) user #%d: sent=%d failed=%d skipped=%d',
+                $eventId,
                 (string) ($event->getCharityName() ?? 'Unknown Event'),
-                (int) ($result['sent'] ?? 0),
-                (int) ($result['failed'] ?? 0),
-                (int) ($result['skipped'] ?? 0)
+                (int) ($user->getId() ?? 0),
+                $isSent ? 1 : 0,
+                $isSent ? 0 : 1,
+                0
             ));
         }
 
         $this->entityManager->flush();
 
         $io->success(sprintf(
-            'Reminder job completed: events=%d, sent=%d, failed=%d, skipped=%d',
-            count($events),
+            'Reminder job completed: registrations=%d, sent=%d, failed=%d, skipped=%d',
+            count($registrations),
             $totalSent,
             $totalFailed,
             $totalSkipped
