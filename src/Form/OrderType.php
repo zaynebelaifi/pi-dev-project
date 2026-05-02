@@ -50,6 +50,15 @@ class OrderType extends AbstractType
                 'label' => 'Total Amount (TND)',
                 'scale' => 2,
             ])
+            ->add('paymentMethod', ChoiceType::class, [
+                'label' => 'Payment Method',
+                'required' => false,
+                'placeholder' => '-- Select payment method --',
+                'choices' => [
+                    'Cash' => 'CASH',
+                    'Credit Card' => 'CARD',
+                ],
+            ])
             ->add('status', ChoiceType::class, [
                 'label'   => 'Status',
                 'choices' => [
