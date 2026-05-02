@@ -1,0 +1,200 @@
+{% extends 'admin_base.html.twig' %}
+
+{% block title %}API JWT Debug - BIG 4 Admin{% endblock %}
+
+{% block body %}
+<div class="admin-header">
+  <h1>API JWT Debug Console</h1>
+  <p style="color:var(--text-2);max-width:80ch;">
+    Test the mobile API authentication flow directly from the admin panel: generate a JWT token via
+    <strong>/api/login</strong>, then call the protected endpoint <strong>/api/driver/me</strong> with the token.
+  </p>
+</div>
+
+<section class="jwt-debug-grid">
+  <article class="jwt-card">
+    <h2>1. Generate Token</h2>
+    <div class="field">
+      <label for="jwtEmail">Email</label>
+      <input id="jwtEmail" type="email" value="driver@example.com" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label for="jwtPassword">Password</label>
+      <input id="jwtPassword" type="password" value="TopSecret123!" autocomplete="current-password" />
+    </div>
+    <button id="jwtLoginBtn" class="admin-btn" type="button">Login API and Get JWT</button>
+    <p id="jwtLoginStatus" class="status-line" aria-live="polite"></p>
+  </article>
+
+  <article class="jwt-card">
+    <h2>2. Call Protected Endpoint</h2>
+    <p style="margin-bottom:0.8rem;color:var(--text-2);">Endpoint: <code>/api/driver/me</code></p>
+    <button id="jwtProtectedBtn" class="admin-btn" type="button">Call /api/driver/me</button>
+    <p id="jwtProtectedStatus" class="status-line" aria-live="polite"></p>
+  </article>
+</section>
+
+<section class="jwt-output-wrap">
+  <h2>Token</h2>
+  <textarea id="jwtToken" class="json-output" readonly placeholder="JWT token will appear here..."></textarea>
+
+  <h2>Last Response</h2>
+  <pre id="jwtResponse" class="json-output" style="min-height:220px;">No API response yet.</pre>
+</section>
+
+<style>
+.jwt-debug-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.jwt-card {
+  background: rgba(250, 246, 239, 0.55);
+  border: 1px solid rgba(184, 135, 42, 0.22);
+  border-radius: 16px;
+  padding: 1rem;
+}
+.jwt-card h2 {
+  margin: 0 0 0.9rem;
+  color: var(--gold);
+  font-size: 1.2rem;
+}
+.field { margin-bottom: 0.8rem; }
+.field label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.field input {
+  width: 100%;
+  border: 1px solid rgba(184, 135, 42, 0.35);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+}
+.status-line {
+  min-height: 1.3rem;
+  margin: 0.75rem 0 0;
+  color: #7a4b1f;
+}
+.jwt-output-wrap {
+  background: rgba(250, 246, 239, 0.55);
+  border: 1px solid rgba(184, 135, 42, 0.22);
+  border-radius: 16px;
+  padding: 1rem;
+}
+.jwt-output-wrap h2 {
+  margin: 0 0 0.6rem;
+  color: var(--gold);
+  font-size: 1.1rem;
+}
+.json-output {
+  width: 100%;
+  background: #151b23;
+  color: #d6e2f0;
+  border: 1px solid #283446;
+  border-radius: 12px;
+  padding: 0.9rem;
+  font-size: 0.86rem;
+  font-family: Consolas, 'Courier New', monospace;
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+@media (max-width: 960px) {
+  .jwt-debug-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+(() => {
+  const loginBtn = document.getElementById('jwtLoginBtn');
+  const protectedBtn = document.getElementById('jwtProtectedBtn');
+  const emailInput = document.getElementById('jwtEmail');
+  const passwordInput = document.getElementById('jwtPassword');
+  const tokenField = document.getElementById('jwtToken');
+  const responseNode = document.getElementById('jwtResponse');
+  const loginStatus = document.getElementById('jwtLoginStatus');
+  const protectedStatus = document.getElementById('jwtProtectedStatus');
+
+  const printJson = (value) => {
+    responseNode.textContent = JSON.stringify(value, null, 2);
+  };
+
+  loginBtn.addEventListener('click', async () => {
+    loginStatus.textContent = 'Authenticating...';
+    protectedStatus.textContent = '';
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          email: emailInput.value.trim(),
+          password: passwordInput.value
+        })
+      });
+
+      const payload = await response.json();
+      printJson(payload);
+
+      if (!response.ok || !payload.token) {
+        tokenField.value = '';
+        loginStatus.textContent = payload.message || 'Login failed.';
+        loginStatus.style.color = '#a61d24';
+        return;
+      }
+
+      tokenField.value = payload.token;
+      loginStatus.textContent = 'JWT token generated successfully.';
+      loginStatus.style.color = '#1e6b2a';
+    } catch (error) {
+      tokenField.value = '';
+      loginStatus.textContent = 'Network error during /api/login.';
+      loginStatus.style.color = '#a61d24';
+    }
+  });
+
+  protectedBtn.addEventListener('click', async () => {
+    const token = tokenField.value.trim();
+    if (!token) {
+      protectedStatus.textContent = 'Generate a token first.';
+      protectedStatus.style.color = '#a61d24';
+      return;
+    }
+
+    protectedStatus.textContent = 'Calling protected endpoint...';
+    protectedStatus.style.color = '#7a4b1f';
+
+    try {
+      const response = await fetch('/api/driver/me', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      const payload = await response.json();
+      printJson(payload);
+
+      if (!response.ok) {
+        protectedStatus.textContent = payload.message || 'Protected call failed.';
+        protectedStatus.style.color = '#a61d24';
+        return;
+      }
+
+      protectedStatus.textContent = 'Protected endpoint returned successfully.';
+      protectedStatus.style.color = '#1e6b2a';
+    } catch (error) {
+      protectedStatus.textContent = 'Network error during /api/driver/me.';
+      protectedStatus.style.color = '#a61d24';
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,136 +1,108 @@
 <?php
 namespace App\Service;
 
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Entity\Order;
 use Psr\Log\LoggerInterface;
+use Twilio\Rest\Client;
 
 final class WhatsAppApiService
 {
+    private ?Client $twilio = null;
+
     public function __construct(
-        private HttpClientInterface $http,
-        private LoggerInterface $logger,
-        private string $apiUrl = '',
-        private ?string $apiToken = null
-    ){
-        if (!$this->apiUrl) {
-            $this->apiUrl = (string) ($_ENV['WHATSAPP_API_URL'] ?? '');
-        }
-        if (!$this->apiToken) {
-            $this->apiToken = $_ENV['WHATSAPP_API_TOKEN'] ?? null;
-        }
+        private readonly LoggerInterface $logger,
+        private readonly string $accountSid = '',
+        private readonly string $authToken = '',
+        private readonly string $fromNumber = 'whatsapp:+14155238886',
+    ) {
     }
 
-    public function sendMessage(string $phone, string $text, ?string $templateName = null, array $templateParams = []): bool
+    public function sendPaymentConfirmationCall(Order $order, string $phone): bool
     {
-        if (!$this->apiUrl || !$this->apiToken) {
-            $this->logger->warning('WhatsApp API credentials missing');
+        $message = sprintf(
+            "✅ Payment confirmed! Your order #%d has been received. Total: %.2f TND. Thank you for choosing us!",
+            (int) ($order->getOrderId() ?? 0),
+            (float) ($order->getTotalAmount() ?? 0)
+        );
+
+        return $this->sendMessage($phone, $message);
+    }
+
+    public function sendMessage(string $phone, string $text): bool
+    {
+        if (trim($this->accountSid) === '' || trim($this->authToken) === '') {
+            $this->logger->warning('Twilio WhatsApp credentials are missing. Configure TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.');
+
             return false;
         }
 
-        $normalizedPhone = $this->normalizePhoneNumber($phone);
-        if (!$normalizedPhone) {
-            $this->logger->warning('WhatsApp phone number invalid or empty');
+        $from = trim($this->fromNumber);
+        if ($from === '') {
+            $this->logger->warning('Twilio WhatsApp sender is missing. Configure TWILIO_WHATSAPP_FROM.');
+
+            return false;
+        }
+
+        $to = $this->normalizeWhatsAppPhone($phone);
+        if ($to === '') {
+            $this->logger->warning('Twilio WhatsApp destination phone is missing or invalid.');
+
             return false;
         }
 
         try {
-            $payload = ['messaging_product' => 'whatsapp', 'to' => $normalizedPhone];
+            $this->getClient()->messages->create(
+                $to,
+                [
+                    'from' => $this->normalizeWhatsAppFrom($from),
+                    'body' => $text,
+                ]
+            );
 
-            if ($templateName) {
-                $template = ['name' => $templateName, 'language' => ['code' => 'en_US']];
-                if (!empty($templateParams)) {
-                    // build components with body parameters
-                    $components = [];
-                    $bodyParams = [];
-                    foreach ($templateParams as $p) {
-                        $bodyParams[] = ['type' => 'text', 'text' => (string) $p];
-                    }
-                    if (!empty($bodyParams)) {
-                        $components[] = ['type' => 'body', 'parameters' => $bodyParams];
-                    }
-                    if (!empty($components)) {
-                        $template['components'] = $components;
-                    }
-                }
-                $payload['type'] = 'template';
-                $payload['template'] = $template;
-            } else {
-                $payload['type'] = 'text';
-                $payload['text'] = ['body' => $text];
-            }
-
-            $options = [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $this->apiToken,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => $payload,
-                'timeout' => 5,
-            ];
-
-            $this->logger->info('WhatsApp API request payload', ['url' => $this->apiUrl, 'payload' => $payload]);
-            $resp = $this->http->request('POST', $this->apiUrl, $options);
-
-            $status = $resp->getStatusCode();
-            if ($status >= 200 && $status < 300) {
-                return true;
-            }
-
-            $body = $resp->getContent(false);
-
-            // Detect expired access token (Facebook Graph returns 401 with specific message / subcode)
-            if ($status === 401) {
-                $decoded = null;
-                try {
-                    $decoded = json_decode($body, true);
-                } catch (\Throwable $e) {
-                    // ignore
-                }
-
-                $msg = 'WhatsApp API returned 401 Unauthorized.';
-                if (is_array($decoded) && isset($decoded['error']['message'])) {
-                    $msg .= ' ' . $decoded['error']['message'];
-                }
-                $msg .= ' Update WHATSAPP_API_TOKEN (in .env) with a valid access token and restart workers.';
-
-                $this->logger->error('WhatsApp API responded with 401 Unauthorized - access token issue', ['status' => $status, 'body' => $body]);
-                $this->logger->error($msg);
-
-                // Throw to ensure message is not silently acknowledged by Messenger transports
-                throw new \RuntimeException('WhatsApp access token invalid or expired. ' . ($decoded['error']['message'] ?? '')); 
-            }
-
-            $this->logger->error('WhatsApp API responded with non-2xx', ['status' => $status, 'body' => $body]);
+            return true;
         } catch (\Throwable $e) {
-            $this->logger->error('WhatsApp API error: ' . $e->getMessage());
-            // Re-throw runtime exceptions so message processing surfaces failures to Messenger
-            if ($e instanceof \RuntimeException) {
-                throw $e;
-            }
+            $this->logger->error('WhatsApp Twilio error: ' . $e->getMessage(), [
+                'to' => $to,
+            ]);
+
+            return false;
         }
-        return false;
     }
 
-    private function normalizePhoneNumber(string $phone): ?string
+    private function getClient(): Client
     {
-        $trimmed = trim($phone);
-        if ($trimmed === '') {
-            return null;
+        if ($this->twilio === null) {
+            $this->twilio = new Client($this->accountSid, $this->authToken);
         }
 
-        $digits = preg_replace('/\D+/', '', $trimmed);
-        if (!$digits) {
-            return null;
+        return $this->twilio;
+    }
+
+    private function normalizeWhatsAppFrom(string $from): string
+    {
+        return str_starts_with($from, 'whatsapp:') ? $from : 'whatsapp:' . $from;
+    }
+
+    private function normalizeWhatsAppPhone(string $phone): string
+    {
+        $cleaned = trim((string) preg_replace('/[^0-9+]/', '', $phone));
+        if ($cleaned === '') {
+            return '';
         }
 
-        if (str_starts_with($digits, '216')) {
-            return $digits;
+        if (str_starts_with($cleaned, '00')) {
+            $cleaned = '+' . substr($cleaned, 2);
         }
 
-        if (str_starts_with($digits, '0')) {
-            return '216' . ltrim($digits, '0');
+        if (!str_starts_with($cleaned, '+')) {
+            // Project defaults to Tunisian numbers when users provide local 8-digit format.
+            if (strlen($cleaned) === 8) {
+                $cleaned = '+216' . $cleaned;
+            } else {
+                $cleaned = '+' . ltrim($cleaned, '+');
+            }
         }
 
-        return '216' . $digits;
+        return 'whatsapp:' . $cleaned;
     }
 }

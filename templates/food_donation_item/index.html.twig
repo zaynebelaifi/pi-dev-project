@@ -1,37 +1,50 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}FoodDonationItem index{% endblock %}
+{% block title %}Donation Items{% endblock %}
 
 {% block body %}
-    <h1>FoodDonationItem index</h1>
+    <link rel="stylesheet" href="{{ asset('styles/donation_items.css') }}">
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Donation_event_id</th>
-                <th>Item_id</th>
-                <th>Quantity</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for food_donation_item in food_donation_items %}
-            <tr>
-                <td>{{ food_donation_item.donationEventId }}</td>
-                <td>{{ food_donation_item.itemId }}</td>
-                <td>{{ food_donation_item.quantity }}</td>
-                <td>
-                    <a href="{{ path('app_food_donation_item_show', {'donation_event_id': food_donation_item.donation_event_id}) }}">show</a>
-                    <a href="{{ path('app_food_donation_item_edit', {'donation_event_id': food_donation_item.donation_event_id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="4">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <section class="donation-fallback-shell">
+        <div class="donation-item-card">
+            <div class="donation-item-header">
+                <div>
+                    <p class="donation-item-eyebrow">Donation Items</p>
+                    <h1 class="donation-item-title">Assigned Donation Items</h1>
+                    <p class="donation-item-sub">A clean fallback view for donation item assignments and quantities.</p>
+                </div>
+                <a class="btn-action btn-primary" href="{{ path('app_food_donation_item_new') }}">Create New</a>
+            </div>
 
-    <a href="{{ path('app_food_donation_item_new') }}">Create new</a>
+            <div class="fallback-table-wrap">
+                <table class="fallback-table">
+                    <thead>
+                        <tr>
+                            <th>Event ID</th>
+                            <th>Item ID</th>
+                            <th>Quantity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for food_donation_item in food_donation_items %}
+                            <tr>
+                                <td>#{{ food_donation_item.donationEventId }}</td>
+                                <td>#{{ food_donation_item.itemId }}</td>
+                                <td>{{ food_donation_item.quantity }}</td>
+                                <td class="fallback-actions">
+                                    <a class="btn-action btn-secondary" href="{{ path('app_food_donation_item_show', {donation_event_id: food_donation_item.donationEventId, item_id: food_donation_item.itemId}) }}">Show</a>
+                                    <a class="btn-action btn-primary" href="{{ path('app_food_donation_item_edit', {donation_event_id: food_donation_item.donationEventId, item_id: food_donation_item.itemId}) }}">Edit</a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="fallback-empty">No donation items found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
 {% endblock %}
