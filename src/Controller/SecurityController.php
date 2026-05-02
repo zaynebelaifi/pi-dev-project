@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\DeliveryMan;
 use App\Entity\User;
+use App\Entity\Embeddable\Email;
+use App\Entity\Embeddable\Phone;
 use App\Form\LoginType;
 use App\Form\RegistrationType;
 use App\Repository\DeliveryManRepository;
@@ -167,7 +169,7 @@ final class SecurityController extends AbstractController
     private function resolveOrCreateDeliveryManProfile(User $user, string $email, DeliveryManRepository $deliveryManRepository, EntityManagerInterface $entityManager): ?DeliveryMan
     {
         $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
-            ->andWhere('LOWER(dm.email) = :email')
+            ->andWhere('LOWER(dm.email.address) = :email')
             ->setParameter('email', strtolower($email))
             ->setMaxResults(1)
             ->getQuery()
@@ -178,8 +180,8 @@ final class SecurityController extends AbstractController
         }
 
         if ($deliveryMan) {
-            if (!$deliveryMan->getEmail()) {
-                $deliveryMan->setEmail(strtolower($email));
+            if ($deliveryMan->getEmail()->isEmpty()) {
+                $deliveryMan->setEmail(new Email(strtolower($email)));
             }
             if (!$deliveryMan->getStatus()) {
                 $deliveryMan->setStatus('active');
@@ -202,8 +204,8 @@ final class SecurityController extends AbstractController
 
         $deliveryMan = new DeliveryMan();
         $deliveryMan->setName($displayName);
-        $deliveryMan->setPhone($phone);
-        $deliveryMan->setEmail(strtolower($email));
+        $deliveryMan->setPhone(new Phone($phone));
+        $deliveryMan->setEmail(new Email(strtolower($email)));
         $deliveryMan->setStatus('active');
         $deliveryMan->setDate_of_joining(new \DateTimeImmutable('today'));
         $deliveryMan->setRating(0.0);

@@ -22,3 +22,7 @@ node_modules
 .conda/
 .venv-ai/
 ai_feedback/__pycache__/
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###

@@ -584,165 +584,180 @@ final class DeliveryController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/location', name: 'app_delivery_update_location', methods: ['GET', 'POST'])]
-    public function updateLocation(Request $request, Delivery $delivery, EntityManagerInterface $em, \Symfony\Contracts\HttpClient\HttpClientInterface $httpClient): Response
-    {
-        if ($request->isMethod('GET')) {
-            return $this->json([
-                'client_latitude' => $delivery->getCurrentLatitude(),
-                'client_longitude' => $delivery->getCurrentLongitude(),
-                'driver_latitude' => $delivery->getDriverLatitude(),
-                'driver_longitude' => $delivery->getDriverLongitude(),
-            ]);
-        }
+ #[Route('/{id}/location', name: 'app_delivery_update_location', methods: ['GET', 'POST'])]
+public function updateLocation(
+    Request $request,
+    Delivery $delivery,
+    EntityManagerInterface $em,
+    \Symfony\Contracts\HttpClient\HttpClientInterface $httpClient,
+    \Symfony\Component\Security\Csrf\CsrfTokenManagerInterface $csrfTokenManager
+): Response {
 
-        $session = $request->getSession();
-        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
-            return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
-        if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
-            return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
-        }
+    if ($request->isMethod('GET')) {
+        // ── Force Doctrine to re-fetch from DB, bypassing identity map cache ──
+        $em->refresh($delivery);
 
-        $data = json_decode($request->getContent() ?: '{}', true);
-        $lat = isset($data['lat']) ? (float) $data['lat'] : null;
-        $lon = isset($data['lon']) ? (float) $data['lon'] : null;
-        if ($lat === null || $lon === null) {
-            return $this->json(['success' => false, 'message' => 'Missing coordinates'], 400);
-        }
-
-        $delivery->setDriverLatitude((string) $lat);
-        $delivery->setDriverLongitude((string) $lon);
-        $em->flush();
-
-        // Try to notify WebSocket broadcast server (if running)
-        try {
-            $broadcastUrl = 'http://127.0.0.1:3001/broadcast';
-            $httpClient->request('POST', $broadcastUrl, [
-                'json' => [
-                    'delivery_id' => $delivery->getDelivery_id(),
-                    'driver_latitude' => (string) $lat,
-                    'driver_longitude' => (string) $lon,
-                ],
-                'timeout' => 1,
-            ]);
-        } catch (\Throwable $e) {
-            // ignore broadcast failures in case WS server is not running
-        }
-
+        $status = strtolower((string) $delivery->getStatus());
         return $this->json([
-            'success' => true,
-            'driver_latitude' => $lat,
-            'driver_longitude' => $lon,
+            'client_latitude'  => $delivery->getCurrentLatitude(),
+            'client_longitude' => $delivery->getCurrentLongitude(),
+            'driver_latitude'  => $delivery->getDriverLatitude(),
+            'driver_longitude' => $delivery->getDriverLongitude(),
+            'status'           => $status,
+        ], 200, [
+            // Prevent ANY browser or proxy caching of this endpoint
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Pragma'        => 'no-cache',
         ]);
     }
+    // ── POST: driver pushes GPS ───────────────────────────────────────────
+    $session = $request->getSession();
+    if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+        return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
 
-    #[Route('/delivery/{id}/mark-delivered', name: 'app_delivery_mark_delivered', methods: ['POST'])]
-    public function markDelivered(Request $request, Delivery $delivery, EntityManagerInterface $em, MessageBusInterface $bus, \Symfony\Contracts\HttpClient\HttpClientInterface $httpClient): Response
-    {
-        if ($delivery->getStatus() === 'DELIVERED') {
-            return $this->json(['success' => false, 'message' => 'This delivery has already been marked as delivered.'], 400);
-        }
+    // Accept CSRF from header (JS sends it there) OR from JSON body
+    $data          = json_decode($request->getContent() ?: '{}', true);
+    $csrfFromHeader = $request->headers->get('X-CSRF-Token', '');
+    $csrfFromBody  = $data['_token'] ?? '';
+    $csrfToken     = $csrfFromHeader ?: $csrfFromBody;
+    $deliveryId    = $delivery->getDelivery_id();
 
-        $data = json_decode($request->getContent() ?: '', true);
-        $lat = is_array($data) && isset($data['latitude']) ? (float) $data['latitude'] : null;
-        $lon = is_array($data) && isset($data['longitude']) ? (float) $data['longitude'] : null;
-        if ($lat === null || $lon === null) {
-            return $this->json(['success' => false, 'message' => 'GPS coordinates are required'], 400);
-        }
-        // Ensure the requester is the assigned delivery man
-        $session = $request->getSession();
-        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
-            return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
-        if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
-            return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
-        }
+    if (!$this->isCsrfTokenValid('location_push_' . $deliveryId, $csrfToken)) {
+        return $this->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
 
-        // Use the client's saved coordinates (delivery current latitude/longitude) for geofence check.
-        // If missing, attempt a reverse-geocode (forward geocode) using the delivery address as a fallback.
-        $clientLat = $delivery->getCurrentLatitude();
-        $clientLon = $delivery->getCurrentLongitude();
-        if ($clientLat === null || $clientLon === null || $clientLat === '' || $clientLon === '') {
-            $address = $delivery->getDeliveryAddress();
-            if (!$address) {
-                return $this->json([
-                    'success' => false,
-                    'message' => 'Client location and delivery address are missing. Cannot verify delivery proximity.',
-                ], 400);
-            }
+    $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+    if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
+        return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
+    }
 
-            try {
-                $url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' . urlencode($address);
-                $resp = $httpClient->request('GET', $url, [
-                    'headers' => [
-                        'User-Agent' => 'FirstProject/1.0 (+http://localhost)'
-                    ],
-                    'timeout' => 3,
-                ]);
-                $arr = $resp->toArray(false);
-                if (is_array($arr) && count($arr) > 0 && isset($arr[0]['lat']) && isset($arr[0]['lon'])) {
-                    $clientLat = (string) $arr[0]['lat'];
-                    $clientLon = (string) $arr[0]['lon'];
-                    // persist these coordinates on the delivery so future checks don't need geocoding
-                    $delivery->setCurrentLatitude($clientLat);
-                    $delivery->setCurrentLongitude($clientLon);
-                    $em->flush();
-                } else {
-                    return $this->json([
-                        'success' => false,
-                        'message' => 'Could not determine client coordinates from delivery address.',
-                    ], 400);
-                }
-            } catch (\Throwable $e) {
-                return $this->json([
-                    'success' => false,
-                    'message' => 'Failed to geocode delivery address: ' . $e->getMessage(),
-                ], 500);
-            }
-        }
+    $lat = isset($data['lat']) ? (float) $data['lat'] : null;
+    $lon = isset($data['lon']) ? (float) $data['lon'] : null;
+    if ($lat === null || $lon === null) {
+        return $this->json(['success' => false, 'message' => 'Missing coordinates'], 400);
+    }
 
-        $clientLatF = (float) $clientLat;
-        $clientLonF = (float) $clientLon;
+    $delivery->setDriverLatitude((string) $lat);
+    $delivery->setDriverLongitude((string) $lon);
+    $em->flush();
 
-        $distance = $this->haversineDistanceMeters($lat, $lon, $clientLatF, $clientLonF);
-        if ($distance > 50.0) {
-            $distanceMeters = (int) round($distance);
-            return $this->json([
-                'success' => false,
-                'message' => sprintf(
-                    'You must be within 50 meters of the client delivery address (you are %dm away)',
-                    $distanceMeters
-                ),
-            ], 400);
-        }
+    // Broadcast to WebSocket server (optional, non-blocking)
+    try {
+        $httpClient->request('POST', 'http://127.0.0.1:3001/broadcast', [
+            'json'    => [
+                'delivery_id'      => $deliveryId,
+                'driver_latitude'  => (string) $lat,
+                'driver_longitude' => (string) $lon,
+            ],
+            'timeout' => 1,
+        ]);
+    } catch (\Throwable) { /* ignore */ }
 
+    return $this->json([
+        'success'          => true,
+        'driver_latitude'  => $lat,
+        'driver_longitude' => $lon,
+        'status'           => strtolower((string) $delivery->getStatus()),
+    ]);
+}
+    #[Route('/{id}/mark-delivered', name: 'app_delivery_mark_delivered', methods: ['POST'])]
+   #[Route('/{id}/mark-delivered', name: 'app_delivery_mark_delivered', methods: ['POST'])]
+public function markDelivered(
+    Request $request,
+    Delivery $delivery,
+    EntityManagerInterface $em,
+    MessageBusInterface $bus
+): Response {
+    if ($delivery->getStatus() === 'DELIVERED') {
+        return $this->json(['success' => false, 'message' => 'Already delivered.'], 400);
+    }
+
+    $session = $request->getSession();
+    if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+        return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
+
+    $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+    if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
+        return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
+    }
+
+    $data = json_decode($request->getContent() ?: '', true);
+    $driverLat = is_array($data) && isset($data['latitude'])  ? (float) $data['latitude']  : null;
+    $driverLon = is_array($data) && isset($data['longitude']) ? (float) $data['longitude'] : null;
+
+    if ($driverLat === null || $driverLon === null) {
+        return $this->json(['success' => false, 'message' => 'GPS coordinates are required.'], 400);
+    }
+
+    // ── Geofence: ONLY use actual saved client GPS — never Nominatim ─────
+    $clientLat = $delivery->getCurrentLatitude();
+    $clientLon = $delivery->getCurrentLongitude();
+
+    // Reject empty strings and non-numeric values
+    $clientLatF = is_numeric($clientLat) ? (float) $clientLat : null;
+    $clientLonF = is_numeric($clientLon) ? (float) $clientLon : null;
+
+    if ($clientLatF === null || $clientLonF === null) {
+        // No real client GPS saved — skip geofence but log it
+        // (This means client placed order without sharing location)
+        // Policy choice: allow delivery but warn. Change to return error if you want strict mode.
         $delivery->setStatus('DELIVERED');
         $delivery->setActual_delivery_date(new \DateTimeImmutable());
         $em->flush();
-
-        // After marking this delivery as delivered, try to reassign any pending deliveries
-        try {
-            $this->reassignPendingDeliveriesForFreedDriver($deliveryManId, $em, $bus);
-        } catch (\Throwable $e) {
-            // do not prevent response on reassignment failures
-        }
-
-        $phone = $delivery->getRecipient_phone() ?? $delivery->getRecipientPhone();
-        if ($phone) {
-            $orderId = $delivery->getOrder_id() ?? $delivery->getOrderId();
-            // Use WhatsApp template if available: delivery confirmation
-            $recipientName = $delivery->getRecipient_name() ?? $delivery->getRecipientName() ?? 'Customer';
-            $template = 'delivery_confirmation_5';
-            $params = [trim((string) $recipientName), (string) $orderId];
-            $text = sprintf('Hi %s, your order #%s was delivered. The delivery man is waiting. Enjoy your meal!', $recipientName, (string) $orderId);
-            $bus->dispatch(new WhatsAppNotificationMessage((int) ($delivery->getDelivery_id() ?? $delivery->getDeliveryId()), (string) $phone, $text, $template, $params));
-        }
-
-        return $this->json(['success' => true]);
+        $this->notifyDelivered($delivery, $bus);
+        return $this->json([
+            'success' => true,
+            'warning' => 'No client GPS on file — geofence skipped.',
+        ]);
     }
+
+    $distance = $this->haversineDistanceMeters($driverLat, $driverLon, $clientLatF, $clientLonF);
+
+    if ($distance > 50.0) {
+        return $this->json([
+            'success' => false,
+            'message' => sprintf(
+                'You are %dm away from the delivery address. You must be within 50m.',
+                (int) round($distance)
+            ),
+        ], 400);
+    }
+
+    $delivery->setStatus('DELIVERED');
+    $delivery->setActual_delivery_date(new \DateTimeImmutable());
+    $em->flush();
+
+    try {
+        $this->reassignPendingDeliveriesForFreedDriver($deliveryManId, $em, $bus);
+    } catch (\Throwable) { /* non-fatal */ }
+
+    $this->notifyDelivered($delivery, $bus);
+
+    return $this->json(['success' => true]);
+}
+
+// ── Small private helper to avoid duplication ─────────────────────────────
+private function notifyDelivered(Delivery $delivery, MessageBusInterface $bus): void
+{
+    $phone = $delivery->getRecipient_phone() ?? $delivery->getRecipientPhone();
+    if (!$phone) return;
+
+    $orderId       = $delivery->getOrder_id() ?? $delivery->getOrderId();
+    $recipientName = $delivery->getRecipient_name() ?? $delivery->getRecipientName() ?? 'Customer';
+    $text          = sprintf('Hi %s, your order #%s was delivered. Enjoy your meal!', $recipientName, $orderId);
+
+    try {
+        $bus->dispatch(new WhatsAppNotificationMessage(
+            (int) ($delivery->getDelivery_id() ?? $delivery->getDeliveryId()),
+            (string) $phone,
+            $text,
+            'delivery_confirmation_5',
+            [trim((string) $recipientName), (string) $orderId]
+        ));
+    } catch (\Throwable) { /* ignore */ }
+}
 
     private function haversineDistanceMeters(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
