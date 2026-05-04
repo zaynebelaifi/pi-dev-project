@@ -9,6 +9,10 @@
       <h2>Edit Donation Event</h2>
       <p>Update the donation event details and save your changes.</p>
     </div>
+    <a href="{{ path('app_food_donation_event_index', {newEventId: food_donation_event.donationEventId}) }}" class="t-btn" data-choose-items-btn style="display:inline-flex;align-items:center;gap:.4rem;">
+      <span style="font-size:1rem;line-height:1;">+</span>
+      <span data-choose-items-label>Choose Items</span>
+    </a>
   </div>
 
   <div class="menu-form-card">
@@ -18,6 +22,9 @@
         <div class="form-group">
           {{ form_label(form.event_date) }}
           {{ form_widget(form.event_date) }}
+          <small class="datetime-hint">Choose a future date/time. Today is allowed only with a future time.</small>
+          <small class="datetime-min-note" data-event-datetime-min-note></small>
+          <small class="datetime-error" data-event-datetime-error hidden>Event date/time cannot be in the past. Please choose a future date.</small>
           {{ form_errors(form.event_date) }}
         </div>
         <div class="form-group">
@@ -34,6 +41,7 @@
           {{ form_label(form.status) }}
           {{ form_widget(form.status) }}
           {{ form_errors(form.status) }}
+          <small class="status-hint">Auto-calculated by date: <strong>{{ autoCalculatedStatus }}</strong>. If set to <strong>Cancelled</strong>, automatic updates will not change it.</small>
         </div>
         <div class="form-group">
           {{ form_label(form.delivery_id) }}
@@ -50,6 +58,7 @@
         <button type="submit" class="t-btn primary">Save Changes</button>
       </div>
     {{ form_end(form) }}
+    <p class="form-save-feedback" data-form-save-feedback hidden></p>
   </div>
 
   <style>
@@ -91,6 +100,35 @@
     .menu-form-card .form-group input[type="date"] {
       min-height: 48px;
     }
+    .menu-form-card .datetime-hint {
+      display: block;
+      margin-top: .45rem;
+      font-size: .76rem;
+      color: var(--text-3);
+      line-height: 1.45;
+    }
+    .menu-form-card .datetime-error {
+      display: block;
+      margin-top: .45rem;
+      font-size: .78rem;
+      color: #b42318;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .menu-form-card .datetime-min-note {
+      display: block;
+      margin-top: .25rem;
+      font-size: .74rem;
+      color: var(--text-3);
+      line-height: 1.4;
+    }
+    .menu-form-card .status-hint {
+      display: block;
+      margin-top: .45rem;
+      font-size: .76rem;
+      color: var(--text-3);
+      line-height: 1.45;
+    }
     .menu-form-card .form-actions {
       margin-top: 1.5rem;
       display: flex;
@@ -100,5 +138,240 @@
       .menu-form-grid { grid-template-columns: 1fr; }
       .menu-form-card { padding: 1.25rem 1.3rem; }
     }
+
+    .form-save-feedback {
+      margin: .9rem 0 0;
+      padding: .55rem .7rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-size: .82rem;
+    }
+
+    .form-save-feedback.is-error {
+      background: #fff1f1;
+      border-color: #efc1c1;
+      color: #8e2a2a;
+    }
+
+    .form-save-feedback.is-success {
+      background: #edf8f1;
+      border-color: #b4dac3;
+      color: #17683f;
+    }
+
+    .t-btn.is-loading {
+      opacity: .75;
+      pointer-events: none;
+    }
+
+    .field-error-inline {
+      margin-top: .35rem;
+      font-size: .76rem;
+      line-height: 1.35;
+      color: #b42318;
+      font-weight: 600;
+    }
+
+    .is-invalid-ajax {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, .14);
+    }
   </style>
+
+  <script>
+    (function () {
+      const datetimeInput = document.querySelector('.js-event-datetime');
+      if (!datetimeInput) {
+        return;
+      }
+
+      const errorMessage = document.querySelector('[data-event-datetime-error]');
+      const minNote = document.querySelector('[data-event-datetime-min-note]');
+      const validationMessage = 'Event date/time cannot be in the past. Please choose a future date.';
+
+      const pad = (value) => String(value).padStart(2, '0');
+      const toLocalMinuteString = (date) => {
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      };
+
+      const validateDateTime = () => {
+        const now = new Date();
+        const minValue = toLocalMinuteString(now);
+        datetimeInput.min = minValue;
+        if (minNote) {
+          minNote.textContent = `Minimum allowed: ${minValue.replace('T', ' ')}`;
+        }
+
+        if (!datetimeInput.value) {
+          datetimeInput.setCustomValidity('');
+          if (errorMessage) {
+            errorMessage.hidden = true;
+          }
+          return true;
+        }
+
+        const selectedTime = datetimeInput.valueAsNumber;
+        const nowTime = Date.now();
+        if (!Number.isNaN(selectedTime) && selectedTime <= nowTime) {
+          datetimeInput.setCustomValidity(validationMessage);
+          if (errorMessage) {
+            errorMessage.hidden = false;
+          }
+          return false;
+        }
+
+        if (Number.isNaN(selectedTime) && datetimeInput.value) {
+          const parsed = new Date(datetimeInput.value);
+          if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= nowTime) {
+            datetimeInput.setCustomValidity(validationMessage);
+            if (errorMessage) {
+              errorMessage.hidden = false;
+            }
+            return false;
+          }
+        }
+
+        datetimeInput.setCustomValidity('');
+        if (errorMessage) {
+          errorMessage.hidden = true;
+        }
+        return true;
+      };
+
+      datetimeInput.addEventListener('input', validateDateTime);
+      datetimeInput.addEventListener('change', validateDateTime);
+
+      const form = datetimeInput.closest('form');
+      if (form) {
+        form.addEventListener('submit', (event) => {
+          if (!validateDateTime()) {
+            event.preventDefault();
+            datetimeInput.reportValidity();
+          }
+        });
+      }
+
+      validateDateTime();
+    })();
+
+    (function () {
+      const chooseItemsBtn = document.querySelector('[data-choose-items-btn]');
+      const chooseItemsLabel = document.querySelector('[data-choose-items-label]');
+      const form = document.querySelector('.admin-form');
+      const feedback = document.querySelector('[data-form-save-feedback]');
+      if (!chooseItemsBtn || !form) {
+        return;
+      }
+
+      let isSaving = false;
+      const defaultLabel = chooseItemsLabel ? chooseItemsLabel.textContent : 'Choose Items';
+
+      const setFeedback = (message, type) => {
+        if (!feedback) {
+          return;
+        }
+
+        feedback.hidden = false;
+        feedback.textContent = message;
+        feedback.classList.remove('is-error', 'is-success');
+        if (type) {
+          feedback.classList.add(type === 'error' ? 'is-error' : 'is-success');
+        }
+      };
+
+      const clearFeedback = () => {
+        if (!feedback) {
+          return;
+        }
+        feedback.hidden = true;
+        feedback.textContent = '';
+        feedback.classList.remove('is-error', 'is-success');
+      };
+
+      const clearFieldErrors = () => {
+        form.querySelectorAll('.field-error-inline').forEach((node) => node.remove());
+        form.querySelectorAll('.is-invalid-ajax').forEach((node) => node.classList.remove('is-invalid-ajax'));
+      };
+
+      const showFieldErrors = (errors) => {
+        if (!errors || typeof errors !== 'object') {
+          return;
+        }
+
+        const formName = form.getAttribute('name') || 'food_donation_event';
+        Object.entries(errors).forEach(([field, messages]) => {
+          if (field === '_form') {
+            return;
+          }
+
+          const inputId = `${formName}_${field}`;
+          const input = document.getElementById(inputId);
+          if (!input) {
+            return;
+          }
+
+          input.classList.add('is-invalid-ajax');
+          const errorNode = document.createElement('div');
+          errorNode.className = 'field-error-inline';
+          errorNode.textContent = Array.isArray(messages) ? messages.join(' ') : String(messages);
+          input.insertAdjacentElement('afterend', errorNode);
+        });
+      };
+
+      const setSavingState = (saving) => {
+        isSaving = saving;
+        chooseItemsBtn.classList.toggle('is-loading', saving);
+        chooseItemsBtn.setAttribute('aria-disabled', saving ? 'true' : 'false');
+        if (chooseItemsLabel) {
+          chooseItemsLabel.textContent = saving ? 'Saving...' : defaultLabel;
+        }
+      };
+
+      chooseItemsBtn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        if (isSaving) {
+          return;
+        }
+
+        clearFeedback();
+        clearFieldErrors();
+
+        if (!form.reportValidity()) {
+          setFeedback('Please fix validation errors before choosing items.', 'error');
+          return;
+        }
+
+        setSavingState(true);
+
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            }
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok || !data.success) {
+            showFieldErrors(data.errors || {});
+            setFeedback(data.message || 'Could not save event changes. Please try again.', 'error');
+            return;
+          }
+
+          setFeedback('Changes saved. Opening items popup...', 'success');
+          const targetUrl = data.redirectUrl || chooseItemsBtn.getAttribute('href');
+          if (targetUrl) {
+            window.location.href = targetUrl;
+          }
+        } catch (error) {
+          setFeedback('Network error while saving. Please check your connection and try again.', 'error');
+        } finally {
+          setSavingState(false);
+        }
+      });
+    })();
+  </script>
 {% endblock %}

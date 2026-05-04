@@ -1,30 +1,49 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}FoodDonationItem{% endblock %}
+{% block title %}Donation Item Details{% endblock %}
 
 {% block body %}
-    <h1>FoodDonationItem</h1>
+    <link rel="stylesheet" href="{{ asset('styles/donation_items.css') }}">
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Donation_event_id</th>
-                <td>{{ food_donation_item.donationEventId }}</td>
-            </tr>
-            <tr>
-                <th>Item_id</th>
-                <td>{{ food_donation_item.itemId }}</td>
-            </tr>
-            <tr>
-                <th>Quantity</th>
-                <td>{{ food_donation_item.quantity }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <section class="donation-fallback-shell">
+        <div class="donation-item-card">
+            <div class="donation-item-header">
+                <div>
+                    <p class="donation-item-eyebrow">Donation Item</p>
+                    <h1 class="donation-item-title">Item #{{ food_donation_item.itemId }}</h1>
+                    <p class="donation-item-sub">Fallback detail page for a donation item assignment.</p>
+                </div>
+            </div>
 
-    <a href="{{ path('app_food_donation_item_index') }}">back to list</a>
+            <div class="donation-item-grid">
+                <div class="info-card">
+                    <span class="info-icon">🎪</span>
+                    <div>
+                        <p class="info-label">Event ID</p>
+                        <p class="info-value">#{{ food_donation_item.donationEventId }}</p>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <span class="info-icon">🍱</span>
+                    <div>
+                        <p class="info-label">Item ID</p>
+                        <p class="info-value">#{{ food_donation_item.itemId }}</p>
+                    </div>
+                </div>
+                <div class="info-card full-width">
+                    <span class="info-icon">🔢</span>
+                    <div>
+                        <p class="info-label">Quantity</p>
+                        <p class="info-value quantity-value">{{ food_donation_item.quantity }}</p>
+                    </div>
+                </div>
+            </div>
 
-    <a href="{{ path('app_food_donation_item_edit', {'donation_event_id': food_donation_item.donation_event_id}) }}">edit</a>
-
-    {{ include('food_donation_item/_delete_form.html.twig') }}
+            <div class="donation-item-actions donation-item-actions-inline">
+                <a class="btn-action btn-secondary" href="{{ path('app_food_donation_item_index') }}">Back to list</a>
+                <a class="btn-action btn-primary" href="{{ path('app_food_donation_item_edit', {donation_event_id: food_donation_item.donationEventId, item_id: food_donation_item.itemId}) }}">Edit</a>
+                {{ include('food_donation_item/_delete_form.html.twig') }}
+            </div>
+        </div>
+    </section>
 {% endblock %}

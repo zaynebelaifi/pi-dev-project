@@ -18,3 +18,11 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+node_modules
+.conda/
+.venv-ai/
+ai_feedback/__pycache__/
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###

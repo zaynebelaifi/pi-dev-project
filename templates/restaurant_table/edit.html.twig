@@ -6,20 +6,22 @@
 {% block body %}
 <div class="sec-head">
   <div>
-    <h2>Edit Table #{{ table.tableId }}</h2>  {# ✅ #}
+    <h2>Edit Table #{{ table.tableId }}</h2>
     <p class="sec-sub">Update the seating capacity and current availability for this table.</p>
   </div>
   <a href="{{ path('table_index') }}" class="t-btn">Back</a>
 </div>
 
 <div class="panel" style="max-width:540px;margin:auto;padding:2rem;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.06);">
-  {{ form_start(form, {'action': path('table_edit', {id: table.tableId}), 'method': 'POST'}) }}  {# ✅ #}
+  {{ form_start(form, {
+      'action': path('table_edit', {id: table.tableId}),
+      'method': 'POST',
+      'attr': {'novalidate': 'novalidate'}
+  }) }}
 
   <div style="display:flex;flex-direction:column;gap:1.4rem;">
     <div>
-      <label style="font-size:.75rem;font-weight:600;color:var(--text-3);margin-bottom:.35rem;display:block;">
-        Capacity
-      </label>
+      {{ form_label(form.capacity, 'Capacity', {'label_attr': {'style': 'font-size:.75rem;font-weight:600;color:var(--text-3);margin-bottom:.35rem;display:block;'}}) }}
       {{ form_widget(form.capacity, {
         'attr': {
           'placeholder': 'e.g. 4 seats',
@@ -32,9 +34,7 @@
     </div>
 
     <div>
-      <label style="font-size:.75rem;font-weight:600;color:var(--text-3);margin-bottom:.35rem;display:block;">
-        Status
-      </label>
+      {{ form_label(form.status, 'Status', {'label_attr': {'style': 'font-size:.75rem;font-weight:600;color:var(--text-3);margin-bottom:.35rem;display:block;'}}) }}
       {{ form_widget(form.status, {
         'attr': {
           'style': 'width:100%;padding:.6rem .8rem;border:1px solid var(--border-2);border-radius:8px;background:var(--ivory);font-size:.85rem;'
