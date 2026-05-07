@@ -16,11 +16,6 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> final2
 
         api_login:
             pattern: ^/api/login$
@@ -32,24 +27,16 @@ security:
             stateless: true
             security: false
 
-<<<<<<< HEAD
-=======
         ai_bot_public:
             pattern: ^/api/ai-bot
             stateless: true
             security: false
 
->>>>>>> final2
         api:
             pattern: ^/api
             stateless: true
             provider: app_user_provider
             jwt: ~
-
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> final2
         main:
             lazy: true
             provider: app_user_provider
@@ -70,13 +57,6 @@ security:
 
     # Ensure access to dashboard requires authenticated application user.
     access_control:
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
-=======
->>>>>>> final2
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/cars, roles: ROLE_ADMIN }
         - { path: ^/api/assignments, roles: ROLE_ADMIN }
@@ -85,10 +65,7 @@ security:
         - { path: ^/api/gps, roles: [ROLE_ADMIN, ROLE_DELIVERY_MAN] }
         - { path: ^/api/notifications, roles: ROLE_USER }
         - { path: ^/api/driver, roles: ROLE_DELIVERY_MAN }
-<<<<<<< HEAD
-=======
         - { path: ^/api/ai-bot, roles: PUBLIC_ACCESS }
->>>>>>> final2
         - { path: ^/api, roles: ROLE_USER }
         - { path: ^/dashboard$, roles: ROLE_USER }
         - { path: ^/webauthn/register, roles: ROLE_USER }

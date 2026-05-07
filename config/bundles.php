@@ -13,13 +13,6 @@ return [
     Symfony\Bundle\SecurityBundle\SecurityBundle::class => ['all' => true],
     Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
     Symfony\Bundle\MakerBundle\MakerBundle::class => ['dev' => true],
-<<<<<<< HEAD
-    Nucleos\DompdfBundle\NucleosDompdfBundle::class => ['all' => true],
-    Webauthn\Bundle\WebauthnBundle::class => ['all' => true],
-    Lexik\Bundle\JWTAuthenticationBundle\LexikJWTAuthenticationBundle::class => ['all' => true],
-=======
-<<<<<<< Updated upstream
-=======
     Nucleos\DompdfBundle\NucleosDompdfBundle::class => ['all' => true],
     Webauthn\Bundle\WebauthnBundle::class => ['all' => true],
     Lexik\Bundle\JWTAuthenticationBundle\LexikJWTAuthenticationBundle::class => ['all' => true],
@@ -27,6 +20,4 @@ return [
     Knp\Bundle\PaginatorBundle\KnpPaginatorBundle::class => ['all' => true],
     App\OrdersReservationsAnalyticsBundle\OrdersReservationsAnalyticsBundle::class => ['all' => true],
     AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true, 'test' => true],
->>>>>>> Stashed changes
->>>>>>> final2
 ];
