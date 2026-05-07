@@ -8,13 +8,17 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class WeatherImpactService
+final class WeatherImpactService
 {
+    private const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
+    private const OPEN_WEATHER_MAP_URL = 'https://api.openweathermap.org/data/2.5/weather';
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         #[Autowire(service: 'cache.app')]
         private readonly CacheInterface $cache,
         private readonly LoggerInterface $logger,
+        private readonly string $openWeatherMapApiKey,
     ) {
     }
 
@@ -25,13 +29,15 @@ class WeatherImpactService
     {
         $lat = (float) $this->getEnv('WEATHER_LATITUDE', '36.8065');
         $lon = (float) $this->getEnv('WEATHER_LONGITUDE', '10.1815');
+        $provider = trim($this->openWeatherMapApiKey) !== '' ? 'open_weather_map' : 'open_meteo';
 
-        $cacheKey = sprintf('weather.open_meteo.%s.%s', number_format($lat, 4, '.', ''), number_format($lon, 4, '.', ''));
+        $cacheKey = sprintf('weather.%s.%s.%s', $provider, number_format($lat, 4, '.', ''), number_format($lon, 4, '.', ''));
 
         return $this->cache->get($cacheKey, function (ItemInterface $item) use ($lat, $lon): array {
             $item->expiresAfter(600);
 
             try {
+<<<<<<< Updated upstream
                 $response = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [
                     'query' => [
                         'latitude' => $lat,
@@ -48,20 +54,21 @@ class WeatherImpactService
 
                 if (null === $temperature) {
                     return $this->fallbackWeather('Temperature data unavailable from API response.');
+=======
+                if (trim($this->openWeatherMapApiKey) !== '') {
+                    $openWeatherImpact = $this->fetchOpenWeatherImpact($lat, $lon);
+                    if ($openWeatherImpact !== null) {
+                        return $openWeatherImpact;
+                    }
+>>>>>>> Stashed changes
                 }
 
-                $mapped = $this->mapTemperatureToImpact($temperature);
+                $openMeteoImpact = $this->fetchOpenMeteoImpact($lat, $lon);
+                if ($openMeteoImpact !== null) {
+                    return $openMeteoImpact;
+                }
 
-                return [
-                    'temperature' => $temperature,
-                    'demandMultiplier' => $mapped['demandMultiplier'],
-                    'expiryAcceleration' => $mapped['expiryAcceleration'],
-                    'statusLabel' => $mapped['statusLabel'],
-                    'statusClass' => $mapped['statusClass'],
-                    'isFallback' => false,
-                    'source' => 'open-meteo',
-                    'fetchedAt' => (new \DateTimeImmutable())->format('Y-m-d H:i'),
-                ];
+                return $this->fallbackWeather('Temperature data unavailable from weather providers.');
             } catch (\Throwable $e) {
                 $this->logger->warning('Weather API request failed, using fallback.', [
                     'message' => $e->getMessage(),
@@ -70,6 +77,112 @@ class WeatherImpactService
                 return $this->fallbackWeather($e->getMessage());
             }
         });
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fetchOpenWeatherImpact(float $lat, float $lon): ?array
+    {
+        try {
+            $response = $this->httpClient->request('GET', self::OPEN_WEATHER_MAP_URL, [
+                'query' => [
+                    'lat' => $lat,
+                    'lon' => $lon,
+                    'appid' => $this->openWeatherMapApiKey,
+                    'units' => 'metric',
+                ],
+                'timeout' => 8,
+                'max_duration' => 8,
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                $this->logger->warning('OpenWeatherMap request returned a non-success status code.', [
+                    'statusCode' => $response->getStatusCode(),
+                ]);
+
+                return null;
+            }
+
+            $payload = $response->toArray(false);
+            $temperature = isset($payload['main']['temp']) ? (float) $payload['main']['temp'] : null;
+
+            if (null === $temperature) {
+                return null;
+            }
+
+            $mapped = $this->mapTemperatureToImpact($temperature);
+
+            return [
+                'temperature' => $temperature,
+                'demandMultiplier' => $mapped['demandMultiplier'],
+                'expiryAcceleration' => $mapped['expiryAcceleration'],
+                'statusLabel' => $mapped['statusLabel'],
+                'statusClass' => $mapped['statusClass'],
+                'isFallback' => false,
+                'source' => 'openweathermap',
+                'fetchedAt' => (new \DateTimeImmutable())->format('Y-m-d H:i'),
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->warning('OpenWeatherMap request failed, falling back to Open-Meteo.', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fetchOpenMeteoImpact(float $lat, float $lon): ?array
+    {
+        try {
+            $response = $this->httpClient->request('GET', self::OPEN_METEO_URL, [
+                'query' => [
+                    'latitude' => $lat,
+                    'longitude' => $lon,
+                    'current' => 'temperature_2m',
+                    'timezone' => 'auto',
+                ],
+                'timeout' => 8,
+                'max_duration' => 8,
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                $this->logger->warning('Open-Meteo request returned a non-success status code.', [
+                    'statusCode' => $response->getStatusCode(),
+                ]);
+
+                return null;
+            }
+
+            $payload = $response->toArray(false);
+            $temperature = isset($payload['current']['temperature_2m']) ? (float) $payload['current']['temperature_2m'] : null;
+
+            if (null === $temperature) {
+                return null;
+            }
+
+            $mapped = $this->mapTemperatureToImpact($temperature);
+
+            return [
+                'temperature' => $temperature,
+                'demandMultiplier' => $mapped['demandMultiplier'],
+                'expiryAcceleration' => $mapped['expiryAcceleration'],
+                'statusLabel' => $mapped['statusLabel'],
+                'statusClass' => $mapped['statusClass'],
+                'isFallback' => false,
+                'source' => 'open-meteo',
+                'fetchedAt' => (new \DateTimeImmutable())->format('Y-m-d H:i'),
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->warning('Open-Meteo request failed.', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

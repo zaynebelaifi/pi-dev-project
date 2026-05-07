@@ -26,7 +26,7 @@ class DeliveryMan
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'bigint')]
     private ?int $delivery_man_id = null;
 
     public function getDelivery_man_id(): ?int
