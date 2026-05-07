@@ -384,16 +384,6 @@
         </tr>
       </thead>
       <tbody>
-        {% for item in food_donation_items %}
-          <tr>
-            <td><span class="event-chip">Event #{{ item.donation_event_id }}</span></td>
-            <td><span class="item-chip">Item #{{ item.item_id }}</span></td>
-            <td>{{ dish_names[item.item_id] ?? 'Unknown' }}</td>
-            <td><span class="qty-chip">{{ item.quantity }}</span></td>
-            <td class="table-actions">
-              <a class="mini-action" href="{{ path('app_food_donation_item_edit', {donation_event_id: item.donation_event_id, item_id: item.item_id}) }}">Edit</a>
-              <a class="mini-action" href="{{ path('app_food_donation_item_show', {donation_event_id: item.donation_event_id, item_id: item.item_id}) }}">View</a>
-=======
         {% for itemGroup in food_donation_items %}
           <tr data-search="{{ itemGroup.donation_event_id }} {{ itemGroup.search_text|trim }}">
             <td>
