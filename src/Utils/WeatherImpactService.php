@@ -58,7 +58,7 @@ final class WeatherImpactService
                     if ($openWeatherImpact !== null) {
                         return $openWeatherImpact;
                     }
->>>>>>> Stashed changes
+
                 }
 
                 $openMeteoImpact = $this->fetchOpenMeteoImpact($lat, $lon);
@@ -261,4 +261,5 @@ final class WeatherImpactService
         return (string) $value;
     }
 }
+
 
