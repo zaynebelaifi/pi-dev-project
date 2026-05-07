@@ -239,11 +239,6 @@ final class FoodDonationEventController extends AbstractController
         return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
     }
 
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> final2
     #[Route('/{donation_event_id}/export-pdf', name: 'app_food_donation_event_export_pdf', methods: ['GET'])]
     public function exportPdf(FoodDonationEvent $foodDonationEvent): Response
     {
