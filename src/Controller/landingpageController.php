@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+<<<<<<< Updated upstream
 use App\Repository\MenuRepository;
 use App\Repository\RestaurantTableRepository;
 =======
@@ -21,6 +22,7 @@ final class landingpageController extends AbstractController
         private RequestStack $requestStack,
         private MenuRepository $menuRepository,
         private RestaurantTableRepository $tableRepository,
+<<<<<<< Updated upstream
 =======
         private Connection $connection,
         private HttpClientInterface $httpClient,
@@ -48,6 +50,7 @@ final class landingpageController extends AbstractController
     #[Route('/landingpage', name: 'app_landingpage')]
     public function index(): Response
     {
+<<<<<<< Updated upstream
 =======
         return $this->renderLandingPage($request);
     }
@@ -92,6 +95,7 @@ final class landingpageController extends AbstractController
 
     private function buildMenuSections(): array
     {
+<<<<<<< Updated upstream
         $menus = $this->menuRepository->createQueryBuilder('m')
             ->where('m.isActive = :active')
             ->setParameter('active', true)
@@ -162,6 +166,7 @@ final class landingpageController extends AbstractController
                     'dishes' => $dishes,
                 ];
             }
+<<<<<<< Updated upstream
         }
         return $menuSections;
     }
