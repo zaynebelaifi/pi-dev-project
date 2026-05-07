@@ -28,5 +28,6 @@ donation_item_delete_event:
     path: /admin/donation-items/{id}/delete-event
     controller: App\Controller\DonationItemController::deleteEvent
     methods: [POST]
->>>>>>> Stashed changes
+
+
 

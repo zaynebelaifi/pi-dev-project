@@ -106,7 +106,7 @@ class User implements PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'bigint', nullable: true)]
->>>>>>> Stashed changes
+
     private ?int $reference_id = null;
 
     public function getReference_id(): ?int
@@ -191,4 +191,5 @@ class User implements PasswordAuthenticatedUserInterface
     }
 
 }
+
 

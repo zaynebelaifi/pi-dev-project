@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Entity\DeliveryMan;
 =======
 use App\Entity\PasswordResetToken;
->>>>>>> Stashed changes
+
 use App\Entity\User;
 use App\Form\LoginType;
 use App\Form\RegistrationType;
@@ -144,7 +144,7 @@ final class SecurityController extends AbstractController
         if (is_string($sessionError) && trim($sessionError) !== '') {
             $error = $sessionError;
             $session->remove('auth_login_error');
->>>>>>> Stashed changes
+
         }
 
         return $this->render('security/login.html.twig', [
@@ -274,4 +274,5 @@ final class SecurityController extends AbstractController
         return $normalized;
     }
 }
+
 

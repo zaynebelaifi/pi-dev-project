@@ -407,7 +407,7 @@
         <div class="donation-index-stat-value">{{ totalItems }}</div>
         <div class="donation-index-stat-label">Total Assignments</div>
       </div>
->>>>>>> Stashed changes
+
     </div>
     <a href="{{ path('app_food_donation_item_new') }}" class="t-btn primary">+ Add Item</a>
   </div>
@@ -492,7 +492,7 @@
           <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'donation_event_id', direction: sort == 'donation_event_id' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="donationEventId" data-sort-type="number">Event / Charity{% if sort == 'donation_event_id' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
           <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'item_name', direction: sort == 'item_name' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="itemName" data-sort-type="text">Item Name{% if sort == 'item_name' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
           <th><a href="{{ path('app_food_donation_item_index', {q: search, sort: 'quantity', direction: sort == 'quantity' and direction == 'asc' ? 'desc' : 'asc'}) }}" class="sort-trigger" data-sort-key="quantity" data-sort-type="number">Quantity{% if sort == 'quantity' %} {{ direction == 'asc' ? '▲' : '▼' }}{% endif %}</a></th>
->>>>>>> Stashed changes
+
           <th>Actions</th>
         </tr>
       </thead>
@@ -557,7 +557,7 @@
                   </div>
                 </div>
               </div>
->>>>>>> Stashed changes
+
             </td>
           </tr>
         {% else %}
@@ -569,4 +569,5 @@
     </table>
   </div>
 {% endblock %}
+
 

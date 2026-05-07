@@ -90,7 +90,7 @@ html.dark-mode body{background:var(--ivory-2);}
 .sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 =======
 .sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
->>>>>>> Stashed changes
+
 .brand-badge{width:38px;height:38px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.1rem;color:var(--ivory);flex-shrink:0;}
 .brand-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);letter-spacing:.08em;line-height:1;font-weight:600;}
 .brand-sub{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);margin-top:2px;}
@@ -352,14 +352,14 @@ html.dark-mode .mode-toggle-switch::after {
         <a class="nav-item nav-subitem {{ activeRoute starts with 'app_food_donation_stats' ? 'active' : '' }}" href="{{ path('app_food_donation_stats') }}"><div class="nav-icon">📊</div>Charts & Statistics</a>
       </div>
     </div>
->>>>>>> Stashed changes
+
     <a class="nav-item {{ activeRoute starts with 'app_food_donation_event_' ? 'active' : '' }}" href="{{ path('app_food_donation_event_index') }}"><div class="nav-icon">🤝</div>Donation Events</a>
     <a class="nav-item {{ activeRoute starts with 'app_food_donation_item_' ? 'active' : '' }}" href="{{ path('app_food_donation_item_index') }}"><div class="nav-icon">📦</div>Donation Items</a>
     <a class="nav-item {{ activeRoute starts with 'app_table_' ? 'active' : '' }}" href="{{ path('table_index') }}"><div class="nav-icon">🪑</div>Tables</a>
     <a class="nav-item {{ activeRoute starts with 'app_reservation_' ? 'active' : '' }}" href="{{ path('app_reservation_index') }}"><div class="nav-icon">🎪</div>Reservations</a>
 =======
     <a class="nav-item {{ activeRoute == 'app_admin_orders_reservations_analytics' ? 'active' : '' }}" href="{{ path('app_admin_orders_reservations_analytics') }}"><div class="nav-icon">🧩</div>Orders & Reservations Analytics</a>
->>>>>>> Stashed changes
+
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Management</div>
@@ -442,7 +442,7 @@ html.dark-mode .mode-toggle-switch::after {
   
   document.addEventListener('DOMContentLoaded', initializeDarkMode);
 </script>
->>>>>>> Stashed changes
+
 
     {% block body %}
     <!-- KPI -->
@@ -809,7 +809,7 @@ if (document.readyState === 'loading') {
 } else {
   setupLiveTables();
 }
->>>>>>> Stashed changes
+
 // Live filters: submit GET forms automatically while keeping filtering on Symfony side.
 document.querySelectorAll('form[data-live-search="true"][method="get"]').forEach(form=>{
   const textInputs=form.querySelectorAll('input[type="text"],input[type="search"]');
@@ -992,7 +992,8 @@ document.querySelectorAll('form[data-live-search="true"][method="get"]').forEach
 </script>
 =======
  {{ importmap('admin') }}
->>>>>>> Stashed changes
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

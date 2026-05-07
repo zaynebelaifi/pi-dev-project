@@ -9,7 +9,7 @@ use App\Utils\WeatherImpactService;
 use App\Repository\MenuRepository;
 use App\Repository\RestaurantTableRepository;
 use Doctrine\DBAL\Connection;
->>>>>>> Stashed changes
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,7 +25,7 @@ final class landingpageController extends AbstractController
         private Connection $connection,
         private HttpClientInterface $httpClient,
         private WeatherImpactService $weatherImpactService,
->>>>>>> Stashed changes
+
     ) {}
 
     #[Route('/', name: 'app_home')]
@@ -82,7 +82,7 @@ final class landingpageController extends AbstractController
 
         $feedbackBaseUrl = rtrim((string) ($_ENV['FEEDBACK_AI_BASE_URL'] ?? 'http://127.0.0.1:8001'), '/');
 
->>>>>>> Stashed changes
+
         return $this->render('base.html.twig', [
             'controller_name' => 'landingpageController',
             'menuSections'    => $this->buildMenuSections(),
@@ -156,7 +156,7 @@ final class landingpageController extends AbstractController
                     'menu' => [
                         'id' => $menu->getId(),
                         'title' => $menu->getTitle(),
->>>>>>> Stashed changes
+
                         'description' => $menu->getDescription(),
                     ],
                     'dishes' => $dishes,
@@ -276,5 +276,6 @@ final class landingpageController extends AbstractController
         ]);
     }
 
->>>>>>> Stashed changes
+
 }
+
