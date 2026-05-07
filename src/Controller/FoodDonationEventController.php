@@ -116,17 +116,6 @@ final class FoodDonationEventController extends AbstractController
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
         }
-<<<<<<< Updated upstream
-=======
-
-        $eventId = (int) ($foodDonationEvent->getDonationEventId() ?? 0);
-        $rawItems = $eventId > 0 ? $this->foodDonationItemRepository->findByDonationEventId($eventId) : [];
-        $eventItems = array_map(static fn (array $item): array => [
-            'name' => (string) ($item['dishName'] ?? 'Unnamed item'),
-            'quantity' => (int) ($item['quantity'] ?? 0),
-            'itemId' => (int) ($item['itemId'] ?? 0),
-        ], $rawItems);
->>>>>>> Stashed changes
 
         $eventId = (int) ($foodDonationEvent->getDonationEventId() ?? 0);
         $rawItems = $eventId > 0 ? $this->foodDonationItemRepository->findByDonationEventId($eventId) : [];
