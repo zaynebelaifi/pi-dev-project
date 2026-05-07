@@ -287,29 +287,6 @@ final class FoodDonationEventController extends AbstractController
             $selectedItems = [];
         }
 
-<<<<<<< HEAD
-        $selectedCount = 0;
-        foreach ($selectedItems as $itemData) {
-            if (is_array($itemData) && isset($itemData['selected']) && (string) $itemData['selected'] === '1') {
-                $selectedCount++;
-            }
-        }
-
-        $maxItems = max(0, (int) ($event->getTotalQuantity() ?? 0));
-        if ($selectedCount > $maxItems) {
-            $this->addFlash('error', sprintf(
-                'You can only assign up to %d items for this event. You selected %d.',
-                $maxItems,
-                $selectedCount
-            ));
-
-            return $this->redirectToRoute('app_food_donation_event_index', [
-                'newEventId' => $event->getDonationEventId(),
-            ]);
-        }
-
-=======
->>>>>>> final2
         $addedCount = 0;
         foreach ($selectedItems as $itemId => $itemData) {
             if (!is_array($itemData)) {
