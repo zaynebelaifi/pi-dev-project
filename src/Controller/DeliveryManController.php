@@ -60,16 +60,8 @@ final class DeliveryManController extends AbstractController
         );
 
         return $this->render('delivery_man/index.html.twig', [
-<<<<<<< HEAD
-            'delivery_men' => $deliveryMen,
-=======
-<<<<<<< Updated upstream
-            'delivery_men' => $deliveryManRepository->searchAndSort($search, $sort, $direction),
-=======
             'delivery_men' => $deliveryMen,
             'pagination' => $pagination,
->>>>>>> Stashed changes
->>>>>>> final2
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,
