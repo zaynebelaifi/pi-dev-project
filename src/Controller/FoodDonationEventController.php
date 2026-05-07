@@ -43,9 +43,9 @@ final class FoodDonationEventController extends AbstractController
         }
 
         $search = trim((string) $request->query->get('q', ''));
-        $status = $request->query->get('status', '');
-        $sort = $request->query->get('sort', 'event_date');
-        $direction = $request->query->get('direction', 'asc');
+        $status = (string) $request->query->get('status', '');
+        $sort = (string) $request->query->get('sort', 'event_date');
+        $direction = (string) $request->query->get('direction', 'asc');
         $newEventId = $request->query->getInt('newEventId', 0);
         $events = $this->foodDonationEventRepository->findFilteredEvents($search, $status, $sort, $direction);
 
@@ -267,14 +267,12 @@ final class FoodDonationEventController extends AbstractController
             return $this->redirectToRoute('app_food_donation_event_index');
         }
 
+        /** @var array<array<string, scalar|null>> $selectedItems */
         $selectedItems = $request->request->all('items');
-        if (!is_array($selectedItems)) {
-            $selectedItems = [];
-        }
 
         $selectedCount = 0;
         foreach ($selectedItems as $itemData) {
-            if (is_array($itemData) && isset($itemData['selected']) && (string) $itemData['selected'] === '1') {
+            if (isset($itemData['selected']) && (string) $itemData['selected'] === '1') {
                 $selectedCount++;
             }
         }
@@ -294,10 +292,6 @@ final class FoodDonationEventController extends AbstractController
 
         $addedCount = 0;
         foreach ($selectedItems as $itemId => $itemData) {
-            if (!is_array($itemData)) {
-                continue;
-            }
-
             $isSelected = isset($itemData['selected']) && (string) $itemData['selected'] === '1';
             if (!$isSelected) {
                 continue;

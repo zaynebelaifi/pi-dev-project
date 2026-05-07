@@ -45,7 +45,8 @@ final class FoodDonationStatsController extends AbstractController
     #[Route('/ai-report', name: 'app_food_donation_ai_report', methods: ['POST'])]
     public function aiReport(HttpClientInterface $httpClient, FoodDonationEventRepository $eventRepository): JsonResponse
     {
-        $apiKey = $this->getParameter('anthropic_api_key');
+        $apiKeyParameter = $this->getParameter('anthropic_api_key');
+        $apiKey = is_string($apiKeyParameter) ? trim($apiKeyParameter) : '';
 
         $events = $eventRepository->findAll();
         $chartEvents = $this->formatEventsForCharts($events);
@@ -193,6 +194,16 @@ final class FoodDonationStatsController extends AbstractController
             return $paragraph1."\n\n".$paragraph2."\n\n".$paragraph3;
         }
 
+    /**
+     * @param list<FoodDonationEvent> $events
+     * @return array{
+     *   monthly: array<string, int>,
+     *   statusCount: array<string, int>,
+     *   charityData: array<string, int>,
+     *   allEventDates: array{labels: list<string>, quantities: list<int>},
+     *   allEvents: list<array{label: string, quantity: int}>
+     * }
+     */
     private function formatEventsForCharts(array $events): array
     {
         $monthlyData = [];
@@ -246,7 +257,7 @@ final class FoodDonationStatsController extends AbstractController
                 'labels' => array_map(static fn (array $row): string => (string) $row['date'], $allEventDates),
                 'quantities' => array_map(static fn (array $row): int => (int) $row['quantity'], $allEventDates),
             ],
-            'allEvents' => array_map(static function ($event) {
+            'allEvents' => array_map(static function (FoodDonationEvent $event): array {
                 $date = $event->getEventDate()?->format('m/d') ?? '—';
                 $label = $date . ' - ' . ($event->getCharityName() ?? 'Unknown');
                 return [
@@ -257,6 +268,10 @@ final class FoodDonationStatsController extends AbstractController
         ];
     }
 
+    /**
+     * @param list<FoodDonationEvent> $events
+     * @return array{totalEvents: int, totalPortions: int, charitiesHelpedCount: int, avgPortionsPerEvent: float|int}
+     */
     private function calculateStats(array $events): array
     {
         $totalEvents = count($events);
@@ -279,6 +294,10 @@ final class FoodDonationStatsController extends AbstractController
         ];
     }
 
+    /**
+     * @param list<FoodDonationEvent> $events
+     * @return array<string, string>
+     */
     private function generateCharityColorMap(array $events): array
     {
         $charities = [];
@@ -307,7 +326,10 @@ final class FoodDonationStatsController extends AbstractController
         return $colorMap;
     }
 
-        private function extractAiText(array $result): string
+    /**
+     * @param array<string, mixed> $result
+     */
+    private function extractAiText(array $result): string
         {
             if (isset($result['choices'][0]['message']['content'])) {
                 $content = $result['choices'][0]['message']['content'];

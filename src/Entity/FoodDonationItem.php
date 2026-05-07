@@ -22,7 +22,7 @@ class FoodDonationItem
         return $this->donation_event_id;
     }
 
-    public function setDonation_event_id(int $donation_event_id): self
+    public function setDonation_event_id(?int $donation_event_id): self
     {
         $this->donation_event_id = $donation_event_id;
         return $this;
@@ -33,7 +33,7 @@ class FoodDonationItem
         return $this->getDonation_event_id();
     }
 
-    public function setDonationEventId(int $donationEventId): self
+    public function setDonationEventId(?int $donationEventId): self
     {
         return $this->setDonation_event_id($donationEventId);
     }
@@ -49,7 +49,7 @@ class FoodDonationItem
         return $this->item_id;
     }
 
-    public function setItem_id(int $item_id): self
+    public function setItem_id(?int $item_id): self
     {
         $this->item_id = $item_id;
         return $this;
@@ -60,7 +60,7 @@ class FoodDonationItem
         return $this->item_id;
     }
 
-    public function setItemId(int $itemId): self
+    public function setItemId(?int $itemId): self
     {
         $this->item_id = $itemId;
         return $this;

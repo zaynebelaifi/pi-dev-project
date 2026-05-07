@@ -26,9 +26,10 @@ final class FoodDonationItemController extends AbstractController
         }
 
         $search = trim((string) $request->query->get('q', ''));
-        $sort = $request->query->get('sort', 'donation_event_id');
-        $direction = $request->query->get('direction', 'asc');
+        $sort = (string) $request->query->get('sort', 'donation_event_id');
+        $direction = (string) $request->query->get('direction', 'asc');
 
+        /** @var list<array{donation_event_id:int, donationEvent:\App\Entity\FoodDonationEvent, items:list<array{assignment_id:int, item_id:int, quantity:int, name:string}>, search_text:string}> $itemsForView */
         $itemsForView = [];
         $allEvents = $foodDonationEventRepository->findBy([], ['event_date' => 'ASC']);
         $eventIds = array_values(array_filter(array_map(
@@ -45,27 +46,31 @@ final class FoodDonationItemController extends AbstractController
             }
 
             $charityName = (string) ($event->getCharityName() ?? '');
-            $itemsForView[$eventId] = [
-                'donation_event_id' => $eventId,
-                'donationEvent' => $event,
-                'items' => [],
-                'search_text' => $eventId . ' ' . $charityName,
-            ];
+            /** @var list<array{assignment_id:int, item_id:int, quantity:int, name:string}> $eventItems */
+            $eventItems = [];
+            $searchText = $eventId . ' ' . $charityName;
 
             foreach ($groupedItemsByEvent[$eventId] ?? [] as $groupedItem) {
-                $itemName = (string) ($groupedItem['dishName'] ?? 'Unknown');
-                $itemId = (int) ($groupedItem['itemId'] ?? 0);
-                $quantity = (int) ($groupedItem['quantity'] ?? 0);
+                $itemName = (string) $groupedItem['dishName'];
+                $itemId = (int) $groupedItem['itemId'];
+                $quantity = (int) $groupedItem['quantity'];
 
-                $itemsForView[$eventId]['items'][] = [
+                $eventItems[] = [
                     'assignment_id' => $itemId,
                     'item_id' => $itemId,
                     'quantity' => $quantity,
                     'name' => $itemName,
                 ];
 
-                $itemsForView[$eventId]['search_text'] .= ' ' . $eventId . ' ' . $itemName . ' ' . $quantity;
+                $searchText .= ' ' . $eventId . ' ' . $itemName . ' ' . $quantity;
             }
+
+            $itemsForView[] = [
+                'donation_event_id' => $eventId,
+                'donationEvent' => $event,
+                'items' => $eventItems,
+                'search_text' => $searchText,
+            ];
         }
 
         if ($search !== '') {
@@ -76,17 +81,15 @@ final class FoodDonationItemController extends AbstractController
             );
         }
 
-        $itemsForView = array_values($itemsForView);
-
         usort($itemsForView, static function (array $a, array $b) use ($sort, $direction): int {
-            $multiplier = strtolower($direction) === 'desc' ? -1 : 1;
+            $multiplier = strtolower((string) $direction) === 'desc' ? -1 : 1;
             $aEvent = $a['donationEvent'];
             $bEvent = $b['donationEvent'];
 
             return match ($sort) {
                 'item_name' => $multiplier * strcmp((string) ($a['items'][0]['name'] ?? ''), (string) ($b['items'][0]['name'] ?? '')),
                 'quantity' => $multiplier * (array_sum(array_column($a['items'], 'quantity')) <=> array_sum(array_column($b['items'], 'quantity'))),
-                default => $multiplier * (((int) ($aEvent?->getDonationEventId() ?? 0)) <=> ((int) ($bEvent?->getDonationEventId() ?? 0))),
+                default => $multiplier * (((int) ($aEvent->getDonationEventId() ?? 0)) <=> ((int) ($bEvent->getDonationEventId() ?? 0))),
             };
         });
 
@@ -206,7 +209,7 @@ final class FoodDonationItemController extends AbstractController
             return $redirect;
         }
 
-        if ($this->isCsrfTokenValid('delete'.$foodDonationItem->getDonation_event_id().'_'.$foodDonationItem->getItem_id(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$foodDonationItem->getDonation_event_id().'_'.$foodDonationItem->getItem_id(), (string) $request->request->get('_token'))) {
             $entityManager->remove($foodDonationItem);
             $entityManager->flush();
             $this->addFlash('success', 'Donation item deleted successfully.');

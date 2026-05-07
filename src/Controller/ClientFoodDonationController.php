@@ -87,7 +87,10 @@ class ClientFoodDonationController extends AbstractController
         $averageFoodRating = count($foodScoreRatings) > 0
             ? round(array_sum(array_map(static fn (EventRating $rating): int => (int) $rating->getFoodRating(), $foodScoreRatings)) / count($foodScoreRatings), 1)
             : null;
-        $availableDishes = $this->foodDonationItemRepository->findByDonationEventId($event->getDonationEventId());
+        $eventId = (int) ($event->getDonationEventId() ?? 0);
+        $availableDishes = $eventId > 0
+            ? $this->foodDonationItemRepository->findByDonationEventId($eventId)
+            : [];
         $normalizedStatus = $this->normalizeEventStatus($event->getStatus());
         $canRate = $this->canRateForStatus($normalizedStatus);
         $isCancelled = $normalizedStatus === FoodDonationEvent::STATUS_CANCELLED;
@@ -161,7 +164,7 @@ class ClientFoodDonationController extends AbstractController
         $events = $this->foodDonationEventRepository->findBy([], ['event_date' => 'ASC']);
         $eventIds = [];
         foreach ($events as $event) {
-            if ($event instanceof FoodDonationEvent && $event->getDonationEventId() !== null) {
+            if ($event->getDonationEventId() !== null) {
                 $eventIds[] = (int) $event->getDonationEventId();
             }
         }
@@ -172,10 +175,6 @@ class ClientFoodDonationController extends AbstractController
         $myRegistrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
         $myEvents = [];
         foreach ($myRegistrations as $registration) {
-            if (!$registration instanceof EventRegistration) {
-                continue;
-            }
-
             $event = $registration->getEvent();
             if (!$event instanceof FoodDonationEvent || $event->getDonationEventId() === null) {
                 continue;
@@ -409,14 +408,14 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_client_food_donation_show', ['id' => $id]);
         }
 
-        if (!$this->isCsrfTokenValid('rate-event'.$event->getDonationEventId(), $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('rate-event'.$event->getDonationEventId(), (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Invalid form submission. Please try again.');
             return $this->redirectToRoute('app_client_food_donation_show', ['id' => $id]);
         }
 
         $eventRatingValue = (int) $request->request->get('eventRating');
         $foodRatingValue = (int) $request->request->get('foodRating');
-        $comment = trim($request->request->get('comment', '')) ?: null;
+        $comment = trim((string) $request->request->get('comment', '')) ?: null;
 
         if (!$this->canRateForStatus($normalizedStatus)) {
             if ($comment === null) {
@@ -504,10 +503,6 @@ class ClientFoodDonationController extends AbstractController
         $registrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
         $registeredEvents = [];
         foreach ($registrations as $registration) {
-            if (!$registration instanceof EventRegistration) {
-                continue;
-            }
-
             $event = $registration->getEvent();
             if (!$event instanceof FoodDonationEvent || $event->getDonationEventId() === null) {
                 continue;
@@ -539,7 +534,8 @@ class ClientFoodDonationController extends AbstractController
 
         $aiRowsByEventId = [];
         try {
-            $apiKey = trim((string) $this->getParameter('anthropic_api_key'));
+            $apiKeyParameter = $this->getParameter('anthropic_api_key');
+            $apiKey = is_string($apiKeyParameter) ? trim($apiKeyParameter) : '';
             if ($apiKey !== '') {
                 $response = $httpClient->request('POST', 'https://models.inference.ai.azure.com/chat/completions', [
                     'headers' => [
@@ -563,7 +559,10 @@ class ClientFoodDonationController extends AbstractController
 
                 foreach ($parsedRecommendations as $row) {
                     $eventId = (int) ($row['id'] ?? 0);
-                    $reason = trim((string) ($row['reason'] ?? 'Recommended for you based on your registration history.'));
+                    $rawReason = $row['reason'] ?? null;
+                    $reason = is_string($rawReason)
+                        ? trim($rawReason)
+                        : 'Recommended for you based on your registration history.';
                     if ($eventId > 0) {
                         $aiRowsByEventId[$eventId] = [
                             'reason' => $reason !== '' ? $reason : 'Recommended for you based on your registration history.',
@@ -579,7 +578,7 @@ class ClientFoodDonationController extends AbstractController
         if ($aiRowsByEventId === []) {
             $baseMatch = 90;
             foreach (array_slice($candidateEvents, 0, 3) as $fallbackEvent) {
-                if (!$fallbackEvent instanceof FoodDonationEvent || $fallbackEvent->getDonationEventId() === null) {
+                if ($fallbackEvent->getDonationEventId() === null) {
                     continue;
                 }
 
@@ -614,7 +613,9 @@ class ClientFoodDonationController extends AbstractController
                 'status' => (string) ($event->getStatus() ?? FoodDonationEvent::STATUS_SCHEDULED),
                 'totalQuantity' => (int) ($event->getTotalQuantity() ?? 0),
                 'deliveryId' => $event->getDeliveryId(),
-                'aiReason' => (string) (($aiRowsByEventId[$recommendedEventId]['reason'] ?? 'Recommended for you based on your registration history.')),
+                'aiReason' => is_string($aiRowsByEventId[$recommendedEventId]['reason'] ?? null)
+                    ? (string) $aiRowsByEventId[$recommendedEventId]['reason']
+                    : 'Recommended for you based on your registration history.',
                 'matchPercentage' => (int) (($aiRowsByEventId[$recommendedEventId]['match'] ?? 80)),
                 'viewUrl' => $this->generateUrl('app_client_food_donation_show', ['id' => $recommendedEventId]),
                 'registerUrl' => $this->generateUrl('app_client_food_donation_register', ['id' => $recommendedEventId]),
@@ -624,7 +625,7 @@ class ClientFoodDonationController extends AbstractController
 
         return new JsonResponse([
             'success' => true,
-            'events' => array_values($recommendedEvents),
+            'events' => $recommendedEvents,
             'message' => $recommendedEvents === []
                 ? 'Register for your first event to get personalized recommendations!'
                 : 'Recommendations loaded successfully.',

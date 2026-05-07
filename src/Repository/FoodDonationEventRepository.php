@@ -18,6 +18,16 @@ class FoodDonationEventRepository extends ServiceEntityRepository
         parent::__construct($registry, FoodDonationEvent::class);
     }
 
+    private function createListingQueryBuilder(string $alias = 'e')
+    {
+        return $this->createQueryBuilder($alias)
+            ->distinct()
+            ->leftJoin($alias . '.eventRegistrations', 'listingRegistrations')
+            ->addSelect('listingRegistrations')
+            ->leftJoin($alias . '.donationEventItems', 'listingItems')
+            ->addSelect('listingItems');
+    }
+
     /**
      * @return FoodDonationEvent[]
      */
@@ -39,7 +49,7 @@ class FoodDonationEventRepository extends ServiceEntityRepository
 
     public function findFilteredEvents(?string $search, ?string $status, string $sort, string $direction): array
     {
-        $qb = $this->createQueryBuilder('f');
+        $qb = $this->createListingQueryBuilder('f');
 
         if ($search !== null && trim($search) !== '') {
             $search = trim($search);
@@ -77,9 +87,35 @@ class FoodDonationEventRepository extends ServiceEntityRepository
     /**
      * @return FoodDonationEvent[]
      */
+    public function findUpcomingForLandingPage(int $limit = 6): array
+    {
+        return $this->createListingQueryBuilder('e')
+            ->andWhere('e.event_date >= :now')
+            ->setParameter('now', new \DateTimeImmutable('now'))
+            ->orderBy('e.event_date', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return FoodDonationEvent[]
+     */
+    public function findRecentForLandingPage(int $limit = 6): array
+    {
+        return $this->createListingQueryBuilder('e')
+            ->orderBy('e.event_date', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return FoodDonationEvent[]
+     */
     public function findByRegisteredUser(User $user): array
     {
-        return $this->createQueryBuilder('e')
+        return $this->createListingQueryBuilder('e')
             ->innerJoin(EventRegistration::class, 'er', 'WITH', 'er.event = e')
             ->andWhere('er.user = :user')
             ->setParameter('user', $user)
@@ -94,7 +130,7 @@ class FoodDonationEventRepository extends ServiceEntityRepository
      */
     public function findRecommendationCandidates(array $excludeEventIds = [], int $limit = 12): array
     {
-        $qb = $this->createQueryBuilder('e')
+        $qb = $this->createListingQueryBuilder('e')
             ->andWhere('e.event_date >= :today')
             ->andWhere('LOWER(e.status) IN (:statuses)')
             ->setParameter('today', new \DateTimeImmutable('today'))

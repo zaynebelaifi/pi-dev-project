@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken;
 use Webauthn\Bundle\Security\Handler\SuccessHandler;
+use Webauthn\PublicKeyCredential;
+use Webauthn\PublicKeyCredentialOptions;
+use Webauthn\PublicKeyCredentialUserEntity;
 
 class AssertionLoginSuccessHandler implements SuccessHandler
 {
@@ -26,7 +29,12 @@ class AssertionLoginSuccessHandler implements SuccessHandler
     ) {
     }
 
-    public function onSuccess(Request $request): Response
+    public function onSuccess(
+        Request $request,
+        ?PublicKeyCredential $publicKeyCredential = null,
+        ?PublicKeyCredentialOptions $publicKeyCredentialOptions = null,
+        ?PublicKeyCredentialUserEntity $userEntity = null
+    ): Response
     {
         $payload = json_decode($request->getContent(), true);
         if (!is_array($payload)) {

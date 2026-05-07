@@ -65,6 +65,30 @@ class TwilioSmsService
         return $this->sendToAllCustomers($event, $message, 'event_updated');
     }
 
+    /**
+     * @param User[] $customers
+     */
+    public function sendToMultipleCustomers(array $customers, string $message): int
+    {
+        $sent = 0;
+        foreach ($customers as $customer) {
+            if (!$customer instanceof User) {
+                continue;
+            }
+
+            $phone = $this->normalizePhone((string) ($customer->getPhoneNumber() ?? $customer->getPhone() ?? ''));
+            if ($phone === null) {
+                continue;
+            }
+
+            if ($this->sendSms($phone, $message, 'manual_dispatch', 0, (int) ($customer->getId() ?? 0))) {
+                $sent++;
+            }
+        }
+
+        return $sent;
+    }
+
     public function sendEventReminderSms(FoodDonationEvent $event): array
     {
         $message = sprintf(
@@ -160,7 +184,7 @@ class TwilioSmsService
     /**
      * @param iterable<mixed> $users
      */
-    private function sendToUsers(iterable $users, string $message, string $context, int $eventId): array
+    public function sendToUsers(iterable $users, string $message, string $context, int $eventId): array
     {
         $sent = 0;
         $failed = 0;
