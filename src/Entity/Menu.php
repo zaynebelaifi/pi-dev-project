@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Entity;
 
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Validator\Constraints as Assert;
 
 use App\Repository\MenuRepository;
@@ -112,15 +111,16 @@ class Menu
 
     #[ORM\OneToMany(targetEntity: Dish::class, mappedBy: 'menu')]
     private Collection $dishs;
+    public function __construct()
+{
+    $this->dishs = new ArrayCollection();
+}
 
     /**
      * @return Collection<int, Dish>
      */
     public function getDishs(): Collection
     {
-        if (!$this->dishs instanceof Collection) {
-            $this->dishs = new ArrayCollection();
-        }
         return $this->dishs;
     }
 
