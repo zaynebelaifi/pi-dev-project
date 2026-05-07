@@ -70,22 +70,22 @@
   <div class="aa-grid">
     <section class="aa-panel">
       <div class="aa-head"><div class="aa-title">Waste by Type</div><div class="aa-sub">Pie Chart</div></div>
-      <div class="aa-body aa-canvas-wrap"><canvas id="wasteByTypePieChart"></canvas></div>
+      <div class="aa-body aa-canvas-wrap">{{ render_chart(wasteByTypePieChartObject) }}</div>
     </section>
 
     <section class="aa-panel">
       <div class="aa-head"><div class="aa-title">Stock Health</div><div class="aa-sub">Pie Chart</div></div>
-      <div class="aa-body aa-canvas-wrap"><canvas id="stockHealthPieChart"></canvas></div>
+      <div class="aa-body aa-canvas-wrap">{{ render_chart(stockHealthPieChartObject) }}</div>
     </section>
 
     <section class="aa-panel">
       <div class="aa-head"><div class="aa-title">Top Wasted Ingredients</div><div class="aa-sub">Bar Chart</div></div>
-      <div class="aa-body aa-canvas-wrap"><canvas id="topWastedIngredientsBarChart"></canvas></div>
+      <div class="aa-body aa-canvas-wrap">{{ render_chart(topWastedIngredientsBarChartObject) }}</div>
     </section>
 
     <section class="aa-panel">
       <div class="aa-head"><div class="aa-title">Revenue Trend</div><div class="aa-sub">Bar Chart</div></div>
-      <div class="aa-body aa-canvas-wrap"><canvas id="revenueTrendBarChart"></canvas></div>
+      <div class="aa-body aa-canvas-wrap">{{ render_chart(revenueTrendBarChartObject) }}</div>
     </section>
   </div>
 

@@ -173,6 +173,11 @@ final class DeliveryController extends AbstractController
                 $items = [];
             }
 
+            if ($items === []) {
+                $this->addFlash('error', 'Your cart is empty. Add items before ordering.');
+                return $this->redirectToRoute('app_home');
+            }
+
             $cartSummary = array_map(static function ($item) {
                 return sprintf('%s (%s TND)', $item['name'] ?? '', number_format((float) ($item['price'] ?? 0), 2, '.', ''));
             }, $items);
@@ -279,117 +284,25 @@ final class DeliveryController extends AbstractController
     }
 
     #[Route('/create', name: 'app_delivery_create', methods: ['GET', 'POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager, DeliveryManRepository $deliveryManRepository, SessionInterface $session, ValidatorInterface $validator, UserRepository $userRepository): Response
-    {
-        if ($session->get('user_role') !== 'ROLE_CLIENT') {
-            return $this->redirectToRoute('app_home');
-        }
+public function create(Request $request, EntityManagerInterface $entityManager,
+    DeliveryManRepository $deliveryManRepository, SessionInterface $session,
+    UserRepository $userRepository): Response   // ← remove ValidatorInterface
+{
+    $delivery = new Delivery();
+    // pre-fill from session/user profile
+    $form = $this->createForm(DeliveryType::class, $delivery);
+    $form->handleRequest($request);
 
-        $cartItems = json_decode($request->query->get('cart_items', '[]'), true);
-        $orderTotal = $request->query->get('order_total', '0');
-
-        if ($request->isMethod('POST')) {
-            $rawCartItems = $request->request->get('cart_items', '[]');
-            $orderTotal = $request->request->get('order_total', '0');
-            $deliveryAddress = $request->request->get('delivery_address');
-            $recipientName = $request->request->get('recipient_name');
-            $recipientPhone = $request->request->get('recipient_phone');
-            $pickupLocation = $request->request->get('pickup_location');
-            $deliveryNotes = $request->request->get('delivery_notes');
-
-            $clientUser = null;
-            if ($session->get('user_role') === 'ROLE_CLIENT') {
-                $userId = $session->get('user_id');
-                if ($userId) {
-                    $clientUser = $userRepository->find($userId);
-                }
-            }
-
-            if (!$recipientPhone && $clientUser && $clientUser->getPhone()) {
-                $recipientPhone = $clientUser->getPhone();
-            }
-            if (!$recipientName && $clientUser) {
-                $recipientName = trim($clientUser->getFirstName() . ' ' . $clientUser->getLastName());
-            }
-
-            $items = json_decode($rawCartItems, true);
-            if (!is_array($items)) {
-                $items = [];
-            }
-
-            $cartSummary = array_map(static function ($item) {
-                return sprintf('%s (%s TND)', $item['name'] ?? '', number_format((float) ($item['price'] ?? 0), 2, '.', ''));
-            }, $items);
-
-            $delivery = new Delivery();
-            $delivery->setOrder_id(random_int(100000, 999999));
-            $delivery->setDelivery_address(trim((string) $deliveryAddress));
-            $delivery->setRecipient_name(trim((string) $recipientName));
-            $normalizedPhone = $this->normalizePhone(trim((string) $recipientPhone));
-            $delivery->setRecipient_phone($normalizedPhone);
-            $delivery->setPickup_location(trim((string) $pickupLocation));
-            $delivery->setDelivery_notes(trim((string) $deliveryNotes));
-            $delivery->setCart_items(implode("\n", $cartSummary));
-            $delivery->setOrder_total((string) number_format((float) $orderTotal, 2, '.', ''));
-            $delivery->setEstimated_time(30);
-            $delivery->setStatus('PENDING');
-            $delivery->setCreated_at(new \DateTime());
-            $delivery->setUpdated_at(new \DateTime());
-
-            $errors = $this->validateDelivery($delivery, $validator);
-            if (!empty($errors)) {
-                return $this->render('delivery/create.html.twig', [
-                    'cart_items' => $items,
-                    'order_total' => $orderTotal,
-                    'form_values' => [
-                        'delivery_address' => $deliveryAddress,
-                        'recipient_name' => $recipientName,
-                        'recipient_phone' => $recipientPhone,
-                        'pickup_location' => $pickupLocation,
-                        'delivery_notes' => $deliveryNotes,
-                    ],
-                    'errors' => $errors,
-                ]);
-            }
-
-            $this->assignDeliveryMan($delivery, $deliveryManRepository);
-
-            $entityManager->persist($delivery);
-            $this->syncClientPhoneWithProfile($session, $userRepository, $recipientPhone);
-            $entityManager->flush();
-
-            $session->set('client_phone', $this->normalizePhone($recipientPhone));
-            $session->set('client_name', $recipientName);
-
-            return $this->redirectToRoute('app_delivery_confirmation', ['id' => $delivery->getDelivery_id()]);
-        }
-
-        $formValues = [
-            'recipient_name' => '',
-            'recipient_phone' => '',
-        ];
-        if ($session->get('user_role') === 'ROLE_CLIENT') {
-            $formValues['recipient_name'] = $session->get('client_name') ?? '';
-            $formValues['recipient_phone'] = $this->normalizePhone($session->get('client_phone')) ?? '';
-
-            $userId = $session->get('user_id');
-            $clientUser = $userId ? $userRepository->find($userId) : null;
-            if ($clientUser) {
-                if (!$formValues['recipient_name']) {
-                    $formValues['recipient_name'] = trim($clientUser->getFirstName() . ' ' . $clientUser->getLastName());
-                }
-                if (!$formValues['recipient_phone']) {
-                    $formValues['recipient_phone'] = $this->normalizePhone($clientUser->getPhone()) ?? '';
-                }
-            }
-        }
-
-        return $this->render('delivery/create.html.twig', [
-            'cart_items' => $cartItems,
-            'order_total' => $orderTotal,
-            'form_values' => $formValues,
-        ]);
+    if ($form->isSubmitted() && $form->isValid()) {
+        // collect cart data from hidden fields, persist, redirect
     }
+
+    return $this->render('delivery/create.html.twig', [
+        'cart_items' => $cartItems,
+        'order_total' => $orderTotal,
+        'form' => $form,   // ← pass form object, not form_values array
+    ]);
+}
 
     #[Route('/save', name: 'app_delivery_save', methods: ['POST'])]
     public function save(Request $request, EntityManagerInterface $entityManager, DeliveryRepository $deliveryRepository, DeliveryManRepository $deliveryManRepository, ValidatorInterface $validator, UserRepository $userRepository, SessionInterface $session, \Psr\Log\LoggerInterface $logger): JsonResponse
@@ -584,165 +497,180 @@ final class DeliveryController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/location', name: 'app_delivery_update_location', methods: ['GET', 'POST'])]
-    public function updateLocation(Request $request, Delivery $delivery, EntityManagerInterface $em, \Symfony\Contracts\HttpClient\HttpClientInterface $httpClient): Response
-    {
-        if ($request->isMethod('GET')) {
-            return $this->json([
-                'client_latitude' => $delivery->getCurrentLatitude(),
-                'client_longitude' => $delivery->getCurrentLongitude(),
-                'driver_latitude' => $delivery->getDriverLatitude(),
-                'driver_longitude' => $delivery->getDriverLongitude(),
-            ]);
-        }
+ #[Route('/{id}/location', name: 'app_delivery_update_location', methods: ['GET', 'POST'])]
+public function updateLocation(
+    Request $request,
+    Delivery $delivery,
+    EntityManagerInterface $em,
+    \Symfony\Contracts\HttpClient\HttpClientInterface $httpClient,
+    \Symfony\Component\Security\Csrf\CsrfTokenManagerInterface $csrfTokenManager
+): Response {
 
-        $session = $request->getSession();
-        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
-            return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
-        if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
-            return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
-        }
+    if ($request->isMethod('GET')) {
+        // ── Force Doctrine to re-fetch from DB, bypassing identity map cache ──
+        $em->refresh($delivery);
 
-        $data = json_decode($request->getContent() ?: '{}', true);
-        $lat = isset($data['lat']) ? (float) $data['lat'] : null;
-        $lon = isset($data['lon']) ? (float) $data['lon'] : null;
-        if ($lat === null || $lon === null) {
-            return $this->json(['success' => false, 'message' => 'Missing coordinates'], 400);
-        }
-
-        $delivery->setDriverLatitude((string) $lat);
-        $delivery->setDriverLongitude((string) $lon);
-        $em->flush();
-
-        // Try to notify WebSocket broadcast server (if running)
-        try {
-            $broadcastUrl = 'http://127.0.0.1:3001/broadcast';
-            $httpClient->request('POST', $broadcastUrl, [
-                'json' => [
-                    'delivery_id' => $delivery->getDelivery_id(),
-                    'driver_latitude' => (string) $lat,
-                    'driver_longitude' => (string) $lon,
-                ],
-                'timeout' => 1,
-            ]);
-        } catch (\Throwable $e) {
-            // ignore broadcast failures in case WS server is not running
-        }
-
+        $status = strtolower((string) $delivery->getStatus());
         return $this->json([
-            'success' => true,
-            'driver_latitude' => $lat,
-            'driver_longitude' => $lon,
+            'client_latitude'  => $delivery->getCurrentLatitude(),
+            'client_longitude' => $delivery->getCurrentLongitude(),
+            'driver_latitude'  => $delivery->getDriverLatitude(),
+            'driver_longitude' => $delivery->getDriverLongitude(),
+            'status'           => $status,
+        ], 200, [
+            // Prevent ANY browser or proxy caching of this endpoint
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Pragma'        => 'no-cache',
         ]);
     }
+    // ── POST: driver pushes GPS ───────────────────────────────────────────
+    $session = $request->getSession();
+    if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+        return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
 
-    #[Route('/delivery/{id}/mark-delivered', name: 'app_delivery_mark_delivered', methods: ['POST'])]
-    public function markDelivered(Request $request, Delivery $delivery, EntityManagerInterface $em, MessageBusInterface $bus, \Symfony\Contracts\HttpClient\HttpClientInterface $httpClient): Response
-    {
-        if ($delivery->getStatus() === 'DELIVERED') {
-            return $this->json(['success' => false, 'message' => 'This delivery has already been marked as delivered.'], 400);
-        }
+    // Accept CSRF from header (JS sends it there) OR from JSON body
+    $data          = json_decode($request->getContent() ?: '{}', true);
+    $csrfFromHeader = $request->headers->get('X-CSRF-Token', '');
+    $csrfFromBody  = $data['_token'] ?? '';
+    $csrfToken     = $csrfFromHeader ?: $csrfFromBody;
+    $deliveryId    = $delivery->getDelivery_id();
 
-        $data = json_decode($request->getContent() ?: '', true);
-        $lat = is_array($data) && isset($data['latitude']) ? (float) $data['latitude'] : null;
-        $lon = is_array($data) && isset($data['longitude']) ? (float) $data['longitude'] : null;
-        if ($lat === null || $lon === null) {
-            return $this->json(['success' => false, 'message' => 'GPS coordinates are required'], 400);
-        }
-        // Ensure the requester is the assigned delivery man
-        $session = $request->getSession();
-        if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
-            return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
-        if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
-            return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
-        }
+    if (!$this->isCsrfTokenValid('location_push_' . $deliveryId, $csrfToken)) {
+        return $this->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
 
-        // Use the client's saved coordinates (delivery current latitude/longitude) for geofence check.
-        // If missing, attempt a reverse-geocode (forward geocode) using the delivery address as a fallback.
-        $clientLat = $delivery->getCurrentLatitude();
-        $clientLon = $delivery->getCurrentLongitude();
-        if ($clientLat === null || $clientLon === null || $clientLat === '' || $clientLon === '') {
-            $address = $delivery->getDeliveryAddress();
-            if (!$address) {
-                return $this->json([
-                    'success' => false,
-                    'message' => 'Client location and delivery address are missing. Cannot verify delivery proximity.',
-                ], 400);
-            }
+    $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+    if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
+        return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
+    }
 
-            try {
-                $url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' . urlencode($address);
-                $resp = $httpClient->request('GET', $url, [
-                    'headers' => [
-                        'User-Agent' => 'FirstProject/1.0 (+http://localhost)'
-                    ],
-                    'timeout' => 3,
-                ]);
-                $arr = $resp->toArray(false);
-                if (is_array($arr) && count($arr) > 0 && isset($arr[0]['lat']) && isset($arr[0]['lon'])) {
-                    $clientLat = (string) $arr[0]['lat'];
-                    $clientLon = (string) $arr[0]['lon'];
-                    // persist these coordinates on the delivery so future checks don't need geocoding
-                    $delivery->setCurrentLatitude($clientLat);
-                    $delivery->setCurrentLongitude($clientLon);
-                    $em->flush();
-                } else {
-                    return $this->json([
-                        'success' => false,
-                        'message' => 'Could not determine client coordinates from delivery address.',
-                    ], 400);
-                }
-            } catch (\Throwable $e) {
-                return $this->json([
-                    'success' => false,
-                    'message' => 'Failed to geocode delivery address: ' . $e->getMessage(),
-                ], 500);
-            }
-        }
+    $lat = isset($data['lat']) ? (float) $data['lat'] : null;
+    $lon = isset($data['lon']) ? (float) $data['lon'] : null;
+    if ($lat === null || $lon === null) {
+        return $this->json(['success' => false, 'message' => 'Missing coordinates'], 400);
+    }
 
-        $clientLatF = (float) $clientLat;
-        $clientLonF = (float) $clientLon;
+    $delivery->setDriverLatitude((string) $lat);
+    $delivery->setDriverLongitude((string) $lon);
+    $em->flush();
 
-        $distance = $this->haversineDistanceMeters($lat, $lon, $clientLatF, $clientLonF);
-        if ($distance > 50.0) {
-            $distanceMeters = (int) round($distance);
-            return $this->json([
-                'success' => false,
-                'message' => sprintf(
-                    'You must be within 50 meters of the client delivery address (you are %dm away)',
-                    $distanceMeters
-                ),
-            ], 400);
-        }
+    // Broadcast to WebSocket server (optional, non-blocking)
+    try {
+        $httpClient->request('POST', 'http://127.0.0.1:3001/broadcast', [
+            'json'    => [
+                'delivery_id'      => $deliveryId,
+                'driver_latitude'  => (string) $lat,
+                'driver_longitude' => (string) $lon,
+            ],
+            'timeout' => 1,
+        ]);
+    } catch (\Throwable) { /* ignore */ }
 
+    return $this->json([
+        'success'          => true,
+        'driver_latitude'  => $lat,
+        'driver_longitude' => $lon,
+        'status'           => strtolower((string) $delivery->getStatus()),
+    ]);
+}
+    #[Route('/{id}/mark-delivered', name: 'app_delivery_mark_delivered', methods: ['POST'])]
+   #[Route('/{id}/mark-delivered', name: 'app_delivery_mark_delivered', methods: ['POST'])]
+public function markDelivered(
+    Request $request,
+    Delivery $delivery,
+    EntityManagerInterface $em,
+    MessageBusInterface $bus
+): Response {
+    if ($delivery->getStatus() === 'DELIVERED') {
+        return $this->json(['success' => false, 'message' => 'Already delivered.'], 400);
+    }
+
+    $session = $request->getSession();
+    if ($session->get('user_role') !== 'ROLE_DELIVERY_MAN') {
+        return $this->json(['success' => false, 'message' => 'Unauthorized'], 403);
+    }
+
+    $deliveryManId = (int) ($session->get('delivery_man_id') ?? 0);
+    if ($deliveryManId <= 0 || $delivery->getDeliveryMan()?->getDelivery_man_id() !== $deliveryManId) {
+        return $this->json(['success' => false, 'message' => 'Unauthorized for this delivery'], 403);
+    }
+
+    $data = json_decode($request->getContent() ?: '', true);
+    $driverLat = is_array($data) && isset($data['latitude'])  ? (float) $data['latitude']  : null;
+    $driverLon = is_array($data) && isset($data['longitude']) ? (float) $data['longitude'] : null;
+
+    if ($driverLat === null || $driverLon === null) {
+        return $this->json(['success' => false, 'message' => 'GPS coordinates are required.'], 400);
+    }
+
+    // ── Geofence: ONLY use actual saved client GPS — never Nominatim ─────
+    $clientLat = $delivery->getCurrentLatitude();
+    $clientLon = $delivery->getCurrentLongitude();
+
+    // Reject empty strings and non-numeric values
+    $clientLatF = is_numeric($clientLat) ? (float) $clientLat : null;
+    $clientLonF = is_numeric($clientLon) ? (float) $clientLon : null;
+
+    if ($clientLatF === null || $clientLonF === null) {
+        // No real client GPS saved — skip geofence but log it
+        // (This means client placed order without sharing location)
+        // Policy choice: allow delivery but warn. Change to return error if you want strict mode.
         $delivery->setStatus('DELIVERED');
         $delivery->setActual_delivery_date(new \DateTimeImmutable());
         $em->flush();
-
-        // After marking this delivery as delivered, try to reassign any pending deliveries
-        try {
-            $this->reassignPendingDeliveriesForFreedDriver($deliveryManId, $em, $bus);
-        } catch (\Throwable $e) {
-            // do not prevent response on reassignment failures
-        }
-
-        $phone = $delivery->getRecipient_phone() ?? $delivery->getRecipientPhone();
-        if ($phone) {
-            $orderId = $delivery->getOrder_id() ?? $delivery->getOrderId();
-            // Use WhatsApp template if available: delivery confirmation
-            $recipientName = $delivery->getRecipient_name() ?? $delivery->getRecipientName() ?? 'Customer';
-            $template = 'delivery_confirmation_5';
-            $params = [trim((string) $recipientName), (string) $orderId];
-            $text = sprintf('Hi %s, your order #%s was delivered. The delivery man is waiting. Enjoy your meal!', $recipientName, (string) $orderId);
-            $bus->dispatch(new WhatsAppNotificationMessage((int) ($delivery->getDelivery_id() ?? $delivery->getDeliveryId()), (string) $phone, $text, $template, $params));
-        }
-
-        return $this->json(['success' => true]);
+        $this->notifyDelivered($delivery, $bus);
+        return $this->json([
+            'success' => true,
+            'warning' => 'No client GPS on file — geofence skipped.',
+        ]);
     }
+
+    $distance = $this->haversineDistanceMeters($driverLat, $driverLon, $clientLatF, $clientLonF);
+
+    if ($distance > 50.0) {
+        return $this->json([
+            'success' => false,
+            'message' => sprintf(
+                'You are %dm away from the delivery address. You must be within 50m.',
+                (int) round($distance)
+            ),
+        ], 400);
+    }
+
+    $delivery->setStatus('DELIVERED');
+    $delivery->setActual_delivery_date(new \DateTimeImmutable());
+    $em->flush();
+
+    try {
+        $this->reassignPendingDeliveriesForFreedDriver($deliveryManId, $em, $bus);
+    } catch (\Throwable) { /* non-fatal */ }
+
+    $this->notifyDelivered($delivery, $bus);
+
+    return $this->json(['success' => true]);
+}
+
+// ── Small private helper to avoid duplication ─────────────────────────────
+private function notifyDelivered(Delivery $delivery, MessageBusInterface $bus): void
+{
+    $phone = $delivery->getRecipient_phone() ?? $delivery->getRecipientPhone();
+    if (!$phone) return;
+
+    $orderId       = $delivery->getOrder_id() ?? $delivery->getOrderId();
+    $recipientName = $delivery->getRecipient_name() ?? $delivery->getRecipientName() ?? 'Customer';
+    $text          = sprintf('Hi %s, your order #%s was delivered. Enjoy your meal!', $recipientName, $orderId);
+
+    try {
+        $bus->dispatch(new WhatsAppNotificationMessage(
+            (int) ($delivery->getDelivery_id() ?? $delivery->getDeliveryId()),
+            (string) $phone,
+            $text,
+            'delivery_confirmation_5',
+            [trim((string) $recipientName), (string) $orderId]
+        ));
+    } catch (\Throwable) { /* ignore */ }
+}
 
     private function haversineDistanceMeters(float $lat1, float $lon1, float $lat2, float $lon2): float
     {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}BIG 4 — Admin Console{% endblock %}</title>
+<title>{% block title %}BIG 4  Admin Console{% endblock %}</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 {% block page_styles %}{% endblock %}
@@ -47,11 +47,8 @@
 body{background:var(--ivory-2);color:var(--text);font-family:'Jost',sans-serif;font-weight:400;display:flex;min-height:100vh;overflow-x:hidden;}
 
 /* SIDEBAR */
-.sidebar{width:var(--sidebar-w);background:var(--ivory);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;box-shadow:2px 0 20px var(--shadow);overflow-y:auto;overflow-x:hidden;}
-.sidebar::-webkit-scrollbar{width:8px;}
-.sidebar::-webkit-scrollbar-thumb{background:rgba(184,135,42,.45);border-radius:10px;}
-.sidebar::-webkit-scrollbar-track{background:transparent;}
-.sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sidebar{width:var(--sidebar-w);background:var(--ivory);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;box-shadow:2px 0 20px var(--shadow);overflow-y:auto;}
+.sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
 .brand-badge{width:38px;height:38px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.1rem;color:var(--ivory);flex-shrink:0;}
 .brand-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);letter-spacing:.08em;line-height:1;font-weight:600;}
 .brand-sub{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);margin-top:2px;}
@@ -63,6 +60,19 @@ body{background:var(--ivory-2);color:var(--text);font-family:'Jost',sans-serif;f
 .nav-icon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
 .nav-badge{margin-left:auto;background:var(--gold);color:var(--ivory);font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center;}
 .nav-badge.red{background:var(--red);color:white;}
+
+/* NAV GROUP (COLLAPSIBLE) */
+.nav-group{display:flex;align-items:center;gap:.7rem;padding:.6rem .75rem;border-radius:6px;text-decoration:none;color:var(--text-2);font-size:.75rem;font-weight:500;letter-spacing:.02em;transition:all .2s;cursor:pointer;border:1px solid transparent;margin-bottom:1px;position:relative;flex-wrap:wrap;}
+.nav-group:hover{background:var(--gold-wash);color:var(--brown);border-color:var(--border);}
+.nav-group.nav-group-expanded{color:var(--gold);border-color:rgba(184,135,42,.22);background:var(--gold-wash);}
+.nav-group-arrow{margin-left:auto;font-size:.5rem;transition:transform .3s;flex-shrink:0;}
+.nav-group.nav-group-expanded .nav-group-arrow{transform:rotate(0deg);}
+.nav-group-items{display:none;flex-basis:100%;flex-direction:column;gap:2px;margin-top:6px;padding-top:8px;border-top:1px solid rgba(184,135,42,.08);}
+.nav-group.nav-group-expanded .nav-group-items{display:flex;}
+.nav-subitem{display:flex;align-items:center;gap:.6rem;padding:.55rem .65rem .55rem 1.8rem;border-radius:4px;text-decoration:none;color:var(--text-2);font-size:.7rem;font-weight:400;letter-spacing:.01em;transition:all .15s;border:1px solid transparent;margin:0;}
+.nav-subitem:hover{background:var(--gold-wash);color:var(--brown);}
+.nav-subitem.active{background:var(--gold-pale);color:var(--gold);font-weight:600;border-color:rgba(184,135,42,.22);}
+
 .sidebar-footer{margin-top:auto;padding:1rem;border-top:1px solid var(--border);}
 .admin-card{display:flex;align-items:center;gap:9px;padding:.7rem 1rem;background:var(--ivory-2);border-radius:8px;border:1px solid var(--border);}
 .admin-av{width:32px;height:32px;border-radius:50%;background:var(--gold-pale);border:1.5px solid rgba(184,135,42,.3);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--gold);flex-shrink:0;}
@@ -232,31 +242,40 @@ tbody tr:hover .dots{color:var(--gold);}
 {% set activeRoute = app.request.attributes.get('_route') %}
 
 <aside class="sidebar">
-  <div class="sidebar-brand">
+  <a href="{{ path('app_home') }}" class="sidebar-brand">
     <div class="brand-badge">B</div>
     <div><div class="brand-name">BIG 4</div><div class="brand-sub">Admin Console</div></div>
-  </div>
+  </a>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Main</div>
-    <a class="nav-item {{ activeRoute == 'app_admin_dashboard' ? 'active' : '' }}" href="{{ path('app_admin_dashboard') }}"><div class="nav-icon">🏠</div>Dashboard</a>
-    <a class="nav-item {{ activeRoute == 'app_admin_analytics' ? 'active' : '' }}" href="{{ path('app_admin_analytics') }}"><div class="nav-icon">📊</div>Analytics</a>
+    <a class="nav-item {{ activeRoute == 'app_admin_dashboard' ? 'active' : '' }}" href="{{ path('app_admin_dashboard') }}"><div class="nav-icon">DB</div>Dashboard</a>
+    <a class="nav-item {{ activeRoute == 'app_admin_analytics' ? 'active' : '' }}" href="{{ path('app_admin_analytics') }}"><div class="nav-icon">AN</div>Analytics</a>
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Operations</div>
-    <a class="nav-item {{ activeRoute == 'app_delivery_index' ? 'active' : '' }}" href="{{ path('app_delivery_index') }}"><div class="nav-icon">🛵</div>Delivery<span class="nav-badge red">7</span></a>
-    <a class="nav-item {{ activeRoute starts with 'admin_menu_' or activeRoute starts with 'admin_dish_' ? 'active' : '' }}" href="{{ path('admin_menu_index') }}"><div class="nav-icon">📋</div>Menu Manager</a>
-    <a class="nav-item {{ activeRoute starts with 'admin_ingredient_' ? 'active' : '' }}" href="{{ path('admin_ingredient_index') }}"><div class="nav-icon">🥬</div>Ingredients</a>
-    <a class="nav-item {{ activeRoute starts with 'admin_waste_' ? 'active' : '' }}" href="{{ path('admin_waste_index') }}"><div class="nav-icon">🗑️</div>Waste Tracker</a>
-    <a class="nav-item {{ activeRoute starts with 'app_food_donation_event_' ? 'active' : '' }}" href="{{ path('app_food_donation_event_index') }}"><div class="nav-icon">🤝</div>Donation Events</a>
-    <a class="nav-item {{ activeRoute starts with 'app_food_donation_item_' ? 'active' : '' }}" href="{{ path('app_food_donation_item_index') }}"><div class="nav-icon">📦</div>Donation Items</a>
-    <a class="nav-item {{ activeRoute starts with 'app_table_' ? 'active' : '' }}" href="{{ path('table_index') }}"><div class="nav-icon">🪑</div>Tables</a>
-    <a class="nav-item {{ activeRoute starts with 'app_reservation_' ? 'active' : '' }}" href="{{ path('app_reservation_index') }}"><div class="nav-icon">🎪</div>Reservations</a>
+    <a class="nav-item {{ activeRoute == 'app_delivery_index' ? 'active' : '' }}" href="{{ path('app_delivery_index') }}"><div class="nav-icon">DL</div>Delivery<span class="nav-badge red">7</span></a>
+    <a class="nav-item {{ activeRoute starts with 'admin_menu_' or activeRoute starts with 'admin_dish_' ? 'active' : '' }}" href="{{ path('admin_menu_index') }}"><div class="nav-icon">MN</div>Menu Manager</a>
+    <a class="nav-item {{ activeRoute starts with 'admin_ingredient_' ? 'active' : '' }}" href="{{ path('admin_ingredient_index') }}"><div class="nav-icon">IG</div>Ingredients</a>
+    <a class="nav-item {{ activeRoute starts with 'admin_waste_' ? 'active' : '' }}" href="{{ path('admin_waste_index') }}"><div class="nav-icon">WS</div>Waste Tracker</a>
+    <div class="nav-group {{ (activeRoute starts with 'app_food_donation_event_' or activeRoute starts with 'app_food_donation_item_' or activeRoute starts with 'app_food_donation_stats') ? 'nav-group-expanded' : '' }}" onclick="this.classList.toggle('nav-group-expanded')">
+      <div class="nav-icon">FD</div>
+      <span>Food Donation</span>
+      <span class="nav-group-arrow">v</span>
+      <div class="nav-group-items">
+        <a class="nav-item nav-subitem {{ activeRoute starts with 'app_food_donation_event_' ? 'active' : '' }}" href="{{ path('app_food_donation_event_index') }}"><div class="nav-icon">EV</div>Food Donation Events</a>
+        <a class="nav-item nav-subitem {{ activeRoute starts with 'app_food_donation_item_' ? 'active' : '' }}" href="{{ path('app_food_donation_item_index') }}"><div class="nav-icon">IT</div>Donation Items</a>
+        <a class="nav-item nav-subitem {{ activeRoute starts with 'app_food_donation_stats' ? 'active' : '' }}" href="{{ path('app_food_donation_stats') }}"><div class="nav-icon">CH</div>Charts & Statistics</a>
+      </div>
+    </div>
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Management</div>
-    <a class="nav-item {{ activeRoute starts with 'app_order_' ? 'active' : '' }}" href="{{ path('app_order_index') }}"><div class="nav-icon">🛒</div>Orders</a>
-    <a class="nav-item {{ activeRoute == 'app_delivery_man_index' ? 'active' : '' }}" href="{{ path('app_delivery_man_index') }}"><div class="nav-icon">👥</div>Delivery Men</a>
-    <a class="nav-item" href="#"><div class="nav-icon">⚙️</div>Settings</a>
+    <a class="nav-item {{ activeRoute starts with 'app_order_' ? 'active' : '' }}" href="{{ path('app_order_index') }}"><div class="nav-icon">OR</div>Orders</a>
+    <a class="nav-item {{ activeRoute == 'app_delivery_man_index' ? 'active' : '' }}" href="{{ path('app_delivery_man_index') }}"><div class="nav-icon">DM</div>Delivery Men</a>
+    <a class="nav-item {{ activeRoute == 'fleet_dashboard' ? 'active' : '' }}" href="{{ path('fleet_dashboard') }}"><div class="nav-icon">FG</div>Fleet GPS</a>
+    <a class="nav-item {{ activeRoute == 'fleet_assignments_dashboard' ? 'active' : '' }}" href="{{ path('fleet_assignments_dashboard') }}"><div class="nav-icon">FA</div>Fleet Assignments</a>
+    <a class="nav-item {{ activeRoute == 'app_user_insights' ? 'active' : '' }}" href="{{ path('app_user_insights') }}"><div class="nav-icon">UI</div>User Insights</a>
+    <a class="nav-item" href="#"><div class="nav-icon">ST</div>Settings</a>
   </div>
   <div class="sidebar-footer">
     <div class="sidebar-sec-lbl" style="padding:0;margin-bottom:.5rem">Logged in as</div>
@@ -270,56 +289,66 @@ tbody tr:hover .dots{color:var(--gold);}
 
 <div class="main-wrap">
   <header class="topbar">
-    <div><div class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</div><div class="topbar-bc">{% block topbar_breadcrumb %}Big 4 · Admin · Overview{% endblock %}</div></div>
+    <div><div class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</div><div class="topbar-bc">{% block topbar_breadcrumb %}Big 4 | Admin | Overview{% endblock %}</div></div>
     <div class="topbar-right">
-      <a href="{{ path('app_landingpage') }}" class="t-btn" target="_blank">🌐 View Homepage</a>
+      <a href="{{ path('app_landingpage') }}" class="t-btn" target="_blank">View Homepage</a>
       <div class="t-div"></div>
-      <button class="notif">🔔<div class="notif-dot"></div></button>
+      <button class="notif">Alerts<div class="notif-dot"></div></button>
     </div>
   </header>
 
   <div class="content">
-    {% for message in app.flashes('error') %}
-      <div class="admin-flash admin-flash-error">{{ message }}</div>
-    {% endfor %}
-    {% for message in app.flashes('success') %}
-      <div class="admin-flash admin-flash-success">{{ message }}</div>
-    {% endfor %}
+   {% for message in app.flashes('error') %}
+  <div class="admin-flash admin-flash-error auto-flash">{{ message }}</div>
+{% endfor %}
+{% for message in app.flashes('success') %}
+  <div class="admin-flash admin-flash-success auto-flash">{{ message }}</div>
+{% endfor %}
+
+<script>
+  document.querySelectorAll('.auto-flash').forEach(function(flash) {
+    setTimeout(function() {
+      flash.style.transition = 'opacity 0.5s ease';
+      flash.style.opacity = '0';
+      setTimeout(() => flash.remove(), 500);
+    }, 5000);
+  });
+</script>
 
     {% block body %}
     <!-- KPI -->
     <div class="kpi-row">
       <div class="kpi">
-        <div class="kpi-lbl">Today's Revenue <span class="kpi-icon">💰</span></div>
+        <div class="kpi-lbl">Today's Revenue <span class="kpi-icon"></span></div>
         <div class="kpi-val">2,847 <span style="font-size:1rem;color:var(--text-3)">TND</span></div>
-        <div class="kpi-chg up">↑ 12.4% vs yesterday</div>
+        <div class="kpi-chg up"> 12.4% vs yesterday</div>
       </div>
       <div class="kpi">
-        <div class="kpi-lbl">Active Orders <span class="kpi-icon">🛒</span></div>
+        <div class="kpi-lbl">Active Orders <span class="kpi-icon"></span></div>
         <div class="kpi-val">23</div>
-        <div class="kpi-chg up">↑ 8 new this hour</div>
+        <div class="kpi-chg up"> 8 new this hour</div>
       </div>
       <div class="kpi">
-        <div class="kpi-lbl">Deliveries Today <span class="kpi-icon">🚚</span></div>
+        <div class="kpi-lbl">Deliveries Today <span class="kpi-icon"></span></div>
         <div class="kpi-val">41</div>
         <div class="kpi-chg up">7 in transit now</div>
       </div>
       <div class="kpi">
-        <div class="kpi-lbl">Waste Index <span class="kpi-icon">📉</span></div>
+        <div class="kpi-lbl">Waste Index <span class="kpi-icon"></span></div>
         <div class="kpi-val">3.2<span style="font-size:1rem;color:var(--text-3)">%</span></div>
-        <div class="kpi-chg up">↓ 0.8% improvement</div>
+        <div class="kpi-chg up"> 0.8% improvement</div>
       </div>
     </div>
 
     <!-- MODULES -->
     <div class="sec-head">
       <h2>Operations Modules</h2>
-      <a href="#" class="view-all">Configure →</a>
+      <a href="#" class="view-all">Configure </a>
     </div>
     <div class="mod-grid">
 
       <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
-        <div class="card-top"><div class="c-icon gold">🛵</div><span class="pill p-green">Live</span></div>
+        <div class="card-top"><div class="c-icon gold"></div><span class="pill p-green">Live</span></div>
         <div class="c-title">Delivery</div>
         <div class="c-desc">Track active deliveries, assign riders, manage zones and ETA estimates in real-time.</div>
         <div class="c-stats">
@@ -328,11 +357,11 @@ tbody tr:hover .dots{color:var(--gold);}
           <div class="cs-item"><div class="cs-num">28 min</div><div class="cs-lbl">Avg. ETA</div></div>
         </div>
         <div class="c-bar"><div class="c-bar-fill green" style="width:82%"></div></div>
-        <a href="#" class="c-action">Manage Delivery →</a>
+        <a href="#" class="c-action">Manage Delivery </a>
       </div>
 
       <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
-        <div class="card-top"><div class="c-icon blue">📋</div><span class="pill p-blue">48 Items</span></div>
+        <div class="card-top"><div class="c-icon blue"></div><span class="pill p-blue">48 Items</span></div>
         <div class="c-title">Menu Manager</div>
         <div class="c-desc">Add, edit or archive menus and dishes, manage prices, availability and categories.</div>
         <div class="c-stats">
@@ -341,11 +370,11 @@ tbody tr:hover .dots{color:var(--gold);}
           <div class="cs-item"><div class="cs-num">3</div><div class="cs-lbl">Out of Stock</div></div>
         </div>
         <div class="c-bar"><div class="c-bar-fill blue" style="width:94%"></div></div>
-        <a href="{{ path('admin_menu_index') }}" class="c-action">Open Menu Manager →</a>
+        <a href="{{ path('admin_menu_index') }}" class="c-action">Open Menu Manager </a>
       </div>
 
       <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
-        <div class="card-top"><div class="c-icon amber">🗑️</div><span class="pill p-amber">Low Waste</span></div>
+        <div class="card-top"><div class="c-icon amber"></div><span class="pill p-amber">Low Waste</span></div>
         <div class="c-title">Waste Tracker</div>
         <div class="c-desc">Monitor ingredient waste, track disposal logs, identify patterns to reduce overhead and spoilage.</div>
         <div class="c-stats">
@@ -354,11 +383,11 @@ tbody tr:hover .dots{color:var(--gold);}
           <div class="cs-item"><div class="cs-num">-0.8%</div><div class="cs-lbl">Vs Last Week</div></div>
         </div>
         <div class="c-bar"><div class="c-bar-fill amber" style="width:32%"></div></div>
-        <a href="#" class="c-action">View Report →</a>
+        <a href="#" class="c-action">View Report </a>
       </div>
 
       <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
-        <div class="card-top"><div class="c-icon purple">🎪</div><span class="pill p-purple">4 Upcoming</span></div>
+        <div class="card-top"><div class="c-icon purple"></div><span class="pill p-purple">4 Upcoming</span></div>
         <div class="c-title">Events</div>
         <div class="c-desc">Create and manage lounge events, handle RSVPs, send invitations and publish to frontend.</div>
         <div class="c-stats">
@@ -367,11 +396,11 @@ tbody tr:hover .dots{color:var(--gold);}
           <div class="cs-item"><div class="cs-num">Apr 12</div><div class="cs-lbl">Next Event</div></div>
         </div>
         <div class="c-bar"><div class="c-bar-fill purple" style="width:65%"></div></div>
-        <a href="#" class="c-action">Manage Events →</a>
+        <a href="#" class="c-action">Manage Events </a>
       </div>
 
       <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
-        <div class="card-top"><div class="c-icon green">🛒</div><span class="pill p-green">Active</span></div>
+        <div class="card-top"><div class="c-icon green"></div><span class="pill p-green">Active</span></div>
         <div class="c-title">Orders</div>
         <div class="c-desc">View all incoming orders across dine-in, delivery and takeaway. Update status, print tickets.</div>
         <div class="c-stats">
@@ -380,11 +409,11 @@ tbody tr:hover .dots{color:var(--gold);}
           <div class="cs-item"><div class="cs-num">18 TND</div><div class="cs-lbl">Avg. Order</div></div>
         </div>
         <div class="c-bar"><div class="c-bar-fill green" style="width:75%"></div></div>
-        <a href="#" class="c-action">View All Orders →</a>
+        <a href="#" class="c-action">View All Orders </a>
       </div>
 
       <div class="mod-card" onmousemove="tilt(event,this)" onmouseleave="untilt(this)">
-        <div class="card-top"><div class="c-icon rose">👥</div><span class="pill p-rose">1.2k Members</span></div>
+        <div class="card-top"><div class="c-icon rose"></div><span class="pill p-rose">1.2k Members</span></div>
         <div class="c-title">Users</div>
         <div class="c-desc">Manage customer accounts, loyalty points, contact info, order history and access levels.</div>
         <div class="c-stats">
@@ -393,7 +422,7 @@ tbody tr:hover .dots{color:var(--gold);}
           <div class="cs-item"><div class="cs-num">89%</div><div class="cs-lbl">Retention</div></div>
         </div>
         <div class="c-bar"><div class="c-bar-fill rose" style="width:89%"></div></div>
-        <a href="#" class="c-action">Manage Users →</a>
+        <a href="#" class="c-action">Manage Users </a>
       </div>
 
     </div>
@@ -401,7 +430,7 @@ tbody tr:hover .dots{color:var(--gold);}
     <!-- ORDERS TABLE -->
     <div class="sec-head">
       <h2>Recent Orders</h2>
-      <a href="#" class="view-all">View All →</a>
+      <a href="#" class="view-all">View All </a>
     </div>
     <div class="tbl-card">
       <div class="tbl-head">
@@ -424,11 +453,11 @@ tbody tr:hover .dots{color:var(--gold);}
           <tr>
             <td><span class="ord-id">#B401</span></td>
             <td><div class="cust-cell"><div class="av-sm">AK</div><div><div class="cust-name">Amir Khalil</div><div class="cust-type">Loyalty Member</div></div></div></td>
-            <td style="color:var(--text-2);font-size:.75rem">Espresso × 2, Croissant</td>
+            <td style="color:var(--text-2);font-size:.75rem">Espresso  2, Croissant</td>
             <td style="color:var(--text-2);font-size:.75rem">Dine-in</td>
             <td><span class="amount">24.00 TND</span></td>
             <td><span class="sbadge s-delivered">Delivered</span></td>
-            <td><span class="dots">···</span></td>
+            <td><span class="dots"></span></td>
           </tr>
           <tr>
             <td><span class="ord-id">#B402</span></td>
@@ -437,16 +466,16 @@ tbody tr:hover .dots{color:var(--gold);}
             <td style="color:var(--text-2);font-size:.75rem">Delivery</td>
             <td><span class="amount">31.50 TND</span></td>
             <td><span class="sbadge s-preparing">Preparing</span></td>
-            <td><span class="dots">···</span></td>
+            <td><span class="dots"></span></td>
           </tr>
           <tr>
             <td><span class="ord-id">#B403</span></td>
             <td><div class="cust-cell"><div class="av-sm">OB</div><div><div class="cust-name">Omar Ben Ali</div><div class="cust-type">VIP Member</div></div></div></td>
-            <td style="color:var(--text-2);font-size:.75rem">Cold Brew × 3, Cake</td>
+            <td style="color:var(--text-2);font-size:.75rem">Cold Brew  3, Cake</td>
             <td style="color:var(--text-2);font-size:.75rem">Delivery</td>
             <td><span class="amount">47.00 TND</span></td>
             <td><span class="sbadge s-pending">Pending</span></td>
-            <td><span class="dots">···</span></td>
+            <td><span class="dots"></span></td>
           </tr>
           <tr>
             <td><span class="ord-id">#B404</span></td>
@@ -455,7 +484,7 @@ tbody tr:hover .dots{color:var(--gold);}
             <td style="color:var(--text-2);font-size:.75rem">Takeaway</td>
             <td><span class="amount">16.00 TND</span></td>
             <td><span class="sbadge s-delivered">Delivered</span></td>
-            <td><span class="dots">···</span></td>
+            <td><span class="dots"></span></td>
           </tr>
           <tr>
             <td><span class="ord-id">#B405</span></td>
@@ -464,7 +493,7 @@ tbody tr:hover .dots{color:var(--gold);}
             <td style="color:var(--text-2);font-size:.75rem">Dine-in</td>
             <td><span class="amount">28.50 TND</span></td>
             <td><span class="sbadge s-cancelled">Cancelled</span></td>
-            <td><span class="dots">···</span></td>
+            <td><span class="dots"></span></td>
           </tr>
         </tbody>
       </table>
@@ -473,26 +502,26 @@ tbody tr:hover .dots{color:var(--gold);}
     <!-- BOTTOM -->
     <div class="bottom-grid">
       <div class="panel">
-        <div class="p-head"><div class="p-title">🔔 Live Activity</div><a href="#" class="view-all" style="font-size:.6rem">All →</a></div>
+        <div class="p-head"><div class="p-title"> Live Activity</div><a href="#" class="view-all" style="font-size:.6rem">All </a></div>
         <div class="p-body">
-          <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text"><strong>New order #B406</strong> received — 2 lattes + sandwich via delivery</div><div class="act-time">Just now</div></div>
+          <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text"><strong>New order #B406</strong> received  2 lattes + sandwich via delivery</div><div class="act-time">Just now</div></div>
           <div class="act-item"><div class="act-dot" style="background:var(--blue)"></div><div class="act-text"><strong>Sara Mekki</strong> completed table reservation for Apr 12</div><div class="act-time">4 min</div></div>
-          <div class="act-item"><div class="act-dot" style="background:var(--amber)"></div><div class="act-text"><strong>Low stock alert</strong> — Oat milk running below 10% threshold</div><div class="act-time">11 min</div></div>
+          <div class="act-item"><div class="act-dot" style="background:var(--amber)"></div><div class="act-text"><strong>Low stock alert</strong>  Oat milk running below 10% threshold</div><div class="act-time">11 min</div></div>
           <div class="act-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text"><strong>Order #B401</strong> marked as delivered by Rider Yassine</div><div class="act-time">18 min</div></div>
           <div class="act-item"><div class="act-dot" style="background:var(--purple)"></div><div class="act-text"><strong>Jazz Evening</strong> event published to frontend by Admin</div><div class="act-time">32 min</div></div>
           <div class="act-item"><div class="act-dot" style="background:var(--rose)"></div><div class="act-text"><strong>34 new user</strong> registrations processed this week</div><div class="act-time">1 hr</div></div>
         </div>
       </div>
       <div class="panel">
-        <div class="p-head"><div class="p-title">⚡ Quick Actions</div></div>
+        <div class="p-head"><div class="p-title"> Quick Actions</div></div>
         <div class="p-body">
           <div class="q-grid">
-            <button class="q-btn" onclick="location.href='{{ path('admin_dish_new') }}'"><div class="q-icon">➕</div><div class="q-lbl">Add Menu Item</div><div class="q-sub">Create new dish or drink</div></button>
-            <button class="q-btn"><div class="q-icon">📅</div><div class="q-lbl">New Event</div><div class="q-sub">Publish to frontend</div></button>
-            <button class="q-btn"><div class="q-icon">📣</div><div class="q-lbl">Send Promo</div><div class="q-sub">Notify all members</div></button>
-            <button class="q-btn"><div class="q-icon">🖨️</div><div class="q-lbl">Print Report</div><div class="q-sub">Daily summary PDF</div></button>
-            <button class="q-btn" onclick="location.href='{{ path('admin_waste_new') }}'"><div class="q-icon">🗑️</div><div class="q-lbl">Log Waste</div><div class="q-sub">Record disposal entry</div></button>
-            <button class="q-btn"><div class="q-icon">🌐</div><div class="q-lbl">View Homepage</div><div class="q-sub">Open live frontend</div></button>
+            <button class="q-btn" onclick="location.href='{{ path('admin_dish_new') }}'"><div class="q-icon"></div><div class="q-lbl">Add Menu Item</div><div class="q-sub">Create new dish or drink</div></button>
+            <button class="q-btn"><div class="q-icon"></div><div class="q-lbl">New Event</div><div class="q-sub">Publish to frontend</div></button>
+            <button class="q-btn"><div class="q-icon"></div><div class="q-lbl">Send Promo</div><div class="q-sub">Notify all members</div></button>
+            <button class="q-btn"><div class="q-icon"></div><div class="q-lbl">Print Report</div><div class="q-sub">Daily summary PDF</div></button>
+            <button class="q-btn" onclick="location.href='{{ path('admin_waste_new') }}'"><div class="q-icon"></div><div class="q-lbl">Log Waste</div><div class="q-sub">Record disposal entry</div></button>
+            <button class="q-btn"><div class="q-icon"></div><div class="q-lbl">View Homepage</div><div class="q-sub">Open live frontend</div></button>
           </div>
         </div>
       </div>
@@ -503,13 +532,13 @@ tbody tr:hover .dots{color:var(--gold);}
 
   {% if activeRoute == 'app_admin_dashboard' or activeRoute == 'app_admin_analytics' %}
     <div class="stock-chatbot" data-chat-endpoint="{{ path('app_admin_stock_chat') }}">
-      <button class="stock-chat-launcher" type="button" id="stockChatLauncher" title="AI Stock Assistant">🤖</button>
+      <button class="stock-chat-launcher" type="button" id="stockChatLauncher" title="AI Stock Assistant"></button>
       <div class="stock-chat-window" id="stockChatWindow">
         <div class="stock-chat-head">
           <div class="stock-chat-title">Stock Assistant</div>
           <div class="stock-chat-head-actions">
-            <button type="button" class="stock-chat-expand" id="stockChatExpand" title="Expand chat">⛶</button>
-            <button type="button" class="stock-chat-close" id="stockChatClose">✕</button>
+            <button type="button" class="stock-chat-expand" id="stockChatExpand" title="Expand chat"></button>
+            <button type="button" class="stock-chat-close" id="stockChatClose"></button>
           </div>
         </div>
         <div class="stock-chat-messages" id="stockChatMessages">
@@ -555,186 +584,101 @@ setTimeout(()=>{
 const obs=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>{e.target.style.opacity='1';e.target.style.transform='translateY(0)';},i*80);obs.unobserve(e.target);}});},{threshold:.1});
 document.querySelectorAll('.mod-card,.kpi').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(16px)';el.style.transition='opacity .55s ease,transform .55s ease';obs.observe(el);});
 
-// Live filters: submit GET forms automatically while keeping filtering on Symfony side.
-document.querySelectorAll('form[data-live-search="true"][method="get"]').forEach(form=>{
-  const textInputs=form.querySelectorAll('input[type="text"],input[type="search"]');
-  const instantControls=form.querySelectorAll('select,input[type="date"],input[type="number"],input[type="checkbox"],input[type="radio"]');
-  let timer=null;
-
-  const submitDebounced=()=>{
-    clearTimeout(timer);
-    timer=setTimeout(()=>form.submit(),300);
-  };
-
-  textInputs.forEach(input=>input.addEventListener('input',submitDebounced));
-  instantControls.forEach(control=>control.addEventListener('change',()=>form.submit()));
-});
-
-(() => {
-  const chatbot = document.querySelector('.stock-chatbot');
-  if (!chatbot) {
-    return;
+function getSortValue(cell,type){
+  const text = cell.dataset.sortValue ? cell.dataset.sortValue.trim() : cell.textContent.trim();
+  if(type === 'number'){
+    const n = parseFloat(text.replace(/[^0-9.-]+/g,''));
+    return Number.isFinite(n) ? n : text.toLowerCase();
   }
+  return text.toLowerCase();
+}
 
-  const endpoint = chatbot.getAttribute('data-chat-endpoint');
-  const launcher = document.getElementById('stockChatLauncher');
-  const windowEl = document.getElementById('stockChatWindow');
-  const closeBtn = document.getElementById('stockChatClose');
-  const expandBtn = document.getElementById('stockChatExpand');
-  const form = document.getElementById('stockChatForm');
-  const input = document.getElementById('stockChatInput');
-  const messages = document.getElementById('stockChatMessages');
-
-  const isTableSeparator = (line) => /^\s*\|?[\s:-]+\|[\s|:-]*$/.test(line.trim());
-
-  const parseRowCells = (line) => line
-    .trim()
-    .replace(/^\|/, '')
-    .replace(/\|$/, '')
-    .split('|')
-    .map(cell => cell.trim());
-
-  const renderMessageContent = (text, bubble) => {
-    const normalized = String(text || '').replace(/\r\n/g, '\n');
-    const lines = normalized.split('\n');
-    let i = 0;
-
-    while (i < lines.length) {
-      const headerLine = lines[i] ?? '';
-      const separatorLine = lines[i + 1] ?? '';
-      const looksLikeTableHeader = headerLine.includes('|') && parseRowCells(headerLine).length >= 2;
-
-      if (looksLikeTableHeader && isTableSeparator(separatorLine)) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'stock-chat-table-wrap';
-        const table = document.createElement('table');
-        table.className = 'stock-chat-table';
-        const thead = document.createElement('thead');
-        const tbody = document.createElement('tbody');
-
-        const headers = parseRowCells(headerLine);
-        const headTr = document.createElement('tr');
-        headers.forEach(label => {
-          const th = document.createElement('th');
-          th.textContent = label;
-          headTr.appendChild(th);
-        });
-        thead.appendChild(headTr);
-
-        i += 2;
-        while (i < lines.length && (lines[i] || '').includes('|')) {
-          const rowCells = parseRowCells(lines[i]);
-          if (rowCells.length > 0) {
-            const tr = document.createElement('tr');
-            headers.forEach((_, idx) => {
-              const td = document.createElement('td');
-              td.textContent = rowCells[idx] ?? '';
-              tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-          }
-          i += 1;
-        }
-
-        table.appendChild(thead);
-        table.appendChild(tbody);
-        wrapper.appendChild(table);
-        bubble.appendChild(wrapper);
-        continue;
-      }
-
-      const textBlock = [];
-      while (i < lines.length) {
-        const current = lines[i] ?? '';
-        const next = lines[i + 1] ?? '';
-        const nextIsTable = current.includes('|') && parseRowCells(current).length >= 2 && isTableSeparator(next);
-        if (nextIsTable) {
-          break;
-        }
-        textBlock.push(current);
-        i += 1;
-      }
-
-      if (textBlock.length > 0) {
-        const pre = document.createElement('pre');
-        pre.textContent = textBlock.join('\n').trimEnd();
-        bubble.appendChild(pre);
-      }
-    }
-  };
-
-  const appendMessage = (text, role, fallbackUsed = false, fallbackReason = '') => {
-    const bubble = document.createElement('div');
-    bubble.className = 'stock-chat-bubble ' + role;
-    renderMessageContent(text, bubble);
-
-    if (fallbackUsed) {
-      const note = document.createElement('div');
-      note.className = 'stock-chat-note';
-      note.textContent = fallbackReason
-        ? ('Fallback mode: ' + fallbackReason)
-        : 'Fallback mode: local recommendation generated.';
-      bubble.appendChild(note);
-    }
-
-    messages.appendChild(bubble);
-    messages.scrollTop = messages.scrollHeight;
-  };
-
-  launcher.addEventListener('click', () => {
-    windowEl.classList.toggle('open');
-    if (windowEl.classList.contains('open')) {
-      input.focus();
-    }
+function sortTableRows(table,key,type,direction){
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.classList.contains('no-results-row'));
+  const headers = Array.from(table.querySelectorAll('thead th'));
+  const index = headers.findIndex(th => th.querySelector(`[data-sort-key="${key}"]`));
+  if(index < 0){return;}
+  rows.sort((a,b) => {
+    const aVal = getSortValue(a.children[index], type);
+    const bVal = getSortValue(b.children[index], type);
+    if(aVal < bVal) return direction === 'asc' ? -1 : 1;
+    if(aVal > bVal) return direction === 'asc' ? 1 : -1;
+    return 0;
   });
+  rows.forEach(row => tbody.appendChild(row));
+}
 
-  closeBtn.addEventListener('click', () => {
-    windowEl.classList.remove('open');
+function updateSortHeaders(table, activeLink, direction){
+  table.querySelectorAll('.sort-trigger').forEach(link => {
+    link.classList.remove('sorted-asc','sorted-desc');
+    link.dataset.sortDirection = 'asc';
   });
+  activeLink.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+  activeLink.dataset.sortDirection = direction;
+}
 
-  expandBtn.addEventListener('click', () => {
-    windowEl.classList.toggle('expanded');
-    expandBtn.textContent = windowEl.classList.contains('expanded') ? '🗗' : '⛶';
-    expandBtn.title = windowEl.classList.contains('expanded') ? 'Restore chat size' : 'Expand chat';
-  });
+function setupLiveTables(root=document){
+  document.querySelectorAll('[data-live-table]').forEach(table => {
+    const root = table.closest('.content') || table.closest('.tbl-card')?.parentElement || document;
+    const searchInput = root.querySelector('[data-live-search-input]');
+    const statusFilter = root.querySelector('[data-live-status-filter]');
+    const resetBtn = root.querySelector('[data-live-reset]');
+    const filterForm = root.querySelector('.live-filter-form');
+    const rows = Array.from(table.querySelectorAll('tbody tr')).filter(row => !row.classList.contains('no-results-row'));
+    const noResults = table.querySelector('tbody .no-results');
 
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const question = input.value.trim();
-    if (!question) {
-      return;
-    }
-
-    appendMessage(question, 'user');
-    input.value = '';
-
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({ question }),
+    const updateFilter = () => {
+      const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      const status = statusFilter ? statusFilter.value : '';
+      let visible = 0;
+      rows.forEach(row => {
+        const text = (row.dataset.search || row.textContent).toLowerCase();
+        const matchesQuery = !query || text.includes(query);
+        const matchesStatus = !status || row.dataset.status === status;
+        const show = matchesQuery && matchesStatus;
+        row.style.display = show ? '' : 'none';
+        if(show) visible++;
       });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        appendMessage(payload.message || 'Unable to answer right now. Please try again.', 'assistant', true, payload.fallbackReason || 'Request failed');
-        return;
+      if(noResults){
+        noResults.style.display = visible ? 'none' : '';
       }
+    };
 
-      appendMessage(
-        payload.answer || 'No answer available.',
-        'assistant',
-        Boolean(payload.usedFallback),
-        payload.fallbackReason || ''
-      );
-    } catch (error) {
-      appendMessage('Network issue while contacting the stock assistant. Please retry.', 'assistant', true);
+    if(searchInput){ searchInput.addEventListener('input', updateFilter); }
+    if(statusFilter){ statusFilter.addEventListener('change', updateFilter); }
+    if(filterForm){
+      filterForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        updateFilter();
+      });
     }
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        if(searchInput) searchInput.value = '';
+        if(statusFilter) statusFilter.value = '';
+        updateFilter();
+      });
+    }
+    table.querySelectorAll('.sort-trigger').forEach(link => {
+      link.addEventListener('click', function(e){
+        e.preventDefault();
+        const key = this.dataset.sortKey;
+        const type = this.dataset.sortType || 'text';
+        const current = this.dataset.sortDirection === 'asc' ? 'desc' : 'asc';
+        sortTableRows(table, key, type, current);
+        updateSortHeaders(table, this, current);
+      });
+    });
   });
-})();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupLiveTables);
+} else {
+  setupLiveTables();
+}
 </script>
 {% block page_scripts %}{% endblock %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
