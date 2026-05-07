@@ -3,10 +3,7 @@
 namespace App\Controller;
 
 use App\Service\CustomerAiBotService;
-<<<<<<< HEAD
-=======
 use App\Service\GoogleTranslateService;
->>>>>>> final2
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
