@@ -52,7 +52,6 @@ final class WeatherImpactService
 
                 if (null === $temperature) {
                     return $this->fallbackWeather('Temperature data unavailable from API response.');
-=======
                 if (trim($this->openWeatherMapApiKey) !== '') {
                     $openWeatherImpact = $this->fetchOpenWeatherImpact($lat, $lon);
                     if ($openWeatherImpact !== null) {

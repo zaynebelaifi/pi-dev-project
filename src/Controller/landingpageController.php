@@ -2,10 +2,8 @@
 
 namespace App\Controller;
 
-<<<<<<< Updated upstream
 use App\Repository\MenuRepository;
 use App\Repository\RestaurantTableRepository;
-=======
 use App\Utils\WeatherImpactService;
 use App\Repository\MenuRepository;
 use App\Repository\RestaurantTableRepository;
@@ -22,8 +20,6 @@ final class landingpageController extends AbstractController
         private RequestStack $requestStack,
         private MenuRepository $menuRepository,
         private RestaurantTableRepository $tableRepository,
-<<<<<<< Updated upstream
-=======
         private Connection $connection,
         private HttpClientInterface $httpClient,
         private WeatherImpactService $weatherImpactService,
@@ -50,8 +46,6 @@ final class landingpageController extends AbstractController
     #[Route('/landingpage', name: 'app_landingpage')]
     public function index(): Response
     {
-<<<<<<< Updated upstream
-=======
         return $this->renderLandingPage($request);
     }
 
@@ -95,7 +89,6 @@ final class landingpageController extends AbstractController
 
     private function buildMenuSections(): array
     {
-<<<<<<< Updated upstream
         $menus = $this->menuRepository->createQueryBuilder('m')
             ->where('m.isActive = :active')
             ->setParameter('active', true)
@@ -122,7 +115,6 @@ final class landingpageController extends AbstractController
                     'menu'   => [
                         'id'          => $menu->getId(),
                         'title'       => $menu->getTitle(),
-=======
         // Try the ORM query first; if schema/mapping is out-of-sync this can throw.
         try {
             $menus = $this->menuRepository->createQueryBuilder('m')
@@ -166,11 +158,9 @@ final class landingpageController extends AbstractController
                     'dishes' => $dishes,
                 ];
             }
-<<<<<<< Updated upstream
         }
         return $menuSections;
     }
-=======
             return $menuSections;
         } catch (\Throwable $e) {
             // Fallback: use DBAL raw queries to be resilient to schema/mapping drift.

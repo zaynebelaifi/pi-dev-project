@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\DeliveryMan;
-=======
 use App\Entity\PasswordResetToken;
 
 use App\Entity\User;
@@ -139,7 +138,6 @@ final class SecurityController extends AbstractController
             }
 
             $error = 'Invalid email or password.';
-=======
         $sessionError = $session->get('auth_login_error');
         if (is_string($sessionError) && trim($sessionError) !== '') {
             $error = $sessionError;

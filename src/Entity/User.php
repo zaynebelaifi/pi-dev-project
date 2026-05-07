@@ -72,7 +72,6 @@ class User implements PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'integer', nullable: true)]
-=======
     /**
      * @return string[]
      */
