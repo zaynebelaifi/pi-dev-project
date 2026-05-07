@@ -71,7 +71,6 @@ class User implements PasswordAuthenticatedUserInterface
         return $this;
     }
 
-<<<<<<< Updated upstream
     #[ORM\Column(type: 'integer', nullable: true)]
 =======
     /**
@@ -192,3 +191,4 @@ class User implements PasswordAuthenticatedUserInterface
     }
 
 }
+

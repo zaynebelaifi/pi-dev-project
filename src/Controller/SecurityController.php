@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-<<<<<<< Updated upstream
 use App\Entity\DeliveryMan;
 =======
 use App\Entity\PasswordResetToken;
@@ -63,7 +62,6 @@ final class SecurityController extends AbstractController
         $form->handleRequest($request);
 
         $error = null;
-<<<<<<< Updated upstream
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
@@ -276,3 +274,4 @@ final class SecurityController extends AbstractController
         return $normalized;
     }
 }
+

@@ -87,7 +87,6 @@ html.dark-mode body{background:var(--ivory-2);}
 .sidebar::-webkit-scrollbar{width:8px;}
 .sidebar::-webkit-scrollbar-thumb{background:rgba(184,135,42,.45);border-radius:10px;}
 .sidebar::-webkit-scrollbar-track{background:transparent;}
-<<<<<<< Updated upstream
 .sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 =======
 .sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
@@ -342,7 +341,6 @@ html.dark-mode .mode-toggle-switch::after {
     <a class="nav-item {{ activeRoute starts with 'admin_menu_' or activeRoute starts with 'admin_dish_' ? 'active' : '' }}" href="{{ path('admin_menu_index') }}"><div class="nav-icon">📋</div>Menu Manager</a>
     <a class="nav-item {{ activeRoute starts with 'admin_ingredient_' ? 'active' : '' }}" href="{{ path('admin_ingredient_index') }}"><div class="nav-icon">🥬</div>Ingredients</a>
     <a class="nav-item {{ activeRoute starts with 'admin_waste_' ? 'active' : '' }}" href="{{ path('admin_waste_index') }}"><div class="nav-icon">🗑️</div>Waste Tracker</a>
-<<<<<<< Updated upstream
 =======
     <div class="nav-group {{ (activeRoute starts with 'app_food_donation_event_' or activeRoute starts with 'app_food_donation_item_' or activeRoute starts with 'app_food_donation_stats') ? 'nav-group-expanded' : '' }}" onclick="this.classList.toggle('nav-group-expanded')">
       <div class="nav-icon">❤️</div>
@@ -359,7 +357,6 @@ html.dark-mode .mode-toggle-switch::after {
     <a class="nav-item {{ activeRoute starts with 'app_food_donation_item_' ? 'active' : '' }}" href="{{ path('app_food_donation_item_index') }}"><div class="nav-icon">📦</div>Donation Items</a>
     <a class="nav-item {{ activeRoute starts with 'app_table_' ? 'active' : '' }}" href="{{ path('table_index') }}"><div class="nav-icon">🪑</div>Tables</a>
     <a class="nav-item {{ activeRoute starts with 'app_reservation_' ? 'active' : '' }}" href="{{ path('app_reservation_index') }}"><div class="nav-icon">🎪</div>Reservations</a>
-<<<<<<< Updated upstream
 =======
     <a class="nav-item {{ activeRoute == 'app_admin_orders_reservations_analytics' ? 'active' : '' }}" href="{{ path('app_admin_orders_reservations_analytics') }}"><div class="nav-icon">🧩</div>Orders & Reservations Analytics</a>
 >>>>>>> Stashed changes
@@ -395,7 +392,6 @@ html.dark-mode .mode-toggle-switch::after {
   </header>
 
   <div class="content">
-<<<<<<< Updated upstream
     {% for message in app.flashes('error') %}
       <div class="admin-flash admin-flash-error">{{ message }}</div>
     {% endfor %}
@@ -717,7 +713,6 @@ setTimeout(()=>{
 const obs=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>{e.target.style.opacity='1';e.target.style.transform='translateY(0)';},i*80);obs.unobserve(e.target);}});},{threshold:.1});
 document.querySelectorAll('.mod-card,.kpi').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(16px)';el.style.transition='opacity .55s ease,transform .55s ease';obs.observe(el);});
 
-<<<<<<< Updated upstream
 =======
 function getSortValue(cell,type){
   const text = cell.dataset.sortValue ? cell.dataset.sortValue.trim() : cell.textContent.trim();
@@ -995,7 +990,6 @@ document.querySelectorAll('form[data-live-search="true"][method="get"]').forEach
   });
 })();
 </script>
-<<<<<<< Updated upstream
 =======
  {{ importmap('admin') }}
 >>>>>>> Stashed changes

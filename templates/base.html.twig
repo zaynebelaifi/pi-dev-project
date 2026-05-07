@@ -167,7 +167,6 @@
             {% endif %}
           </div>
           <div class="menu-grid">
-<<<<<<< Updated upstream
             {% for dish in section.dishes %}
               {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
               <div class="menu-card reveal">
@@ -428,7 +427,6 @@
         <button type="submit" class="btn-primary" style="width:100%" id="bookingSubmitBtn">Confirm Booking</button>
       </div>
     </form>
-<<<<<<< Updated upstream
   </div>
 </div>
 
@@ -960,7 +958,6 @@
 
   function openBookingPopup(e) { e.preventDefault(); bookingPopup.classList.add('active'); document.body.style.overflow='hidden'; }
   function closeBookingPopup() { bookingPopup.classList.remove('active'); document.body.style.overflow=''; document.getElementById('bookingMsg')?.remove(); }
-<<<<<<< Updated upstream
 =======
   function showFrontFlash(message, isError = false) {
     const existing = document.getElementById('frontFlashToast');
@@ -1129,7 +1126,6 @@
   const bookingDate = document.getElementById('booking_date');
   const bookingTime = document.getElementById('booking_time');
   const bookingGuests = document.getElementById('booking_guests');
-<<<<<<< Updated upstream
 =======
   const bookingOccasion = document.getElementById('booking_occasion');
   const bookingMobility = document.getElementById('booking_mobility');
@@ -1149,7 +1145,6 @@
   const bookingSummaryDate = document.getElementById('bookingSummaryDate');
   const bookingSummaryTime = document.getElementById('bookingSummaryTime');
   const bookingSummaryGuests = document.getElementById('bookingSummaryGuests');
-<<<<<<< Updated upstream
 =======
   const bookingWeatherState = document.getElementById('bookingWeatherState');
   const bookingWeatherHumidity = document.getElementById('bookingWeatherHumidity');
@@ -1321,7 +1316,6 @@
     bookingSummaryGuests.textContent = guests;
   }
 
-<<<<<<< Updated upstream
 =======
   async function refreshReservationWeatherState() {
     if (!bookingWeatherState) {
@@ -1742,7 +1736,6 @@
     form.insertAdjacentElement('beforebegin', msg);
   }
 
-<<<<<<< Updated upstream
 =======
   function pushBookingChatMessage(role, text, originalText = text) {
     if (!bookingAiChatLog || !text) {
@@ -2550,3 +2543,4 @@
 
 </body>
 </html>
+
