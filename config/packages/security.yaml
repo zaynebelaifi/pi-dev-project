@@ -76,10 +76,6 @@ when@prod:
             - { path: ^/webauthn, requires_channel: https }
             - { path: ^/login, requires_channel: https }
             - { path: ^/register, requires_channel: https }
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> final2
 
 when@test:
     security:
