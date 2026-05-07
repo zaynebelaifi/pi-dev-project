@@ -3,7 +3,7 @@
 namespace App\Tests\Repository;
 
 use App\Repository\MenuRepository;
-use Doctrine\ORM\AbstractQuery;
+use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,13 +23,16 @@ final class MenuRepositoryTest extends TestCase
 
         $qb->expects($this->never())->method('andWhere');
         $qb->expects($this->never())->method('setParameter');
+
         $qb->expects($this->once())
             ->method('orderBy')
             ->with('m.created_at', 'DESC')
             ->willReturnSelf();
+
         $qb->expects($this->once())
             ->method('getQuery')
             ->willReturn($query);
+
         $query->expects($this->once())
             ->method('getResult')
             ->willReturn([]);
@@ -54,17 +57,21 @@ final class MenuRepositoryTest extends TestCase
             ->method('andWhere')
             ->with('LOWER(m.title) LIKE :q OR LOWER(m.description) LIKE :q')
             ->willReturnSelf();
+
         $qb->expects($this->once())
             ->method('setParameter')
             ->with('q', '%brunch%')
             ->willReturnSelf();
+
         $qb->expects($this->once())
             ->method('orderBy')
             ->with('m.title', 'ASC')
             ->willReturnSelf();
+
         $qb->expects($this->once())
             ->method('getQuery')
             ->willReturn($query);
+
         $query->expects($this->once())
             ->method('getResult')
             ->willReturn(['ok']);
@@ -94,10 +101,10 @@ final class MenuRepositoryTest extends TestCase
     }
 
     /**
-     * @return AbstractQuery&MockObject
+     * @return Query&MockObject
      */
-    private function createQueryMock(): AbstractQuery
+    private function createQueryMock(): Query
     {
-        return $this->createMock(AbstractQuery::class);
+        return $this->createMock(Query::class);
     }
 }

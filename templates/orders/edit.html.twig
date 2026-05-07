@@ -137,6 +137,12 @@
         </div>
 
         <div class="form-row">
+            {{ form_label(form.paymentMethod) }}
+            {{ form_widget(form.paymentMethod) }}
+            {{ form_errors(form.paymentMethod) }}
+        </div>
+
+        <div class="form-row">
             {{ form_label(form.status) }}
             {{ form_widget(form.status) }}
             {{ form_errors(form.status) }}

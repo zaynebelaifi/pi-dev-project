@@ -16,14 +16,35 @@ final class Version20260417120000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // add columns for candidate assignment flow
-        $this->addSql("ALTER TABLE delivery ADD candidate_delivery_men TEXT DEFAULT NULL");
-        $this->addSql("ALTER TABLE delivery ADD candidate_index INT DEFAULT NULL");
+        if (!$schema->hasTable('delivery')) {
+            return;
+        }
+
+        $table = $schema->getTable('delivery');
+
+        if (!$table->hasColumn('candidate_delivery_men')) {
+            $this->addSql("ALTER TABLE delivery ADD candidate_delivery_men TEXT DEFAULT NULL");
+        }
+
+        if (!$table->hasColumn('candidate_index')) {
+            $this->addSql("ALTER TABLE delivery ADD candidate_index INT DEFAULT NULL");
+        }
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE delivery DROP COLUMN candidate_delivery_men');
-        $this->addSql('ALTER TABLE delivery DROP COLUMN candidate_index');
+        if (!$schema->hasTable('delivery')) {
+            return;
+        }
+
+        $table = $schema->getTable('delivery');
+
+        if ($table->hasColumn('candidate_delivery_men')) {
+            $this->addSql('ALTER TABLE delivery DROP COLUMN candidate_delivery_men');
+        }
+
+        if ($table->hasColumn('candidate_index')) {
+            $this->addSql('ALTER TABLE delivery DROP COLUMN candidate_index');
+        }
     }
 }
