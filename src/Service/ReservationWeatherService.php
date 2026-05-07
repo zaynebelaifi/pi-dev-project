@@ -10,18 +10,13 @@ final class ReservationWeatherService
         private readonly HttpClientInterface $httpClient,
         private readonly float $latitude,
         private readonly float $longitude,
-<<<<<<< HEAD
-=======
         private readonly string $apiKey,
->>>>>>> final2
     ) {
     }
 
     public function getDailyState(\DateTimeInterface $date): ?array
     {
         try {
-<<<<<<< HEAD
-=======
             if (trim($this->apiKey) !== '') {
                 $openWeather = $this->getOpenWeatherDailyState($date);
                 if ($openWeather !== null) {
@@ -157,16 +152,11 @@ final class ReservationWeatherService
 
     private function getOpenMeteoDailyState(\DateTimeInterface $date): ?array
     {
->>>>>>> final2
             $response = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [
                 'query' => [
                     'latitude' => $this->latitude,
                     'longitude' => $this->longitude,
-<<<<<<< HEAD
-                    'daily' => 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
-=======
                     'daily' => 'weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean',
->>>>>>> final2
                     'timezone' => 'auto',
                     'forecast_days' => 14,
                 ],
@@ -187,16 +177,12 @@ final class ReservationWeatherService
             $codes = $daily['weather_code'] ?? [];
             $maxTemps = $daily['temperature_2m_max'] ?? [];
             $minTemps = $daily['temperature_2m_min'] ?? [];
-<<<<<<< HEAD
-            $precip = $daily['precipitation_probability_max'] ?? [];
-=======
             $feelsLikeTemps = $daily['apparent_temperature_max'] ?? [];
             $precip = $daily['precipitation_probability_max'] ?? [];
             $windSpeeds = $daily['wind_speed_10m_max'] ?? [];
             $windGusts = $daily['wind_gusts_10m_max'] ?? [];
             $windDirections = $daily['wind_direction_10m_dominant'] ?? [];
             $humidityValues = $daily['relative_humidity_2m_mean'] ?? [];
->>>>>>> final2
 
             $target = $date->format('Y-m-d');
             $index = array_search($target, $times, true);
@@ -214,15 +200,6 @@ final class ReservationWeatherService
                 'weather_code' => $code,
                 'temperature_min' => isset($minTemps[$index]) ? (float) $minTemps[$index] : null,
                 'temperature_max' => isset($maxTemps[$index]) ? (float) $maxTemps[$index] : null,
-<<<<<<< HEAD
-                'precipitation_probability' => isset($precip[$index]) ? (int) $precip[$index] : null,
-            ];
-        } catch (\Throwable) {
-            return null;
-        }
-    }
-
-=======
                 'feels_like' => isset($feelsLikeTemps[$index]) ? (float) round((float) $feelsLikeTemps[$index], 1) : null,
                 'precipitation_probability' => isset($precip[$index]) ? (int) $precip[$index] : null,
                 'humidity' => isset($humidityValues[$index]) ? (int) round((float) $humidityValues[$index]) : null,
@@ -247,7 +224,6 @@ final class ReservationWeatherService
             };
         }
 
->>>>>>> final2
     private function mapCodeToState(int $code): array
     {
         return match (true) {
@@ -262,8 +238,6 @@ final class ReservationWeatherService
             default => ['state' => 'Uncertain', 'description' => 'Weather state is uncertain'],
         };
     }
-<<<<<<< HEAD
-=======
 
     private function averageWindDirection(array $degrees): ?int
     {
@@ -302,5 +276,4 @@ final class ReservationWeatherService
 
         return sprintf('%s %d°', $sectors[$index % 16], $degrees % 360);
     }
->>>>>>> final2
 }

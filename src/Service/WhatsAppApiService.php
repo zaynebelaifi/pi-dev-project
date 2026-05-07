@@ -3,10 +3,7 @@ namespace App\Service;
 
 use App\Entity\Order;
 use Psr\Log\LoggerInterface;
-<<<<<<< HEAD
-=======
 use Symfony\Contracts\HttpClient\HttpClientInterface;
->>>>>>> final2
 use Twilio\Rest\Client;
 
 final class WhatsAppApiService
@@ -15,18 +12,12 @@ final class WhatsAppApiService
 
     public function __construct(
         private readonly LoggerInterface $logger,
-<<<<<<< HEAD
-        private readonly string $accountSid = '',
-        private readonly string $authToken = '',
-        private readonly string $fromNumber = 'whatsapp:+14155238886',
-=======
         private readonly HttpClientInterface $httpClient,
         private readonly string $accountSid = '',
         private readonly string $authToken = '',
         private readonly string $fromNumber = 'whatsapp:+14155238886',
         private readonly string $graphApiUrl = '',
         private readonly string $graphApiToken = '',
->>>>>>> final2
     ) {
     }
 
@@ -41,12 +32,6 @@ final class WhatsAppApiService
         return $this->sendMessage($phone, $message);
     }
 
-<<<<<<< HEAD
-    public function sendMessage(string $phone, string $text): bool
-    {
-        if (trim($this->accountSid) === '' || trim($this->authToken) === '') {
-            $this->logger->warning('Twilio WhatsApp credentials are missing. Configure TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.');
-=======
     public function sendMessage(string $phone, string $text, ?string $template = null, array $templateParams = []): bool
     {
         // Prefer Twilio if credentials are available.
@@ -62,17 +47,10 @@ final class WhatsAppApiService
 
                 return $this->sendViaGraphApi($phone, $text, $template, $templateParams);
             }
->>>>>>> final2
 
             return false;
         }
 
-<<<<<<< HEAD
-        $from = trim($this->fromNumber);
-        if ($from === '') {
-            $this->logger->warning('Twilio WhatsApp sender is missing. Configure TWILIO_WHATSAPP_FROM.');
-
-=======
         // Fallback to Meta Graph API when token/url are configured.
         if (trim($this->graphApiUrl) !== '' && trim($this->graphApiToken) !== '') {
             return $this->sendViaGraphApi($phone, $text, $template, $templateParams);
@@ -88,15 +66,12 @@ final class WhatsAppApiService
         $from = trim($this->fromNumber);
         if ($from === '') {
             $this->logger->warning('Twilio WhatsApp sender is missing. Configure TWILIO_WHATSAPP_FROM.');
->>>>>>> final2
             return false;
         }
 
         $to = $this->normalizeWhatsAppPhone($phone);
         if ($to === '') {
             $this->logger->warning('Twilio WhatsApp destination phone is missing or invalid.');
-<<<<<<< HEAD
-=======
             return false;
         }
 
@@ -104,7 +79,6 @@ final class WhatsAppApiService
             $this->logger->warning('Twilio WhatsApp rejected: destination and sender are identical.', [
                 'to' => $to,
             ]);
->>>>>>> final2
 
             return false;
         }
@@ -128,8 +102,6 @@ final class WhatsAppApiService
         }
     }
 
-<<<<<<< HEAD
-=======
     private function sendViaGraphApi(string $phone, string $text, ?string $template = null, array $templateParams = []): bool
     {
         $to = $this->normalizeGraphPhone($phone);
@@ -195,7 +167,6 @@ final class WhatsAppApiService
         }
     }
 
->>>>>>> final2
     private function getClient(): Client
     {
         if ($this->twilio === null) {
@@ -232,8 +203,6 @@ final class WhatsAppApiService
 
         return 'whatsapp:' . $cleaned;
     }
-<<<<<<< HEAD
-=======
 
     private function normalizeGraphPhone(string $phone): string
     {
@@ -257,5 +226,4 @@ final class WhatsAppApiService
         // Graph API expects numeric string without '+'
         return ltrim($cleaned, '+');
     }
->>>>>>> final2
 }
