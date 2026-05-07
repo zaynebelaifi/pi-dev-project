@@ -317,9 +317,13 @@
 
   {# ── Module hero ─────────────────────────────────────────── #}
   {% set totalItems = 0 %}
+  {% set totalItemsQty = 0 %}
   {% set totalEvents = food_donation_items|length %}
   {% for itemGroup in food_donation_items %}
     {% set totalItems = totalItems + itemGroup.items|length %}
+    {% for item in itemGroup.items %}
+      {% set totalItemsQty = totalItemsQty + (item.quantity ?? 0) %}
+    {% endfor %}
   {% endfor %}
 
   <div class="donation-index-hero">
