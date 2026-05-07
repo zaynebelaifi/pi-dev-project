@@ -2,7 +2,11 @@
 
 namespace App\Controller;
 
+<<<<<<< Updated upstream
 use App\Entity\DeliveryMan;
+=======
+use App\Entity\PasswordResetToken;
+>>>>>>> Stashed changes
 use App\Entity\User;
 use App\Form\LoginType;
 use App\Form\RegistrationType;
@@ -59,6 +63,7 @@ final class SecurityController extends AbstractController
         $form->handleRequest($request);
 
         $error = null;
+<<<<<<< Updated upstream
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
@@ -136,6 +141,12 @@ final class SecurityController extends AbstractController
             }
 
             $error = 'Invalid email or password.';
+=======
+        $sessionError = $session->get('auth_login_error');
+        if (is_string($sessionError) && trim($sessionError) !== '') {
+            $error = $sessionError;
+            $session->remove('auth_login_error');
+>>>>>>> Stashed changes
         }
 
         return $this->render('security/login.html.twig', [

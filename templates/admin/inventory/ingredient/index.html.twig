@@ -124,33 +124,217 @@
   </div>
 
   <style>
+    /* KPI ENHANCEMENTS */
+    .kpi {
+      background: linear-gradient(135deg, var(--ivory) 0%, #fefcf7 100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(184,135,42,0.08);
+    }
+    .kpi:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(184,135,42,0.15);
+      border-color: var(--gold);
+    }
+    .kpi-lbl {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+    }
+    .kpi-val {
+      font-size: 1.95rem;
+      font-weight: 700;
+      color: var(--espresso);
+    }
+
+    /* FILTER SECTION */
+    .list-filters {
+      background: var(--ivory);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+      box-shadow: 0 2px 12px rgba(184,135,42,0.06);
+    }
+    .list-filters input,
+    .list-filters select {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      transition: all 0.25s;
+    }
+    .list-filters input:focus,
+    .list-filters select:focus {
+      border-color: var(--gold) !important;
+      background-color: #fefef8;
+      box-shadow: 0 0 0 3px rgba(184,135,42,0.08);
+    }
+
+    /* TABLE CARD */
+    .delivery-table-card {
+      background: var(--ivory);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(184,135,42,0.08);
+    }
+    .table-header {
+      padding: 1.4rem 1.6rem;
+      background: linear-gradient(90deg, rgba(184,135,42,0.04) 0%, rgba(184,135,42,0.02) 100%);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .table-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--espresso);
+    }
+    .table-count {
+      font-size: 0.72rem;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      background: rgba(184,135,42,0.08);
+      padding: 0.35rem 0.8rem;
+      border-radius: 20px;
+    }
+
+    /* TABLE STYLING */
+    .delivery-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .delivery-table thead {
+      background: var(--ivory-2);
+    }
+    .delivery-table th {
+      padding: 0.85rem 1.4rem;
+      font-size: 0.64rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      font-weight: 600;
+      border-bottom: 2px solid var(--border-2);
+      text-align: left;
+    }
+    .delivery-table tbody tr {
+      border-bottom: 1px solid rgba(184,135,42,0.08);
+      transition: all 0.2s ease;
+    }
+    .delivery-table tbody tr:hover {
+      background: var(--gold-wash);
+      box-shadow: inset 3px 0 0 var(--gold);
+    }
+    .delivery-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    .delivery-table td {
+      padding: 1rem 1.4rem;
+      font-size: 0.77rem;
+      color: var(--text);
+    }
+
+    /* WARNING ROW */
     .warn-row {
-      background: #fff7ef;
+      background: #fff5f0;
     }
+    .warn-row:hover {
+      background: #ffead6;
+      box-shadow: inset 3px 0 0 var(--amber);
+    }
+
+    /* STATUS BADGES */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .status-completed {
+      background: rgba(46,158,106,0.12);
+      color: var(--green);
+      border: 1px solid rgba(46,158,106,0.25);
+    }
+    .status-pending {
+      background: rgba(200,125,32,0.12);
+      color: var(--amber);
+      border: 1px solid rgba(200,125,32,0.25);
+    }
+    .status-cancelled {
+      background: rgba(217,64,64,0.12);
+      color: var(--red);
+      border: 1px solid rgba(217,64,64,0.25);
+    }
+
+    /* ACTION CELL */
     .action-cell {
-      display:flex;
-      gap:.45rem;
-      flex-wrap:wrap;
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      align-items: center;
     }
+
+    /* ACTION BUTTONS */
     .mini-action {
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:.35rem .6rem;
-      border-radius:7px;
-      border:1px solid var(--border-2);
-      background:#fff;
-      color:var(--espresso);
-      text-decoration:none;
-      font-size:.78rem;
-      font-weight:600;
-      line-height:1;
-      cursor:pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.42rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      color: var(--text-2);
+      text-decoration: none;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Jost', sans-serif;
+    }
+    .mini-action:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: var(--gold-wash);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(184,135,42,0.12);
     }
     .mini-action-danger {
-      border-color:#dfb6b1;
-      color:#8f1f1f;
-      background:#fff7f6;
+      border-color: rgba(217,64,64,0.3);
+      color: var(--red);
+      background: rgba(217,64,64,0.06);
+    }
+    .mini-action-danger:hover {
+      border-color: var(--red);
+      background: rgba(217,64,64,0.12);
+      color: var(--red);
+      box-shadow: 0 4px 12px rgba(217,64,64,0.15);
+    }
+
+    /* EMPTY STATE */
+    .no-results {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 0.9rem;
+      background: var(--ivory-2);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .list-filters {
+        flex-wrap: wrap;
+      }
+      .table-header {
+        flex-direction: column;
+        gap: 0.8rem;
+        align-items: flex-start;
+      }
     }
   </style>
 {% endblock %}

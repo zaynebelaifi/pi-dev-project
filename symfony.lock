@@ -1,4 +1,16 @@
 {
+    "ahmed-bhs/doctrine-doctor": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "0a0c0e3972f784e628c4f759d2fb446e9eeb4959"
+        },
+        "files": [
+            "./config/packages/doctrine_doctor.yaml"
+        ]
+    },
     "doctrine/deprecations": {
         "version": "1.1",
         "recipe": {
@@ -35,6 +47,60 @@
             "./migrations/.gitignore"
         ]
     },
+<<<<<<< Updated upstream
+=======
+    "knplabs/knp-paginator-bundle": {
+        "version": "v6.10.0"
+    },
+    "lexik/jwt-authentication-bundle": {
+        "version": "2.18",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "2.5",
+            "ref": "e9481b233a11ef7e15fe055a2b21fd3ac1aa2bb7"
+        },
+        "files": [
+            "./config/packages/lexik_jwt_authentication.yaml"
+        ]
+    },
+    "nucleos/dompdf-bundle": {
+        "version": "4.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "3.1",
+            "ref": "0a89461aec4873f9205f1fc04c96c607116abb2e"
+        },
+        "files": [
+            "./config/packages/nucleos_dompdf.yaml"
+        ]
+    },
+    "php-http/discovery": {
+        "version": "1.20",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.18",
+            "ref": "f45b5dd173a27873ab19f5e3180b2f661c21de02"
+        },
+        "files": [
+            "./config/packages/http_discovery.yaml"
+        ]
+    },
+    "phpstan/phpstan": {
+        "version": "2.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "5e490cc197fb6bb1ae22e5abbc531ddc633b6767"
+        },
+        "files": [
+            "./phpstan.dist.neon"
+        ]
+    },
+>>>>>>> Stashed changes
     "phpunit/phpunit": {
         "version": "11.5",
         "recipe": {
@@ -244,6 +310,24 @@
             "./templates/base.html.twig"
         ]
     },
+<<<<<<< Updated upstream
+=======
+    "symfony/uid": {
+        "version": "6.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "6.2",
+            "ref": "d294ad4add3e15d7eb1bae0221588ca89b38e558"
+        },
+        "files": [
+            "./config/packages/uid.yaml"
+        ]
+    },
+    "symfony/ux-chartjs": {
+        "version": "v2.35.0"
+    },
+>>>>>>> Stashed changes
     "symfony/ux-turbo": {
         "version": "2.30",
         "recipe": {

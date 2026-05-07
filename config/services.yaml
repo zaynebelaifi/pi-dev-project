@@ -4,6 +4,12 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+<<<<<<< Updated upstream
+=======
+    anthropic_api_key: '%env(string:ANTHROPIC_API_KEY)%'
+    gemini_api_key: '%env(string:GEMINI_API_KEY)%'
+    google_translate_api_key: '%env(string:GOOGLE_TRANSLATE_API_KEY)%'
+>>>>>>> Stashed changes
 
 services:
     # default configuration for services in *this* file
@@ -20,5 +26,72 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+<<<<<<< Updated upstream
+=======
+    App\Service\OpenWeatherMapService:
+        arguments:
+            $apiKey: '%env(string:OPENWEATHERMAP_API_KEY)%'
+
+    App\Service\StripeCheckoutService:
+        arguments:
+            $secretKey: '%env(string:STRIPE_SECRET_KEY)%'
+            $currency: '%env(string:STRIPE_CURRENCY)%'
+            $displayCurrency: '%env(string:STRIPE_DISPLAY_CURRENCY)%'
+            $displayToChargeRate: '%env(float:STRIPE_DISPLAY_TO_CHARGE_RATE)%'
+
+    App\Service\CustomerAiBotService:
+        arguments:
+            $endpoint: '%env(string:FREE_CHAT_API_URL)%'
+            $timeout: '%env(int:FREE_CHAT_TIMEOUT)%'
+
+    App\Service\GoogleTranslateService:
+        arguments:
+            $apiKey: '%google_translate_api_key%'
+            $fallbackEndpoint: '%env(string:FREE_CHAT_API_URL)%'
+
+    App\Service\ReservationWeatherService:
+        arguments:
+            $latitude: '%env(float:WEATHER_LATITUDE)%'
+            $longitude: '%env(float:WEATHER_LONGITUDE)%'
+            $apiKey: '%env(string:OPENWEATHERMAP_API_KEY)%'
+
+    App\Utils\WeatherImpactService:
+        arguments:
+            $openWeatherMapApiKey: '%env(string:OPENWEATHERMAP_API_KEY)%'
+
+    App\Service\PaymentConfirmationMailer:
+        arguments:
+            $smtpHost: '%env(string:PHPMAILER_SMTP_HOST)%'
+            $smtpPort: '%env(int:PHPMAILER_SMTP_PORT)%'
+            $smtpUsername: '%env(string:PHPMAILER_SMTP_USERNAME)%'
+            $smtpPassword: '%env(string:PHPMAILER_SMTP_PASSWORD)%'
+            $smtpEncryption: '%env(string:PHPMAILER_SMTP_ENCRYPTION)%'
+            $fromEmail: '%env(string:PHPMAILER_FROM_EMAIL)%'
+            $fromName: '%env(string:PHPMAILER_FROM_NAME)%'
+
+    App\Service\TwilioVoiceCallService:
+        arguments:
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $fromNumber: '%env(string:TWILIO_FROM_NUMBER)%'
+
+    App\Service\TwilioSmsService:
+        arguments:
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $fromNumber: '%env(string:TWILIO_FROM_NUMBER)%'
+
+    App\Service\WhatsAppApiService:
+        arguments:
+            $accountSid: '%env(string:TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(string:TWILIO_AUTH_TOKEN)%'
+            $fromNumber: '%env(string:TWILIO_WHATSAPP_FROM)%'
+            $graphApiUrl: '%env(string:WHATSAPP_API_URL)%'
+            $graphApiToken: '%env(string:WHATSAPP_API_TOKEN)%'
+
+    GeminiAPI\Client:
+        arguments:
+            $apiKey: '%gemini_api_key%'
+>>>>>>> Stashed changes
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

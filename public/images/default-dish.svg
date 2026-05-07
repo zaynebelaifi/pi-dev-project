@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="BIG 4 Dish">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f7ead2"/>
+      <stop offset="100%" stop-color="#e2c28b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <g fill="none" stroke="#6f4c1f" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity="0.8">
+    <path d="M360 295c0 120 95 215 215 215s215-95 215-215"/>
+    <path d="M575 255v90"/>
+    <path d="M625 255v90"/>
+    <path d="M675 255v90"/>
+    <path d="M760 255c0 35-18 62-45 78"/>
+  </g>
+  <text x="600" y="620" text-anchor="middle" font-family="Georgia, serif" font-size="72" fill="#5d3d1e" letter-spacing="2">BIG 4 DISH</text>
+</svg>

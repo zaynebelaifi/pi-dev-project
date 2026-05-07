@@ -27,7 +27,12 @@ final class DeliveryManController extends AbstractController
         $direction = $request->query->get('direction', 'DESC');
 
         return $this->render('delivery_man/index.html.twig', [
+<<<<<<< Updated upstream
             'delivery_men' => $deliveryManRepository->searchAndSort($search, $sort, $direction),
+=======
+            'delivery_men' => $deliveryMen,
+            'pagination' => $pagination,
+>>>>>>> Stashed changes
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,

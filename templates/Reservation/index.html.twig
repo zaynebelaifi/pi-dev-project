@@ -3,18 +3,51 @@
 {% block topbar_title %}Reservations{% endblock %}
 
 {% block body %}
+<<<<<<< Updated upstream
 <div class="sec-head">
   <div>
     <h2>Reservations</h2>
     <p class="sec-sub">Manage all table reservations for the restaurant.</p>
+=======
+  <div class="reservation-page">
+    <div class="reservation-hero">
+      <div>
+        <h2>Reservation Manager</h2>
+        <p>Track bookings, monitor status, and manage table schedules from one place.</p>
+      </div>
+      <div class="reservation-meta">
+        <span>Live list</span>
+        <span>Auto refresh</span>
+      </div>
+    </div>
+>>>>>>> Stashed changes
   </div>
 </div>
 
+<<<<<<< Updated upstream
 <div class="kpi-row">
   <div class="kpi">
     <div class="kpi-lbl">Total</div>
     <div class="kpi-val">{{ reservations|length }}</div>
     <div class="kpi-chg up">All reservations</div>
+=======
+  <div class="reservation-filter-wrap">
+    <form method="get" action="{{ path('app_reservation_index') }}" class="list-filters" data-live-search="true">
+      <input type="text" name="search" value="{{ search }}" placeholder="Search by status, table, or client ID">
+      <select name="sort" aria-label="Sort field">
+        <option value="reservationDate" {{ sort == 'reservationDate' ? 'selected' : '' }}>Sort: Date</option>
+        <option value="reservationTime" {{ sort == 'reservationTime' ? 'selected' : '' }}>Sort: Time</option>
+        <option value="clientId" {{ sort == 'clientId' ? 'selected' : '' }}>Sort: Client</option>
+        <option value="numberOfGuests" {{ sort == 'numberOfGuests' ? 'selected' : '' }}>Sort: Guests</option>
+        <option value="status" {{ sort == 'status' ? 'selected' : '' }}>Sort: Status</option>
+      </select>
+      <select name="direction" aria-label="Sort direction">
+        <option value="DESC" {{ direction == 'DESC' ? 'selected' : '' }}>Desc</option>
+        <option value="ASC" {{ direction == 'ASC' ? 'selected' : '' }}>Asc</option>
+      </select>
+      <button type="button" class="t-btn reservation-reset-btn" id="reservationReset">Reset</button>
+    </form>
+>>>>>>> Stashed changes
   </div>
   <div class="kpi">
     <div class="kpi-lbl">Confirmed</div>
@@ -28,9 +61,153 @@
   </div>
 </div>
 
+<<<<<<< Updated upstream
 {% for msg in app.flashes('success') %}
   <div style="margin-bottom:1rem;padding:.75rem 1rem;border:1px solid rgba(46,158,106,.25);border-radius:8px;background:rgba(46,158,106,.08);color:var(--green);">{{ msg }}</div>
 {% endfor %}
+=======
+  <style>
+    .reservation-page {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .reservation-hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.2rem 1.3rem;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 241, 227, 0.85));
+      box-shadow: 0 8px 24px rgba(92, 61, 30, 0.08);
+    }
+
+    .reservation-hero h2 {
+      margin: 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      color: var(--espresso);
+    }
+
+    .reservation-hero p {
+      margin: .35rem 0 0;
+      color: var(--text-2);
+      font-size: .92rem;
+    }
+
+    .reservation-meta {
+      display: flex;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+
+    .reservation-meta span {
+      border: 1px solid var(--border-2);
+      border-radius: 999px;
+      background: #fff;
+      padding: .34rem .65rem;
+      font-size: .66rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      font-weight: 700;
+    }
+
+    .reservation-filter-wrap {
+      margin-bottom: 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: .85rem;
+    }
+
+    .list-filters {
+      display: flex;
+      gap: .55rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .list-filters input[type="text"] {
+      min-width: 330px;
+      padding: .7rem .85rem;
+      border: 1px solid var(--border-2);
+      border-radius: 10px;
+      font-family: 'Jost', sans-serif;
+      background: #fff;
+    }
+    .list-filters select {
+      padding: .68rem .8rem;
+      border: 1px solid var(--border-2);
+      border-radius: 10px;
+      font-family: 'Jost', sans-serif;
+      background: #fff;
+    }
+
+    .reservation-reset-btn {
+      padding: .64rem .9rem;
+      border-radius: 10px;
+    }
+
+    .sort-link {
+      color: inherit;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .sort-link:hover { text-decoration: underline; }
+    .action-cell {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+    .mini-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .35rem .6rem;
+      border-radius: 7px;
+      border: 1px solid var(--border-2);
+      background: #fff;
+      color: var(--espresso);
+      text-decoration: none;
+      font-size: .78rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .mini-action:hover {
+      background: #f5f2ea;
+    }
+    .mini-action-danger {
+      border-color: #dfb6b1;
+      color: #8f1f1f;
+      background: #fff7f6;
+    }
+    .mini-action-danger:hover {
+      background: #fdeeee;
+    }
+
+    @media (max-width: 780px) {
+      .reservation-hero {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .list-filters input[type="text"] {
+        min-width: 100%;
+        width: 100%;
+      }
+    }
+  </style>
+  <script>
+    (() => {
+      const form = document.querySelector('.list-filters[data-live-search="true"]');
+      const resultsContainer = document.getElementById('reservationResults');
+      if (!form || !resultsContainer) return;
+>>>>>>> Stashed changes
 
 <div class="panel">
   <form method="get" style="display:flex;gap:.6rem;margin-bottom:1.2rem;align-items:center;">

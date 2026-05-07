@@ -14,7 +14,7 @@ class FleetCar
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'bigint')]
     private ?int $car_id = null;
 
     public function getCar_id(): ?int
@@ -84,7 +84,7 @@ class FleetCar
         return $this;
     }
 
-    #[ORM\Column(type: 'integer', nullable: true)]
+    #[ORM\Column(type: 'bigint', nullable: true)]
     private ?int $delivery_man_id = null;
 
     public function getDelivery_man_id(): ?int

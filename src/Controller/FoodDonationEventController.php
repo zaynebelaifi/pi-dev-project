@@ -72,6 +72,17 @@ final class FoodDonationEventController extends AbstractController
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
         }
+<<<<<<< Updated upstream
+=======
+
+        $eventId = (int) ($foodDonationEvent->getDonationEventId() ?? 0);
+        $rawItems = $eventId > 0 ? $this->foodDonationItemRepository->findByDonationEventId($eventId) : [];
+        $eventItems = array_map(static fn (array $item): array => [
+            'name' => (string) ($item['dishName'] ?? 'Unnamed item'),
+            'quantity' => (int) ($item['quantity'] ?? 0),
+            'itemId' => (int) ($item['itemId'] ?? 0),
+        ], $rawItems);
+>>>>>>> Stashed changes
 
         return $this->render('admin/food_donation_event/show.html.twig', [
             'food_donation_event' => $foodDonationEvent,
@@ -118,6 +129,105 @@ final class FoodDonationEventController extends AbstractController
         return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
     }
 
+<<<<<<< Updated upstream
+=======
+    #[Route('/{donation_event_id}/export-pdf', name: 'app_food_donation_event_export_pdf', methods: ['GET'])]
+    public function exportPdf(FoodDonationEvent $foodDonationEvent): Response
+    {
+        $eventId = (int) $foodDonationEvent->getDonationEventId();
+        $items = $this->foodDonationItemRepository->findByDonationEventId($eventId);
+        $registeredUsersCount = $this->eventRegistrationRepository->countByEventIds([$eventId])[$eventId] ?? 0;
+
+        $eventTitle = sprintf(
+            'Food Donation Event #%d - %s',
+            $eventId,
+            (string) ($foodDonationEvent->getCharityName() ?? 'BIG 4 Community')
+        );
+
+        $html = $this->renderView('admin/food_donation_event/export_pdf.html.twig', [
+            'event' => $foodDonationEvent,
+            'eventTitle' => $eventTitle,
+            'registeredUsersCount' => $registeredUsersCount,
+            'items' => $items,
+        ]);
+
+        $filename = sprintf('food-donation-event-%d.pdf', $eventId);
+
+        return $this->dompdf->getStreamResponse($html, $filename, [
+            'Attachment' => true,
+        ]);
+    }
+
+    #[Route('/{id}/assign-items', name: 'app_food_donation_event_assign_items', methods: ['POST'])]
+    public function assignItems(int $id, Request $request): RedirectResponse
+    {
+        $event = $this->foodDonationEventRepository->find($id);
+        if (!$event) {
+            $this->addFlash('error', 'Donation event not found.');
+
+            return $this->redirectToRoute('app_food_donation_event_index');
+        }
+
+        if (!$this->isCsrfTokenValid('assign-items', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid request token. Please try again.');
+
+            return $this->redirectToRoute('app_food_donation_event_index');
+        }
+
+        $selectedItems = $request->request->all('items');
+        if (!is_array($selectedItems)) {
+            $selectedItems = [];
+        }
+
+        $addedCount = 0;
+        foreach ($selectedItems as $itemId => $itemData) {
+            if (!is_array($itemData)) {
+                continue;
+            }
+
+            $isSelected = isset($itemData['selected']) && (string) $itemData['selected'] === '1';
+            if (!$isSelected) {
+                continue;
+            }
+
+            $dishId = (int) $itemId;
+            $quantity = max(1, (int) ($itemData['quantity'] ?? 1));
+            if ($dishId <= 0) {
+                continue;
+            }
+
+            $existing = $this->foodDonationItemRepository->findOneBy([
+                'donation_event_id' => $event->getDonationEventId(),
+                'item_id' => $dishId,
+            ]);
+
+            if ($existing instanceof FoodDonationItem) {
+                $existing->setQuantity($quantity);
+                $addedCount++;
+                continue;
+            }
+
+            $item = (new FoodDonationItem())
+                ->setDonationEventId((int) $event->getDonationEventId())
+                ->setItemId($dishId)
+                ->setQuantity($quantity);
+
+            $this->entityManager->persist($item);
+            $addedCount++;
+        }
+
+        $this->entityManager->flush();
+
+        if ($addedCount > 0) {
+            $this->addFlash('success', 'Items successfully assigned to the event!');
+        } else {
+            $this->addFlash('error', 'No items were selected.');
+        }
+
+        return $this->redirectToRoute('app_food_donation_event_index');
+    }
+
+>>>>>>> Stashed changes
     private function denyUnlessAdmin(Request $request): ?Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {

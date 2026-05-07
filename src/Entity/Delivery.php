@@ -11,6 +11,7 @@ use App\Repository\DeliveryRepository;
 
 #[ORM\Entity(repositoryClass: DeliveryRepository::class)]
 #[ORM\Table(name: 'delivery')]
+#[ORM\Index(name: 'idx_delivery_man_id', columns: ['delivery_man_id'])]
 class Delivery
 {
     #[ORM\Id]
