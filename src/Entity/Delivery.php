@@ -418,7 +418,7 @@ class Delivery
         return $this->created_at;
     }
 
-    protected function setCreated_at(\DateTimeInterface $created_at): self
+    public function setCreated_at(\DateTimeInterface $created_at): self
     {
         $this->created_at = $created_at;
         return $this;
@@ -432,7 +432,7 @@ class Delivery
         return $this->updated_at;
     }
 
-    protected function setUpdated_at(\DateTimeInterface $updated_at): self
+    public function setUpdated_at(\DateTimeInterface $updated_at): self
     {
         $this->updated_at = $updated_at;
         return $this;
