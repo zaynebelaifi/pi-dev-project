@@ -132,13 +132,6 @@ class AiStockInsightService
     /**
      * @param array<string, mixed> $context
      */
-    private function buildPrompt(string $question, array $context): string
-    {
-        $contextJson = json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
-        return "Question:\n{$question}\n\nLive stock context:\n{$contextJson}\n\nRespond in plain language for an admin user. Keep under 180 words.";
-    }
-
     /**
      * @param array<string, mixed> $context
      */
@@ -532,10 +525,16 @@ class AiStockInsightService
     {
         $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
 
-        if (false === $value || null === $value || '' === trim((string) $value)) {
+        if (false === $value) {
             return $default;
         }
 
-        return (string) $value;
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return $default;
+        }
+
+        return $value;
     }
 }
