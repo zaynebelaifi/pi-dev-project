@@ -37,7 +37,6 @@ final class WeatherImpactService
             $item->expiresAfter(600);
 
             try {
-<<<<<<< Updated upstream
                 $response = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [
                     'query' => [
                         'latitude' => $lat,
@@ -262,3 +261,4 @@ final class WeatherImpactService
         return (string) $value;
     }
 }
+
