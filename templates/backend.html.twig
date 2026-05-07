@@ -42,12 +42,61 @@
   --rose:     #C94070;
   --rose-bg:  rgba(201,64,112,0.1);
 }
+
+html.dark-mode {
+  --ivory:    #1A1410;
+  --ivory-2:  #251D15;
+  --ivory-3:  #362A1F;
+  --ivory-4:  #453826;
+  --gold:     #D4A23E;
+  --gold-2:   #E8C472;
+  --gold-lt:  #F0D89A;
+  --gold-pale:#3D3015;
+  --gold-wash:#2B2310;
+  --brown:    #8C6340;
+  --brown-lt: #B3885C;
+  --espresso: #F5EBE0;
+  --text:     #F5EBE0;
+  --text-2:   #D9C9B8;
+  --text-3:   #A88C6E;
+  --border:   rgba(212,162,62,0.15);
+  --border-2: rgba(212,162,62,0.25);
+  --shadow:   rgba(0,0,0,0.25);
+  --shadow-md:rgba(0,0,0,0.35);
+
+  --green:    #52D77E;
+  --green-bg: rgba(82,215,126,0.12);
+  --red:      #FF5757;
+  --red-bg:   rgba(255,87,87,0.12);
+  --amber:    #FFA500;
+  --amber-bg: rgba(255,165,0,0.12);
+  --blue:     #5BA3E8;
+  --blue-bg:  rgba(91,163,232,0.12);
+  --purple:   #9D6FD9;
+  --purple-bg:rgba(157,111,217,0.12);
+  --rose:     #E565A0;
+  --rose-bg:  rgba(229,101,160,0.12);
+}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--ivory-2);color:var(--text);font-family:'Jost',sans-serif;font-weight:400;display:flex;min-height:100vh;overflow-x:hidden;}
+body{background:var(--ivory-2);color:var(--text);font-family:'Jost',sans-serif;font-weight:400;display:flex;min-height:100vh;overflow-x:hidden;transition:background-color 0.35s ease, color 0.35s ease;}
+html{transition:background-color 0.35s ease;}
+html.dark-mode body{background:var(--ivory-2);}
 
 /* SIDEBAR */
+<<<<<<< HEAD
 .sidebar{width:var(--sidebar-w);background:var(--ivory);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;box-shadow:2px 0 20px var(--shadow);overflow-y:auto;}
 .sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
+=======
+.sidebar{width:var(--sidebar-w);background:var(--ivory);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;box-shadow:2px 0 20px var(--shadow);overflow-y:auto;overflow-x:hidden;}
+.sidebar::-webkit-scrollbar{width:8px;}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(184,135,42,.45);border-radius:10px;}
+.sidebar::-webkit-scrollbar-track{background:transparent;}
+<<<<<<< Updated upstream
+.sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+=======
+.sidebar-brand{padding:1.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
+>>>>>>> Stashed changes
+>>>>>>> final2
 .brand-badge{width:38px;height:38px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.1rem;color:var(--ivory);flex-shrink:0;}
 .brand-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);letter-spacing:.08em;line-height:1;font-weight:600;}
 .brand-sub{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);margin-top:2px;}
@@ -233,6 +282,61 @@ tbody tr:hover .dots{color:var(--gold);}
 .stock-chat-input{flex:1;height:38px;border:1px solid var(--border-2);border-radius:8px;padding:0 .62rem;font-size:.73rem;}
 .stock-chat-send{height:38px;padding:0 .8rem;border:none;border-radius:8px;background:var(--gold);color:#fff;font-size:.72rem;font-weight:600;cursor:pointer;}
 
+/* MODE TOGGLE */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.9rem;
+  background: rgba(184,135,42,0.08);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
+}
+.mode-toggle:hover {
+  background: rgba(184,135,42,0.12);
+  border-color: var(--border-2);
+}
+.mode-toggle-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  min-width: 45px;
+}
+.mode-toggle-switch {
+  width: 44px;
+  height: 24px;
+  background: var(--border-2);
+  border-radius: 12px;
+  position: relative;
+  transition: background 0.3s ease;
+  border: 1px solid var(--border);
+}
+.mode-toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: var(--ivory);
+  border-radius: 10px;
+  top: 2px;
+  left: 2px;
+  transition: left 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+html.dark-mode .mode-toggle-switch {
+  background: var(--gold);
+  border-color: var(--gold-2);
+}
+html.dark-mode .mode-toggle-switch::after {
+  left: 22px;
+  background: var(--ivory-2);
+}
+
 @media(max-width:1200px){.kpi-row{grid-template-columns:repeat(2,1fr);}.mod-grid{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:900px){:root{--sidebar-w:0px;}.sidebar{transform:translateX(-256px);width:256px;}.main-wrap{margin-left:0;}.bottom-grid{grid-template-columns:1fr;}}
 </style>
@@ -252,6 +356,7 @@ tbody tr:hover .dots{color:var(--gold);}
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Operations</div>
+<<<<<<< HEAD
     <a class="nav-item {{ activeRoute == 'app_delivery_index' ? 'active' : '' }}" href="{{ path('app_delivery_index') }}"><div class="nav-icon">DL</div>Delivery<span class="nav-badge red">7</span></a>
     <a class="nav-item {{ activeRoute starts with 'admin_menu_' or activeRoute starts with 'admin_dish_' ? 'active' : '' }}" href="{{ path('admin_menu_index') }}"><div class="nav-icon">MN</div>Menu Manager</a>
     <a class="nav-item {{ activeRoute starts with 'admin_ingredient_' ? 'active' : '' }}" href="{{ path('admin_ingredient_index') }}"><div class="nav-icon">IG</div>Ingredients</a>
@@ -266,6 +371,33 @@ tbody tr:hover .dots{color:var(--gold);}
         <a class="nav-item nav-subitem {{ activeRoute starts with 'app_food_donation_stats' ? 'active' : '' }}" href="{{ path('app_food_donation_stats') }}"><div class="nav-icon">CH</div>Charts & Statistics</a>
       </div>
     </div>
+=======
+    <a class="nav-item {{ activeRoute == 'app_delivery_index' ? 'active' : '' }}" href="{{ path('app_delivery_index') }}"><div class="nav-icon">🛵</div>Delivery<span class="nav-badge red">7</span></a>
+    <a class="nav-item {{ activeRoute starts with 'admin_menu_' or activeRoute starts with 'admin_dish_' ? 'active' : '' }}" href="{{ path('admin_menu_index') }}"><div class="nav-icon">📋</div>Menu Manager</a>
+    <a class="nav-item {{ activeRoute starts with 'admin_ingredient_' ? 'active' : '' }}" href="{{ path('admin_ingredient_index') }}"><div class="nav-icon">🥬</div>Ingredients</a>
+    <a class="nav-item {{ activeRoute starts with 'admin_waste_' ? 'active' : '' }}" href="{{ path('admin_waste_index') }}"><div class="nav-icon">🗑️</div>Waste Tracker</a>
+<<<<<<< Updated upstream
+=======
+    <div class="nav-group {{ (activeRoute starts with 'app_food_donation_event_' or activeRoute starts with 'app_food_donation_item_' or activeRoute starts with 'app_food_donation_stats') ? 'nav-group-expanded' : '' }}" onclick="this.classList.toggle('nav-group-expanded')">
+      <div class="nav-icon">❤️</div>
+      <span>Food Donation</span>
+      <span class="nav-group-arrow">▼</span>
+      <div class="nav-group-items">
+        <a class="nav-item nav-subitem {{ activeRoute starts with 'app_food_donation_event_' ? 'active' : '' }}" href="{{ path('app_food_donation_event_index') }}"><div class="nav-icon">🎪</div>Food Donation Events</a>
+        <a class="nav-item nav-subitem {{ activeRoute starts with 'app_food_donation_item_' ? 'active' : '' }}" href="{{ path('app_food_donation_item_index') }}"><div class="nav-icon">🍱</div>Donation Items</a>
+        <a class="nav-item nav-subitem {{ activeRoute starts with 'app_food_donation_stats' ? 'active' : '' }}" href="{{ path('app_food_donation_stats') }}"><div class="nav-icon">📊</div>Charts & Statistics</a>
+      </div>
+    </div>
+>>>>>>> Stashed changes
+    <a class="nav-item {{ activeRoute starts with 'app_food_donation_event_' ? 'active' : '' }}" href="{{ path('app_food_donation_event_index') }}"><div class="nav-icon">🤝</div>Donation Events</a>
+    <a class="nav-item {{ activeRoute starts with 'app_food_donation_item_' ? 'active' : '' }}" href="{{ path('app_food_donation_item_index') }}"><div class="nav-icon">📦</div>Donation Items</a>
+    <a class="nav-item {{ activeRoute starts with 'app_table_' ? 'active' : '' }}" href="{{ path('table_index') }}"><div class="nav-icon">🪑</div>Tables</a>
+    <a class="nav-item {{ activeRoute starts with 'app_reservation_' ? 'active' : '' }}" href="{{ path('app_reservation_index') }}"><div class="nav-icon">🎪</div>Reservations</a>
+<<<<<<< Updated upstream
+=======
+    <a class="nav-item {{ activeRoute == 'app_admin_orders_reservations_analytics' ? 'active' : '' }}" href="{{ path('app_admin_orders_reservations_analytics') }}"><div class="nav-icon">🧩</div>Orders & Reservations Analytics</a>
+>>>>>>> Stashed changes
+>>>>>>> final2
   </div>
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Management</div>
@@ -277,6 +409,10 @@ tbody tr:hover .dots{color:var(--gold);}
     <a class="nav-item" href="#"><div class="nav-icon">ST</div>Settings</a>
   </div>
   <div class="sidebar-footer">
+    <button class="mode-toggle" id="modeToggleBackend" title="Toggle dark mode">
+      <span class="mode-toggle-label" id="modeLabel">Light</span>
+      <div class="mode-toggle-switch"></div>
+    </button>
     <div class="sidebar-sec-lbl" style="padding:0;margin-bottom:.5rem">Logged in as</div>
     <div class="admin-card">
       <div class="admin-av">AD</div>
@@ -297,6 +433,17 @@ tbody tr:hover .dots{color:var(--gold);}
   </header>
 
   <div class="content">
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+    {% for message in app.flashes('error') %}
+      <div class="admin-flash admin-flash-error">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('success') %}
+      <div class="admin-flash admin-flash-success">{{ message }}</div>
+    {% endfor %}
+=======
+>>>>>>> final2
    {% for message in app.flashes('error') %}
   <div class="admin-flash admin-flash-error auto-flash">{{ message }}</div>
 {% endfor %}
@@ -312,7 +459,39 @@ tbody tr:hover .dots{color:var(--gold);}
       setTimeout(() => flash.remove(), 500);
     }, 5000);
   });
+<<<<<<< HEAD
 </script>
+=======
+
+  // DARK MODE TOGGLE
+  function initializeDarkMode() {
+    const toggle = document.getElementById('modeToggleBackend');
+    const modeLabel = document.getElementById('modeLabel');
+    const htmlElem = document.documentElement;
+    const savedMode = localStorage.getItem('bigFourTheme');
+    
+    // Apply saved mode or default to light
+    if (savedMode === 'dark') {
+      htmlElem.classList.add('dark-mode');
+      modeLabel.textContent = 'Dark';
+    } else {
+      htmlElem.classList.remove('dark-mode');
+      modeLabel.textContent = 'Light';
+    }
+    
+    // Toggle mode on click
+    toggle.addEventListener('click', function() {
+      htmlElem.classList.toggle('dark-mode');
+      const isDarkMode = htmlElem.classList.contains('dark-mode');
+      localStorage.setItem('bigFourTheme', isDarkMode ? 'dark' : 'light');
+      modeLabel.textContent = isDarkMode ? 'Dark' : 'Light';
+    });
+  }
+  
+  document.addEventListener('DOMContentLoaded', initializeDarkMode);
+</script>
+>>>>>>> Stashed changes
+>>>>>>> final2
 
     {% block body %}
     <!-- KPI -->
@@ -583,11 +762,128 @@ setTimeout(()=>{
 const obs=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>{e.target.style.opacity='1';e.target.style.transform='translateY(0)';},i*80);obs.unobserve(e.target);}});},{threshold:.1});
 document.querySelectorAll('.mod-card,.kpi').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(16px)';el.style.transition='opacity .55s ease,transform .55s ease';obs.observe(el);});
 
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> final2
 function getSortValue(cell,type){
   const text = cell.dataset.sortValue ? cell.dataset.sortValue.trim() : cell.textContent.trim();
   if(type === 'number'){
     const n = parseFloat(text.replace(/[^0-9.-]+/g,''));
     return Number.isFinite(n) ? n : text.toLowerCase();
+<<<<<<< HEAD
+=======
+  }
+  return text.toLowerCase();
+}
+
+function sortTableRows(table,key,type,direction){
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.classList.contains('no-results-row'));
+  const headers = Array.from(table.querySelectorAll('thead th'));
+  const index = headers.findIndex(th => th.querySelector(`[data-sort-key="${key}"]`));
+  if(index < 0){return;}
+  rows.sort((a,b) => {
+    const aVal = getSortValue(a.children[index], type);
+    const bVal = getSortValue(b.children[index], type);
+    if(aVal < bVal) return direction === 'asc' ? -1 : 1;
+    if(aVal > bVal) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+function updateSortHeaders(table, activeLink, direction){
+  table.querySelectorAll('.sort-trigger').forEach(link => {
+    link.classList.remove('sorted-asc','sorted-desc');
+    link.dataset.sortDirection = 'asc';
+  });
+  activeLink.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+  activeLink.dataset.sortDirection = direction;
+}
+
+function setupLiveTables(root=document){
+  document.querySelectorAll('[data-live-table]').forEach(table => {
+    const root = table.closest('.content') || table.closest('.tbl-card')?.parentElement || document;
+    const searchInput = root.querySelector('[data-live-search-input]');
+    const statusFilter = root.querySelector('[data-live-status-filter]');
+    const resetBtn = root.querySelector('[data-live-reset]');
+    const filterForm = root.querySelector('.live-filter-form');
+    const rows = Array.from(table.querySelectorAll('tbody tr')).filter(row => !row.classList.contains('no-results-row'));
+    const noResults = table.querySelector('tbody .no-results');
+
+    const updateFilter = () => {
+      const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      const status = statusFilter ? statusFilter.value : '';
+      let visible = 0;
+      rows.forEach(row => {
+        const text = (row.dataset.search || row.textContent).toLowerCase();
+        const matchesQuery = !query || text.includes(query);
+        const matchesStatus = !status || row.dataset.status === status;
+        const show = matchesQuery && matchesStatus;
+        row.style.display = show ? '' : 'none';
+        if(show) visible++;
+      });
+      if(noResults){
+        noResults.style.display = visible ? 'none' : '';
+      }
+    };
+
+    if(searchInput){ searchInput.addEventListener('input', updateFilter); }
+    if(statusFilter){ statusFilter.addEventListener('change', updateFilter); }
+    if(filterForm){
+      filterForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        updateFilter();
+      });
+    }
+    if(resetBtn){
+      resetBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        if(searchInput) searchInput.value = '';
+        if(statusFilter) statusFilter.value = '';
+        updateFilter();
+      });
+    }
+    table.querySelectorAll('.sort-trigger').forEach(link => {
+      link.addEventListener('click', function(e){
+        e.preventDefault();
+        const key = this.dataset.sortKey;
+        const type = this.dataset.sortType || 'text';
+        const current = this.dataset.sortDirection === 'asc' ? 'desc' : 'asc';
+        sortTableRows(table, key, type, current);
+        updateSortHeaders(table, this, current);
+      });
+    });
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupLiveTables);
+} else {
+  setupLiveTables();
+}
+>>>>>>> Stashed changes
+// Live filters: submit GET forms automatically while keeping filtering on Symfony side.
+document.querySelectorAll('form[data-live-search="true"][method="get"]').forEach(form=>{
+  const textInputs=form.querySelectorAll('input[type="text"],input[type="search"]');
+  const instantControls=form.querySelectorAll('select,input[type="date"],input[type="number"],input[type="checkbox"],input[type="radio"]');
+  let timer=null;
+
+  const submitDebounced=()=>{
+    clearTimeout(timer);
+    timer=setTimeout(()=>form.submit(),300);
+  };
+
+  textInputs.forEach(input=>input.addEventListener('input',submitDebounced));
+  instantControls.forEach(control=>control.addEventListener('change',()=>form.submit()));
+
+(() => {
+  const chatbot = document.querySelector('.stock-chatbot');
+  if (!chatbot) {
+    return;
+>>>>>>> final2
   }
   return text.toLowerCase();
 }
@@ -679,7 +975,14 @@ if (document.readyState === 'loading') {
   setupLiveTables();
 }
 </script>
+<<<<<<< HEAD
 {{ importmap('admin') }}
+=======
+<<<<<<< Updated upstream
+=======
+ {{ importmap('admin') }}
+>>>>>>> Stashed changes
+>>>>>>> final2
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

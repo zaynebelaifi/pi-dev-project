@@ -18,7 +18,20 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> final2
 
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
+<<<<<<< HEAD
+=======
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###
+>>>>>>> Stashed changes
+>>>>>>> final2

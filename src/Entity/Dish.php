@@ -11,8 +11,11 @@ use App\Repository\DishRepository;
 
 #[ORM\Entity(repositoryClass: DishRepository::class)]
 #[ORM\Table(name: 'dish')]
+#[ORM\HasLifecycleCallbacks]
 class Dish
 {
+    private const DEFAULT_IMAGE_URL = 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1200&q=80';
+
     public function __construct()
     {
         $this->recipeLines = new ArrayCollection();
@@ -69,6 +72,11 @@ class Dish
     public function setName(?string $name): self
     {
         $this->name = $name;
+
+        if ($this->isAutoImageUrl($this->image_url)) {
+            $this->image_url = $this->resolveAutoImageUrl();
+        }
+
         return $this;
     }
 
@@ -176,14 +184,73 @@ class Dish
 
     public function setImage_url(?string $image_url): self
     {
-        $this->image_url = $image_url;
+        $normalized = $image_url !== null ? trim($image_url) : null;
+        $this->image_url = $normalized !== null && $normalized != ''
+            ? $normalized
+            : $this->resolveAutoImageUrl();
         return $this;
     }
 
     public function setImageUrl(?string $imageUrl): self
     {
-        $this->image_url = $imageUrl;
-        return $this;
+        return $this->setImage_url($imageUrl);
+    }
+
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function ensureAutomaticImageUrl(): void
+    {
+        $normalized = $this->image_url !== null ? trim($this->image_url) : '';
+
+        if ($normalized === '' || $this->isAutoImageUrl($normalized)) {
+            $this->image_url = $this->resolveAutoImageUrl();
+            return;
+        }
+
+        $this->image_url = $normalized;
+    }
+
+    private function resolveAutoImageUrl(): string
+    {
+        $dishName = strtolower(trim((string) $this->name));
+
+        $keywordMap = [
+            'pizza' => 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80',
+            'pasta' => 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?auto=format&fit=crop&w=1200&q=80',
+            'salad' => 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1200&q=80',
+            'soup' => 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1200&q=80',
+            'burger' => 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=80',
+            'steak' => 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80',
+            'fish' => 'https://images.unsplash.com/photo-1485963631004-f2f00b1d6606?auto=format&fit=crop&w=1200&q=80',
+            'sushi' => 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1200&q=80',
+            'cake' => 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1200&q=80',
+            'dessert' => 'https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1200&q=80',
+            'coffee' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+            'chicken' => 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=1200&q=80',
+        ];
+
+        foreach ($keywordMap as $keyword => $url) {
+            if ($dishName !== '' && str_contains($dishName, $keyword)) {
+                return $url;
+            }
+        }
+
+        return self::DEFAULT_IMAGE_URL;
+    }
+
+    private function isAutoImageUrl(?string $imageUrl): bool
+    {
+        $normalized = $imageUrl !== null ? trim($imageUrl) : '';
+
+        if ($normalized === '') {
+            return true;
+        }
+
+        if ($normalized === '/images/default-dish.svg' || str_contains($normalized, 'placehold.co')) {
+            return true;
+        }
+
+        return $normalized === self::DEFAULT_IMAGE_URL;
     }
 
     #[ORM\Column(type: 'datetime', nullable: false)]

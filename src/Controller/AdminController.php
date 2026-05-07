@@ -6,6 +6,8 @@ use App\Repository\IngredientRepository;
 use App\Repository\WasterecordRepository;
 use App\Repository\DeliveryManRepository;
 use App\Repository\DeliveryRepository;
+use App\Repository\OrderRepository;
+use App\Repository\ReservationRepository;
 use App\Service\AdminAnalyticsService;
 use App\Service\ExpiredIngredientWasteService;
 use App\Utils\AiStockInsightService;
@@ -33,6 +35,8 @@ final class AdminController extends AbstractController
         IngredientRepository $ingredientRepository,
         WasterecordRepository $wasterecordRepository,
         ExpiredIngredientWasteService $expiredWasteService,
+        ReservationRepository $reservationRepository,
+        OrderRepository $orderRepository,
     ): Response
     {
         $session = $request->getSession();
@@ -57,6 +61,15 @@ final class AdminController extends AbstractController
             'totalWasteQuantity' => $wasterecordRepository->totalWastedQuantity(),
             'autoWasteMoved' => $autoMoved,
             'vehicleCount' => $fleetCarRepository->count([]),
+            'reservationCount' => $reservationRepository->count([]),
+            'reservationConfirmedCount' => $reservationRepository->countByStatus('CONFIRMED'),
+            'reservationCancelledCount' => $reservationRepository->countByStatus('CANCELLED'),
+            'orderCount' => $orderRepository->count([]),
+            'orderPendingCount' => $orderRepository->countByStatus('PENDING'),
+            'orderPreparedCount' => $orderRepository->countByStatus('PREPARED'),
+            'orderDeliveredCount' => $orderRepository->countByStatus('DELIVERED'),
+            'orderRevenue' => $orderRepository->getTotalRevenue(),
+            'showOnlyOrdersReservations' => false,
         ]);
     }
 

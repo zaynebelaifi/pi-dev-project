@@ -3,6 +3,17 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+
+orders_reservations_analytics_bundle_controllers:
+    resource:
+        path: ../src/OrdersReservationsAnalyticsBundle/Controller/
+        namespace: App\OrdersReservationsAnalyticsBundle\Controller
+    type: attribute
+>>>>>>> final2
 
 donation_item_show:
     path: /admin/donation-items/{id}
@@ -21,8 +32,12 @@ donation_item_delete_event:
     path: /admin/donation-items/{id}/delete-event
     controller: App\Controller\DonationItemController::deleteEvent
     methods: [POST]
+<<<<<<< HEAD
 
 donation_item_delete_event_api:
     path: /api/donation-items/delete-by-event/{id}
     controller: App\Controller\DonationItemController::deleteEvent
     methods: [DELETE]
+=======
+>>>>>>> Stashed changes
+>>>>>>> final2

@@ -5,14 +5,17 @@
 {% block topbar_title %}Dashboard{% endblock %}
 
 {% block body %}
+    {% set showOnlyOrdersReservations = showOnlyOrdersReservations|default(false) %}
+
     <div class="sec-head">
       <div>
-        <h2>Admin Dashboard</h2>
-        <p class="sec-sub">Overview of delivery operations, assigned drivers, and active orders.</p>
+        <h2>{{ showOnlyOrdersReservations ? 'Orders & Reservations Analytics' : 'Admin Dashboard' }}</h2>
+        <p class="sec-sub">{{ showOnlyOrdersReservations ? 'Focused view: reservations and orders analytics only.' : 'Overview of delivery operations, assigned drivers, and active orders.' }}</p>
       </div>
       <a href="{{ path('app_admin_support_queue') }}" class="t-btn primary">Support Queue</a>
     </div>
 
+    {% if not showOnlyOrdersReservations %}
     <div class="kpi-row">
       <div class="kpi">
         <div class="kpi-lbl">Total Deliveries</div>
@@ -41,7 +44,290 @@
         Automation moved {{ autoWasteMoved }} expired ingredient stocks to waste records.
       </div>
     {% endif %}
+    {% endif %}
 
+    <style>
+      .analytics-bundle {
+        margin: 0 0 1.2rem;
+        padding: 1rem;
+        border: 1px solid rgba(58,126,201,.22);
+        border-radius: 14px;
+        background: linear-gradient(165deg, rgba(239,246,255,.95), rgba(255,255,255,.96));
+        box-shadow: 0 8px 24px rgba(58,126,201,.10);
+      }
+      .analytics-bundle .mod-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .analytics-bundle-card {
+        border-color: rgba(58,126,201,.22);
+      }
+      .mini-chart {
+        margin-top: .8rem;
+        display: grid;
+        gap: .42rem;
+      }
+      .mini-chart-row {
+        display: grid;
+        grid-template-columns: 90px 44px 1fr;
+        align-items: center;
+        gap: .45rem;
+      }
+      .mini-chart-label {
+        font-size: .58rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .mini-chart-value {
+        font-size: .66rem;
+        color: var(--espresso);
+        font-weight: 600;
+      }
+      .mini-chart-track {
+        height: 6px;
+        border-radius: 999px;
+        background: var(--ivory-3);
+        overflow: hidden;
+      }
+      .mini-chart-fill {
+        height: 100%;
+        border-radius: 999px;
+      }
+      .fill-green { background: var(--green); }
+      .fill-red { background: var(--red); }
+      .fill-blue { background: var(--blue); }
+      .fill-amber { background: var(--amber); }
+      .fill-purple { background: var(--purple); }
+      .bundle-chart-grid {
+        margin-top: .9rem;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .9rem;
+      }
+      .bundle-chart-card {
+        border: 1px solid rgba(58,126,201,.22);
+        border-radius: 12px;
+        background: rgba(255,255,255,.88);
+        padding: .9rem;
+      }
+      .bundle-chart-title {
+        margin: 0 0 .6rem;
+        font-size: .72rem;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        font-weight: 600;
+      }
+      .bundle-chart-canvas-wrap {
+        height: 220px;
+      }
+      .bundle-chart-canvas-wrap canvas {
+        width: 100%;
+        height: 100%;
+      }
+      .reservation-donut-wrap {
+        display: flex;
+        align-items: center;
+        gap: .9rem;
+      }
+      .reservation-donut {
+        width: 92px;
+        height: 92px;
+        border-radius: 50%;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .reservation-donut::after {
+        content: '';
+        position: absolute;
+        inset: 14px;
+        border-radius: 50%;
+        background: var(--ivory);
+      }
+      .reservation-donut-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--espresso);
+        z-index: 1;
+      }
+      .chart-legend {
+        display: grid;
+        gap: .35rem;
+      }
+      .chart-legend-item {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .68rem;
+        color: var(--text-2);
+      }
+      .chart-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .orders-bars {
+        display: grid;
+        gap: .45rem;
+      }
+      .orders-bar-row {
+        display: grid;
+        grid-template-columns: 74px 44px 1fr;
+        align-items: center;
+        gap: .4rem;
+      }
+      .orders-bar-label {
+        font-size: .62rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .orders-bar-value {
+        font-size: .66rem;
+        font-weight: 600;
+        color: var(--espresso);
+      }
+      .orders-bar-track {
+        height: 7px;
+        border-radius: 999px;
+        background: var(--ivory-3);
+        overflow: hidden;
+      }
+      .orders-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+      }
+      @media (max-width: 980px) {
+        .analytics-bundle .mod-grid {
+          grid-template-columns: 1fr;
+        }
+        .bundle-chart-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+
+    {% set reservationBase = reservationCount > 0 ? reservationCount : 1 %}
+    {% set orderBase = orderCount > 0 ? orderCount : 1 %}
+    {% set reservationConfirmedPct = ((reservationConfirmedCount / reservationBase) * 100)|round(0, 'common') %}
+    {% set reservationCancelledPct = ((reservationCancelledCount / reservationBase) * 100)|round(0, 'common') %}
+    {% set orderPendingPct = ((orderPendingCount / orderBase) * 100)|round(0, 'common') %}
+    {% set orderPreparedPct = ((orderPreparedCount / orderBase) * 100)|round(0, 'common') %}
+    {% set orderDeliveredPct = ((orderDeliveredCount / orderBase) * 100)|round(0, 'common') %}
+
+    <section id="orders-reservations-analytics" class="analytics-bundle">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:.8rem; flex-wrap:wrap; margin-bottom:.8rem;">
+        <div>
+          <h3 style="margin:0; font-size:1rem; color:var(--espresso);">Reservations & Orders Analytics Bundle</h3>
+          <p style="margin:.2rem 0 0; font-size:.86rem; color:var(--text-2);">Separate section for reservation flow health and order pipeline performance.</p>
+        </div>
+        <a href="{{ path('app_admin_analytics') }}" class="t-btn">Open Full Analytics</a>
+      </div>
+
+      <div class="mod-grid" style="margin:0;">
+        <div class="mod-card analytics-bundle-card" onclick="location.href='{{ path('app_reservation_index') }}'">
+          <div class="card-top">
+            <div>
+              <p class="c-title">Reservation Analytics</p>
+              <p class="c-desc">Track confirmed vs cancelled bookings and monitor reservation volume.</p>
+            </div>
+            <div class="c-icon gold">📅</div>
+          </div>
+          <div class="c-stats">
+            <div class="cs-item">
+              <div class="cs-num">{{ reservationCount }}</div>
+              <div class="cs-lbl">Total reservations</div>
+            </div>
+            <div class="cs-item">
+              <div class="cs-num">{{ reservationConfirmedCount }}</div>
+              <div class="cs-lbl">Confirmed</div>
+            </div>
+            <div class="cs-item">
+              <div class="cs-num">{{ reservationCancelledCount }}</div>
+              <div class="cs-lbl">Cancelled</div>
+            </div>
+          </div>
+          <div class="mini-chart" aria-label="Reservation status distribution">
+            <div class="mini-chart-row">
+              <span class="mini-chart-label">Confirmed</span>
+              <span class="mini-chart-value">{{ reservationConfirmedPct }}%</span>
+              <span class="mini-chart-track"><span class="mini-chart-fill fill-green" style="width: {{ reservationConfirmedPct }}%;"></span></span>
+            </div>
+            <div class="mini-chart-row">
+              <span class="mini-chart-label">Cancelled</span>
+              <span class="mini-chart-value">{{ reservationCancelledPct }}%</span>
+              <span class="mini-chart-track"><span class="mini-chart-fill fill-red" style="width: {{ reservationCancelledPct }}%;"></span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mod-card analytics-bundle-card" onclick="location.href='{{ path('app_order_index') }}'">
+          <div class="card-top">
+            <div>
+              <p class="c-title">Orders Analytics</p>
+              <p class="c-desc">Watch order lifecycle stages and delivered-order revenue in one panel.</p>
+            </div>
+            <div class="c-icon blue">🧾</div>
+          </div>
+          <div class="c-stats">
+            <div class="cs-item">
+              <div class="cs-num">{{ orderCount }}</div>
+              <div class="cs-lbl">Total orders</div>
+            </div>
+            <div class="cs-item">
+              <div class="cs-num">{{ orderPendingCount }}/{{ orderPreparedCount }}/{{ orderDeliveredCount }}</div>
+              <div class="cs-lbl">Pending/Prepared/Delivered</div>
+            </div>
+            <div class="cs-item">
+              <div class="cs-num">{{ orderRevenue|number_format(2, '.', ',') }}</div>
+              <div class="cs-lbl">Delivered revenue</div>
+            </div>
+          </div>
+          <div class="mini-chart" aria-label="Order status distribution">
+            <div class="mini-chart-row">
+              <span class="mini-chart-label">Pending</span>
+              <span class="mini-chart-value">{{ orderPendingPct }}%</span>
+              <span class="mini-chart-track"><span class="mini-chart-fill fill-blue" style="width: {{ orderPendingPct }}%;"></span></span>
+            </div>
+            <div class="mini-chart-row">
+              <span class="mini-chart-label">Prepared</span>
+              <span class="mini-chart-value">{{ orderPreparedPct }}%</span>
+              <span class="mini-chart-track"><span class="mini-chart-fill fill-amber" style="width: {{ orderPreparedPct }}%;"></span></span>
+            </div>
+            <div class="mini-chart-row">
+              <span class="mini-chart-label">Delivered</span>
+              <span class="mini-chart-value">{{ orderDeliveredPct }}%</span>
+              <span class="mini-chart-track"><span class="mini-chart-fill fill-purple" style="width: {{ orderDeliveredPct }}%;"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bundle-chart-grid">
+        <article class="bundle-chart-card" aria-label="Reservation chart bundle">
+          <h4 class="bundle-chart-title">Reservation Chart Bundle (Interactive)</h4>
+          <div class="bundle-chart-canvas-wrap">
+            <canvas id="reservationBundleChart" aria-label="Reservation status chart" role="img"></canvas>
+          </div>
+        </article>
+
+        <article class="bundle-chart-card" aria-label="Orders chart bundle">
+          <h4 class="bundle-chart-title">Orders Chart Bundle (Interactive)</h4>
+          <div class="bundle-chart-canvas-wrap">
+            <canvas id="ordersBundleChart" aria-label="Orders status chart" role="img"></canvas>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    {% if not showOnlyOrdersReservations %}
     <div class="mod-grid">
       <div class="mod-card" onclick="location.href='{{ path('app_delivery_index') }}'">
         <div class="card-top">
@@ -167,5 +453,109 @@
         </div>
       </div>
     </div>
+    {% endif %}
+
+  <script>
+    (function initOrdersReservationsCharts() {
+      const reservationCanvas = document.getElementById('reservationBundleChart');
+      const ordersCanvas = document.getElementById('ordersBundleChart');
+
+      if (!reservationCanvas || !ordersCanvas) {
+        return;
+      }
+
+      const chartData = {
+        reservation: {
+          confirmed: {{ reservationConfirmedCount }},
+          cancelled: {{ reservationCancelledCount }},
+        },
+        orders: {
+          pending: {{ orderPendingCount }},
+          prepared: {{ orderPreparedCount }},
+          delivered: {{ orderDeliveredCount }},
+        },
+      };
+
+      function renderCharts() {
+        if (!window.Chart) {
+          return;
+        }
+
+        if (window.__reservationBundleChartInstance) {
+          window.__reservationBundleChartInstance.destroy();
+        }
+        if (window.__ordersBundleChartInstance) {
+          window.__ordersBundleChartInstance.destroy();
+        }
+
+        window.__reservationBundleChartInstance = new Chart(reservationCanvas, {
+          type: 'doughnut',
+          data: {
+            labels: ['Confirmed', 'Cancelled'],
+            datasets: [{
+              data: [chartData.reservation.confirmed, chartData.reservation.cancelled],
+              backgroundColor: ['#2E9E6A', '#D94040'],
+              borderWidth: 0,
+            }],
+          },
+          options: {
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+              legend: { position: 'bottom' },
+              tooltip: { enabled: true },
+            },
+          },
+        });
+
+        window.__ordersBundleChartInstance = new Chart(ordersCanvas, {
+          type: 'bar',
+          data: {
+            labels: ['Pending', 'Prepared', 'Delivered'],
+            datasets: [{
+              label: 'Orders',
+              data: [chartData.orders.pending, chartData.orders.prepared, chartData.orders.delivered],
+              backgroundColor: ['#3A7EC9', '#C87D20', '#7C4FC4'],
+              borderRadius: 8,
+            }],
+          },
+          options: {
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: true },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0 },
+                grid: { color: 'rgba(184,135,42,.14)' },
+              },
+              x: {
+                grid: { display: false },
+              },
+            },
+          },
+        });
+      }
+
+      if (window.Chart) {
+        renderCharts();
+        return;
+      }
+
+      const existingScript = document.getElementById('chartjs-cdn-script');
+      if (existingScript) {
+        existingScript.addEventListener('load', renderCharts, { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = 'chartjs-cdn-script';
+      script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';
+      script.onload = renderCharts;
+      document.head.appendChild(script);
+    })();
+  </script>
   </div>
 {% endblock %}

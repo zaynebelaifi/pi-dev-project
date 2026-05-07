@@ -16,7 +16,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'bigint')]
     private ?int $id = null;
 
     public function getId(): ?int
@@ -72,6 +72,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+<<<<<<< HEAD
     /**
      * @return string[]
      */
@@ -104,7 +105,45 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // No transient sensitive property is stored on the entity.
     }
 
+=======
+<<<<<<< Updated upstream
+>>>>>>> final2
     #[ORM\Column(type: 'integer', nullable: true)]
+=======
+    /**
+     * @return string[]
+     */
+    public function getRoles(): array
+    {
+        $role = strtoupper(trim((string) $this->role));
+        if ($role === '') {
+            $role = 'ROLE_CLIENT';
+        }
+
+        // ROLE_USER is always present to support generic protected routes.
+        return array_values(array_unique([$role, 'ROLE_USER']));
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $primaryRole = (string) ($roles[0] ?? 'ROLE_CLIENT');
+        $this->role = strtoupper(trim($primaryRole));
+
+        return $this;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return strtolower(trim((string) ($this->email ?? '')));
+    }
+
+    public function eraseCredentials(): void
+    {
+        // No transient sensitive property is stored on the entity.
+    }
+
+    #[ORM\Column(type: 'bigint', nullable: true)]
+>>>>>>> Stashed changes
     private ?int $reference_id = null;
 
     public function getReference_id(): ?int
