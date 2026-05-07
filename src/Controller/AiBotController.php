@@ -18,10 +18,7 @@ final class AiBotController extends AbstractController
     {
         $payload = json_decode((string) $request->getContent(), true);
         $question = trim((string) ($payload['question'] ?? ''));
-<<<<<<< HEAD
-=======
         $language = trim((string) ($payload['language'] ?? 'en'));
->>>>>>> final2
 
         if ($question === '') {
             return new JsonResponse([
@@ -30,13 +27,6 @@ final class AiBotController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-<<<<<<< HEAD
-        $answer = $customerAiBotService->ask($question);
-
-        return new JsonResponse([
-            'success' => true,
-            'answer' => $answer,
-=======
         $rawAnswer = $customerAiBotService->ask($question);
 
         return new JsonResponse([
@@ -65,7 +55,6 @@ final class AiBotController extends AbstractController
             'success' => true,
             'translation' => $googleTranslateService->translate($text, $language),
             'language' => $language !== '' ? $language : 'en',
->>>>>>> final2
         ]);
     }
 }
