@@ -335,10 +335,6 @@ final class FoodDonationEventController extends AbstractController
         return $this->redirectToRoute('app_food_donation_event_index');
     }
 
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> final2
     private function denyUnlessAdmin(Request $request): ?Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
