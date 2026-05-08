@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
@@ -57,6 +58,7 @@ class User1
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Ignore]
     private ?string $password = null;
 
     public function getPassword(): ?string

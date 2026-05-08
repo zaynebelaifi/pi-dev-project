@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 use App\Repository\UserRepository;
 
@@ -83,6 +84,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
+    #[Ignore]
     private ?string $password_hash = null;
 
     public function getPassword(): ?string
