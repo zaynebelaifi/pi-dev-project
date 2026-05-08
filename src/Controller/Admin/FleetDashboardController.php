@@ -56,7 +56,7 @@ class FleetDashboardController extends AbstractController
         $status           = $this->fleet->getFleetStatus();
         $weatherData      = $this->weather->getCurrentWeather($this->restaurantLat, $this->restaurantLng);
         $pendingDeliveries = $this->deliveryRepo->findBy(['status' => 'PENDING']);
-        $availableCars    = $this->carRepo->findBy(['carStatus' => 'available']);
+        $availableCars    = $this->carRepo->findBy(['status' => 'AVAILABLE']);
         $ranked           = $this->fleet->findNearbyDrivers();
 
         return $this->render('admin/fleet/dashboard.html.twig', [
