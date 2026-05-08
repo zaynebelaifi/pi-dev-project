@@ -16,7 +16,7 @@ class OrderRepository extends ServiceEntityRepository
 
     public function searchAndSort(string $search = '', string $sort = 'order_date', string $direction = 'DESC'): array
     {
-        $allowed = ['order_date', 'order_type', 'status', 'total_amount', 'client_id'];
+        $allowed = ['order_date', 'order_type', 'status', 'total_amount', 'client'];
         if (!in_array($sort, $allowed, true)) {
             $sort = 'order_date';
         }
@@ -24,11 +24,12 @@ class OrderRepository extends ServiceEntityRepository
 
         $qb = $this->createQueryBuilder('o')
             ->leftJoin('o.reservation', 'r')
+            ->leftJoin('o.client', 'c')
             ->leftJoin('App\Entity\Delivery', 'd', 'WITH', 'd.order_id = o.order_id')
-            ->addSelect('r');
+            ->addSelect('r', 'c');
 
         if ($search !== '') {
-            $qb->andWhere('o.status LIKE :s OR o.order_type LIKE :s OR o.client_id LIKE :s OR o.delivery_address LIKE :s OR d.recipient_name LIKE :s OR d.recipient_phone LIKE :s')
+            $qb->andWhere('o.status LIKE :s OR o.order_type LIKE :s OR c.id LIKE :s OR c.first_name LIKE :s OR c.last_name LIKE :s OR o.delivery_address LIKE :s OR d.recipient_name LIKE :s OR d.recipient_phone LIKE :s')
                ->setParameter('s', "%$search%");
         }
 

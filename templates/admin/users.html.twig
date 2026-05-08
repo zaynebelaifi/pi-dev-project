@@ -1,44 +1,334 @@
-{% extends 'admin_base.html.twig' %}
-
-{% block title %}Users Management - Admin{% endblock %}
+{% extends 'backend.html.twig' %}
+{% block title %}User Management — BIG 4 Admin{% endblock %}
+{% block topbar_title %}User Management{% endblock %}
+{% block topbar_breadcrumb %}Big 4 · Admin · Users{% endblock %}
 
 {% block body %}
-<div class="admin-header">
-    <h1>Users Management</h1>
-    <p>Manage clients and delivery men.</p>
+<style>
+/* ─── USER CARDS ─── */
+.ua-grid{display:flex;flex-direction:column;gap:.8rem;}
+.ua-card{background:var(--ivory);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.4rem;display:grid;grid-template-columns:42px 1fr auto auto auto auto;align-items:center;gap:1rem;transition:all .3s cubic-bezier(.34,1.4,.64,1);position:relative;overflow:hidden;}
+.ua-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);opacity:0;transition:opacity .2s;}
+.ua-card:hover{border-color:var(--border-2);box-shadow:0 6px 24px var(--shadow-md);transform:translateY(-2px);}
+.ua-card:hover::before{opacity:1;}
+.ua-card.banned{border-color:rgba(217,64,64,.2);background:linear-gradient(135deg,var(--ivory),rgba(217,64,64,.03));}
+.ua-card.banned::before{background:var(--red);}
+
+/* Avatar */
+.ua-av{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--gold-2),var(--gold));color:var(--ivory);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:700;flex-shrink:0;box-shadow:0 2px 8px rgba(184,135,42,.25);}
+
+/* Identity */
+.ua-identity{}
+.ua-name{font-size:.85rem;font-weight:600;color:var(--espresso);margin-bottom:.15rem;}
+.ua-meta{display:flex;gap:.6rem;flex-wrap:wrap;}
+.ua-email{font-size:.65rem;color:var(--text-2);}
+.ua-phone{font-size:.65rem;color:var(--rose);display:flex;align-items:center;gap:.2rem;}
+
+/* Role & Status badges */
+.ua-role{padding:3px 10px;border-radius:20px;font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;}
+.ua-role.admin{background:var(--gold-pale);color:var(--gold);}
+.ua-role.client{background:var(--blue-bg);color:var(--blue);}
+.ua-role.delivery{background:var(--green-bg);color:var(--green);}
+
+.ua-status{display:flex;align-items:center;gap:.35rem;padding:4px 10px;border-radius:20px;font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;}
+.ua-status::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.ua-status.active{background:var(--green-bg);color:var(--green);}
+.ua-status.banned{background:var(--red-bg);color:var(--red);}
+
+/* Ban info */
+.ua-ban-info{display:flex;flex-direction:column;gap:.2rem;min-width:140px;}
+.ua-ban-date{font-size:.6rem;color:var(--text-3);display:flex;align-items:center;gap:.3rem;}
+.ua-ban-reason{font-size:.65rem;color:var(--amber);background:var(--amber-bg);border:1px solid rgba(200,125,32,.15);padding:3px 8px;border-radius:6px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* Analytics icon buttons */
+.ua-analytics{display:flex;gap:5px;}
+.ua-ibtn{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--ivory-2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.75rem;transition:all .2s;color:var(--text-2);}
+.ua-ibtn:hover{transform:translateY(-1px);box-shadow:0 3px 8px var(--shadow);}
+.ua-ibtn.b{background:var(--blue-bg);color:var(--blue);border-color:rgba(58,126,201,.2);}
+.ua-ibtn.o{background:var(--amber-bg);color:var(--amber);border-color:rgba(200,125,32,.2);}
+.ua-ibtn.p{background:var(--purple-bg);color:var(--purple);border-color:rgba(124,79,196,.2);}
+
+/* Action buttons */
+.ua-actions{display:flex;gap:5px;}
+.ua-btn{padding:5px 12px;border-radius:6px;border:1px solid transparent;font-size:.65rem;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.ua-btn.unban{background:var(--green-bg);color:var(--green);border-color:rgba(46,158,106,.2);}
+.ua-btn.ban{background:var(--amber-bg);color:var(--amber);border-color:rgba(200,125,32,.2);}
+.ua-btn.del{background:var(--red-bg);color:var(--red);border-color:rgba(217,64,64,.2);}
+.ua-btn:hover{transform:translateY(-1px);box-shadow:0 3px 8px var(--shadow);}
+
+/* Analytics slide panel */
+.ua-overlay{position:fixed;inset:0;background:rgba(44,26,14,.45);z-index:900;opacity:0;pointer-events:none;transition:opacity .3s;}
+.ua-overlay.open{opacity:1;pointer-events:all;}
+.ua-panel{position:fixed;top:0;right:0;width:400px;max-width:90vw;height:100vh;background:var(--ivory);border-left:1px solid var(--border);z-index:901;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-10px 0 40px var(--shadow-md);}
+.ua-panel.open{transform:none;}
+.ua-ph{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,rgba(184,135,42,.07),transparent);}
+.ua-ph-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--espresso);}
+.ua-ph-close{border:none;background:transparent;font-size:1rem;cursor:pointer;color:var(--text-3);width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.ua-ph-close:hover{background:var(--red-bg);color:var(--red);}
+.ua-pb{flex:1;overflow-y:auto;padding:1.4rem;}
+.ua-pb::-webkit-scrollbar{width:4px;}
+.ua-pb::-webkit-scrollbar-thumb{background:rgba(184,135,42,.25);border-radius:4px;}
+
+/* Panel result cards */
+.ua-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.8rem;}
+.ua-kpi{background:var(--ivory-2);border:1px solid var(--border);border-radius:9px;padding:.9rem;text-align:center;}
+.ua-kpi-val{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--espresso);line-height:1;}
+.ua-kpi-lbl{font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-top:.25rem;}
+.ua-tier{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.62rem;font-weight:700;letter-spacing:.1em;color:#fff;margin:.5rem 0;}
+.ua-prog-wrap{margin:.5rem 0;}
+.ua-prog-lbl{display:flex;justify-content:space-between;font-size:.6rem;color:var(--text-3);margin-bottom:.3rem;}
+.ua-prog{height:5px;background:var(--ivory-3);border-radius:3px;overflow:hidden;}
+.ua-prog-fill{height:100%;border-radius:3px;transition:width .8s ease;}
+.ua-rec{background:var(--ivory-2);border:1px solid var(--border);border-radius:9px;padding:.9rem;margin-bottom:.6rem;}
+.ua-rec-cat{font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-3);}
+.ua-rec-dish{font-weight:600;color:var(--espresso);font-size:.82rem;margin:.2rem 0;}
+.ua-rec-why{font-size:.68rem;color:var(--text-2);font-style:italic;line-height:1.5;}
+.ua-rec-conf{font-size:.6rem;color:var(--green);font-weight:600;margin-top:.3rem;}
+.ua-inactive-item{display:flex;justify-content:space-between;align-items:center;padding:.55rem 0;border-bottom:1px solid rgba(184,135,42,.07);}
+.ua-inactive-item:last-child{border-bottom:none;}
+.ua-in-name{font-size:.75rem;font-weight:600;color:var(--espresso);}
+.ua-in-meta{font-size:.62rem;color:var(--text-3);}
+.ua-in-days{font-size:.58rem;padding:2px 8px;border-radius:10px;background:var(--red-bg);color:var(--red);font-weight:700;}
+.ua-spin{display:flex;align-items:center;justify-content:center;padding:3rem;}
+.ua-spin::after{content:'';width:28px;height:28px;border:2px solid var(--ivory-3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Ban modal */
+.ua-modal{display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;background:rgba(44,26,14,.5);}
+.ua-modal.open{display:flex;}
+.ua-mc{background:var(--ivory);border:1px solid var(--border-2);border-radius:14px;padding:1.8rem;width:380px;max-width:90vw;box-shadow:0 20px 50px var(--shadow-md);}
+.ua-mc h3{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--red);margin-bottom:.5rem;}
+.ua-mc p{font-size:.75rem;color:var(--text-2);margin-bottom:1rem;}
+.ua-mc textarea{width:100%;min-height:80px;border:1px solid var(--border-2);border-radius:8px;padding:.7rem;font-family:'Jost',sans-serif;font-size:.75rem;background:var(--ivory-2);resize:vertical;outline:none;}
+.ua-mc textarea:focus{border-color:var(--gold);}
+.ua-mc-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1rem;}
+
+/* Feature panel */
+.ua-feat-panel{background:var(--ivory);border:1px solid var(--border);border-radius:12px;padding:1.4rem;margin-bottom:1.5rem;display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:center;}
+.ua-feat-btns{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.ua-fb{display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;padding:.8rem .9rem;background:var(--ivory-2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .25s;text-align:left;}
+.ua-fb:hover{border-color:var(--border-2);background:var(--gold-wash);transform:translateY(-1px);box-shadow:0 4px 14px var(--shadow);}
+.ua-fb-icon{font-size:1.1rem;}
+.ua-fb-lbl{font-size:.68rem;font-weight:600;color:var(--espresso);}
+.ua-fb-sub{font-size:.58rem;color:var(--text-3);}
+</style>
+
+<!-- Page Header -->
+<div class="sec-head">
+  <div>
+    <h2>User Authority</h2>
+    <p class="sec-sub" style="font-size:.7rem;color:var(--text-3);margin-top:.2rem">{{ users|length }} registered users · Management & AI Analytics</p>
+  </div>
+  <a href="{{ path('app_admin_dashboard') }}" class="t-btn">← Dashboard</a>
 </div>
 
-<div class="admin-content">
-    <table class="admin-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Banned</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-                <tr>
-                    <td>{{ user.id }}</td>
-                    <td>{{ user.firstName }} {{ user.lastName }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.role }}</td>
-                    <td>{{ user.banned ? 'Yes' : 'No' }}</td>
-                    <td>
-                        <form method="post" action="{{ path('app_admin_user_ban', {id: user.id}) }}" style="display: inline;">
-                            <button type="submit" class="btn-small">{{ user.banned ? 'Unban' : 'Ban' }}</button>
-                        </form>
-                        <form method="post" action="{{ path('app_admin_user_delete', {id: user.id}) }}" style="display: inline;" onsubmit="return confirm('Are you sure?')">
-                            <button type="submit" class="btn-small btn-danger">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<!-- Analytics Feature Panel -->
+<div class="ua-feat-panel">
+  <div>
+    <div class="c-title" style="margin-bottom:.25rem">Advanced User Analytics</div>
+    <div style="font-size:.68rem;color:var(--text-3)">Select a feature, then click any user's icon to analyse</div>
+  </div>
+  <div class="ua-feat-btns">
+    <button class="ua-fb" onclick="UA.fetchInactive()">
+      <span class="ua-fb-icon">💤</span><span class="ua-fb-lbl">Inactive Users</span><span class="ua-fb-sub">No orders in 30d</span>
+    </button>
+    <button class="ua-fb" onclick="UA.hint('stats')">
+      <span class="ua-fb-icon">📊</span><span class="ua-fb-lbl">Statistics</span><span class="ua-fb-sub">Click a user's 📊</span>
+    </button>
+    <button class="ua-fb" onclick="UA.hint('loyalty')">
+      <span class="ua-fb-icon">⭐</span><span class="ua-fb-lbl">Loyalty Score</span><span class="ua-fb-sub">Click a user's ⭐</span>
+    </button>
+    <button class="ua-fb" onclick="UA.hint('ai')">
+      <span class="ua-fb-icon">🤖</span><span class="ua-fb-lbl">AI Insight</span><span class="ua-fb-sub">Click a user's 🤖</span>
+    </button>
+  </div>
 </div>
+
+<!-- User Cards -->
+<div class="ua-grid">
+{% for user in users %}
+{% set initials = (user.firstName|slice(0,1)|upper) ~ (user.lastName|slice(0,1)|upper) %}
+{% set roleKey = user.role|replace({'ROLE_': '', '_MAN': ''})|lower %}
+<div class="ua-card {{ user.banned ? 'banned' : '' }}">
+
+  <div class="ua-av">{{ initials }}</div>
+
+  <div class="ua-identity">
+    <div class="ua-name">{{ user.firstName }} {{ user.lastName }}</div>
+    <div class="ua-meta">
+      <span class="ua-email">{{ user.email }}</span>
+      {% if user.phone %}<span class="ua-phone">📞 {{ user.phone }}</span>{% endif %}
+    </div>
+  </div>
+
+  <span class="ua-role {{ roleKey }}">{{ user.role|replace({'ROLE_': ''}) }}</span>
+
+  <span class="ua-status {{ user.banned ? 'banned' : 'active' }}">{{ user.banned ? 'Banned' : 'Active' }}</span>
+
+  <div class="ua-ban-info">
+    {% if user.banned %}
+      <span class="ua-ban-date">📅 {{ user.bannedAt ? user.bannedAt|date('d/m/Y') : '—' }}</span>
+      {% if user.banReason %}<span class="ua-ban-reason" title="{{ user.banReason }}">{{ user.banReason }}</span>{% endif %}
+    {% else %}
+      <span style="font-size:.62rem;color:var(--text-3)">Good standing</span>
+    {% endif %}
+  </div>
+
+  <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+    <div class="ua-analytics">
+      <button class="ua-ibtn b" onclick="UA.fetchStats({{ user.id }})" title="Statistics">📊</button>
+      <button class="ua-ibtn o" onclick="UA.fetchLoyalty({{ user.id }})" title="Loyalty">⭐</button>
+      <button class="ua-ibtn p" onclick="UA.fetchAI({{ user.id }})" title="AI Rec">🤖</button>
+    </div>
+    <div class="ua-actions">
+      {% if user.banned %}
+        <form method="post" action="{{ path('app_admin_user_unban', {id: user.id}) }}" style="display:contents">
+          <button type="submit" class="ua-btn unban">✓ Restore</button>
+        </form>
+      {% else %}
+        <button class="ua-btn ban" onclick="UA.openBan({{ user.id }},'{{ user.email }}')">🚫 Ban</button>
+      {% endif %}
+      {% if 'ADMIN' not in user.role %}
+        <form method="post" action="{{ path('app_admin_user_delete', {id: user.id}) }}" style="display:contents" onsubmit="return confirm('Permanently delete this user?')">
+          <button type="submit" class="ua-btn del">✕</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% else %}
+<div style="text-align:center;padding:3rem;color:var(--text-3);font-size:.8rem">No users found.</div>
+{% endfor %}
+</div>
+
+<!-- Slide Panel -->
+<div class="ua-overlay" id="uaOverlay" onclick="UA.close()"></div>
+<div class="ua-panel" id="uaPanel">
+  <div class="ua-ph">
+    <div class="ua-ph-title" id="uaPTitle">Insights</div>
+    <button class="ua-ph-close" onclick="UA.close()">✕</button>
+  </div>
+  <div class="ua-pb" id="uaPBody"><div class="ua-spin"></div></div>
+</div>
+
+<!-- Ban Modal -->
+<div class="ua-modal" id="uaBanModal">
+  <div class="ua-mc">
+    <h3>🚫 Suspend User</h3>
+    <p id="uaBanEmail"></p>
+    <form id="uaBanForm" method="post">
+      <textarea name="ban_reason" placeholder="State the policy violation reason (sent via WhatsApp)..." required></textarea>
+      <div class="ua-mc-actions">
+        <button type="button" class="t-btn" onclick="UA.closeBan()">Cancel</button>
+        <button type="submit" class="t-btn primary">Confirm & Notify</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const UA = (() => {
+  const ov = document.getElementById('uaOverlay');
+  const pn = document.getElementById('uaPanel');
+  const pt = document.getElementById('uaPTitle');
+  const pb = document.getElementById('uaPBody');
+  const bm = document.getElementById('uaBanModal');
+
+  function open(title, html) {
+    pt.textContent = title;
+    pb.innerHTML = html;
+    pn.classList.add('open');
+    ov.classList.add('open');
+  }
+  function spin(t) { open(t, '<div class="ua-spin"></div>'); }
+  function close() { pn.classList.remove('open'); ov.classList.remove('open'); }
+  function openBan(id, email) {
+    document.getElementById('uaBanForm').action = `/admin/users/${id}/ban`;
+    document.getElementById('uaBanEmail').textContent = email;
+    bm.classList.add('open');
+  }
+  function closeBan() { bm.classList.remove('open'); }
+  function hint(type) {
+    const labels = {stats:'📊 Statistics — click a user\'s 📊 button',loyalty:'⭐ Loyalty — click a user\'s ⭐ button',ai:'🤖 AI — click a user\'s 🤖 button'};
+    open(labels[type]||'Select a user', '<div style="padding:2rem;text-align:center;color:var(--text-2);font-size:.78rem">Click the corresponding icon button on any user row to load data.</div>');
+  }
+
+  async function fetchStats(id) {
+    spin('📊 User Statistics');
+    try {
+      const r = await fetch(`/api/users/${id}/stats`);
+      const j = await r.json();
+      if (j.status !== 'success') { open('Error', `<p style="color:var(--red)">${j.message}</p>`); return; }
+      const d = j.data;
+      open('📊 ' + d.user_name, `
+        <div class="ua-kpi-row">
+          <div class="ua-kpi"><div class="ua-kpi-val">${d.total_orders}</div><div class="ua-kpi-lbl">Orders</div></div>
+          <div class="ua-kpi"><div class="ua-kpi-val">${d.total_spent}</div><div class="ua-kpi-lbl">Spent (${d.currency})</div></div>
+          <div class="ua-kpi"><div class="ua-kpi-val">${d.avg_order}</div><div class="ua-kpi-lbl">Avg Order</div></div>
+          <div class="ua-kpi"><div class="ua-kpi-val" style="font-size:1rem">${d.preferred_type}</div><div class="ua-kpi-lbl">Preference</div></div>
+        </div>
+        <div class="ua-kpi" style="margin-bottom:.7rem"><div class="ua-kpi-lbl" style="margin-bottom:.3rem">Top Item</div><div style="font-weight:600;color:var(--espresso)">${d.most_ordered_item}</div></div>
+        <div class="ua-kpi"><div class="ua-kpi-lbl" style="margin-bottom:.3rem">Last Order</div><div style="color:var(--text-2);font-size:.78rem">${d.last_order_date}</div></div>`);
+    } catch(e) { open('Error', '<p style="color:var(--red)">Connection failed. Is the server running?</p>'); }
+  }
+
+  async function fetchLoyalty(id) {
+    spin('⭐ Loyalty Score');
+    try {
+      const r = await fetch(`/api/users/${id}/loyalty-score`);
+      const j = await r.json();
+      if (j.status !== 'success') { open('Error', `<p style="color:var(--red)">${j.message}</p>`); return; }
+      const d = j.data;
+      open('⭐ ' + d.user_name, `
+        <div style="text-align:center;padding:1.2rem 0">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:700;color:var(--espresso)">${d.score}</div>
+          <div style="font-size:.58rem;letter-spacing:.2em;color:var(--text-3);margin-bottom:.7rem">LOYALTY POINTS</div>
+          <span class="ua-tier" style="background:${d.tier_color}">${d.tier}</span>
+        </div>
+        <div class="ua-prog-wrap">
+          <div class="ua-prog-lbl"><span>Progress to ${d.next_tier}</span><span>${d.progress}%</span></div>
+          <div class="ua-prog"><div class="ua-prog-fill" style="width:${d.progress}%;background:${d.tier_color}"></div></div>
+        </div>
+        <div class="ua-kpi-row" style="margin-top:.8rem">
+          <div class="ua-kpi"><div class="ua-kpi-val">${d.total_orders}</div><div class="ua-kpi-lbl">Orders</div></div>
+          <div class="ua-kpi"><div class="ua-kpi-val">${d.total_spent}</div><div class="ua-kpi-lbl">Spent (TND)</div></div>
+        </div>`);
+    } catch(e) { open('Error', '<p style="color:var(--red)">Connection failed.</p>'); }
+  }
+
+  async function fetchAI(id) {
+    spin('🤖 AI Recommendation');
+    try {
+      const r = await fetch(`/api/users/${id}/recommendation`);
+      const j = await r.json();
+      if (j.status !== 'success') { open('Error', `<p style="color:var(--red)">${j.message}</p>`); return; }
+      const d = j.data;
+      const cards = (d.recommendations||[]).map(rec=>`
+        <div class="ua-rec">
+          <div class="ua-rec-cat">${rec.category}</div>
+          <div class="ua-rec-dish">${rec.dish}</div>
+          <div class="ua-rec-why">"${rec.reason}"</div>
+          <div class="ua-rec-conf">Confidence: ${rec.confidence}</div>
+        </div>`).join('');
+      open('🤖 ' + d.user_name, `<div style="font-size:.65rem;color:var(--text-3);margin-bottom:1rem">Based on ${d.order_count} order(s) · ${d.generated_at}</div>${cards||'<p>No data.</p>'}`);
+    } catch(e) { open('Error', '<p style="color:var(--red)">Connection failed.</p>'); }
+  }
+
+  async function fetchInactive() {
+    spin('💤 Inactive Users');
+    try {
+      const r = await fetch('/api/users/inactive');
+      const j = await r.json();
+      if (j.status !== 'success') { open('Error', `<p style="color:var(--red)">${j.message}</p>`); return; }
+      const data = j.data;
+      if (!data.length) { open('💤 Inactive Users', '<div style="text-align:center;padding:2rem"><div style="font-size:2rem">🎉</div><p style="color:var(--green);font-weight:600;margin-top:.5rem">All users are active!</p></div>'); return; }
+      open(`💤 Inactive Users (${data.length})`, '<div style="font-size:.65rem;color:var(--text-3);margin-bottom:.8rem">No orders placed in the last 30 days</div>' +
+        data.map(u=>`<div class="ua-inactive-item"><div><div class="ua-in-name">${u.name}</div><div class="ua-in-meta">${u.email} · ${u.role}</div><div class="ua-in-meta">${u.last_order}</div></div><span class="ua-in-days">${u.days_inactive === 999 ? '∞' : u.days_inactive}d</span></div>`).join(''));
+    } catch(e) { open('Error', '<p style="color:var(--red)">Connection failed.</p>'); }
+  }
+
+  return { close, openBan, closeBan, hint, fetchStats, fetchLoyalty, fetchAI, fetchInactive };
+})();
+</script>
 {% endblock %}

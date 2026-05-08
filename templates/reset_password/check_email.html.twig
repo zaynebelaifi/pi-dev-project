@@ -1,0 +1,122 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Check your inbox — BIG 4{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+  <div class="auth-card check-card">
+
+    {# Icon ── envelope with a checkmark feel #}
+    <div class="check-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="32" fill="rgba(199,151,47,.12)"/>
+        <path d="M12 22l20 14 20-14" stroke="#c7972f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="12" y="20" width="40" height="26" rx="4" stroke="#c7972f" stroke-width="2.5"/>
+        {# small tick #}
+        <circle cx="46" cy="18" r="8" fill="#c7972f"/>
+        <path d="M42 18l3 3 5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <h1 class="check-title">Check your inbox</h1>
+
+    <p class="check-body">
+      If an account exists for that email address, we've sent a password reset link.
+      The link expires in <strong>60 minutes</strong>.
+    </p>
+
+    <p class="check-body check-hint">
+      Don't see it? Check your <strong>spam</strong> or <strong>junk</strong> folder,
+      or wait a moment and try again.
+    </p>
+
+    <div class="check-actions">
+      <a href="{{ path('app_forgot_password') }}" class="btn btn-outline">
+        Try a different email
+      </a>
+      <a href="{{ path('app_login') }}" class="btn btn-primary">
+        Back to Sign In
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.auth-page {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: radial-gradient(circle at top, rgba(255,244,214,.65), transparent 35%),
+              linear-gradient(180deg, #f9f5ec 0%, #fffdf9 100%);
+}
+.auth-card.check-card {
+  width: min(100%, 520px);
+  background: rgba(255,255,255,.96);
+  border-radius: 32px;
+  border: 1px solid rgba(209,184,120,.18);
+  box-shadow: 0 40px 120px rgba(141,109,57,.12);
+  padding: 3rem 2.5rem;
+  text-align: center;
+}
+.check-icon { margin-bottom: 1.5rem; }
+.check-icon svg { width: 72px; height: 72px; }
+.check-title {
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  color: var(--brown, #7a4f1e);
+  margin: 0 0 1rem;
+}
+.check-body {
+  font-size: .97rem;
+  color: var(--text-2, #6b5744);
+  line-height: 1.7;
+  margin: 0 0 1rem;
+}
+.check-hint { font-size: .9rem; }
+.check-actions {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  margin-top: 2rem;
+}
+.btn {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.15rem;
+  border-radius: 18px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .18s ease, background .18s ease;
+  text-align: center;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #c7972f 0%, #b27a1d 100%);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(178,122,29,.28);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #b27a1d 0%, #8a5b12 100%);
+  transform: translateY(-1px);
+  color: #fff;
+}
+.btn-outline {
+  background: transparent;
+  color: var(--brown, #7a4f1e);
+  border: 1.5px solid rgba(184,135,42,.35);
+}
+.btn-outline:hover {
+  background: rgba(199,151,47,.07);
+  border-color: var(--gold, #c7972f);
+  color: var(--brown, #7a4f1e);
+  transform: translateY(-1px);
+}
+@media (max-width: 480px) {
+  .auth-card.check-card { padding: 2rem 1.5rem; }
+}
+</style>
+{% endblock %}

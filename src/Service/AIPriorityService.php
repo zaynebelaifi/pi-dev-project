@@ -1,18 +1,24 @@
 <?php
+
 namespace App\Service;
 
 use App\Entity\Delivery;
+use App\Entity\DeliveryMan;
+use App\Entity\FleetCar;
 use App\Repository\DeliveryManRepository;
 use App\Repository\DeliveryFeatureRepository;
+use App\Repository\FleetCarRepository;
 use Psr\Log\LoggerInterface;
+use App\Contract\AIPriorityServiceInterface;
 
-final class AIPriorityService
+final class AIPriorityService implements AIPriorityServiceInterface
 {
     public function __construct(
         private LogisticsService $logistics,
         private DeliveryManRepository $deliveryManRepo,
         private DeliveryFeatureRepository $featureRepo,
         private \App\Repository\DeliveryRepository $deliveryRepo,
+        private FleetCarRepository $carRepo,
         private LoggerInterface $logger
     ) {}
 
@@ -157,5 +163,132 @@ final class AIPriorityService
         if (!$created) return false;
         $elapsed = time() - $created->getTimestamp();
         return $elapsed > ($etaSeconds * 1.2);
+    }
+
+    /**
+     * AI-powered best assignment: ranks all available drivers and cars.
+     * Returns the optimal driver+car pair with score and reason.
+     *
+     * @return array{driver: DeliveryMan, car: FleetCar, score: float, reason: string, candidates: array}
+     * @throws \RuntimeException when no driver or car is available
+     */
+    public function suggestBestAssignment(Delivery $delivery): array
+    {
+        // 1. Gather available drivers
+        $drivers = $this->deliveryManRepo->findAvailableDeliveryMen();
+        if (empty($drivers)) {
+            throw new \RuntimeException('Aucun livreur disponible pour l\'assignation.');
+        }
+
+        // 2. Gather available cars
+        $cars = $this->carRepo->findBy(['carStatus' => 'available']);
+        if (empty($cars)) {
+            // Fallback: try all cars
+            $cars = $this->carRepo->findAll();
+        }
+        if (empty($cars)) {
+            throw new \RuntimeException('Aucun véhicule disponible pour l\'assignation.');
+        }
+
+        // 3. Reference point: delivery destination or restaurant default
+        $refLat = (float) ($delivery->getDestinationLat() ?? $delivery->getCurrentLatitude() ?? 36.8065);
+        $refLon = (float) ($delivery->getDestinationLng() ?? $delivery->getCurrentLongitude() ?? 10.1815);
+
+        // 4. Score each driver
+        $scoredDrivers = [];
+        foreach ($drivers as $dm) {
+            $driverScore = $this->scoreDriverForDelivery($delivery, $dm, $refLat, $refLon);
+
+            // Workload penalty: reduce score for drivers with active deliveries
+            $activeCount = $dm->getDeliverys()
+                ->filter(fn($d) => in_array($d->getStatus(), ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'assigned', 'in_progress'], true))
+                ->count();
+            $workloadPenalty = $activeCount * 10.0;
+            $driverScore = max(0, $driverScore - $workloadPenalty);
+
+            // Performance bonus
+            $perfBonus = ($dm->getPerformanceScore() / 100.0) * 5.0;
+            $driverScore += $perfBonus;
+
+            $scoredDrivers[] = [
+                'driver' => $dm,
+                'score'  => round($driverScore, 2),
+            ];
+        }
+
+        // Sort descending (higher = better)
+        usort($scoredDrivers, fn($a, $b) => $b['score'] <=> $a['score']);
+
+        $bestDriver = $scoredDrivers[0]['driver'];
+        $bestDriverScore = $scoredDrivers[0]['score'];
+
+        // 5. Find best car (prefer higher fuel, available status)
+        $bestCar = $this->findBestCar($cars);
+
+        // 6. Normalize score to 0.0-1.0 range (lower = better for frontend)
+        $maxPossibleScore = 100.0 + 5.0; // max rating score + perf bonus
+        $normalizedScore = round(1.0 - min(1.0, $bestDriverScore / $maxPossibleScore), 4);
+
+        // 7. Build reason string
+        $reason = $this->buildAssignmentReason($bestDriver, $bestCar, $bestDriverScore);
+
+        // 8. Build candidates list (top 3) for the modal
+        $candidates = [];
+        foreach (array_slice($scoredDrivers, 0, 3) as $c) {
+            $candidates[] = [
+                'driverId'   => $c['driver']->getId(),
+                'driverName' => $c['driver']->getName(),
+                'score'      => $c['score'],
+                'rating'     => (float) ($c['driver']->getRating() ?? 0),
+                'status'     => $c['driver']->getStatus(),
+            ];
+        }
+
+        return [
+            'driver'     => $bestDriver,
+            'car'        => $bestCar,
+            'score'      => $normalizedScore,
+            'reason'     => $reason,
+            'candidates' => $candidates,
+        ];
+    }
+
+    /**
+     * Find the best available car (highest fuel level, available first).
+     */
+    private function findBestCar(array $cars): FleetCar
+    {
+        usort($cars, function (FleetCar $a, FleetCar $b) {
+            // Prefer available cars
+            $aAvail = $a->getCarStatus() === 'available' ? 1 : 0;
+            $bAvail = $b->getCarStatus() === 'available' ? 1 : 0;
+            if ($aAvail !== $bAvail) return $bAvail <=> $aAvail;
+            // Then by fuel level
+            return ($b->getFuelLevel() ?? 0) <=> ($a->getFuelLevel() ?? 0);
+        });
+        return $cars[0];
+    }
+
+    /**
+     * Build a human-readable reason for the AI suggestion.
+     */
+    private function buildAssignmentReason(DeliveryMan $driver, FleetCar $car, float $score): string
+    {
+        $rating = $driver->getRating() ?? 'N/A';
+        $fuel = $car->getFuelLevel() ?? 100;
+        $perf = $driver->getPerformanceScore();
+
+        return sprintf(
+            'Meilleur match: %s (score IA: %.1f) — Rating: %s/5, Performance: %.0f/100, '
+            . 'Véhicule: %s %s (%s), Carburant: %.0f%%.',
+            $driver->getName(),
+            $score,
+            $rating,
+            $perf,
+            $car->getMake(),
+            $car->getModel(),
+            $car->getLicensePlate(),
+            $fuel
+        );
     }
 }

@@ -15,9 +15,9 @@ class Order
     #[ORM\Column(type: 'integer')]
     private ?int $order_id = null;
 
-    #[ORM\Column(type: 'integer')]
-    #[Assert\NotBlank]
-    private ?int $client_id = null;
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'orders')]
+    #[ORM\JoinColumn(name: 'client_id', referencedColumnName: 'id', nullable: false)]
+    private ?User $client = null;
 
     #[ORM\ManyToOne(targetEntity: Reservation::class)]
     #[ORM\JoinColumn(name: 'reservation_id', referencedColumnName: 'reservation_id', nullable: true, onDelete: 'SET NULL')]
@@ -48,8 +48,10 @@ class Order
     // ✅ camelCase getters/setters — Symfony can now find them
     public function getOrderId(): ?int { return $this->order_id; }
 
-    public function getClientId(): ?int { return $this->client_id; }
-    public function setClientId(int $client_id): self { $this->client_id = $client_id; return $this; }
+    public function getClientId(): ?int { return $this->client ? $this->client->getId() : null; }
+    
+    public function getClient(): ?User { return $this->client; }
+    public function setClient(?User $client): self { $this->client = $client; return $this; }
 
     public function getReservation(): ?Reservation { return $this->reservation; }
     public function setReservation(?Reservation $reservation): self { $this->reservation = $reservation; return $this; }

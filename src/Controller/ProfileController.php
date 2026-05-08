@@ -12,10 +12,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
+use App\Service\OrderHistoryService;
+
 final class ProfileController extends AbstractController
 {
     #[Route('/profile', name: 'app_profile')]
-    public function index(SessionInterface $session, UserRepository $userRepository): Response
+    public function index(SessionInterface $session, UserRepository $userRepository, OrderHistoryService $historyService): Response
     {
         $userId = $session->get('user_id');
         if (!$userId) {
@@ -27,8 +29,11 @@ final class ProfileController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
+        $lastOrders = $historyService->getLastOrders($user, 3);
+
         return $this->render('profile/index.html.twig', [
             'user' => $user,
+            'lastOrders' => $lastOrders,
         ]);
     }
 

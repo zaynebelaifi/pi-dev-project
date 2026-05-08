@@ -22,3 +22,54 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\WhatsAppNotificationService:
+        arguments:
+            $twilioSid:              '%env(TWILIO_SID)%'
+            $twilioAuthToken:        '%env(TWILIO_AUTH_TOKEN)%'
+            $twilioWhatsappNumber:   '%env(TWILIO_WHATSAPP_NUMBER)%'
+
+    App\Service\Fleet\WeatherService:
+        arguments:
+            $apiKey: '%env(OPENWEATHER_API_KEY)%'
+
+    App\Service\Fleet\RouteService:
+        arguments:
+            $apiKey: '%env(GOOGLE_MAPS_API_KEY)%'
+
+    App\Service\Fleet\GeofencingService:
+        arguments:
+            $defaultZoneRadius: '%env(float:DELIVERY_ZONE_RADIUS_KM)%'
+
+    App\Service\AIPriorityService: ~
+
+    App\Service\Fleet\FleetService:
+        arguments:
+            $restaurantLat: '%env(float:RESTAURANT_LAT)%'
+            $restaurantLng: '%env(float:RESTAURANT_LNG)%'
+
+    App\Controller\Admin\FleetDashboardController:
+        arguments:
+            $googleMapsApiKey: '%env(GOOGLE_MAPS_API_KEY)%'
+            $restaurantLat:    '%env(float:RESTAURANT_LAT)%'
+            $restaurantLng:    '%env(float:RESTAURANT_LNG)%'
+        tags: ['controller.service_arguments']
+
+
+    App\Contract\GpsServiceInterface:
+        alias: App\Service\Fleet\GpsService
+
+    App\Contract\WeatherServiceInterface:
+        alias: App\Service\Fleet\WeatherService
+
+    App\Contract\RouteServiceInterface:
+        alias: App\Service\Fleet\RouteService
+
+    App\Contract\GeofencingServiceInterface:
+        alias: App\Service\Fleet\GeofencingService
+
+    App\Contract\AIPriorityServiceInterface:
+        alias: App\Service\AIPriorityService
+
+    App\Contract\FleetServiceInterface:
+        alias: App\Service\Fleet\FleetService

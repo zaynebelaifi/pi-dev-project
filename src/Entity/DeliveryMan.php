@@ -264,4 +264,36 @@ class DeliveryMan
     
     public function getUpdatedAt(): ?\DateTimeInterface { return $this->getUpdated_at(); }
     public function setUpdatedAt(\DateTimeInterface $at): self { return $this->setUpdated_at($at); }
+
+    // ── Fleet tracking fields ─────────────────────────────────────────────
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $latitude = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $longitude = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isOnline = false;
+
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $activeDeliveries = 0;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $lastLocationUpdate = null;
+
+    public function getLatitude(): ?float { return $this->latitude; }
+    public function setLatitude(?float $latitude): self { $this->latitude = $latitude; return $this; }
+
+    public function getLongitude(): ?float { return $this->longitude; }
+    public function setLongitude(?float $longitude): self { $this->longitude = $longitude; return $this; }
+
+    public function isOnline(): bool { return $this->isOnline; }
+    public function setIsOnline(bool $isOnline): self { $this->isOnline = $isOnline; return $this; }
+
+    public function getActiveDeliveries(): int { return $this->activeDeliveries; }
+    public function setActiveDeliveries(int $activeDeliveries): self { $this->activeDeliveries = $activeDeliveries; return $this; }
+
+    public function getLastLocationUpdate(): ?\DateTimeInterface { return $this->lastLocationUpdate; }
+    public function setLastLocationUpdate(?\DateTimeInterface $lastLocationUpdate): self { $this->lastLocationUpdate = $lastLocationUpdate; return $this; }
 }

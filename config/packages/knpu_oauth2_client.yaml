@@ -1,0 +1,11 @@
+knpu_oauth2_client:
+    clients:
+        # Google OAuth2 client — see https://github.com/knpuniversity/oauth2-client-bundle
+        google:
+            type: google
+            client_id: '%env(GOOGLE_CLIENT_ID)%'
+            client_secret: '%env(GOOGLE_CLIENT_SECRET)%'
+            # Must match the Authorized Redirect URI in Google Cloud Console exactly.
+            redirect_route: connect_google_check
+            redirect_params: {}
+            use_state: true

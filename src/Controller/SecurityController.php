@@ -83,7 +83,10 @@ final class SecurityController extends AbstractController
                     || (in_array($email, ['admin@big4.test', 'admin@big4.com'], true) && $password === 'admin123');
             }
 
-            if ($user && !$user->isBanned() && $passwordIsValid) {
+            if ($user && $user->isBanned() && $passwordIsValid) {
+                // Banned users get a specific message instead of a generic login failure.
+                $error = 'Your account has been suspended. Please contact support.';
+            } elseif ($user && !$user->isBanned() && $passwordIsValid) {
                 $normalizedRole = $this->normalizeRole($user->getRole());
 
                 // Upgrade legacy role values in place so existing access checks keep working.

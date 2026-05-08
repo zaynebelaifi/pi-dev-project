@@ -476,4 +476,98 @@ class Delivery
     
     public function getUpdatedAt(): ?\DateTimeInterface { return $this->getUpdated_at(); }
     public function setUpdatedAt(\DateTimeInterface $at): self { return $this->setUpdated_at($at); }
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $destinationLat = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $destinationLng = null;
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'assigned_user_id', referencedColumnName: 'id', nullable: true)]
+    private ?User $assignedUser = null;
+
+    public function getDestinationLat(): ?float
+    {
+        return $this->destinationLat;
+    }
+
+    public function setDestinationLat(?float $destinationLat): self
+    {
+        $this->destinationLat = $destinationLat;
+        return $this;
+    }
+
+    public function getDestinationLng(): ?float
+    {
+        return $this->destinationLng;
+    }
+
+    public function setDestinationLng(?float $destinationLng): self
+    {
+        $this->destinationLng = $destinationLng;
+        return $this;
+    }
+
+    public function getAssignedUser(): ?User
+    {
+        return $this->assignedUser;
+    }
+
+    public function setAssignedUser(?User $assignedUser): self
+    {
+        $this->assignedUser = $assignedUser;
+        return $this;
+    }
+
+    // ── Fleet intelligence fields ─────────────────────────────────────
+
+    /** AI-computed ETA based on route + traffic + weather. */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $estimatedArrivalTime = null;
+
+    /** Actual arrival time stamped when delivery is confirmed. */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $actualArrivalTime = null;
+
+    /** Risk level computed from weather + traffic: low | medium | high. */
+    #[ORM\Column(type: 'string', length: 10, nullable: true, options: ['default' => 'low'])]
+    private ?string $riskLevel = 'low';
+
+    /** Total route distance in km. */
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $routeDistance = null;
+
+    /** Lifecycle status: pending | assigned | in_progress | delivered | failed. */
+    #[ORM\Column(type: 'string', length: 20, nullable: true, options: ['default' => 'pending'])]
+    private ?string $deliveryStatus = 'pending';
+
+    /** Current weather at the destination (e.g. "rain", "clear"). */
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $weatherCondition = null;
+
+    /** Extra ETA minutes caused by weather conditions. */
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $weatherEtaImpact = null;
+
+    public function getEstimatedArrivalTime(): ?\DateTimeImmutable { return $this->estimatedArrivalTime; }
+    public function setEstimatedArrivalTime(?\DateTimeImmutable $t): self { $this->estimatedArrivalTime = $t; return $this; }
+
+    public function getActualArrivalTime(): ?\DateTimeImmutable { return $this->actualArrivalTime; }
+    public function setActualArrivalTime(?\DateTimeImmutable $t): self { $this->actualArrivalTime = $t; return $this; }
+
+    public function getRiskLevel(): ?string { return $this->riskLevel; }
+    public function setRiskLevel(?string $riskLevel): self { $this->riskLevel = $riskLevel; return $this; }
+
+    public function getRouteDistance(): ?float { return $this->routeDistance; }
+    public function setRouteDistance(?float $routeDistance): self { $this->routeDistance = $routeDistance; return $this; }
+
+    public function getDeliveryStatus(): ?string { return $this->deliveryStatus; }
+    public function setDeliveryStatus(?string $deliveryStatus): self { $this->deliveryStatus = $deliveryStatus; return $this; }
+
+    public function getWeatherCondition(): ?string { return $this->weatherCondition; }
+    public function setWeatherCondition(?string $weatherCondition): self { $this->weatherCondition = $weatherCondition; return $this; }
+
+    public function getWeatherEtaImpact(): ?float { return $this->weatherEtaImpact; }
+    public function setWeatherEtaImpact(?float $weatherEtaImpact): self { $this->weatherEtaImpact = $weatherEtaImpact; return $this; }
 }

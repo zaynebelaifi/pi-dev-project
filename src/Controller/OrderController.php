@@ -133,31 +133,30 @@ final class OrderController extends AbstractController
         if (!$cartItems || !$orderTotal || !$orderType) {
             return new JsonResponse(['success' => false, 'message' => 'Invalid order data.']);
         }
+        $clientId = $request->getSession()->get('user_id');
+        $cart = $request->getSession()->get('cart', []);
+        $orderType = $request->getSession()->get('order_type', 'DELIVERY');
 
-        if (!in_array($orderType, ['DINE_IN', 'DELIVERY'])) {
-            return new JsonResponse(['success' => false, 'message' => 'Invalid order type.']);
+        if (!$clientId || empty($cart)) {
+            return $this->redirectToRoute('app_home');
         }
 
-        if (!is_numeric($orderTotal) || (float) $orderTotal < 0) {
-            return new JsonResponse(['success' => false, 'message' => 'Invalid order total.']);
-        }
-
-        $clientId = $this->resolveClientIdForOrder($em->getConnection(), $sessionUserId);
-        if ($clientId === null) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Unable to identify a valid client account for this order. Please sign in and try again.',
-            ], 400);
+        $total = 0;
+        $itemsDesc = [];
+        foreach ($cart as $item) {
+            $total += $item['price'] * $item['quantity'];
+            $itemsDesc[] = $item['name'] . ' x' . $item['quantity'];
         }
 
         try {
             $order = new Order();
-            $order->setClientId($clientId);
+            $client = $em->getReference(User::class, $clientId);
+            $order->setClient($client);
             $order->setOrderType($orderType);
             $order->setOrderDate(new \DateTime());
             $order->setStatus('PENDING');
-            $order->setTotalAmount((string) $orderTotal);
-            $order->setCartItems($cartItems);
+            $order->setTotalAmount((string)$total);
+            $order->setCartItems(implode(', ', $itemsDesc));
 
             $em->persist($order);
             $em->flush();

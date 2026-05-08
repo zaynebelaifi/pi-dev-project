@@ -119,6 +119,26 @@
         </div>
       </div>
 
+      <div class="mod-card" onclick="location.href='{{ path('admin_fleet_dashboard') }}'">
+        <div class="card-top">
+          <div>
+            <p class="c-title">Fleet Management</p>
+            <p class="c-desc">Monitor live driver tracking, smart assignment, and real-time delivery map.</p>
+          </div>
+          <div class="c-icon purple">🗺️</div>
+        </div>
+        <div class="c-stats">
+          <div class="cs-item">
+            <div class="cs-num">{{ deliveryManCount }}</div>
+            <div class="cs-lbl">Drivers</div>
+          </div>
+          <div class="cs-item">
+            <div class="cs-num" style="color:var(--green);font-size:.85rem">● Live</div>
+            <div class="cs-lbl">Map Active</div>
+          </div>
+        </div>
+      </div>
+
       <div class="mod-card" onclick="location.href='{{ path('app_admin_users') }}'">
         <div class="card-top">
           <div>
@@ -127,11 +147,27 @@
           </div>
           <div class="c-icon red">👤</div>
         </div>
-        <div class="c-stats">
-          <div class="cs-item">
-            <div class="cs-num">Users</div>
-            <div class="cs-lbl">Management</div>
-          </div>
+        <div class="q-grid mt-3">
+          <button class="q-btn" onclick="fetchDashboardStats()">
+            <span class="q-icon">📊</span>
+            <span class="q-lbl">View Statistics</span>
+            <span class="q-sub">Engagement metrics</span>
+          </button>
+          <button class="q-btn" onclick="fetchDashboardInactive()">
+            <span class="q-icon">💤</span>
+            <span class="q-lbl">Inactive Users</span>
+            <span class="q-sub">Churn prevention</span>
+          </button>
+          <button class="q-btn" onclick="fetchDashboardLoyalty()">
+            <span class="q-icon">⭐</span>
+            <span class="q-lbl">Loyalty Score</span>
+            <span class="q-sub">Top members list</span>
+          </button>
+          <button class="q-btn" onclick="fetchDashboardAI()">
+            <span class="q-icon">🤖</span>
+            <span class="q-lbl">AI Insight</span>
+            <span class="q-sub">Smart segmentation</span>
+          </button>
         </div>
       </div>
 
@@ -168,4 +204,94 @@
       </div>
     </div>
   </div>
+
+    <!-- Dashboard Result Modal -->
+    <div id="dashResultModal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 20px; border: 1px solid var(--gold); background: var(--ivory);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="dashResultTitle" style="font-family: 'Cormorant Garamond', serif; font-weight: 700; color: var(--gold); font-size: 1.5rem;">Insights</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="dashResultBody" style="font-size: 0.9rem; color: var(--text-2);">
+                    <!-- Dynamic content here -->
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="t-btn primary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const dashModalElement = document.getElementById('dashResultModal');
+        const dashModal = dashModalElement ? new bootstrap.Modal(dashModalElement) : null;
+        const dashTitle = document.getElementById('dashResultTitle');
+        const dashBody = document.getElementById('dashResultBody');
+
+        function showDashResult(title, html) {
+            if (!dashModal) return;
+            dashTitle.textContent = title;
+            dashBody.innerHTML = html;
+            dashModal.show();
+        }
+
+        async function fetchDashboardStats() {
+            try {
+                const res = await fetch('/api/users/1/stats');
+                const data = await res.json();
+                showDashResult('User Engagement Statistics', `
+                    <div class="p-3 mb-2" style="background:var(--gold-wash); border-radius:12px;">
+                        <p><strong>Representative Member:</strong> Admin Manager</p>
+                        <p><strong>Total Orders:</strong> ${data.total_orders}</p>
+                        <p><strong>Total Spending:</strong> ${data.total_spent} ${data.currency}</p>
+                        <p><strong>Last Activity:</strong> ${data.last_order_date}</p>
+                    </div>
+                `);
+            } catch(e) { console.error(e); }
+        }
+
+        async function fetchDashboardInactive() {
+            try {
+                const res = await fetch('/api/users/inactive');
+                const data = await res.json();
+                let html = data.length > 0 
+                    ? data.map(u => `<div class="mb-2 p-2 border-bottom"><strong>${u.name}</strong><br><span class="small">Last order: ${u.last_order}</span></div>`).join('')
+                    : '<p>All customers are currently active!</p>';
+                showDashResult('Inactive Users (30d)', `<div style="max-height: 300px; overflow-y: auto;">${html}</div>`);
+            } catch(e) { console.error(e); }
+        }
+
+        async function fetchDashboardLoyalty() {
+            try {
+                const res = await fetch('/api/users/1/loyalty-score');
+                const data = await res.json();
+                showDashResult('Loyalty Insights', `
+                    <div class="text-center p-4" style="background:var(--gold-wash); border-radius:15px;">
+                        <div style="font-size: 2.5rem; color: var(--gold); font-weight: 700;">${data.score}</div>
+                        <div class="pill p-amber mt-2">${data.tier} MEMBER</div>
+                        <div class="progress mt-4" style="height: 8px;">
+                            <div class="progress-bar" style="width: ${data.next_tier_progress}%; background: var(--gold);"></div>
+                        </div>
+                    </div>
+                `);
+            } catch(e) { console.error(e); }
+        }
+
+        async function fetchDashboardAI() {
+            try {
+                const res = await fetch('/api/users/1/recommendation');
+                const data = await res.json();
+                showDashResult('AI Strategic Recommendation', `
+                    <div class="p-3" style="border-left: 4px solid var(--gold); background: #fff8eb;">
+                        <p class="font-italic" style="font-size: 1.1rem; color: var(--espresso);">"${data.recommendation}"</p>
+                    </div>
+                `);
+            } catch(e) { console.error(e); }
+        }
+    </script>
+{% endblock %}
+

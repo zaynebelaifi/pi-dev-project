@@ -1,0 +1,430 @@
+{% extends 'backend.html.twig' %}
+{% block title %}Fleet Dashboard — BIG 4{% endblock %}
+{% block topbar_title %}Fleet Management{% endblock %}
+{% block topbar_breadcrumb %}Big 4 · Admin · Fleet{% endblock %}
+
+{% block body %}
+<style>
+/* ── Layout ── */
+.fd-grid{display:grid;grid-template-columns:1fr 360px;gap:1.2rem;height:calc(100vh - 130px);}
+.fd-map-col{display:flex;flex-direction:column;gap:1rem;min-height:0;}
+.fd-side{display:flex;flex-direction:column;gap:.9rem;overflow-y:auto;padding-right:4px;}
+.fd-side::-webkit-scrollbar{width:4px;}
+.fd-side::-webkit-scrollbar-thumb{background:rgba(184,135,42,.3);border-radius:4px;}
+
+/* ── Map ── */
+#fleetMap{flex:1;min-height:480px;border-radius:12px;border:1px solid var(--border);box-shadow:0 4px 20px var(--shadow-md);}
+
+/* ── Cards ── */
+.fd-card{background:var(--ivory);border:1px solid var(--border);border-radius:12px;padding:1.1rem;}
+.fd-card-title{font-family:'Cormorant Garamond',serif;font-size:.9rem;font-weight:600;color:var(--espresso);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;}
+
+/* ── KPI strip ── */
+.fd-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1rem;}
+.fd-kpi-item{background:var(--ivory);border:1px solid var(--border);border-radius:10px;padding:.8rem;text-align:center;}
+.fd-kpi-val{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--espresso);line-height:1;}
+.fd-kpi-lbl{font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-top:.2rem;}
+
+/* ── Weather banner ── */
+.fd-weather{display:flex;align-items:center;gap:1rem;padding:.9rem 1.1rem;}
+.fd-weather-icon{font-size:2rem;line-height:1;}
+.fd-weather-info{}
+.fd-weather-temp{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--espresso);}
+.fd-weather-cond{font-size:.65rem;color:var(--text-2);text-transform:uppercase;letter-spacing:.1em;}
+.fd-weather-warn{font-size:.62rem;color:var(--amber);font-weight:600;margin-top:.2rem;}
+.fd-weather-badge{margin-left:auto;padding:3px 10px;border-radius:20px;font-size:.6rem;font-weight:700;}
+.fd-weather-badge.good{background:var(--green-bg);color:var(--green);}
+.fd-weather-badge.bad{background:var(--amber-bg);color:var(--amber);}
+
+/* ── Driver cards ── */
+.fd-driver{display:flex;align-items:center;gap:.7rem;padding:.6rem 0;border-bottom:1px solid rgba(184,135,42,.07);}
+.fd-driver:last-child{border-bottom:none;}
+.fd-av{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--gold),#b8872a);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0;position:relative;}
+.fd-av-dot{position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;border:2px solid var(--ivory);}
+.fd-av-dot.online{background:var(--green);}
+.fd-av-dot.offline{background:var(--text-3);}
+.fd-driver-info{flex:1;min-width:0;}
+.fd-driver-name{font-size:.75rem;font-weight:600;color:var(--espresso);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fd-driver-meta{font-size:.6rem;color:var(--text-3);}
+.fd-driver-dist{font-size:.6rem;padding:2px 7px;border-radius:10px;background:var(--blue-bg);color:var(--blue);font-weight:600;white-space:nowrap;}
+
+/* ── Pending deliveries ── */
+.fd-deliv{padding:.6rem 0;border-bottom:1px solid rgba(184,135,42,.07);}
+.fd-deliv:last-child{border-bottom:none;}
+.fd-deliv-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;}
+.fd-deliv-id{font-size:.7rem;font-weight:600;color:var(--espresso);}
+.fd-status{font-size:.55rem;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.fd-status.pending{background:var(--amber-bg);color:var(--amber);}
+.fd-status.assigned{background:var(--blue-bg);color:var(--blue);}
+.fd-status.in-progress{background:var(--purple-bg);color:var(--purple);}
+.fd-deliv-addr{font-size:.62rem;color:var(--text-2);margin-bottom:.4rem;}
+.fd-assign-btn{font-size:.6rem;padding:3px 9px;border-radius:6px;border:1px solid var(--border-2);background:var(--ivory-2);cursor:pointer;color:var(--gold);font-weight:600;transition:all .2s;}
+.fd-assign-btn:hover{background:var(--gold-wash);border-color:var(--gold);}
+
+/* ── Assignment modal ── */
+.fd-modal{display:none;position:fixed;inset:0;z-index:900;align-items:center;justify-content:center;background:rgba(44,26,14,.5);}
+.fd-modal.open{display:flex;}
+.fd-modal-box{background:var(--ivory);border:1px solid var(--border-2);border-radius:14px;padding:1.8rem;width:440px;max-width:92vw;box-shadow:0 20px 50px var(--shadow-md);}
+.fd-modal-box h3{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--espresso);margin-bottom:.3rem;}
+.fd-modal-box p{font-size:.72rem;color:var(--text-2);margin-bottom:1rem;}
+.fd-field{margin-bottom:.9rem;}
+.fd-field label{display:block;font-size:.62rem;font-weight:600;color:var(--text-2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.3rem;}
+.fd-field select{width:100%;padding:.6rem .8rem;border:1px solid var(--border-2);border-radius:8px;background:var(--ivory-2);font-family:'Jost',sans-serif;font-size:.75rem;color:var(--espresso);outline:none;}
+.fd-field select:focus{border-color:var(--gold);}
+.fd-modal-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.1rem;}
+
+/* ── Best-driver suggestion panel ── */
+.fd-suggestion{background:linear-gradient(135deg,rgba(184,135,42,.06),transparent);border:1px solid rgba(184,135,42,.2);border-radius:10px;padding:.9rem;margin-top:.6rem;}
+.fd-suggestion-title{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:.5rem;}
+.fd-sug-driver{font-size:.8rem;font-weight:700;color:var(--espresso);}
+.fd-sug-meta{font-size:.65rem;color:var(--text-2);margin-top:.2rem;}
+
+/* ── Route info strip ── */
+#routeInfo{background:var(--ivory-2);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;font-size:.72rem;display:none;}
+#routeInfo.show{display:flex;gap:1.5rem;align-items:center;}
+.ri-item{display:flex;flex-direction:column;align-items:center;}
+.ri-val{font-weight:700;color:var(--espresso);font-size:.9rem;}
+.ri-lbl{font-size:.55rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em;}
+</style>
+
+<!-- KPI Strip -->
+<div class="fd-kpi">
+  <div class="fd-kpi-item">
+    <div class="fd-kpi-val">{{ drivers|length }}</div>
+    <div class="fd-kpi-lbl">Drivers</div>
+  </div>
+  <div class="fd-kpi-item">
+    <div class="fd-kpi-val">{{ cars|length }}</div>
+    <div class="fd-kpi-lbl">Vehicles</div>
+  </div>
+  <div class="fd-kpi-item">
+    <div class="fd-kpi-val">{{ activeDeliveries }}</div>
+    <div class="fd-kpi-lbl">Active</div>
+  </div>
+  <div class="fd-kpi-item">
+    <div class="fd-kpi-val">{{ pendingDeliveries|length }}</div>
+    <div class="fd-kpi-lbl">Pending</div>
+  </div>
+</div>
+
+<!-- Route Info Strip -->
+<div id="routeInfo">
+  <div class="ri-item"><span class="ri-val" id="ri-dist">—</span><span class="ri-lbl">Distance</span></div>
+  <div class="ri-item"><span class="ri-val" id="ri-eta">—</span><span class="ri-lbl">ETA</span></div>
+  <div class="ri-item"><span class="ri-val" id="ri-adj">—</span><span class="ri-lbl">Adj. ETA</span></div>
+  <div class="ri-item" id="ri-warn" style="color:var(--amber);font-size:.65rem;font-style:italic"></div>
+  <button onclick="Fleet.clearRoute()" class="t-btn" style="margin-left:auto;font-size:.6rem;padding:4px 10px">Clear Route</button>
+</div>
+
+<!-- Main 2-col layout -->
+<div class="fd-grid">
+
+  <!-- LEFT: Map -->
+  <div class="fd-map-col">
+    <div id="fleetMap"></div>
+  </div>
+
+  <!-- RIGHT: Sidebar -->
+  <div class="fd-side">
+
+    <!-- Weather -->
+    <div class="fd-card">
+      <div class="fd-weather">
+        <div class="fd-weather-icon" id="wIcon">{{ weather.icon }}</div>
+        <div class="fd-weather-info">
+          <div class="fd-weather-temp" id="wTemp">{{ weather.temp }}°C</div>
+          <div class="fd-weather-cond" id="wCond">{{ weather.condition }}</div>
+          {% if weather.isBad %}
+          <div class="fd-weather-warn" id="wWarn">⚠️ ETA +30% adjusted</div>
+          {% endif %}
+        </div>
+        <span class="fd-weather-badge {{ weather.isBad ? 'bad' : 'good' }}" id="wBadge">{{ weather.isBad ? 'Delayed' : 'Normal' }}</span>
+      </div>
+    </div>
+
+    <!-- Smart Assignment -->
+    <div class="fd-card">
+      <div class="fd-card-title">🧠 Smart Assignment</div>
+      <button class="t-btn primary" style="width:100%;font-size:.72rem;padding:.55rem" onclick="Fleet.loadBestDriver()">
+        Find Best Driver
+      </button>
+      <div id="suggestionPanel" style="display:none" class="fd-suggestion">
+        <div class="fd-suggestion-title">⭐ Recommended</div>
+        <div class="fd-sug-driver" id="sugName">—</div>
+        <div class="fd-sug-meta" id="sugMeta">—</div>
+      </div>
+    </div>
+
+    <!-- Active Drivers -->
+    <div class="fd-card">
+      <div class="fd-card-title">🚗 Drivers <span style="font-size:.6rem;color:var(--text-3);margin-left:auto">{{ drivers|length }} total</span></div>
+      <div id="driverList">
+        {% for d in drivers %}
+        <div class="fd-driver">
+          <div class="fd-av">
+            {{ d.name|slice(0,2)|upper }}
+            <span class="fd-av-dot {{ d.isOnline ? 'online' : 'offline' }}"></span>
+          </div>
+          <div class="fd-driver-info">
+            <div class="fd-driver-name">{{ d.name }}</div>
+            <div class="fd-driver-meta">{{ d.vehicleType ?: 'N/A' }} · {{ d.activeDeliveries }} active</div>
+          </div>
+          <span class="fd-driver-dist">{{ d.distance }} km</span>
+        </div>
+        {% else %}
+        <p style="font-size:.72rem;color:var(--text-3)">No drivers registered.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Pending Deliveries -->
+    <div class="fd-card">
+      <div class="fd-card-title">📦 Pending Deliveries <span style="font-size:.6rem;color:var(--text-3);margin-left:auto">{{ pendingDeliveries|length }}</span></div>
+      {% for delivery in pendingDeliveries %}
+      <div class="fd-deliv">
+        <div class="fd-deliv-head">
+          <span class="fd-deliv-id">#{{ delivery.deliveryId }}</span>
+          <span class="fd-status pending">Pending</span>
+        </div>
+        <div class="fd-deliv-addr">📍 {{ delivery.deliveryAddress ?: 'Address not set' }}</div>
+        <button class="fd-assign-btn" onclick="Fleet.openAssign({{ delivery.deliveryId }})">+ Assign Driver</button>
+      </div>
+      {% else %}
+      <p style="font-size:.72rem;color:var(--text-3)">No pending deliveries.</p>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+<!-- Assignment Modal -->
+<div class="fd-modal" id="assignModal">
+  <div class="fd-modal-box">
+    <h3>🚗 Assign Delivery</h3>
+    <p id="assignInfo">Select a driver and vehicle for this delivery.</p>
+    <div class="fd-field">
+      <label>Driver</label>
+      <select id="assignDriver">
+        <option value="">— Select driver —</option>
+        {% for d in drivers %}
+        <option value="{{ d.id }}">{{ d.name }} ({{ d.distance }} km · Score {{ d.score }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="fd-field">
+      <label>Vehicle</label>
+      <select id="assignCar">
+        <option value="">— Select vehicle —</option>
+        {% for car in availableCars %}
+        <option value="{{ car.id }}">{{ car.make }} {{ car.model }} — {{ car.licensePlate }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="fd-modal-actions">
+      <button class="t-btn" onclick="Fleet.closeAssign()">Cancel</button>
+      <button class="t-btn primary" onclick="Fleet.confirmAssign()">Confirm Assignment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@mapbox/polyline@1.2.1/src/polyline.js"></script>
+
+<script>
+const Fleet = (() => {
+  // ── Config ──────────────────────────────────────────────────────────────
+  const RESTAURANT = { lat: {{ restaurantLat }}, lng: {{ restaurantLng }} };
+  let map, restaurantMarker, driverMarkers = {}, routeLayer = null;
+  let currentDeliveryId = null;
+
+  // ── Map Init ─────────────────────────────────────────────────────────────
+  function initMap() {
+    map = L.map('fleetMap').setView([RESTAURANT.lat, RESTAURANT.lng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Restaurant marker
+    restaurantMarker = L.marker([RESTAURANT.lat, RESTAURANT.lng], {
+      icon: L.divIcon({
+        className: '',
+        html: '<div style="background:#C9A84C;color:#fff;width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.25)">🍽</div>',
+        iconAnchor: [18, 18]
+      })
+    }).addTo(map).bindPopup('<b>BIG 4 Restaurant</b><br>Tunis, Tunisia');
+  }
+
+  // ── Driver Markers ────────────────────────────────────────────────────────
+  function makeDriverIcon(driver) {
+    const initials = driver.name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+    const bg = driver.isOnline ? (driver.activeDeliveries > 0 ? '#E8892A' : '#2E9E6A') : '#95A5A6';
+    return L.divIcon({
+      className: '',
+      html: `<div style="background:${bg};color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">${initials}</div>`,
+      iconAnchor: [17, 17]
+    });
+  }
+
+  function updateDriverMarkers(drivers) {
+    // Remove stale markers
+    Object.keys(driverMarkers).forEach(id => {
+      if (!drivers.find(d => d.id == id)) {
+        map.removeLayer(driverMarkers[id]);
+        delete driverMarkers[id];
+      }
+    });
+
+    drivers.forEach(d => {
+      const latlng = [d.lat, d.lng];
+      const popup = `<b>${d.name}</b><br>Status: ${d.status}<br>Active deliveries: ${d.activeDeliveries}<br>Last update: ${d.lastUpdate}`;
+
+      if (driverMarkers[d.id]) {
+        driverMarkers[d.id].setLatLng(latlng);
+        driverMarkers[d.id].setIcon(makeDriverIcon(d));
+        driverMarkers[d.id].getPopup().setContent(popup);
+      } else {
+        driverMarkers[d.id] = L.marker(latlng, { icon: makeDriverIcon(d) })
+          .addTo(map)
+          .bindPopup(popup);
+      }
+    });
+  }
+
+  // ── Route Drawing ─────────────────────────────────────────────────────────
+  function drawRoute(polylineStr, startLatLng, endLatLng) {
+    clearRoute();
+    if (polylineStr) {
+      try {
+        const coords = polyline.decode(polylineStr).map(c => [c[0], c[1]]);
+        routeLayer = L.polyline(coords, { color: '#C9A84C', weight: 4, opacity: .8 }).addTo(map);
+        map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+      } catch(e) {
+        // Fallback: draw straight line
+        routeLayer = L.polyline([startLatLng, endLatLng], { color: '#C9A84C', weight: 3, dashArray: '6,4' }).addTo(map);
+        map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+      }
+    } else {
+      routeLayer = L.polyline([startLatLng, endLatLng], { color: '#C9A84C', weight: 3, dashArray: '6,4' }).addTo(map);
+      map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+    }
+  }
+
+  function clearRoute() {
+    if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+    document.getElementById('routeInfo').classList.remove('show');
+  }
+
+  // ── Live Refresh ──────────────────────────────────────────────────────────
+  async function refreshLocations() {
+    try {
+      const r = await fetch('{{ path('admin_fleet_api_locations') }}');
+      const j = await r.json();
+      if (j.status === 'success') updateDriverMarkers(j.data);
+    } catch(e) { console.warn('[Fleet] Location refresh failed:', e); }
+  }
+
+  async function refreshWeather() {
+    try {
+      const r = await fetch('{{ path('admin_fleet_api_weather') }}');
+      const j = await r.json();
+      if (j.status !== 'success') return;
+      const w = j.data;
+      document.getElementById('wIcon').textContent = w.icon;
+      document.getElementById('wTemp').textContent = w.temp + '°C';
+      document.getElementById('wCond').textContent = w.condition;
+      const wWarn = document.getElementById('wWarn');
+      if (wWarn) wWarn.style.display = w.isBad ? 'block' : 'none';
+      const badge = document.getElementById('wBadge');
+      badge.textContent = w.isBad ? 'Delayed' : 'Normal';
+      badge.className = 'fd-weather-badge ' + (w.isBad ? 'bad' : 'good');
+    } catch(e) {}
+  }
+
+  // ── Smart Assignment ──────────────────────────────────────────────────────
+  async function loadBestDriver() {
+    const panel = document.getElementById('suggestionPanel');
+    panel.style.display = 'block';
+    document.getElementById('sugName').textContent = 'Loading…';
+    document.getElementById('sugMeta').textContent = '';
+
+    try {
+      const r = await fetch('{{ path('admin_fleet_api_best_driver') }}');
+      const j = await r.json();
+      if (j.status !== 'success') { document.getElementById('sugName').textContent = j.message; return; }
+      const d = j.data;
+      document.getElementById('sugName').textContent = d.driver.name;
+      document.getElementById('sugMeta').textContent =
+        `📍 ${d.distance} km · ⏱ ${d.etaMin} min ETA · ⭐ ${d.driver.rating || 'N/A'} · ${d.driver.activeDeliveries} active`;
+
+      // Pre-select in modal
+      const sel = document.getElementById('assignDriver');
+      if (sel) sel.value = d.driver.id;
+    } catch(e) { document.getElementById('sugName').textContent = 'Error loading suggestion.'; }
+  }
+
+  // ── Assignment Modal ───────────────────────────────────────────────────────
+  function openAssign(deliveryId) {
+    currentDeliveryId = deliveryId;
+    document.getElementById('assignInfo').textContent = `Assigning delivery #${deliveryId}`;
+    document.getElementById('assignModal').classList.add('open');
+    loadBestDriver();
+  }
+
+  function closeAssign() {
+    document.getElementById('assignModal').classList.remove('open');
+    currentDeliveryId = null;
+  }
+
+  async function confirmAssign() {
+    const driverId = document.getElementById('assignDriver').value;
+    const carId    = document.getElementById('assignCar').value;
+    if (!driverId || !carId) { alert('Please select both a driver and a vehicle.'); return; }
+
+    try {
+      const r = await fetch('{{ path('admin_fleet_api_assign') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ delivery_id: currentDeliveryId, driver_id: parseInt(driverId), car_id: parseInt(carId) })
+      });
+      const j = await r.json();
+      if (j.status === 'success') {
+        closeAssign();
+        showToast('✅ ' + j.message);
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        alert('Error: ' + j.message);
+      }
+    } catch(e) { alert('Network error. Please try again.'); }
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:var(--espresso);color:var(--ivory);padding:.7rem 1.2rem;border-radius:8px;font-size:.75rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:fadeIn .3s ease';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    refreshLocations();
+    refreshWeather();
+    setInterval(refreshLocations, 10000);
+    setInterval(refreshWeather, 60000);
+  });
+
+  // Close modal on overlay click
+  document.addEventListener('click', e => {
+    if (e.target.id === 'assignModal') closeAssign();
+  });
+
+  return { loadBestDriver, openAssign, closeAssign, confirmAssign, clearRoute };
+})();
+</script>
+{% endblock %}

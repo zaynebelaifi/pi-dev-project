@@ -113,4 +113,18 @@ class FleetCar
     
     public function getDeliveryManId(): ?int { return $this->getDelivery_man_id(); }
     public function setDeliveryManId(?int $id): self { return $this->setDelivery_man_id($id); }
+
+    // ── Fleet status fields ───────────────────────────────────────────────
+
+    #[ORM\Column(type: 'string', length: 30, options: ['default' => 'available'])]
+    private string $carStatus = 'available';
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $fuelLevel = null;
+
+    public function getCarStatus(): string { return $this->carStatus; }
+    public function setCarStatus(string $carStatus): self { $this->carStatus = $carStatus; return $this; }
+
+    public function getFuelLevel(): ?int { return $this->fuelLevel; }
+    public function setFuelLevel(?int $fuelLevel): self { $this->fuelLevel = $fuelLevel; return $this; }
 }

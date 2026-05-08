@@ -8,6 +8,7 @@ use App\Repository\DeliveryManRepository;
 use App\Repository\DeliveryRepository;
 use App\Service\AdminAnalyticsService;
 use App\Service\ExpiredIngredientWasteService;
+use App\Service\WhatsAppNotificationService;
 use App\Utils\AiStockInsightService;
 use App\Repository\UserRepository;
 use App\Repository\FleetCarRepository;
@@ -56,6 +57,24 @@ final class AdminController extends AbstractController
             'autoWasteMoved' => $autoMoved,
             'vehicleCount' => $fleetCarRepository->count([]),
         ]);
+    }
+
+    #[Route('/test-whatsapp', name: 'app_admin_test_whatsapp', methods: ['GET'])]
+    public function testWhatsapp(Request $request, WhatsAppNotificationService $whatsApp): JsonResponse
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->json(['error' => 'unauthorized'], 403);
+        }
+
+        $phone  = $request->query->get('phone', '96930620');
+        $result = $whatsApp->sendTestMessage($phone);
+
+        return $this->json(array_merge($result, [
+            'sandbox_reminder' => 'The target number must have sent "join badly-told" to +14155238886 on WhatsApp to activate the Twilio sandbox.',
+            'from'             => 'whatsapp:+14155238886',
+            'formatted_to'     => $whatsApp->formatPhone($phone),
+        ]));
     }
 
     #[Route('/diagnostics', name: 'app_admin_diagnostics', methods: ['GET'])]
@@ -140,20 +159,77 @@ final class AdminController extends AbstractController
         ]);
     }
 
+    /**
+     * Bans a user account, records the ban timestamp & reason, then sends
+     * a role-specific WhatsApp notification if the user has a phone number.
+     */
     #[Route('/users/{id}/ban', name: 'app_admin_user_ban', methods: ['POST'])]
-    public function banUser(int $id, Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager): Response
-    {
+    public function banUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+        WhatsAppNotificationService $whatsApp,
+    ): Response {
         $session = $request->getSession();
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
             return $this->redirectToRoute('app_login');
         }
 
         $user = $userRepository->find($id);
-        if ($user) {
-            $user->setBanned(!$user->isBanned());
-            $entityManager->flush();
+        if (!$user) {
+            $this->addFlash('error', 'User not found.');
+            return $this->redirectToRoute('app_admin_users');
         }
 
+        $reason = trim((string) $request->request->get('ban_reason', 'Violation of platform rules.'));
+        if ($reason === '') {
+            $reason = 'Violation of platform rules.';
+        }
+
+        $user->setBanned(true);
+        $user->setBannedAt(new \DateTime());
+        $user->setBanReason($reason);
+        $entityManager->flush();
+
+        // Send WhatsApp notification asynchronously-safe (failures are logged, not thrown).
+        $whatsApp->sendBanNotification($user, $reason);
+
+        $this->addFlash('success', sprintf('User %s has been banned.', $user->getEmail()));
+        return $this->redirectToRoute('app_admin_users');
+    }
+
+    /**
+     * Restores a previously banned user account and sends a WhatsApp
+     * reinstatement notification.
+     */
+    #[Route('/users/{id}/unban', name: 'app_admin_user_unban', methods: ['POST'])]
+    public function unbanUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+        WhatsAppNotificationService $whatsApp,
+    ): Response {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $user = $userRepository->find($id);
+        if (!$user) {
+            $this->addFlash('error', 'User not found.');
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        $user->setBanned(false);
+        $user->setBannedAt(null);
+        $user->setBanReason(null);
+        $entityManager->flush();
+
+        $whatsApp->sendUnbanNotification($user);
+
+        $this->addFlash('success', sprintf('User %s has been restored.', $user->getEmail()));
         return $this->redirectToRoute('app_admin_users');
     }
 

@@ -22,3 +22,7 @@ node_modules
 .conda/
 .venv-ai/
 ai_feedback/__pycache__/
+
+.env
+.env.local
+.env.*.local
