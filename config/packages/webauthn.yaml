@@ -1,0 +1,18 @@
+webauthn:
+    credential_repository: 'App\Repository\WebauthnCredentialDoctrineRepository'
+    user_repository: 'App\Repository\WebauthnUserEntityRepository'
+    creation_profiles:
+        default:
+            rp:
+                name: 'BIG 4'
+                id: 'localhost'
+            authenticator_selection_criteria:
+                authenticator_attachment: 'cross-platform'
+                user_verification: 'discouraged'
+                resident_key: 'preferred'
+                require_resident_key: false
+            extensions: {}
+    request_profiles:
+        default:
+            rp_id: 'localhost'
+            extensions: {}

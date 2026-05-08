@@ -1,0 +1,87 @@
+<div class="btn-actions" id="reservationStats">
+  <span class="t-btn" style="cursor:default;">Total: {{ reservations|length }}</span>
+  <span class="t-btn" style="cursor:default;">Confirmed: {{ confirmed }}</span>
+  <span class="t-btn" style="cursor:default;">Cancelled: {{ cancelled }}</span>
+</div>
+
+<div class="delivery-table-card">
+  <div class="table-header">
+    <div class="table-title">Reservations</div>
+    <div class="table-count">{{ reservations|length }} total</div>
+  </div>
+
+  {% if reservations is empty %}
+    <div class="no-results">No reservations found.</div>
+  {% else %}
+    <table class="delivery-table">
+      <thead>
+      <tr>
+        <th>
+          <a class="sort-link" href="{{ path('app_reservation_index', {search: search, sort: 'reservationDate', direction: sort == 'reservationDate' and direction == 'ASC' ? 'DESC' : 'ASC'}) }}">
+            ID{% if sort == 'reservationDate' %} {{ direction == 'ASC' ? '↑' : '↓' }}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a class="sort-link" href="{{ path('app_reservation_index', {search: search, sort: 'clientId', direction: sort == 'clientId' and direction == 'ASC' ? 'DESC' : 'ASC'}) }}">
+            Client{% if sort == 'clientId' %} {{ direction == 'ASC' ? '↑' : '↓' }}{% endif %}
+          </a>
+        </th>
+        <th>Table</th>
+        <th>
+          <a class="sort-link" href="{{ path('app_reservation_index', {search: search, sort: 'reservationDate', direction: sort == 'reservationDate' and direction == 'ASC' ? 'DESC' : 'ASC'}) }}">
+            Date{% if sort == 'reservationDate' %} {{ direction == 'ASC' ? '↑' : '↓' }}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a class="sort-link" href="{{ path('app_reservation_index', {search: search, sort: 'reservationTime', direction: sort == 'reservationTime' and direction == 'ASC' ? 'DESC' : 'ASC'}) }}">
+            Time{% if sort == 'reservationTime' %} {{ direction == 'ASC' ? '↑' : '↓' }}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a class="sort-link" href="{{ path('app_reservation_index', {search: search, sort: 'numberOfGuests', direction: sort == 'numberOfGuests' and direction == 'ASC' ? 'DESC' : 'ASC'}) }}">
+            Guests{% if sort == 'numberOfGuests' %} {{ direction == 'ASC' ? '↑' : '↓' }}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a class="sort-link" href="{{ path('app_reservation_index', {search: search, sort: 'status', direction: sort == 'status' and direction == 'ASC' ? 'DESC' : 'ASC'}) }}">
+            Status{% if sort == 'status' %} {{ direction == 'ASC' ? '↑' : '↓' }}{% endif %}
+          </a>
+        </th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for r in reservations %}
+        <tr>
+          <td class="delivery-id">#{{ r.reservationId }}</td>
+          <td>{{ r.clientId }}</td>
+          <td>#{{ r.tableId }}</td>
+          <td>{{ r.reservationDate|date('Y-m-d') }}</td>
+          <td>{{ r.reservationTime|date('H:i') }}</td>
+          <td>{{ r.numberOfGuests }}</td>
+          <td>
+            {% if r.status == 'CONFIRMED' %}
+              <span class="status-badge status-completed">Confirmed</span>
+            {% else %}
+              <span class="status-badge status-cancelled">Cancelled</span>
+            {% endif %}
+          </td>
+          <td class="action-cell">
+            <a href="{{ path('app_reservation_edit', {id: r.reservationId}) }}" class="mini-action">Edit</a>
+            {% if r.status == 'CONFIRMED' %}
+              <form method="post" action="{{ path('app_reservation_cancel', {id: r.reservationId}) }}" onsubmit="return confirm('Cancel this reservation?');" style="display:inline-block;">
+                <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ r.reservationId) }}">
+                <button class="mini-action" style="border-color:#ecd8af;color:#9a6e12;background:#fff9ed;">Cancel</button>
+              </form>
+            {% endif %}
+            <form method="post" action="{{ path('app_reservation_delete', {id: r.reservationId}) }}" onsubmit="return confirm('Delete reservation #{{ r.reservationId }}?');" style="display:inline-block;">
+              <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ r.reservationId) }}">
+              <button class="mini-action mini-action-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>

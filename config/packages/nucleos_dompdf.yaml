@@ -1,0 +1,8 @@
+nucleos_dompdf:
+    defaults:
+        font_dir: '%kernel.project_dir%/var/fonts'
+        font_cache: '%kernel.project_dir%/var/fonts'
+        temp_dir: '%kernel.project_dir%/var/tmp'
+        chroot: '%kernel.project_dir%/public'
+        is_html5_parser_enabled: true
+        is_remote_enabled: false

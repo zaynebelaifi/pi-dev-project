@@ -166,7 +166,7 @@
 
 <!-- Filter Section -->
 <div class="filter-section">
-    <form method="GET" class="filter-controls">
+    <form method="GET" action="{{ path('app_admin_deliveries') }}" class="filter-controls" id="deliveriesFilterForm" data-live-filters="true">
         <div class="filter-group">
             <label class="filter-label">Search</label>
             <input type="text" name="search" class="filter-input" placeholder="Order ID, Address, Phone..." value="{{ search }}">
@@ -188,91 +188,91 @@
             </select>
         </div>
         <button type="submit" class="filter-btn">Filter</button>
+        <button type="button" class="filter-btn" id="deliveriesResetBtn" style="background: #ffffff; color: var(--espresso); border: 1.5px solid var(--border-2);">Reset</button>
     </form>
 </div>
 
 <!-- Deliveries Table -->
-{% if deliveries|length > 0 %}
-<div class="table-wrapper">
-    <table>
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Recipient</th>
-                <th>Address</th>
-                <th>Status</th>
-                <th>Assigned Car</th>
-                <th>License Plate</th>
-                <th>Driver</th>
-                <th>Created</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for delivery in deliveries %}
-            <tr>
-                <td><strong>#{{ delivery.order_id }}</strong></td>
-                <td>{{ delivery.recipient_name }}</td>
-                <td>
-                    {% if delivery.delivery_address is not empty and delivery.delivery_address|length > 30 %}
-                        {{ delivery.delivery_address|slice(0, 30) }}...
-                    {% else %}
-                        {{ delivery.delivery_address }}
-                    {% endif %}
-                </td>
-                <td>
-                    <span class="status-badge status-{{ delivery.status|lower }}">
-                        {{ delivery.status|replace({'_': ' '}) }}
-                    </span>
-                </td>
-                <td>
-                    {% if delivery.fleetCar %}
-                        {{ delivery.fleetCar.make }} {{ delivery.fleetCar.model }}
-                    {% else %}
-                        <em style="color: var(--text-3);">Unassigned</em>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if delivery.license_plate %}
-                        <code>{{ delivery.license_plate }}</code>
-                    {% else %}
-                        <em style="color: var(--text-3);">—</em>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if delivery.deliveryMan %}
-                        {{ delivery.deliveryMan.name }}
-                    {% else %}
-                        <em style="color: var(--text-3);">Unassigned</em>
-                    {% endif %}
-                </td>
-                <td>{{ delivery.created_at|date('M d, Y') }}</td>
-                <td>
-                    <div class="action-buttons">
-                        {% if not delivery.fleetCar %}
-                        <form method="POST" action="{{ path('app_admin_assign_car', {'id': delivery.delivery_id}) }}" style="display: inline;">
-                            <select name="car_id" class="filter-select" style="padding: 0.4rem; font-size: 0.75rem;" required>
-                                <option value="">Select Car</option>
-                                <!-- Add available cars here from controller -->
-                            </select>
-                            <button type="submit" class="btn-small btn-assign">Assign</button>
-                        </form>
-                        {% else %}
-                        <form method="POST" action="{{ path('app_admin_remove_car', {'id': delivery.delivery_id}) }}" style="display: inline;">
-                            <button type="submit" class="btn-small btn-remove" onclick="return confirm('Remove car assignment?');">Remove Car</button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div id="deliveriesResults">
+    {% include 'admin/_deliveries_results.html.twig' with {
+        deliveries: deliveries,
+        search: search,
+        sort: sort,
+        direction: direction
+    } %}
 </div>
-{% else %}
-<div style="text-align: center; padding: 3rem; background: var(--ivory); border-radius: 12px; color: var(--text-3);">
-    <p>No deliveries found.</p>
-</div>
-{% endif %}
+
+<script>
+(() => {
+    const form = document.getElementById('deliveriesFilterForm');
+    const resultsContainer = document.getElementById('deliveriesResults');
+    const resetButton = document.getElementById('deliveriesResetBtn');
+    if (!form || !resultsContainer) {
+        return;
+    }
+
+    const searchInput = form.querySelector('input[name="search"]');
+    const sortInput = form.querySelector('select[name="sort"]');
+    const directionInput = form.querySelector('select[name="direction"]');
+    let debounceTimer = null;
+
+    const refreshResults = async () => {
+        const params = new URLSearchParams(new FormData(form));
+        const query = params.toString();
+
+        try {
+            const response = await fetch(`${form.action}?${query}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load deliveries.');
+            }
+
+            const payload = await response.json();
+            if (!payload.success || typeof payload.resultsHtml !== 'string') {
+                throw new Error('Invalid deliveries payload.');
+            }
+
+            resultsContainer.innerHTML = payload.resultsHtml;
+            window.history.replaceState({}, '', `${form.action}?${query}`);
+        } catch (error) {
+            console.error('Deliveries live filter failed:', error);
+        }
+    };
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        refreshResults();
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(refreshResults, 300);
+        });
+    }
+
+    if (sortInput) {
+        sortInput.addEventListener('change', refreshResults);
+    }
+
+    if (directionInput) {
+        directionInput.addEventListener('change', refreshResults);
+    }
+
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            if (sortInput) sortInput.value = 'created_at';
+            if (directionInput) directionInput.value = 'DESC';
+            refreshResults();
+        });
+    }
+})();
+</script>
 
 {% endblock %}

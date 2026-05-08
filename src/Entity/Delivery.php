@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\DeliveryRepository;
 
 #[ORM\Entity(repositoryClass: DeliveryRepository::class)]
-#[ORM\Table(name: 'delivery')]
+#[ORM\Table(name: 'delivery', options: ['collation' => 'utf8mb4_general_ci'])]
 class Delivery
 {
     #[ORM\Id]
@@ -30,9 +30,9 @@ class Delivery
     }
 
     #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $order_id = null;
+    private int $order_id;
 
-    public function getOrder_id(): ?int
+    public function getOrder_id(): int
     {
         return $this->order_id;
     }
@@ -61,9 +61,9 @@ class Delivery
     #[ORM\Column(type: 'string', nullable: false)]
     #[Assert\NotBlank(message: 'Delivery address is required.')]
     #[Assert\Length(min: 5, max: 500, minMessage: 'Delivery address must be at least {{ limit }} characters long.', maxMessage: 'Delivery address cannot be longer than {{ limit }} characters.')]
-    private ?string $delivery_address = null;
+    private string $delivery_address;
 
-    public function getDelivery_address(): ?string
+    public function getDelivery_address(): string
     {
         return $this->delivery_address;
     }
@@ -179,7 +179,7 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 8, nullable: true)]
     private ?string $current_latitude = null;
 
     public function getCurrent_latitude(): ?string
@@ -193,7 +193,7 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 8, nullable: true)]
     private ?string $current_longitude = null;
 
     public function getCurrent_longitude(): ?string
@@ -207,7 +207,7 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 8, nullable: true)]
     private ?string $driver_latitude = null;
 
     public function getDriver_latitude(): ?string
@@ -221,7 +221,7 @@ class Delivery
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 8, nullable: true)]
     private ?string $driver_longitude = null;
 
     public function getDriver_longitude(): ?string
@@ -250,16 +250,35 @@ class Delivery
         return $this->delivery_notes;
     }
 
+    /**
+     * @return int[]|null
+     */
     public function getCandidateDeliveryMen(): ?array
     {
-        if (!$this->candidate_delivery_men) return null;
+        if ($this->candidate_delivery_men === null || $this->candidate_delivery_men === '') {
+            return null;
+        }
         $data = json_decode($this->candidate_delivery_men, true);
         return is_array($data) ? $data : null;
     }
 
+    /**
+     * @param int[]|null $ids
+     */
     public function setCandidateDeliveryMen(?array $ids): self
     {
-        $this->candidate_delivery_men = $ids ? json_encode(array_values($ids)) : null;
+        if ($ids === null) {
+            $this->candidate_delivery_men = null;
+            return $this;
+        }
+
+        $encoded = json_encode(array_values($ids));
+        if ($encoded === false) {
+            // avoid assigning false to a string property
+            $this->candidate_delivery_men = null;
+        } else {
+            $this->candidate_delivery_men = $encoded;
+        }
         return $this;
     }
 
@@ -392,9 +411,9 @@ class Delivery
     }
 
     #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $created_at = null;
+    private \DateTimeInterface $created_at;
 
-    public function getCreated_at(): ?\DateTimeInterface
+    public function getCreated_at(): \DateTimeInterface
     {
         return $this->created_at;
     }
@@ -406,9 +425,9 @@ class Delivery
     }
 
     #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $updated_at = null;
+    private \DateTimeInterface $updated_at;
 
-    public function getUpdated_at(): ?\DateTimeInterface
+    public function getUpdated_at(): \DateTimeInterface
     {
         return $this->updated_at;
     }
@@ -416,6 +435,34 @@ class Delivery
     public function setUpdated_at(\DateTimeInterface $updated_at): self
     {
         $this->updated_at = $updated_at;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $createdBy = null;
+
+    public function getCreatedBy(): ?string
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?string $createdBy): self
+    {
+        $this->createdBy = $createdBy;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $updatedBy = null;
+
+    public function getUpdatedBy(): ?string
+    {
+        return $this->updatedBy;
+    }
+
+    public function setUpdatedBy(?string $updatedBy): self
+    {
+        $this->updatedBy = $updatedBy;
         return $this;
     }
 

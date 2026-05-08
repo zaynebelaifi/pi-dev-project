@@ -8,7 +8,7 @@
     }
 
     body {
-      font-family: DejaVu Sans, sans-serif;
+      font-family: Helvetica, Arial, sans-serif;
       font-size: 11px;
       color: #1f2937;
     }
@@ -82,7 +82,7 @@
       <div class="filter-line">Generated at: {{ generatedAt|date('Y-m-d H:i') }}</div>
       <div class="filter-line">Search: {{ filters.search ?: 'None' }}</div>
       <div class="filter-line">Waste type: {{ filters.wasteType }}</div>
-      <div class="filter-line">Date range: {{ filters.dateFrom }} → {{ filters.dateTo }}</div>
+      <div class="filter-line">Date range: {{ filters.dateFrom }} -> {{ filters.dateTo }}</div>
       <div class="filter-line">Sort: {{ filters.sort }} ({{ filters.dir }})</div>
     </div>
 
@@ -100,8 +100,8 @@
         {% for record in rows %}
           {% if record %}
             <tr>
-              <td>{{ record.date ? record.date|date('Y-m-d') : '—' }}</td>
-              <td>{{ record.ingredient ? record.ingredient.name : '—' }}</td>
+              <td>{{ record.date ? record.date|date('Y-m-d') : '-' }}</td>
+              <td>{{ record.ingredient ? record.ingredient.name : '-' }}</td>
               <td>{{ record.quantityWasted|number_format(2, '.', ' ') }} {{ record.ingredient ? record.ingredient.unit : '' }}</td>
               <td>{{ record.wasteType }}</td>
               <td>{{ record.reason }}</td>
