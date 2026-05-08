@@ -19,6 +19,13 @@ class GoogleController extends AbstractController
     #[Route('/connect/google', name: 'connect_google_start')]
     public function connectAction(ClientRegistry $clientRegistry): Response
     {
+        // Guard: if credentials are placeholder values, show a friendly message
+        $clientId = $_ENV['GOOGLE_CLIENT_ID'] ?? '';
+        if (empty($clientId) || $clientId === 'CHANGE_ME') {
+            $this->addFlash('warning', 'Google login is not configured yet. Please log in with your email and password.');
+            return $this->redirectToRoute('app_login');
+        }
+
         return $clientRegistry
             ->getClient('google')
             ->redirect([
