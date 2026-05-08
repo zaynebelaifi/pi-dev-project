@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ResetPasswordRequestRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 /**
  * Stores a single-use, time-limited password reset token for a user.
@@ -45,6 +46,7 @@ class ResetPasswordRequest
      * SHA-256 hash of the real token (never store the plain token).
      */
     #[ORM\Column(type: 'string', length: 100)]
+    #[Ignore]
     private string $hashedToken;
 
     /**
@@ -59,7 +61,7 @@ class ResetPasswordRequest
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $expiresAt;
 
-    public function __construct(User $user, string $hashedToken)
+    public function __construct(User $user, #[\SensitiveParameter] string $hashedToken)
     {
         $this->user        = $user;
         $this->hashedToken = $hashedToken;
