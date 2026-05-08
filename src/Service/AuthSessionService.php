@@ -23,7 +23,7 @@ class AuthSessionService
         $session->set('user_email', $email);
         $session->set('user_name', $displayName);
         $session->set('user_role', $normalizedRole);
-        $session->set('user_phone', $this->normalizePhone($user->getPhoneNumber() ?: $user->getPhone()));
+        $session->set('user_phone', $this->normalizePhone($user->getPhone()));
         $session->set('user_address', $user->getAddress());
 
         if ($normalizedRole === 'ROLE_DELIVERY_MAN') {

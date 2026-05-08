@@ -49,26 +49,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeBooking = document.getElementById('closeBooking');
     const bookingForm = document.getElementById('bookingForm');
 
-    function showBooking(){
-      if(!bookingPopup){
-        return;
-      }
+    function showBooking(e){
+      if(e) e.preventDefault();
+      if(!bookingPopup) return;
       bookingPopup.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
     function hideBooking(){
-      if(!bookingPopup){
-        return;
-      }
+      if(!bookingPopup) return;
       bookingPopup.classList.remove('active');
       document.body.style.overflow = '';
     }
 
+    // Attach click handlers with better error handling
     if(openBooking){
-      openBooking.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
+      openBooking.onclick = showBooking;
+      openBooking.addEventListener('click', showBooking);
     }
     if(openBooking2){
-      openBooking2.addEventListener('click', (e)=>{ e.preventDefault(); showBooking(); });
+      openBooking2.onclick = showBooking;
+      openBooking2.addEventListener('click', showBooking);
     }
     if(closeBooking){
       closeBooking.addEventListener('click', hideBooking);
