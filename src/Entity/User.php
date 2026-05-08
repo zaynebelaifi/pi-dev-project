@@ -19,12 +19,15 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
+    /** @var Collection<int, Order> */
     #[ORM\OneToMany(mappedBy: 'client', targetEntity: Order::class, orphanRemoval: true, fetch: 'EXTRA_LAZY')]
     private Collection $orders;
 
     public function __construct()
     {
         $this->orders = new ArrayCollection();
+        $this->audit_logs = new ArrayCollection();
+        $this->notifications = new ArrayCollection();
     }
 
     /**
@@ -121,6 +124,9 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return array_values(array_unique([$role, 'ROLE_USER']));
     }
 
+    /**
+     * @param string[] $roles
+     */
     public function setRoles(array $roles): self
     {
         $primaryRole = (string) ($roles[0] ?? 'ROLE_CLIENT');
@@ -434,6 +440,7 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
         return $this;
     }
 
+    /** @var Collection<int, AuditLog> */
     #[ORM\OneToMany(targetEntity: AuditLog::class, mappedBy: 'actor')]
     private Collection $audit_logs;
 
@@ -442,13 +449,10 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
      */
     public function getAuditLogs(): Collection
     {
-        if (!$this->audit_logs instanceof Collection) {
-            $this->audit_logs = new ArrayCollection();
-        }
-
         return $this->audit_logs;
     }
 
+    /** @var Collection<int, Notification> */
     #[ORM\OneToMany(targetEntity: Notification::class, mappedBy: 'recipient')]
     private Collection $notifications;
 
@@ -457,10 +461,6 @@ class User implements PasswordAuthenticatedUserInterface, UserInterface
      */
     public function getNotifications(): Collection
     {
-        if (!$this->notifications instanceof Collection) {
-            $this->notifications = new ArrayCollection();
-        }
-
         return $this->notifications;
     }
 

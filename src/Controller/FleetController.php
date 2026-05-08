@@ -105,8 +105,8 @@ class FleetController extends AbstractController
 
             // Create or update delivery
             $delivery = new Delivery();
-            $delivery->setDestination_latitude($destLat);
-            $delivery->setDestination_longitude($destLng);
+            $delivery->setDestinationLat($destLat);
+            $delivery->setDestinationLng($destLng);
             $delivery->setDeliveryMan($nearest);
             $delivery->setStatus('assigned');
             $delivery->setDelivery_address('Destination: ' . $destLat . ', ' . $destLng);
@@ -160,15 +160,15 @@ class FleetController extends AbstractController
                 return $this->json(['success' => false, 'message' => 'Delivery man or location not found'], 400);
             }
 
-            if (!$delivery->getDestination_latitude() || !$delivery->getDestination_longitude()) {
+            if (!$delivery->getDestinationLat() || !$delivery->getDestinationLng()) {
                 return $this->json(['success' => false, 'message' => 'Destination not set'], 400);
             }
 
             $eta = $this->fleetService->calculateETA(
                 $user->getLatitude(),
                 $user->getLongitude(),
-                $delivery->getDestination_latitude(),
-                $delivery->getDestination_longitude()
+                $delivery->getDestinationLat(),
+                $delivery->getDestinationLng()
             );
 
             return $this->json([

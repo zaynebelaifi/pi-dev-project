@@ -12,6 +12,11 @@ use App\Repository\FleetCarRepository;
 #[ORM\Table(name: 'fleet_car')]
 class FleetCar
 {
+    public function __construct()
+    {
+        $this->assigned_delivery_men = new ArrayCollection();
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -323,6 +328,7 @@ class FleetCar
         return $this;
     }
 
+    /** @var Collection<int, DeliveryMan> */
     #[ORM\OneToMany(targetEntity: DeliveryMan::class, mappedBy: 'currentCar')]
     private Collection $assigned_delivery_men;
 
@@ -331,10 +337,6 @@ class FleetCar
      */
     public function getAssignedDeliveryMen(): Collection
     {
-        if (!$this->assigned_delivery_men instanceof Collection) {
-            $this->assigned_delivery_men = new ArrayCollection();
-        }
-
         return $this->assigned_delivery_men;
     }
 
