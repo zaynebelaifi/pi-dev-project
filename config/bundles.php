@@ -17,5 +17,4 @@ return [
     KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle::class => ['all' => true],
     AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true, 'test' => true],
     Nucleos\DompdfBundle\NucleosDompdfBundle::class => ['all' => true],
-    Webauthn\Bundle\WebauthnBundle::class => ['all' => true],
 ];
