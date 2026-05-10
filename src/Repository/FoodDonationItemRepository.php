@@ -39,6 +39,21 @@ class FoodDonationItemRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return array<int, array{donation_event_id:int, item_id:int, quantity:int, item_name:string|null}>
+     */
+    public function findItemsWithDishNames(int $eventId): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT fdi.donation_event_id, fdi.item_id, fdi.quantity, d.name AS item_name '
+            .'FROM food_donation_items fdi '
+            .'LEFT JOIN dish d ON fdi.item_id = d.id '
+            .'WHERE fdi.donation_event_id = :eventId '
+            .'ORDER BY fdi.item_id';
+
+        return $conn->fetchAllAssociative($sql, ['eventId' => $eventId]);
+    }
+
     //    /**
     //     * @return FoodDonationItem[] Returns an array of FoodDonationItem objects
     //     */

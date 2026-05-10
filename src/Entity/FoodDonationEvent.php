@@ -84,7 +84,7 @@ class FoodDonationEvent
 
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     #[Assert\NotBlank(message: 'Status is required.')]
-    #[Assert\Choice(choices: ['SCHEDULED', 'PENDING', 'CANCELLED', 'COMPLETED'], message: 'Please select a valid status.')]
+    #[Assert\Choice(choices: ['SCHEDULED', 'PENDING', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED'], message: 'Please select a valid status.')]
     private ?string $status = 'PENDING';
 
     public function getStatus(): ?string

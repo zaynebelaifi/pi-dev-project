@@ -32,6 +32,7 @@ class FoodDonationEventType extends AbstractType
                 'choices' => [
                     'Scheduled' => 'SCHEDULED',
                     'Pending' => 'PENDING',
+                    'In Progress' => 'IN_PROGRESS',
                     'Cancelled' => 'CANCELLED',
                     'Completed' => 'COMPLETED',
                 ],

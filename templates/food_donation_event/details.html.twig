@@ -1,0 +1,337 @@
+{% extends 'frontend.html.twig' %}
+
+{% block title %}Donation Event Details{% endblock %}
+
+{% block body %}
+  <section class="event-hero">
+    <div class="container">
+      <a class="back-link" href="{{ path('app_food_donation_event_public_index') }}">Back to events</a>
+      <div class="event-header">
+        <div>
+          <p class="eyebrow">Donation event</p>
+          <h1>{{ food_donation_event.charityName }}</h1>
+          <p class="event-date">{{ food_donation_event.eventDate ? food_donation_event.eventDate|date('F j, Y') : 'Date TBA' }}</p>
+        </div>
+        <span class="status-pill status-{{ (food_donation_event.status ?: 'unknown')|lower|replace({'_':'-'}) }}">{{ food_donation_event.status ?: 'UNKNOWN' }}</span>
+      </div>
+      <div class="event-metrics">
+        <div class="metric-card">
+          <span>Planned portions</span>
+          <strong>{{ food_donation_event.totalQuantity }}</strong>
+        </div>
+        <div class="metric-card">
+          <span>Event ID</span>
+          <strong>#{{ food_donation_event.donationEventId }}</strong>
+        </div>
+        <div class="metric-card">
+          <span>Delivery ref</span>
+          <strong>{{ food_donation_event.deliveryId ?: 'Not assigned' }}</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="event-details">
+    <div class="container">
+      <div class="details-grid">
+        <div class="details-card">
+          <h2>Donation items</h2>
+          <div class="items-list">
+            {% for item in event_items %}
+              <div class="item-row">
+                <div>
+                  <p class="item-name">{{ item.item_name ?? 'Unknown dish' }}</p>
+                  <p class="item-sub">Item #{{ item.item_id }}</p>
+                </div>
+                <span class="item-qty">{{ item.quantity }} portions</span>
+              </div>
+            {% else %}
+              <div class="empty-state">No items listed for this event yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="details-card">
+          <h2>Ratings summary</h2>
+          <div class="rating-summary">
+            <div>
+              <span>Event rating</span>
+              <strong>{{ avg_event_rating|number_format(1) }}/5</strong>
+            </div>
+            <div>
+              <span>Food rating</span>
+              <strong>{{ avg_food_rating|number_format(1) }}/5</strong>
+            </div>
+            <div>
+              <span>Total reviews</span>
+              <strong>{{ rating_count }}</strong>
+            </div>
+          </div>
+          <div class="reviews">
+            {% for rating in ratings %}
+              <div class="review-card">
+                <div class="review-header">
+                  <strong>{{ rating.user ? rating.user.email : 'Guest' }}</strong>
+                  <span>{{ rating.createdAt ? rating.createdAt|date('Y-m-d') : 'N/A' }}</span>
+                </div>
+                <div class="review-scores">
+                  <span>Event: {{ rating.eventRating }}/5</span>
+                  <span>Food: {{ rating.foodRating }}/5</span>
+                </div>
+                <p>{{ rating.comment ?: 'No comment provided.' }}</p>
+              </div>
+            {% else %}
+              <div class="empty-state">No reviews yet. Be the first to share feedback.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="details-card" style="margin-top:1.6rem;">
+        <h2>Your rating</h2>
+        {% if current_user %}
+          <form method="post" action="{{ path('app_food_donation_event_public_rate', {'donation_event_id': food_donation_event.donationEventId}) }}" class="rating-form">
+            <input type="hidden" name="_token" value="{{ csrf_token('rate_event_' ~ food_donation_event.donationEventId) }}">
+            <div class="form-row">
+              <label for="event_rating">Event rating</label>
+              <select id="event_rating" name="event_rating" required>
+                <option value="">Select</option>
+                {% for i in 1..5 %}
+                  <option value="{{ i }}" {{ user_rating and user_rating.eventRating == i ? 'selected' : '' }}>{{ i }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="food_rating">Food rating</label>
+              <select id="food_rating" name="food_rating" required>
+                <option value="">Select</option>
+                {% for i in 1..5 %}
+                  <option value="{{ i }}" {{ user_rating and user_rating.foodRating == i ? 'selected' : '' }}>{{ i }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="comment">Comment (optional)</label>
+              <textarea id="comment" name="comment" rows="4">{{ user_rating ? user_rating.comment : '' }}</textarea>
+            </div>
+            <div class="form-actions">
+              <button class="nav-btn" type="submit">Save rating</button>
+              {% if user_rating %}
+                <button class="nav-btn" type="submit" form="delete-rating-form">Delete rating</button>
+              {% endif %}
+            </div>
+          </form>
+          {% if user_rating %}
+            <form id="delete-rating-form" method="post" action="{{ path('app_food_donation_event_public_rate_delete', {'donation_event_id': food_donation_event.donationEventId}) }}">
+              <input type="hidden" name="_token" value="{{ csrf_token('delete_rating_' ~ food_donation_event.donationEventId) }}">
+            </form>
+          {% endif %}
+        {% else %}
+          <p class="empty-state">Log in to submit your rating and feedback.</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .event-hero {
+      padding: 140px 0 60px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1.2rem;
+      font-size: .7rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .event-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.1rem, 3.6vw, 3.2rem);
+      margin: .4rem 0;
+    }
+    .event-date {
+      color: var(--text-2);
+      font-size: 1rem;
+    }
+    .event-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .metric-card {
+      background: rgba(255,255,255,.82);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      padding: 1rem 1.2rem;
+      box-shadow: var(--shadow);
+    }
+    .metric-card span {
+      display: block;
+      font-size: .7rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: .3rem;
+    }
+    .metric-card strong {
+      font-size: 1.3rem;
+      font-family: 'Cormorant Garamond', serif;
+      color: var(--espresso);
+    }
+    .event-details {
+      padding: 30px 0 90px;
+    }
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.6rem;
+    }
+    .details-card {
+      background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(242,230,211,.92));
+      border: 1px solid var(--line-2);
+      border-radius: 18px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .details-card h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+    }
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .8rem 1rem;
+      background: rgba(255,255,255,.7);
+      border-radius: 12px;
+      border: 1px solid rgba(184,135,42,.18);
+    }
+    .item-name {
+      font-weight: 600;
+      color: var(--espresso);
+    }
+    .item-sub {
+      font-size: .7rem;
+      color: var(--text-3);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-top: .2rem;
+    }
+    .item-qty {
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .rating-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .8rem;
+      margin-bottom: 1rem;
+    }
+    .rating-summary span {
+      display: block;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      color: var(--text-3);
+    }
+    .rating-summary strong {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      color: var(--espresso);
+    }
+    .reviews {
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+    }
+    .review-card {
+      padding: .9rem 1rem;
+      border-radius: 12px;
+      background: rgba(255,255,255,.7);
+      border: 1px solid rgba(184,135,42,.18);
+    }
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+      color: var(--text-2);
+      margin-bottom: .4rem;
+    }
+    .review-scores {
+      display: flex;
+      gap: 1.2rem;
+      font-size: .8rem;
+      color: var(--text-2);
+      margin-bottom: .4rem;
+    }
+    .rating-form {
+      display: grid;
+      gap: 1rem;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+    .form-row label {
+      font-size: .7rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .form-row select,
+    .form-row textarea {
+      padding: .7rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--line-2);
+      background: #fff;
+      font-family: 'Jost', sans-serif;
+    }
+    .form-actions {
+      display: flex;
+      gap: .8rem;
+      flex-wrap: wrap;
+    }
+    .status-pill {
+      padding: .35rem .85rem;
+      border-radius: 999px;
+      font-size: .6rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      font-weight: 700;
+      background: rgba(184,135,42,.1);
+      color: var(--gold);
+    }
+    .status-pill.status-pending { background: rgba(58,126,201,.14); color: #2363ac; border-color: rgba(58,126,201,.2); }
+    .status-pill.status-scheduled { background: rgba(124,79,196,.14); color: #7043b8; border-color: rgba(124,79,196,.2); }
+    .status-pill.status-in-progress { background: rgba(255,168,38,.14); color: #b56a12; border-color: rgba(255,168,38,.2); }
+    .status-pill.status-completed { background: rgba(46,158,106,.14); color: #228657; border-color: rgba(46,158,106,.2); }
+    .status-pill.status-cancelled { background: rgba(217,64,64,.12); color: #b83131; border-color: rgba(217,64,64,.2); }
+    .empty-state {
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      border: 1px dashed var(--line-2);
+      text-align: center;
+      color: var(--text-2);
+      background: rgba(255,255,255,.6);
+    }
+    @media (max-width: 900px) {
+      .rating-summary { grid-template-columns: 1fr; }
+      .event-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+{% endblock %}

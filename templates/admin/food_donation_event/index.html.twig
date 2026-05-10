@@ -5,10 +5,6 @@
 {% block topbar_breadcrumb %}Big 4 · Admin · Donations · Events{% endblock %}
 
 {% block body %}
-  {% set totalDonationQty = 0 %}
-  {% for event in food_donation_events %}
-    {% set totalDonationQty = totalDonationQty + (event.totalQuantity ?? 0) %}
-  {% endfor %}
 
   <style>
     .don-card {
@@ -20,7 +16,7 @@
     }
     .don-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: .8rem;
       margin-bottom: 1rem;
     }
@@ -97,6 +93,11 @@
       color: #228657;
       border-color: rgba(46,158,106,.24);
     }
+    .status-in-progress {
+      background: rgba(255, 168, 38, .16);
+      color: #b56a12;
+      border-color: rgba(255, 168, 38, .28);
+    }
     .status-cancelled {
       background: rgba(217,64,64,.12);
       color: #b83131;
@@ -151,21 +152,36 @@
       <h2>Food Donation Events</h2>
       <p>Manage donation events, assign delivery references and track quantities for charities.</p>
     </div>
-    <a href="{{ path('app_food_donation_event_new') }}" class="t-btn primary">+ Create Event</a>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+      <a href="{{ path('app_food_donation_event_recommendations') }}" class="t-btn">Recommendations</a>
+      <a href="{{ path('app_food_donation_event_new') }}" class="t-btn primary">+ Create Event</a>
+    </div>
   </div>
 
   <div class="don-grid">
     <div class="don-stat">
       <div class="don-stat-lbl">Total Events</div>
-      <div class="don-stat-val">{{ food_donation_events|length }}</div>
+      <div class="don-stat-val">{{ total_events }}</div>
     </div>
     <div class="don-stat">
       <div class="don-stat-lbl">Total Quantity Planned</div>
-      <div class="don-stat-val">{{ totalDonationQty }}</div>
+      <div class="don-stat-val">{{ total_quantity }}</div>
     </div>
     <div class="don-stat">
-      <div class="don-stat-lbl">Active Status Filter</div>
-      <div class="don-stat-val" style="font-size:1.15rem;line-height:1.2">{{ status ?: 'All statuses' }}</div>
+      <div class="don-stat-lbl">Pending Events</div>
+      <div class="don-stat-val">{{ pending_count }}</div>
+    </div>
+    <div class="don-stat">
+      <div class="don-stat-lbl">Scheduled Events</div>
+      <div class="don-stat-val">{{ scheduled_count }}</div>
+    </div>
+    <div class="don-stat">
+      <div class="don-stat-lbl">In Progress</div>
+      <div class="don-stat-val">{{ in_progress_count }}</div>
+    </div>
+    <div class="don-stat">
+      <div class="don-stat-lbl">Completed Events</div>
+      <div class="don-stat-val">{{ completed_count }}</div>
     </div>
   </div>
 
@@ -176,6 +192,7 @@
       <option value="">All statuses</option>
       <option value="PENDING" {{ status == 'PENDING' ? 'selected' : '' }}>Pending</option>
       <option value="SCHEDULED" {{ status == 'SCHEDULED' ? 'selected' : '' }}>Scheduled</option>
+      <option value="IN_PROGRESS" {{ status == 'IN_PROGRESS' ? 'selected' : '' }}>In progress</option>
       <option value="COMPLETED" {{ status == 'COMPLETED' ? 'selected' : '' }}>Completed</option>
       <option value="CANCELLED" {{ status == 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
     </select>
@@ -221,7 +238,7 @@
             <td>{{ event.charityName }}</td>
             <td>
               {% set normalized = (event.status ?: 'UNKNOWN')|upper %}
-              <span class="status-chip {{ normalized == 'PENDING' ? 'status-pending' : normalized == 'SCHEDULED' ? 'status-scheduled' : normalized == 'COMPLETED' ? 'status-completed' : normalized == 'CANCELLED' ? 'status-cancelled' : 'status-unknown' }}">{{ normalized }}</span>
+              <span class="status-chip {{ normalized == 'PENDING' ? 'status-pending' : normalized == 'SCHEDULED' ? 'status-scheduled' : normalized == 'IN_PROGRESS' ? 'status-in-progress' : normalized == 'COMPLETED' ? 'status-completed' : normalized == 'CANCELLED' ? 'status-cancelled' : 'status-unknown' }}">{{ normalized }}</span>
             </td>
             <td>{% if event.deliveryId %}<span class="meta-pill">#{{ event.deliveryId }}</span>{% else %}<span class="meta-pill">Not linked</span>{% endif %}</td>
             <td>{{ event.updatedAt ? event.updatedAt|date('Y-m-d H:i') : '—' }}</td>

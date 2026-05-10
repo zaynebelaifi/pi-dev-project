@@ -4,6 +4,39 @@
 {% block topbar_title %}Food Donation Events{% endblock %}
 
 {% block body %}
+  <style>
+    .don-card {
+      background: var(--ivory);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 6px 20px rgba(92, 61, 30, 0.08);
+    }
+    .don-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: .8rem;
+    }
+    .don-stat {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .9rem 1rem;
+      background: linear-gradient(145deg, rgba(250,246,239,.95), rgba(244,237,224,.85));
+    }
+    .don-stat-lbl {
+      font-size: .58rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: .35rem;
+    }
+    .don-stat-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      line-height: 1;
+      color: var(--espresso);
+    }
+  </style>
   <div class="sec-head">
     <div>
       <h2>Donation Event Details</h2>
@@ -44,6 +77,83 @@
         </tr>
       </tbody>
     </table>
+
+    <div style="margin-top:1.6rem;">
+      <h3 style="margin-bottom:.6rem;">Donation Items</h3>
+      <div class="tbl-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Item ID</th>
+              <th>Dish</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in event_items %}
+              <tr>
+                <td>#{{ item.item_id }}</td>
+                <td>{{ item.item_name ?? 'Unknown' }}</td>
+                <td>{{ item.quantity }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="3" class="no-results">No items linked to this event.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:1.6rem;">
+      <h3 style="margin-bottom:.6rem;">Ratings</h3>
+      <div class="don-card" style="margin-bottom:1rem;">
+        <div class="don-grid" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));">
+          <div class="don-stat">
+            <div class="don-stat-lbl">Avg Event</div>
+            <div class="don-stat-val">{{ avg_event_rating|number_format(1) }}/5</div>
+          </div>
+          <div class="don-stat">
+            <div class="don-stat-lbl">Avg Food</div>
+            <div class="don-stat-val">{{ avg_food_rating|number_format(1) }}/5</div>
+          </div>
+          <div class="don-stat">
+            <div class="don-stat-lbl">Total Reviews</div>
+            <div class="don-stat-val">{{ rating_count }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tbl-card">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Event Rating</th>
+              <th>Food Rating</th>
+              <th>Comment</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rating in ratings %}
+              <tr>
+                <td>{{ rating.user ? rating.user.email : 'Unknown' }}</td>
+                <td>{{ rating.eventRating }}/5</td>
+                <td>{{ rating.foodRating }}/5</td>
+                <td>{{ rating.comment ?: '—' }}</td>
+                <td>{{ rating.createdAt ? rating.createdAt|date('Y-m-d H:i') : '—' }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="5" class="no-results">No ratings yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="form-actions">
       <a href="{{ path('app_food_donation_event_index') }}" class="t-btn secondary">Back to events</a>

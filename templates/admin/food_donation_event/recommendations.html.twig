@@ -1,0 +1,86 @@
+{% extends 'backend.html.twig' %}
+
+{% block title %}Donation Recommendations · BIG 4 Admin{% endblock %}
+{% block topbar_title %}Donation Recommendations{% endblock %}
+{% block topbar_breadcrumb %}Big 4 · Admin · Donations · Recommendations{% endblock %}
+
+{% block body %}
+  <div class="sec-head">
+    <div>
+      <h2>Donation Recommendations</h2>
+      <p>Ranked dishes that help use near-expiry ingredients in the next {{ near_expiry_days }} days.</p>
+    </div>
+  </div>
+
+  <form method="get" class="list-filters don-card" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
+    <label style="font-weight:600;letter-spacing:.08em;">Near-expiry days</label>
+    <input type="number" name="days" min="0" value="{{ near_expiry_days }}" style="padding:.7rem 1rem;border:1px solid var(--border-2);border-radius:12px;width:140px;background:var(--ivory);">
+    <button type="submit" class="t-btn">Refresh</button>
+  </form>
+
+  {% if recommendations is empty %}
+    <div class="empty-state">No near-expiry recommendations found for the current window.</div>
+  {% else %}
+    <div class="tbl-card" style="margin-bottom:1.6rem;">
+      <div class="tbl-head">
+        <div class="tbl-title">Top Recommendations</div>
+        <div>{{ recommendations|length }} dishes</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Dish</th>
+            <th>Max Portions</th>
+            <th>Near-expiry Usage</th>
+            <th>Cost Saving Score</th>
+            <th>Total Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rec in recommendations %}
+            <tr>
+              <td>{{ rec.dish.name }}</td>
+              <td>{{ rec.maxDishCount }}</td>
+              <td>{{ rec.nearExpiryUsageScore|number_format(1) }}</td>
+              <td>{{ rec.costSavingScore|number_format(2) }}</td>
+              <td>{{ rec.totalPriorityScore|number_format(2) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% for rec in recommendations %}
+      <div class="tbl-card" style="margin-bottom:1.6rem;">
+        <div class="tbl-head">
+          <div class="tbl-title">{{ rec.dish.name }}</div>
+          <div>Max portions: {{ rec.maxDishCount }}</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Ingredient</th>
+              <th>Required / Dish</th>
+              <th>Near-expiry Stock</th>
+              <th>Near-expiry Used</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for usage in rec.ingredientUsages %}
+              <tr>
+                <td>{{ usage.ingredient.name }}</td>
+                <td>{{ usage.quantityRequiredPerDish|number_format(2) }} {{ usage.ingredient.unit }}</td>
+                <td>{{ usage.nearExpiryStockQuantity|number_format(2) }} {{ usage.ingredient.unit }}</td>
+                <td>{{ usage.nearExpiryQuantityConsumed|number_format(2) }} {{ usage.ingredient.unit }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="4" class="no-results">No near-expiry ingredients mapped.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endblock %}

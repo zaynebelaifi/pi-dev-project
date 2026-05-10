@@ -53,6 +53,32 @@ class FoodDonationEventRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    public function countAllEvents(): int
+    {
+        return (int) $this->createQueryBuilder('f')
+            ->select('COUNT(f.donation_event_id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countByStatus(string $status): int
+    {
+        return (int) $this->createQueryBuilder('f')
+            ->select('COUNT(f.donation_event_id)')
+            ->andWhere('f.status = :status')
+            ->setParameter('status', $status)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function sumTotalQuantity(): int
+    {
+        return (int) $this->createQueryBuilder('f')
+            ->select('COALESCE(SUM(f.total_quantity), 0)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     //    /**
     //     * @return FoodDonationEvent[] Returns an array of FoodDonationEvent objects
     //     */

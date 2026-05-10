@@ -9,6 +9,7 @@ use App\Repository\DishRepository;
 use App\Repository\FoodDonationEventRepository;
 use App\Repository\FoodDonationItemRepository;
 use App\Repository\IngredientRepository;
+use App\Service\DonationItemStockService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,7 +45,7 @@ final class FoodDonationItemController extends AbstractController
     }
 
     #[Route('/new', name: 'app_food_donation_item_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, FoodDonationEventRepository $eventRepository, DishRepository $dishRepository, IngredientRepository $ingredientRepository, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, FoodDonationEventRepository $eventRepository, DishRepository $dishRepository, IngredientRepository $ingredientRepository, EntityManagerInterface $entityManager, DonationItemStockService $stockService): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
@@ -82,11 +83,22 @@ final class FoodDonationItemController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($foodDonationItem);
-            $entityManager->flush();
+            $connection = $entityManager->getConnection();
+            $connection->beginTransaction();
 
-            $this->addFlash('success', 'Donation item created successfully.');
-            return $this->redirectToRoute('app_food_donation_item_index', [], Response::HTTP_SEE_OTHER);
+            try {
+                $stockService->consumeForDish((int) $foodDonationItem->getItem_id(), (int) $foodDonationItem->getQuantity());
+
+                $entityManager->persist($foodDonationItem);
+                $entityManager->flush();
+
+                $connection->commit();
+                $this->addFlash('success', 'Donation item created successfully.');
+                return $this->redirectToRoute('app_food_donation_item_index', [], Response::HTTP_SEE_OTHER);
+            } catch (\Throwable $e) {
+                $connection->rollBack();
+                $this->addFlash('error', $e->getMessage());
+            }
         }
 
         return $this->render('admin/food_donation_item/new.html.twig', [
@@ -109,11 +121,13 @@ final class FoodDonationItemController extends AbstractController
     }
 
     #[Route('/{donation_event_id}/{item_id}/edit', name: 'app_food_donation_item_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, FoodDonationItem $foodDonationItem, FoodDonationEventRepository $eventRepository, DishRepository $dishRepository, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, FoodDonationItem $foodDonationItem, FoodDonationEventRepository $eventRepository, DishRepository $dishRepository, EntityManagerInterface $entityManager, DonationItemStockService $stockService): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
         }
+
+        $originalQuantity = (int) $foodDonationItem->getQuantity();
 
         $eventChoices = [];
         foreach ($eventRepository->findAll() as $event) {
@@ -132,10 +146,28 @@ final class FoodDonationItemController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
+            $newQuantity = (int) $foodDonationItem->getQuantity();
+            $delta = $newQuantity - $originalQuantity;
 
-            $this->addFlash('success', 'Donation item updated successfully.');
-            return $this->redirectToRoute('app_food_donation_item_index', [], Response::HTTP_SEE_OTHER);
+            $connection = $entityManager->getConnection();
+            $connection->beginTransaction();
+
+            try {
+                if ($delta > 0) {
+                    $stockService->consumeForDish((int) $foodDonationItem->getItem_id(), $delta);
+                } elseif ($delta < 0) {
+                    $stockService->restoreForDish((int) $foodDonationItem->getItem_id(), abs($delta));
+                }
+
+                $entityManager->flush();
+                $connection->commit();
+
+                $this->addFlash('success', 'Donation item updated successfully.');
+                return $this->redirectToRoute('app_food_donation_item_index', [], Response::HTTP_SEE_OTHER);
+            } catch (\Throwable $e) {
+                $connection->rollBack();
+                $this->addFlash('error', $e->getMessage());
+            }
         }
 
         return $this->render('admin/food_donation_item/edit.html.twig', [
@@ -145,16 +177,27 @@ final class FoodDonationItemController extends AbstractController
     }
 
     #[Route('/{donation_event_id}/{item_id}', name: 'app_food_donation_item_delete', methods: ['POST'])]
-    public function delete(Request $request, FoodDonationItem $foodDonationItem, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, FoodDonationItem $foodDonationItem, EntityManagerInterface $entityManager, DonationItemStockService $stockService): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
         }
 
         if ($this->isCsrfTokenValid('delete'.$foodDonationItem->getDonation_event_id().'_'.$foodDonationItem->getItem_id(), $request->request->get('_token'))) {
-            $entityManager->remove($foodDonationItem);
-            $entityManager->flush();
-            $this->addFlash('success', 'Donation item deleted successfully.');
+            $connection = $entityManager->getConnection();
+            $connection->beginTransaction();
+
+            try {
+                $stockService->restoreForDish((int) $foodDonationItem->getItem_id(), (int) $foodDonationItem->getQuantity());
+                $entityManager->remove($foodDonationItem);
+                $entityManager->flush();
+                $connection->commit();
+
+                $this->addFlash('success', 'Donation item deleted successfully.');
+            } catch (\Throwable $e) {
+                $connection->rollBack();
+                $this->addFlash('error', $e->getMessage());
+            }
         }
 
         return $this->redirectToRoute('app_food_donation_item_index', [], Response::HTTP_SEE_OTHER);
