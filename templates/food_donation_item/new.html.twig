@@ -1,11 +1,24 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New FoodDonationItem{% endblock %}
+{% block title %}Create Donation Item{% endblock %}
 
 {% block body %}
-    <h1>Create new FoodDonationItem</h1>
+    <link rel="stylesheet" href="{{ asset('styles/donation_items.css') }}">
 
-    {{ include('food_donation_item/_form.html.twig') }}
+    <section class="donation-fallback-shell">
+        <div class="donation-edit-card">
+            <div class="donation-item-header">
+                <div>
+                    <p class="donation-item-eyebrow">Fallback Creator</p>
+                    <h1 class="donation-item-title">Create Donation Item</h1>
+                </div>
+            </div>
 
-    <a href="{{ path('app_food_donation_item_index') }}">back to list</a>
+            {{ include('food_donation_item/_form.html.twig', {'button_label': 'Create'}) }}
+
+            <div class="donation-item-actions">
+                <a class="btn-action btn-secondary" href="{{ path('app_food_donation_item_index') }}">Back to list</a>
+            </div>
+        </div>
+    </section>
 {% endblock %}

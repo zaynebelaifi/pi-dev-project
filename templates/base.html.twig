@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}BIG 4 — Ultra Luxury Coffee Lounge{% endblock %}</title>
+  <title>{% block title %}BIG 4 - Ultra Luxury Coffee Lounge{% endblock %}</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ asset('styles/app.css') }}?v=1">
+
+  <link rel="stylesheet" href="/styles/app.css?v=5">
 </head>
 <body>
-
   <!-- NAV -->
   <nav id="nav">
     <div class="nav-inner">
-      <a href="#home" class="brand">
-        <img src="{{ asset('images/FB_IMG_1698958536626-removebg-preview (1).png') }}" alt="BIG 4 logo" onerror="this.style.display='none'">
+      <a href="{{ path('app_home') }}" class="brand">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="BIG 4 logo" style="display:none">
         <div>
           <h1>BIG 4</h1>
           <span>Coffee Lounge</span>
@@ -25,29 +25,43 @@
       </a>
 
       <ul class="nav-links">
-        <li><a href="#menu-section">Menu</a></li>
-        <li><a href="#delivery">Delivery</a></li>
-        <li><a href="#events">Events</a></li>
+        <li><a href="{{ path('app_home') }}#menu-section">MENU</a></li>
+        <li><a href="{{ path('app_home') }}#delivery">DELIVERY</a></li>
+        <li><a href="{{ path('app_home') }}#events">EVENTS</a></li>
       </ul>
 
       {% set user_role = app.request.session.get('user_role') %}
       {% set user_name = app.request.session.get('user_name') %}
+      {% set user_email = app.request.session.get('user_email') %}
+      {% set user_phone = app.request.session.get('user_phone') %}
+      {% set user_address = app.request.session.get('user_address') %}
+      {% set is_customer = is_granted('ROLE_CUSTOMER') or is_granted('ROLE_CLIENT') %}
+      {% set is_authenticated = is_granted('IS_AUTHENTICATED_FULLY') %}
       <div class="nav-actions">
         <button class="cart-btn" id="openCart">
-          Cart <span class="cart-badge" id="cartCount">0</span>
+          CART <span class="cart-badge" id="cartCount">0</span>
         </button>
-        <button class="profile-btn" id="openProfile">Profile</button>
-        <a href="#" class="nav-btn" id="openBooking">Book Now</a>
+        <button class="profile-btn" id="openProfile">PROFILE</button>
+        <a href="#" class="nav-btn" id="openBooking">BOOK NOW</a>
         {% if user_role == 'ROLE_ADMIN' %}
           <a href="{{ path('app_admin_dashboard') }}" class="nav-btn">Admin</a>
-          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+          <form method="post" action="{{ path('app_logout') }}" style="display:inline-flex; margin:0;">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button type="submit" class="nav-btn" style="border:none;">Logout</button>
+          </form>
         {% elseif user_role == 'ROLE_DELIVERY_MAN' %}
           <a href="{{ path('app_driver_deliveries') }}" class="nav-btn">My Deliveries</a>
-          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+          <form method="post" action="{{ path('app_logout') }}" style="display:inline-flex; margin:0;">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button type="submit" class="nav-btn" style="border:none;">Logout</button>
+          </form>
         {% elseif user_role == 'ROLE_CLIENT' %}
-          <a href="{{ path('app_profile') }}" class="nav-btn">My Profile</a>
-          <a href="{{ path('app_client_orders') }}" class="nav-btn">My Orders</a>
-          <a href="{{ path('app_logout') }}" class="nav-btn">Logout</a>
+          <a href="{{ path('app_profile') }}" class="nav-btn">MY PROFILE</a>
+          <a href="{{ path('app_client_orders') }}" class="nav-btn">MY ORDERS</a>
+          <form method="post" action="{{ path('app_logout') }}" style="display:inline-flex; margin:0;">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button type="submit" class="nav-btn" style="border:none;">LOGOUT</button>
+          </form>
         {% else %}
           <a href="{{ path('app_login') }}" class="nav-btn">Login</a>
         {% endif %}
@@ -57,22 +71,25 @@
 
   <!-- FLASH MESSAGES -->
   {% for message in app.flashes('error') %}
-    <div class="flash-message flash-error">{{ message }}</div>
+    <div class="flash-message flash-error" data-flash>
+      {{ message }}
+    </div>
   {% endfor %}
   {% for message in app.flashes('success') %}
-    <div class="flash-message flash-success">{{ message }}</div>
+    <div class="flash-message flash-success" data-flash>
+      {{ message }}
+    </div>
   {% endfor %}
 
   {% block body %}
-
   <!-- HERO -->
   <section class="hero" id="home">
     <div class="container hero-grid">
       <div class="reveal-left show">
-        <div class="eyebrow">Tunis • Elevated Dining & Coffee</div>
+        <div class="eyebrow">Tunis - Elevated Dining & Coffee</div>
         <h2>Where Coffee Meets <em>Luxury</em></h2>
         <div class="hero-sub">BIG 4 Coffee Lounge</div>
-        <p class="lead">A refined escape for coffee lovers, dinner guests, and late-evening conversations — designed with warmth, elegance, and unforgettable atmosphere.</p>
+        <p class="lead">A refined escape for coffee lovers, dinner guests, and late-evening conversations - designed with warmth, elegance, and unforgettable atmosphere.</p>
         <div class="hero-actions">
           <a href="#" class="btn-primary" id="openBooking2">Reserve a Table</a>
           <a href="#gallery" class="btn-secondary">Discover the Space</a>
@@ -101,7 +118,7 @@
       <div class="about-panel reveal-right">
         <small class="eyebrow" style="margin-bottom:1rem">Our Story</small>
         <h3 style="font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:300;line-height:1.05;color:var(--espresso)">A Space Crafted for <span style="color:var(--gold);font-style:italic">Taste & Atmosphere</span></h3>
-        <p>BIG 4 was imagined as more than a café — a destination where refined design, gourmet flavors, and ambient evenings come together. Every detail is curated to feel elegant, intimate, and memorable.</p>
+        <p>BIG 4 was imagined as more than a cafe - a destination where refined design, gourmet flavors, and ambient evenings come together. Every detail is curated to feel elegant, intimate, and memorable.</p>
         <div class="stats-grid">
           <div class="stat"><strong>2023</strong><span>Founded in Tunis</span></div>
           <div class="stat"><strong>1.2K+</strong><span>Loyal Guests</span></div>
@@ -120,8 +137,9 @@
           <small>Signature Offerings</small>
           <h3>Curated for a <em>Premium</em> Experience</h3>
         </div>
-        <p>Every service is designed to feel polished, elevated, and indulgent — whether you're dining in, reserving for a special night, or ordering from home.</p>
+        <p>Every service is designed to feel polished, elevated, and indulgent - whether you're dining in, reserving for a special night, or ordering from home.</p>
       </div>
+
       <div class="cards">
         <div class="card reveal">
           <div class="number">01</div>
@@ -154,30 +172,66 @@
       </div>
 
       {% if menuSections is defined and menuSections is not empty %}
+        {# Count total available dishes across sections #}
+        {% set totalDishes = 0 %}
         {% for section in menuSections %}
+          {% set totalDishes = totalDishes + (section.dishes is defined ? section.dishes|length : 0) %}
+        {% endfor %}
+
+        {# If there are any dishes, render a consolidated Main Menu first so the page shows items clearly #}
+        {% if totalDishes > 0 %}
           <div style="margin:1.2rem 0 .7rem;">
-            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">
-              {{ section.menu.title }}
-            </h4>
-            {% if section.menu.description %}
-              <p style="margin:.25rem 0 0;color:var(--text-2);">{{ section.menu.description }}</p>
-            {% endif %}
+            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">Main Menu</h4>
+            <p style="margin:.25rem 0 0;color:var(--text-2);">All available dishes</p>
           </div>
+
           <div class="menu-grid">
-            {% for dish in section.dishes %}
-              {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
-              <div class="menu-card reveal">
-                <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
-                <div class="menu-card-content">
-                  <h4>{{ dish.name }}</h4>
-                  <p>{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
-                  <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
-                  <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
-                </div>
-              </div>
+            {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
+            {% for section in menuSections %}
+              {% if section.dishes is defined and section.dishes|length > 0 %}
+                {% for dish in section.dishes %}
+                  <div class="menu-card reveal compact">
+                    <div class="menu-card-inner">
+                      <div class="menu-thumb">
+                        <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
+                      </div>
+                      <div class="menu-card-content">
+                        <h4>{{ dish.name }}</h4>
+                        <p class="short-desc">{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
+                        <div class="menu-card-footer">
+                          <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
+                          <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
             {% endfor %}
           </div>
-        {% endfor %}
+
+          {# Instead of repeating dishes, show a compact category list linking to sections. #}
+          <div style="margin:1.2rem 0 .7rem;">
+            <h5 style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:500;color:var(--espresso);margin:0 0 .5rem;">Categories</h5>
+            <div class="menu-categories" style="display:flex;flex-wrap:wrap;gap:.6rem">
+              {% for section in menuSections %}
+                {% if section.dishes is defined and section.dishes|length > 0 %}
+                  <a href="#menu-section" class="menu-category" style="padding:.5rem .8rem;border:1px solid rgba(184,135,42,.12);border-radius:999px;background:rgba(255,255,255,.92);color:var(--brown);text-decoration:none;font-weight:600">{{ section.menu.title }} ({{ section.dishes|length }})</a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <div class="menu-grid">
+            <div class="menu-card reveal">
+              <div class="menu-card-content">
+                <h4>Menu Coming Soon</h4>
+                <p>Our dishes are being updated right now. Please check back shortly.</p>
+                <span class="price">--</span>
+              </div>
+            </div>
+          </div>
+        {% endif %}
       {% else %}
         <div class="menu-grid">
           <div class="menu-card reveal">
@@ -200,7 +254,7 @@
           <small>Visual Atmosphere</small>
           <h3>Inside the <em>BIG 4</em> Experience</h3>
         </div>
-        <p>Elegant interiors, signature drinks, and warm lighting — a destination designed to feel cinematic and unforgettable.</p>
+        <p>Elegant interiors, signature drinks, and warm lighting - a destination designed to feel cinematic and unforgettable.</p>
       </div>
       <div class="gallery-grid">
         <div class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80" alt="Luxury lounge interior"><span>Elegant Lounge Ambience</span></div>
@@ -223,6 +277,7 @@
         </div>
         <p>Enjoy BIG 4 from the comfort of your home with premium packaging, stylish presentation, and carefully delivered orders.</p>
       </div>
+
       <div class="cards">
         <div class="card reveal"><div class="number">01</div><h4>Fast Arrival</h4><p>Freshly prepared items delivered promptly while preserving temperature, presentation, and taste.</p></div>
         <div class="card reveal"><div class="number">02</div><h4>Premium Packaging</h4><p>Luxury-inspired packaging designed to keep your order elegant and intact from our lounge to your table.</p></div>
@@ -239,15 +294,116 @@
           <small>Upcoming Moments</small>
           <h3>Events & <em>Exclusive Nights</em></h3>
         </div>
-        <p>Transform ordinary evenings into memorable occasions with curated live experiences, themed dinners, and social lounge nights.</p>
+        <p>Open the donation calendar, pick an event, and leave your rating directly from the event detail page.</p>
       </div>
       <div class="event-list">
-        <div class="event reveal"><div class="date"><strong>12</strong><span>Apr</span></div><div><h5>Barista Signature Night</h5><p>Live coffee artistry, tasting sessions, and a showcase of BIG 4's signature creations.</p></div><div class="badge">Featured</div></div>
-        <div class="event reveal"><div class="date"><strong>19</strong><span>Apr</span></div><div><h5>Jazz Dinner Evening</h5><p>A warm candlelit atmosphere with soft live music, curated drinks, and a refined dinner service.</p></div><div class="badge">Live Music</div></div>
-        <div class="event reveal"><div class="date"><strong>26</strong><span>Apr</span></div><div><h5>Origin Coffee Masterclass</h5><p>An immersive tasting journey through exceptional beans, roast profiles, and brewing rituals.</p></div><div class="badge">Masterclass</div></div>
+        <a class="event event-card-link reveal" href="{{ path('app_client_food_donation_calendar') }}">
+          <div class="date">
+            <strong>All</strong>
+            <span>Calendar</span>
+          </div>
+          <div>
+            <h5>Food Donation Calendar</h5>
+            <p>Click anywhere on this card to open the calendar page.</p>
+          </div>
+        </a>
+
+        {% if donationEvents is defined and donationEvents is not empty %}
+          {% for event in donationEvents %}
+            {% set eventDate = event.eventDate %}
+            {% set eventStatus = event.status ?: 'Scheduled' %}
+            {% set eventStatusKey = eventStatus|lower %}
+            {% set eventStatusApiClass = eventStatusKey == 'in progress' ? 'in_progress' : eventStatusKey %}
+            <div class="event reveal" data-event-id="{{ event.donationEventId }}">
+              <div class="date">
+                <strong>{{ eventDate ? eventDate|date('d') : '--' }}</strong>
+                <span>{{ eventDate ? eventDate|date('M') : 'TBD' }}</span>
+              </div>
+              <div>
+                <h5>{{ event.charityName ?: ('Event #' ~ event.donationEventId) }}</h5>
+                <p>
+                  {{ eventDate ? eventDate|date('F j, Y H:i') : 'Date to be announced' }}
+                  · {{ event.totalQuantity }} items
+                  · <span data-registration-count-for="{{ event.donationEventId }}">{{ registrationCounts[event.donationEventId]|default(0) }}</span> registered
+                  · <span class="status status-{{ eventStatusApiClass }}" data-event-status>{{ eventStatus }}</span>
+                  {% if event.deliveryId %}· Delivery #{{ event.deliveryId }}{% endif %}
+                </p>
+                {% if eventStatusKey == 'scheduled' %}
+                  <div
+                    class="event-inline-actions"
+                    data-register-wrapper
+                    data-registered="{{ event.donationEventId in (registeredEventIds|default([])) ? '1' : '0' }}"
+                    data-register-token="{{ csrf_token('register-event' ~ event.donationEventId) }}"
+                    data-unregister-token="{{ csrf_token('unregister-event' ~ event.donationEventId) }}"
+                  >
+                    {% if is_customer %}
+                      {% if event.donationEventId in (registeredEventIds|default([])) %}
+                        <div class="registered-badge">
+                          <span>Registered</span>
+                        </div>
+                      {% else %}
+                        <div class="register-status">
+                          <span class="status-badge">SCHEDULED</span>
+                          <span class="registered-count">0 registered</span>
+                        </div>
+                        <form method="post" action="{{ path('app_client_food_donation_register', {'id': event.donationEventId}) }}" class="js-event-register-form" data-event-id="{{ event.donationEventId }}">
+                          <input type="hidden" name="_token" value="{{ csrf_token('register-event' ~ event.donationEventId) }}">
+                          <button type="submit" class="event-register-btn-ui">Register</button>
+                        </form>
+                      {% endif %}
+                    {% elseif not is_authenticated %}
+                      <a href="{{ path('app_login') }}" class="event-register-btn-ui">Login to Register</a>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="event reveal">
+            <div class="date"><strong>--</strong><span>--</span></div>
+            <div>
+              <h5>No donation events yet</h5>
+              <p>New food donation events will appear here as soon as they are created.</p>
+            </div>
+          </div>
+        {% endif %}
       </div>
+
+      {% if is_customer %}
+        <div class="my-registered-events-cta">
+          <button type="button" class="btn-secondary" id="openMyRegisteredEvents">My Registered Events</button>
+        </div>
+      {% endif %}
     </div>
   </section>
+
+  <!-- AI RECOMMENDATIONS SECTION -->
+  {% if is_customer %}
+    <section class="recommended-events-section" id="ai-recommendations">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <small>Personalized With AI</small>
+            <h3><span class="ai-badge">AI Picks For You</span> Recommended <em>Events</em></h3>
+          </div>
+          <p class="recommended-subtitle">Based on events you have registered for before.</p>
+        </div>
+
+        <div
+          id="recommendations"
+          data-recommended-events
+          class="event-list events-container"
+          data-authenticated="{{ is_authenticated ? '1' : '0' }}"
+          data-user-role="{{ is_customer ? 'ROLE_CUSTOMER' : (app.request.session.get('user_role') ?: '') }}"
+        >
+          <div class="event reveal">
+            <p>Loading recommendations...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endif %}
 
   <!-- CTA -->
   <section class="cta">
@@ -291,118 +447,51 @@
             Tunis, Tunisia<br>
             info@big4lounge.tn<br>
             +216 XX XXX XXX<br>
-            Daily · 8 AM — Midnight
+            Daily - 8 AM - Midnight
           </address>
         </div>
       </div>
       <div class="footer-bottom">
-        <span>© {{ "now"|date("Y") }} BIG 4 Coffee Lounge. All rights reserved.</span>
-        <span>Privacy Policy · Terms</span>
+        <span>&copy; {{ "now"|date("Y") }} BIG 4 Coffee Lounge. All rights reserved.</span>
+        <span>Privacy Policy - Terms</span>
       </div>
     </div>
   </footer>
 
   <!-- BOOKING POPUP -->
-<div class="popup-overlay" id="bookingPopup">
-  <div class="popup-box booking-popup-box">
-    <button class="close-popup" id="closeBooking">&times;</button>
-    <h3>Reserve Your Table</h3>
-    <p>Book your luxury dining moment at BIG 4. Choose your table, arrival window, and party size with smarter guidance built into the form.</p>
+  <div class="popup-overlay" id="bookingPopup">
+    <div class="popup-box">
+      <button class="close-popup" id="closeBooking">&times;</button>
+      <h3>Reserve Your Table</h3>
+      <p>Book your luxury dining moment at BIG 4. Select your preferred date, time, and guest count.</p>
 
-    <div class="booking-insight-strip">
-      <div class="booking-insight-card">
-        <span class="booking-insight-label">Service Hours</span>
-        <strong>08:00 - 23:30</strong>
-      </div>
-      <div class="booking-insight-card">
-        <span class="booking-insight-label">Smart Match</span>
-        <strong id="bookingTableHint">Choose guests to get a best-fit table.</strong>
-      </div>
+      <form class="booking-form" id="bookingForm">
+        <div class="full">
+          <input type="text" placeholder="Full Name" required>
+        </div>
+        <div>
+          <input type="date" required>
+        </div>
+        <div>
+          <input type="time" required>
+        </div>
+        <div class="full">
+          <select required>
+            <option value="">Select Guests</option>
+            <option>1 Guest</option>
+            <option>2 Guests</option>
+            <option>3 Guests</option>
+            <option>4 Guests</option>
+            <option>5 Guests</option>
+            <option>6+ Guests</option>
+          </select>
+        </div>
+        <div class="full">
+          <button type="submit" class="btn-primary" style="width:100%">Confirm Booking</button>
+        </div>
+      </form>
     </div>
-
-    <form class="booking-form" id="bookingForm" novalidate>
-      <div class="full booking-field">
-        <label for="booking_table">Preferred Table</label>
-        <select id="booking_table" name="table_id" required>
-          <option value="">-- Select a Table --</option>
-          {% if availableTables is defined and availableTables|length > 0 %}
-            {% for table in availableTables %}
-              <option value="{{ table.tableId }}" data-capacity="{{ table.capacity }}">
-                Table #{{ table.tableId }} &mdash; {{ table.capacity }} seats
-              </option>
-            {% endfor %}
-          {% else %}
-            <option value="" disabled>No tables available at the moment</option>
-          {% endif %}
-        </select>
-        <small class="booking-help" id="bookingCapacityHint">Select a table to see its seating capacity.</small>
-      </div>
-
-      <div class="booking-field">
-        <label for="booking_date">Reservation Date</label>
-        <input type="date" id="booking_date" name="date" required min="{{ 'now'|date('Y-m-d') }}">
-        <small class="booking-help">Bookings start from today onward.</small>
-      </div>
-
-      <div class="booking-field">
-        <label for="booking_time">Arrival Time</label>
-        <input type="time" id="booking_time" name="time" required min="08:00" max="23:30" step="1800">
-        <small class="booking-help">30-minute slots between 08:00 and 23:30.</small>
-      </div>
-
-      <div class="full booking-slot-picker">
-        <span class="booking-slot-label">Quick Time Picks</span>
-        <div class="booking-slot-list">
-          <button type="button" class="booking-slot-btn" data-time="08:30">Breakfast</button>
-          <button type="button" class="booking-slot-btn" data-time="13:00">Lunch</button>
-          <button type="button" class="booking-slot-btn" data-time="16:30">Coffee Break</button>
-          <button type="button" class="booking-slot-btn" data-time="20:00">Dinner</button>
-          <button type="button" class="booking-slot-btn" data-time="22:30">Late Night</button>
-        </div>
-      </div>
-
-      <div class="full booking-field">
-        {% set maxCapacity = 0 %}
-        {% for table in availableTables %}
-          {% if table.capacity > maxCapacity %}
-            {% set maxCapacity = table.capacity %}
-          {% endif %}
-        {% endfor %}
-        <label for="booking_guests">Party Size</label>
-        <select id="booking_guests" name="guests" required>
-          <option value="">Number of Guests</option>
-          {% for i in 1..maxCapacity %}
-            <option value="{{ i }}">{{ i }} Guest{{ i > 1 ? 's' : '' }}</option>
-          {% endfor %}
-        </select>
-        <small class="booking-help">We will recommend the smallest comfortable table for your group.</small>
-      </div>
-
-      <div class="full booking-summary" id="bookingSummary" aria-live="polite">
-        <div class="booking-summary-row">
-          <span>Selected table</span>
-          <strong id="bookingSummaryTable">Not selected</strong>
-        </div>
-        <div class="booking-summary-row">
-          <span>Date</span>
-          <strong id="bookingSummaryDate">Choose a date</strong>
-        </div>
-        <div class="booking-summary-row">
-          <span>Arrival time</span>
-          <strong id="bookingSummaryTime">Choose a time</strong>
-        </div>
-        <div class="booking-summary-row">
-          <span>Guests</span>
-          <strong id="bookingSummaryGuests">Choose guests</strong>
-        </div>
-      </div>
-
-      <div class="full">
-        <button type="submit" class="btn-primary" style="width:100%" id="bookingSubmitBtn">Confirm Booking</button>
-      </div>
-    </form>
   </div>
-</div>
 
   <!-- PROFILE POPUP -->
   <div class="profile-overlay" id="profilePopup">
@@ -410,15 +499,20 @@
       <button class="close-popup" id="closeProfile">&times;</button>
       <h3>Your Profile</h3>
       <p>Welcome to BIG 4 Lounge. Your profile can be used for future reservations, loyalty rewards, and personalized dining experiences.</p>
-      <form class="booking-form" id="profileForm">
+
+      <form class="booking-form" id="profileForm" method="post" action="{{ path('app_profile_quick_save') }}" data-authenticated="{{ isUserLoggedIn is defined and isUserLoggedIn ? '1' : '0' }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('profile_quick_save') }}">
         <div class="full">
-          <input type="text" placeholder="Full Name">
+          <input type="text" name="full_name" placeholder="Full Name" value="{{ user_name ?: '' }}">
         </div>
         <div>
-          <input type="email" placeholder="Email Address">
+          <input type="email" name="email" placeholder="Email Address" value="{{ user_email ?: '' }}">
         </div>
         <div>
-          <input type="tel" placeholder="Phone Number">
+          <input type="tel" name="phone" placeholder="Phone Number" value="{{ user_phone ?: '' }}">
+        </div>
+        <div class="full">
+          <input type="text" name="address" placeholder="Address (optional)" value="{{ user_address ?: '' }}">
         </div>
         <div class="full">
           <button type="submit" class="btn-primary" style="width:100%">Save Profile</button>
@@ -427,6 +521,48 @@
     </div>
   </div>
 
+  {% if is_customer %}
+    <div class="popup-overlay" id="myRegisteredEventsPopup">
+      <div class="popup-box my-events-popup-box">
+        <div class="my-events-popup-head">
+          <div>
+            <h3 style="margin:0 0 .25rem;color:#fff;">My Registered Events</h3>
+            <p style="margin:0;font-size:.82rem;color:var(--text-2);">Your current donation event registrations.</p>
+          </div>
+          <button class="close-popup" id="closeMyRegisteredEvents" style="position:static;flex-shrink:0;">&times;</button>
+        </div>
+
+        <div class="my-events-grid">
+          {% if myRegisteredEvents is defined and myRegisteredEvents is not empty %}
+            {% for event in myRegisteredEvents %}
+              {% set eventDate = event.eventDate %}
+              {% set eventStatus = event.status ?: 'Scheduled' %}
+              <article class="my-event-card">
+                <span class="my-event-date">{{ eventDate ? eventDate|date('M j, Y H:i') : 'Date TBD' }}</span>
+                <h4 class="my-event-title">{{ event.charityName ?: ('Event #' ~ event.donationEventId) }}</h4>
+                <p class="my-event-summary">
+                  {{ event.totalQuantity }} items · {{ eventStatus }} ·
+                  <span data-registration-count-for="{{ event.donationEventId }}">{{ registrationCounts[event.donationEventId]|default(0) }}</span> registered
+                </p>
+                <div class="event-inline-actions">
+                  <a class="event-register-btn-ui" href="{{ path('app_client_food_donation_show', {'id': event.donationEventId}) }}">View Details</a>
+                  <button
+                    type="button"
+                    class="event-register-btn-ui js-unregister-btn"
+                    data-event-id="{{ event.donationEventId }}"
+                    data-csrf="{{ csrf_token('unregister-event' ~ event.donationEventId) }}"
+                  >Unregister</button>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-copy js-no-events-msg">You are not registered for any events yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
   <!-- CART DRAWER -->
   <div class="cart-overlay" id="cartOverlay">
     <div class="cart-drawer">
@@ -434,979 +570,683 @@
         <h3>Your Cart</h3>
         <button class="close-popup" id="closeCart">&times;</button>
       </div>
+
       <div class="cart-items" id="cartItems">
         <div class="empty-cart">Your luxury cart is currently empty.</div>
       </div>
+
       <div class="cart-footer">
         <div class="cart-total">
           <span>Total</span>
           <strong id="cartTotal">0 TND</strong>
         </div>
-        <button type="button" class="btn-primary" style="width:100%" id="checkoutBtn">Confirm Order</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ORDER TYPE SELECTION MODAL -->
-  <div id="orderTypeModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:white; padding:2rem; border-radius:12px; min-width:300px; max-width:500px; box-shadow:0 10px 40px rgba(0,0,0,0.3); text-align:center;">
-      <h2 style="margin-bottom:1rem; font-family:'Cormorant Garamond', serif; font-size:2rem;">Choose Order Type</h2>
-      <p style="margin-bottom:2rem; color:#666;">How would you like to receive your order?</p>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-        <button id="dineInBtn" type="button" style="padding:1rem; background:#D4AF37; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">🍽️ Dine In</button>
-        <button id="deliveryBtn" type="button" style="padding:1rem; background:#D4AF37; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">🛵 Delivery</button>
-      </div>
-      <button id="closeOrderType" type="button" style="margin-top:1rem; padding:0.5rem 1rem; background:#ccc; border:none; border-radius:6px; cursor:pointer;">Cancel</button>
-    </div>
-  </div>
-
-  <!-- DELIVERY FORM MODAL -->
-  <style>
-    .delivery-modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-      overflow-y: auto;
-      padding: 28px 18px;
-      background:
-        radial-gradient(circle at top, rgba(212, 175, 55, 0.16), transparent 35%),
-        rgba(17, 12, 9, 0.76);
-      backdrop-filter: blur(8px);
-    }
-
-    .delivery-modal-card {
-      width: min(100%, 640px);
-      margin: auto;
-      background: linear-gradient(180deg, #fffdf9 0%, #fff7ea 100%);
-      border: 1px solid rgba(155, 114, 29, 0.18);
-      border-radius: 28px;
-      box-shadow: 0 32px 90px rgba(25, 16, 10, 0.32);
-      overflow: hidden;
-    }
-
-    .delivery-modal-header {
-      padding: 2rem 2rem 1.25rem;
-      background:
-        linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(255, 255, 255, 0)),
-        linear-gradient(180deg, rgba(94, 62, 25, 0.98), rgba(58, 36, 11, 0.94));
-      color: #fff8ec;
-    }
-
-    .delivery-modal-tag {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.45rem 0.85rem;
-      border-radius: 999px;
-      background: rgba(255, 248, 236, 0.12);
-      border: 1px solid rgba(255, 248, 236, 0.18);
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-weight: 700;
-    }
-
-    .delivery-modal-title {
-      margin: 1rem 0 0.45rem;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.1rem, 4vw, 2.9rem);
-      line-height: 1;
-    }
-
-    .delivery-modal-copy {
-      margin: 0;
-      max-width: 40rem;
-      color: rgba(255, 248, 236, 0.82);
-      line-height: 1.6;
-      font-size: 0.98rem;
-    }
-
-    .delivery-modal-body {
-      padding: 1.6rem 2rem 2rem;
-    }
-
-    .delivery-form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1rem;
-    }
-
-    .delivery-form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.45rem;
-    }
-
-    .delivery-form-field-full {
-      grid-column: 1 / -1;
-    }
-
-    .delivery-form-label {
-      font-size: 0.83rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #6f5224;
-      font-weight: 800;
-    }
-
-    .delivery-form-input {
-      width: 100%;
-      min-height: 54px;
-      padding: 0.95rem 1rem;
-      border-radius: 18px;
-      border: 1px solid rgba(177, 138, 73, 0.24);
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-      color: #2c1d0f;
-      font-size: 0.98rem;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-    }
-
-    .delivery-form-input:focus {
-      outline: none;
-      border-color: #d4af37;
-      box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.14);
-      transform: translateY(-1px);
-    }
-
-    .delivery-form-input::placeholder {
-      color: #a69072;
-    }
-
-    .delivery-form-textarea {
-      min-height: 112px;
-      resize: vertical;
-    }
-
-    .delivery-location-panel {
-      margin-top: 1.1rem;
-      padding: 1.2rem;
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(255, 250, 240, 0.95), rgba(249, 239, 217, 0.9));
-      border: 1px solid rgba(212, 175, 55, 0.2);
-    }
-
-    .delivery-location-heading {
-      margin: 0 0 0.35rem;
-      color: #6b4b1a;
-      font-size: 1rem;
-      font-weight: 800;
-    }
-
-    .delivery-location-copy {
-      margin: 0 0 1rem;
-      color: #7f6642;
-      line-height: 1.5;
-      font-size: 0.92rem;
-    }
-
-    .delivery-location-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1rem;
-    }
-
-    .delivery-location-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-top: 1rem;
-    }
-
-    .delivery-locate-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 0.8rem 1.1rem;
-      background: linear-gradient(135deg, #285943, #1e4332);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 12px 26px rgba(30, 67, 50, 0.22);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .delivery-locate-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 32px rgba(30, 67, 50, 0.28);
-    }
-
-    .delivery-location-help {
-      color: #7f6642;
-      font-size: 0.88rem;
-    }
-
-    .delivery-modal-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    .delivery-modal-btn {
-      min-height: 54px;
-      border-radius: 18px;
-      border: none;
-      font-size: 0.98rem;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-    }
-
-    .delivery-modal-btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .delivery-modal-btn-primary {
-      background: linear-gradient(135deg, #d4af37, #b6851b);
-      color: #fffdf7;
-      box-shadow: 0 16px 30px rgba(182, 133, 27, 0.26);
-    }
-
-    .delivery-modal-btn-secondary {
-      background: rgba(108, 84, 47, 0.08);
-      color: #5c431f;
-      border: 1px solid rgba(108, 84, 47, 0.12);
-    }
-
-    @media (max-width: 640px) {
-      .delivery-modal-header,
-      .delivery-modal-body {
-        padding-left: 1.2rem;
-        padding-right: 1.2rem;
-      }
-
-      .delivery-form-grid,
-      .delivery-location-grid,
-      .delivery-modal-actions {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-  <div id="deliveryFormModal" class="delivery-modal-overlay">
-    <div class="delivery-modal-card">
-      <div class="delivery-modal-header">
-        <div class="delivery-modal-tag">Premium Delivery Checkout</div>
-        <h2 class="delivery-modal-title">Delivery Details</h2>
-        <p class="delivery-modal-copy">Share where the order should go and how we can reach you, then we'll take care of the rest.</p>
-      </div>
-      
-      <div class="delivery-modal-body">
-        <form id="deliveryForm">
-          <div class="delivery-form-grid">
-            <div class="delivery-form-field">
-              <label class="delivery-form-label" for="recipientName">Your Name *</label>
-              <input class="delivery-form-input" type="text" id="recipientName" name="recipient_name" placeholder="Enter your full name" required>
-            </div>
-        
-            <div class="delivery-form-field">
-              <label class="delivery-form-label" for="recipientPhone">Phone Number *</label>
-              <input class="delivery-form-input" type="tel" id="recipientPhone" name="recipient_phone" placeholder="e.g., +216 12 345 678" required>
-            </div>
-        
-            <div class="delivery-form-field delivery-form-field-full">
-              <label class="delivery-form-label" for="deliveryAddress">Delivery Address *</label>
-              <textarea class="delivery-form-input delivery-form-textarea" id="deliveryAddress" name="delivery_address" placeholder="Enter your complete delivery address" required></textarea>
-            </div>
-        
-            <div class="delivery-form-field delivery-form-field-full">
-              <label class="delivery-form-label" for="pickupLocation">Pickup Location</label>
-              <input class="delivery-form-input" type="text" id="pickupLocation" name="pickup_location" placeholder="e.g., BIG 4 Downtown Branch">
-            </div>
-          </div>
-          <input type="hidden" id="deliveryOrderId" name="order_id" value="">
-          <input type="hidden" id="deliverySaveToken" name="_token" value="{{ csrf_token('delivery-save') }}">
-        
-          <div class="delivery-location-panel">
-            <h4 class="delivery-location-heading">Location Coordinates</h4>
-            <p class="delivery-location-copy">Use your current coordinates for more accurate routing and a smoother handoff.</p>
-          
-            <div class="delivery-location-grid">
-              <div class="delivery-form-field">
-                <label class="delivery-form-label" for="deliveryLatitude">Latitude *</label>
-                <input class="delivery-form-input" type="number" id="deliveryLatitude" name="current_latitude" step="any" placeholder="e.g., 36.8065" required>
-              </div>
-            
-              <div class="delivery-form-field">
-                <label class="delivery-form-label" for="deliveryLongitude">Longitude *</label>
-                <input class="delivery-form-input" type="number" id="deliveryLongitude" name="current_longitude" step="any" placeholder="e.g., 10.1815" required>
-              </div>
-            </div>
-          
-            <div class="delivery-location-actions">
-              <button type="button" id="getCurrentLocation" class="delivery-locate-btn">Use Current Location</button>
-              <span class="delivery-location-help">Allow location access to fill these fields automatically.</span>
-            </div>
-          </div>
-        </form>
-      
-        <div class="delivery-modal-actions">
-          <button id="confirmDeliveryBtn" type="button" class="delivery-modal-btn delivery-modal-btn-primary">Confirm Delivery</button>
-          <button id="closeDeliveryForm" type="button" class="delivery-modal-btn delivery-modal-btn-secondary">Cancel</button>
-        </div>
+        <button type="button" class="btn-primary" style="width:100%" id="checkoutBtn">Proceed to Checkout</button>
       </div>
     </div>
   </div>
 
   <!-- CHECKOUT REDIRECT FORM -->
-  <form id="checkoutRedirectForm" method="get" action="{{ path('app_order_create_from_cart') }}" style="display:none;">
+  <form id="checkoutRedirectForm" method="get" action="{{ path('app_delivery_create') }}" style="display:none;">
     <input type="hidden" name="cart_items" id="redirectCartItemsInput">
     <input type="hidden" name="order_total" id="redirectCartTotalInput">
-    <input type="hidden" name="order_type" id="orderTypeInput">
-    <input type="hidden" name="order_id" id="deliverySavedOrderIdInput">
   </form>
 
   {% endblock %}
 
+  {% block javascripts %}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/recommendations.js?v=2"></script>
   <script>
-  // ── BOOKING POPUP ──────────────────────────────────────────
-  const bookingPopup = document.getElementById('bookingPopup');
-
-  function openBookingPopup(e) { e.preventDefault(); bookingPopup.classList.add('active'); document.body.style.overflow='hidden'; }
-  function closeBookingPopup() { bookingPopup.classList.remove('active'); document.body.style.overflow=''; document.getElementById('bookingMsg')?.remove(); }
-
-  document.getElementById('openBooking').addEventListener('click', openBookingPopup);
-  document.getElementById('openBooking2').addEventListener('click', openBookingPopup);
-  document.getElementById('closeBooking').addEventListener('click', closeBookingPopup);
-  bookingPopup.addEventListener('click', e => { if(e.target === bookingPopup) closeBookingPopup(); });
-
-  const bookingForm = document.getElementById('bookingForm');
-  const bookingTable = document.getElementById('booking_table');
-  const bookingDate = document.getElementById('booking_date');
-  const bookingTime = document.getElementById('booking_time');
-  const bookingGuests = document.getElementById('booking_guests');
-  const bookingSubmitBtn = document.getElementById('bookingSubmitBtn');
-  const bookingCapacityHint = document.getElementById('bookingCapacityHint');
-  const bookingTableHint = document.getElementById('bookingTableHint');
-  const bookingSummaryTable = document.getElementById('bookingSummaryTable');
-  const bookingSummaryDate = document.getElementById('bookingSummaryDate');
-  const bookingSummaryTime = document.getElementById('bookingSummaryTime');
-  const bookingSummaryGuests = document.getElementById('bookingSummaryGuests');
-  const bookingSlotButtons = Array.from(document.querySelectorAll('.booking-slot-btn'));
-
-  function getSelectedTableCapacity() {
-    return parseInt(bookingTable.selectedOptions[0]?.dataset.capacity || 0, 10);
-  }
-
-  function formatBookingDate(value) {
-    if (!value) {
-      return 'Choose a date';
-    }
-
-    const date = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-
-    return date.toLocaleDateString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }
-
-  function roundTimeToNextSlot(date) {
-    const next = new Date(date.getTime());
-    next.setSeconds(0, 0);
-
-    const minutes = next.getMinutes();
-    const remainder = minutes % 30;
-
-    if (remainder !== 0) {
-      next.setMinutes(minutes + (30 - remainder));
-    }
-
-    if (next < date) {
-      next.setMinutes(next.getMinutes() + 30);
-    }
-
-    return `${String(next.getHours()).padStart(2, '0')}:${String(next.getMinutes()).padStart(2, '0')}`;
-  }
-
-  function syncGuestOptions() {
-    const capacity = getSelectedTableCapacity();
-    const currentGuests = parseInt(bookingGuests.value || '0', 10);
-
-    Array.from(bookingGuests.options).forEach(opt => {
-      if (!opt.value) {
-        return;
-      }
-
-      const tooMany = capacity > 0 && parseInt(opt.value, 10) > capacity;
-      opt.disabled = tooMany;
-      opt.style.color = tooMany ? '#bbb' : '';
-    });
-
-    if (capacity > 0) {
-      bookingCapacityHint.textContent = `This table seats up to ${capacity} guest${capacity > 1 ? 's' : ''}.`;
-      if (currentGuests > capacity) {
-        bookingGuests.value = '';
-      }
-    } else {
-      bookingCapacityHint.textContent = 'Select a table to see its seating capacity.';
-    }
-  }
-
-  function suggestBestFitTable() {
-    const guests = parseInt(bookingGuests.value || '0', 10);
-    const options = Array.from(bookingTable.options)
-      .filter(opt => opt.value)
-      .map(opt => ({
-        value: opt.value,
-        label: opt.textContent.trim(),
-        capacity: parseInt(opt.dataset.capacity || '0', 10),
-      }))
-      .filter(opt => opt.capacity > 0)
-      .sort((a, b) => a.capacity - b.capacity);
-
-    if (!guests) {
-      bookingTableHint.textContent = 'Choose guests to get a best-fit table.';
-      return;
-    }
-
-    const bestFit = options.find(opt => opt.capacity >= guests);
-    if (!bestFit) {
-      bookingTableHint.textContent = 'No table currently fits that party size.';
-      return;
-    }
-
-    const selectedCapacity = getSelectedTableCapacity();
-    if (!bookingTable.value || (selectedCapacity > 0 && selectedCapacity < guests)) {
-      bookingTable.value = bestFit.value;
-    }
-
-    bookingTableHint.textContent = `Best fit: ${bestFit.label}`;
-  }
-
-  function syncTimeConstraints() {
-    const today = new Date();
-    const selectedDate = bookingDate.value;
-    const todayString = today.toISOString().split('T')[0];
-    const openingTime = '08:00';
-    const closingTime = '23:30';
-
-    bookingTime.min = openingTime;
-    bookingTime.max = closingTime;
-
-    if (selectedDate === todayString) {
-      const nextAvailable = roundTimeToNextSlot(today);
-      bookingTime.min = nextAvailable > openingTime ? nextAvailable : openingTime;
-      if (bookingTime.value && bookingTime.value < bookingTime.min) {
-        bookingTime.value = bookingTime.min <= closingTime ? bookingTime.min : '';
-      }
-    }
-  }
-
-  function syncTimeSlotState() {
-    bookingSlotButtons.forEach(button => {
-      button.classList.toggle('active', button.dataset.time === bookingTime.value);
-      button.disabled = Boolean(bookingTime.min && button.dataset.time < bookingTime.min);
-    });
-  }
-
-  function updateBookingSummary() {
-    const selectedTableText = bookingTable.selectedOptions[0]?.textContent?.trim() || 'Not selected';
-    const guests = bookingGuests.value ? `${bookingGuests.value} guest${bookingGuests.value === '1' ? '' : 's'}` : 'Choose guests';
-
-    bookingSummaryTable.textContent = selectedTableText;
-    bookingSummaryDate.textContent = formatBookingDate(bookingDate.value);
-    bookingSummaryTime.textContent = bookingTime.value || 'Choose a time';
-    bookingSummaryGuests.textContent = guests;
-  }
-
-  bookingTable.addEventListener('change', function() {
-    syncGuestOptions();
-    updateBookingSummary();
-  });
-
-  bookingGuests.addEventListener('change', function() {
-    suggestBestFitTable();
-    syncGuestOptions();
-    updateBookingSummary();
-  });
-
-  bookingDate.addEventListener('change', function() {
-    syncTimeConstraints();
-    syncTimeSlotState();
-    updateBookingSummary();
-  });
-
-  bookingTime.addEventListener('input', function() {
-    syncTimeSlotState();
-    updateBookingSummary();
-  });
-
-  bookingSlotButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      if (this.disabled) {
-        return;
-      }
-
-      bookingTime.value = this.dataset.time;
-      syncTimeSlotState();
-      updateBookingSummary();
-    });
-  });
-
-  syncTimeConstraints();
-  syncGuestOptions();
-  syncTimeSlotState();
-  updateBookingSummary();
-
-  function showBookingMsg(form, text, isError) {
-    document.getElementById('bookingMsg')?.remove();
-    const msg = document.createElement('div');
-    msg.id = 'bookingMsg';
-    msg.style.cssText = 'margin-bottom:1rem;padding:.75rem 1rem;border-radius:12px;font-size:.9rem;';
-    if (isError) {
-      msg.style.background = 'rgba(220,53,69,.08)';
-      msg.style.color = '#dc3545';
-      msg.style.border = '1px solid rgba(220,53,69,.2)';
-    } else {
-      msg.style.background = 'rgba(46,158,106,.10)';
-      msg.style.color = '#2e9e6a';
-      msg.style.border = '1px solid rgba(46,158,106,.25)';
-    }
-    msg.textContent = text;
-    form.insertAdjacentElement('beforebegin', msg);
-  }
-
-  bookingForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const capacity = getSelectedTableCapacity();
-    const guests = parseInt(bookingGuests.value || '0', 10);
-    const selectedDateTime = bookingDate.value && bookingTime.value
-      ? new Date(`${bookingDate.value}T${bookingTime.value}:00`)
-      : null;
-
-    // Client-side capacity guard
-    if (capacity && guests > capacity) {
-      showBookingMsg(this, `This table only seats ${capacity} guest(s). Please select fewer guests or a larger table.`, true);
-      return;
-    }
-
-    if (selectedDateTime && selectedDateTime < new Date()) {
-      showBookingMsg(this, 'Please choose a reservation time in the future.', true);
-      return;
-    }
-
-    if (bookingTime.value && (bookingTime.value < '08:00' || bookingTime.value > '23:30')) {
-      showBookingMsg(this, 'Please choose a time between 08:00 and 23:30.', true);
-      return;
-    }
-
-    bookingSubmitBtn.textContent = 'Processing...';
-    bookingSubmitBtn.disabled = true;
-
-    const payload = {
-      table_id: bookingTable.value,
-      date: bookingDate.value,
-      time: bookingTime.value,
-      guests: guests,
-    };
-
-    try {
-      const res  = await fetch('{{ path("app_reservation_book") }}', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        showBookingMsg(this, 'Your reservation is confirmed! We look forward to welcoming you.', false);
-        this.reset();
-        // Re-enable all guest options after reset
-        document.querySelectorAll('#booking_guests option').forEach(o => { o.disabled = false; o.style.color = ''; });
-        bookingTableHint.textContent = 'Choose guests to get a best-fit table.';
-        bookingCapacityHint.textContent = 'Select a table to see its seating capacity.';
-        syncTimeConstraints();
-        syncTimeSlotState();
-        updateBookingSummary();
-        setTimeout(closeBookingPopup, 2500);
-      } else {
-        showBookingMsg(this, data.error || 'Something went wrong. Please try again.', true);
-      }
-    } catch(err) {
-      showBookingMsg(this, 'Network error. Please try again.', true);
-    }
-
-    bookingSubmitBtn.textContent = 'Confirm Booking';
-    bookingSubmitBtn.disabled = false;
-  });
-
-  // ── PROFILE POPUP ──────────────────────────────────────────
-  const profilePopup = document.getElementById('profilePopup');
-  function closeProfilePopup() { profilePopup.classList.remove('active'); document.body.style.overflow=''; }
-  document.getElementById('openProfile').addEventListener('click', () => { profilePopup.classList.add('active'); document.body.style.overflow='hidden'; });
-  document.getElementById('closeProfile').addEventListener('click', closeProfilePopup);
-  profilePopup.addEventListener('click', e => { if(e.target === profilePopup) closeProfilePopup(); });
-  document.getElementById('profileForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    alert('Your profile has been saved successfully!');
-    this.reset();
-    closeProfilePopup();
-  });
-
-  // ── CART DRAWER ────────────────────────────────────────────
-  const cartOverlay = document.getElementById('cartOverlay');
-  function openCart()  { cartOverlay.classList.add('active');    document.body.style.overflow='hidden'; }
-  function closeCart() { cartOverlay.classList.remove('active'); document.body.style.overflow=''; }
-  document.getElementById('openCart').addEventListener('click', openCart);
-  document.getElementById('openCart2').addEventListener('click', openCart);
-  document.getElementById('closeCart').addEventListener('click', closeCart);
-  cartOverlay.addEventListener('click', e => { if(e.target === cartOverlay) closeCart(); });
-
-  let cart = [];
-  let pendingDeliveryOrderId = null;
-
-  document.querySelectorAll('.add-cart-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      cart.push({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) });
-      updateCart();
-      btn.textContent = 'Added';
-      setTimeout(() => btn.textContent = 'Add to Cart', 1200);
-    });
-  });
-
-  function updateCart() {
-    const container = document.getElementById('cartItems');
-    container.innerHTML = cart.length === 0
-      ? '<div class="empty-cart">Your luxury cart is currently empty.</div>'
-      : cart.map((item, i) => `
-          <div class="cart-item">
-            <div><h4>${item.name}</h4><p>${item.price.toFixed(2)} TND</p></div>
-            <button class="remove-btn" onclick="removeFromCart(${i})">Remove</button>
-          </div>`).join('');
-    const total = cart.reduce((s, i) => s + i.price, 0);
-    document.getElementById('cartTotal').textContent  = total.toFixed(2) + ' TND';
-    document.getElementById('cartCount').textContent  = cart.length;
-  }
-
-  function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
-  window.removeFromCart = removeFromCart;
-
-  // ── ORDER TYPE MODAL ───────────────────────────────────────
-  const checkoutBtn = document.getElementById('checkoutBtn');
-  const orderTypeModal = document.getElementById('orderTypeModal');
-  const dineInBtn = document.getElementById('dineInBtn');
-  const deliveryBtn = document.getElementById('deliveryBtn');
-  const closeOrderTypeBtn = document.getElementById('closeOrderType');
-
-  if(checkoutBtn) {
-    checkoutBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if(cart.length === 0){
-        alert("Your cart is empty.");
-        return;
-      }
-
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      document.getElementById('redirectCartItemsInput').value = JSON.stringify(cart);
-      document.getElementById('redirectCartTotalInput').value = total.toFixed(2);
-      
-      closeCart();
-      
-      if(orderTypeModal){
-        orderTypeModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-      }
-    });
-  }
-
-  if(dineInBtn) {
-    dineInBtn.addEventListener('click', function() {
-      const cartItemsInput = document.getElementById('redirectCartItemsInput');
-      const orderTotalInput = document.getElementById('redirectCartTotalInput');
-      
-      const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
-      url.searchParams.append('cart_items', cartItemsInput.value);
-      url.searchParams.append('order_total', orderTotalInput.value);
-      url.searchParams.append('order_type', 'DINE_IN');
-      
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          if(data.success) {
-            // Close modal
-            if(orderTypeModal){
-              orderTypeModal.style.display = 'none';
-              document.body.style.overflow = '';
-            }
-            
-            // Clear cart display
-            const cartContainer = document.getElementById('cartItems');
-            if(cartContainer) {
-              cartContainer.innerHTML = '<div class="empty-cart">Your luxury cart is currently empty.</div>';
-            }
-            document.getElementById('cartCount').textContent = '0';
-            document.getElementById('cartTotal').textContent = '0 TND';
-            
-            // Show success notification
-            alert('✅ Your Dine In order has been placed successfully!\nOrder ID: #' + data.order_id);
-          } else {
-            alert('❌ Error: ' + (data.message || 'Failed to place order'));
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('❌ Error placing order. Please try again.');
+    (function () {
+      const nav = document.getElementById('nav');
+      if (nav) {
+        window.addEventListener('scroll', () => {
+          nav.classList.toggle('scrolled', window.scrollY > 40);
         });
-    });
-  }
+      }
 
-  if(deliveryBtn) {
-    deliveryBtn.addEventListener('click', async function() {
-      if(cart.length === 0) {
-        alert('Your cart is empty. Add items before selecting delivery.');
+      const revealNodes = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+      if (!revealNodes.length) {
         return;
       }
 
-      if (!pendingDeliveryOrderId) {
-        const cartItemsInput = document.getElementById('redirectCartItemsInput');
-        const orderTotalInput = document.getElementById('redirectCartTotalInput');
-        const url = new URL('{{ path("app_order_create_from_cart") }}', window.location.origin);
+      if (!('IntersectionObserver' in window)) {
+        revealNodes.forEach((node) => node.classList.add('show'));
+        return;
+      }
 
-        url.searchParams.append('cart_items', cartItemsInput.value);
-        url.searchParams.append('order_total', orderTotalInput.value);
-        url.searchParams.append('order_type', 'DELIVERY');
-
-        try {
-          const response = await fetch(url);
-          const data = await response.json();
-
-          if (!data.success) {
-            alert('❌ Error: ' + (data.message || 'Failed to create delivery order')); 
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
             return;
           }
 
-          pendingDeliveryOrderId = data.order_id;
-          document.getElementById('deliveryOrderId').value = pendingDeliveryOrderId;
-          document.getElementById('deliverySavedOrderIdInput').value = pendingDeliveryOrderId;
-          alert('✅ Delivery order saved automatically. Please confirm delivery details. Order ID: #' + pendingDeliveryOrderId);
-        } catch (error) {
-          console.error('Error creating delivery order:', error);
-          alert('❌ Error creating delivery order. Please try again.');
+          entry.target.classList.add('show');
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.12 });
+
+      revealNodes.forEach((node) => observer.observe(node));
+    })();
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const flashMessages = document.querySelectorAll('[data-flash]');
+      flashMessages.forEach((msg) => {
+        window.setTimeout(() => {
+          msg.style.transition = 'opacity 0.3s ease';
+          msg.style.opacity = '0';
+          window.setTimeout(() => msg.remove(), 300);
+        }, 3000);
+      });
+    });
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const openBtn = document.getElementById('openMyRegisteredEvents');
+      const popup = document.getElementById('myRegisteredEventsPopup');
+      const closeBtn = document.getElementById('closeMyRegisteredEvents');
+
+      if (!openBtn || !popup || !closeBtn) {
+        return;
+      }
+
+      function openPopup() {
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        document.dispatchEvent(new CustomEvent('my-registrations:open'));
+      }
+
+      function closePopup() {
+        popup.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      openBtn.addEventListener('click', openPopup);
+      closeBtn.addEventListener('click', closePopup);
+
+      popup.addEventListener('click', function (event) {
+        if (event.target === popup) {
+          closePopup();
+        }
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          closePopup();
+        }
+      });
+    });
+  </script>
+  <script>
+    (function () {
+      const REGISTRATION_STATE_ENDPOINT = '{{ path('app_client_food_donation_registration_state') }}';
+      const REGISTRATION_SYNC_MS = 15000;
+
+      const showToast = (message, type = 'success') => {
+        const toast = document.createElement('div');
+        toast.className = `flash-message ${type === 'error' ? 'flash-error' : 'flash-success'}`;
+        toast.textContent = String(message || 'Done.');
+        document.body.prepend(toast);
+        window.setTimeout(() => {
+          toast.remove();
+        }, 2600);
+      };
+
+      window.BIG4ShowToast = showToast;
+
+      const escapeHtml = (value) => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+      const setRegistrationCount = (eventId, count) => {
+        document.querySelectorAll(`[data-registration-count-for="${eventId}"]`).forEach((node) => {
+          node.textContent = String(Number(count || 0));
+        });
+      };
+
+      const setButtonState = (button, action) => {
+        const normalized = action === 'register' ? 'register' : 'unregister';
+        button.dataset.action = normalized;
+        button.textContent = normalized === 'register' ? 'Register' : 'Unregister';
+        button.classList.toggle('btn-register', normalized === 'register');
+        button.classList.toggle('btn-unregister', normalized === 'unregister');
+        button.classList.toggle('btn-unregister-sm', normalized === 'unregister' && button.classList.contains('btn-unregister-sm'));
+      };
+
+      const replaceEventCardRegisterState = (eventId, isRegistered, registerToken) => {
+        const wrapper = document.querySelector(`.event[data-event-id="${eventId}"] [data-register-wrapper]`);
+        if (!wrapper) {
           return;
         }
-      }
 
-      if(orderTypeModal){
-        orderTypeModal.style.display = 'none';
-      }
-      const deliveryFormModal = document.getElementById('deliveryFormModal');
-      if(deliveryFormModal){
-        deliveryFormModal.style.display = 'flex';
-      }
-    });
-  }
+        const currentToken = wrapper.querySelector('input[name="_token"]')?.value || '';
+        const effectiveToken = String(registerToken || currentToken || '');
+        const unregisterToken = String(wrapper.dataset.unregisterToken || '');
+        const registerUrl = `/client/food-donation/event/${eventId}/register`;
+        const unregisterUrl = `/client/food-donation/event/${eventId}/unregister`;
 
-  // Handle confirm delivery button
-  const confirmDeliveryBtn = document.getElementById('confirmDeliveryBtn');
-  if(confirmDeliveryBtn) {
-    confirmDeliveryBtn.addEventListener('click', async function() {
-      const orderId = document.getElementById('deliveryOrderId').value.trim() || pendingDeliveryOrderId;
-      const recipientName = document.getElementById('recipientName').value.trim();
-      const recipientPhone = document.getElementById('recipientPhone').value.trim();
-      const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
-      const pickupLocation = document.getElementById('pickupLocation').value.trim();
-      const latitude = document.getElementById('deliveryLatitude').value.trim();
-      const longitude = document.getElementById('deliveryLongitude').value.trim();
-      const token = document.getElementById('deliverySaveToken').value;
+        if (isRegistered) {
+          wrapper.dataset.registered = '1';
+          wrapper.innerHTML = `
+            <div class="registered-badge">
+              <span>Registered</span>
+            </div>
+          `;
+          return;
+        }
 
-      if (!orderId) {
-        alert('❌ No delivery order has been created yet. Please select Delivery again.');
-        return;
-      }
+        wrapper.dataset.registered = '0';
+        wrapper.innerHTML = `
+          <form method="post" action="/client/food-donation/event/${eventId}/register" class="js-event-register-form" data-event-id="${eventId}">
+            <input type="hidden" name="_token" value="${effectiveToken}">
+            <button type="submit" class="event-register-btn-ui">Register</button>
+          </form>
+        `;
+      };
 
-      if (!recipientName || !recipientPhone || !deliveryAddress || !latitude || !longitude) {
-        alert('❌ Please fill in all required fields (Name, Phone, Address, Latitude, Longitude)');
-        return;
-      }
+      const renderMyRegisteredEvents = (events) => {
+        const grid = document.querySelector('#myRegisteredEventsPopup .my-events-grid');
+        if (!grid) {
+          return;
+        }
 
-      const payload = new URLSearchParams();
-      payload.append('order_id', orderId);
-      payload.append('recipient_name', recipientName);
-      payload.append('recipient_phone', recipientPhone);
-      payload.append('delivery_address', deliveryAddress);
-      payload.append('pickup_location', pickupLocation);
-      payload.append('current_latitude', latitude);
-      payload.append('current_longitude', longitude);
-      payload.append('_token', token);
+        if (!Array.isArray(events) || events.length === 0) {
+          grid.innerHTML = '<p class="empty-copy js-no-events-msg">You have no registered events.</p>';
+          return;
+        }
 
-      try {
-        const response = await fetch('{{ path("app_delivery_save") }}', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: payload.toString(),
+        grid.innerHTML = events.map((event) => {
+          const eventId = Number(event.id || 0);
+          return `
+            <article class="my-event-card">
+              <span class="my-event-date">${escapeHtml(event.event_date || 'Date TBD')}</span>
+              <h4 class="my-event-title">${escapeHtml(event.charity_name || ('Event #' + eventId))}</h4>
+              <p class="my-event-summary">
+                ${Number(event.total_quantity || 0)} items · ${escapeHtml(event.status || 'Scheduled')} ·
+                <span data-registration-count-for="${eventId}">${Number(event.registration_count || 0)}</span> registered
+              </p>
+              <div class="event-inline-actions">
+                <a class="event-register-btn-ui" href="${escapeHtml(event.view_url || '#')}">View Details</a>
+                <button
+                  type="button"
+                  class="event-register-btn-ui js-unregister-btn"
+                  data-event-id="${eventId}"
+                  data-unregister-url="${escapeHtml(event.unregister_url || '')}"
+                  data-csrf="${escapeHtml(event.unregister_token || '')}"
+                >Unregister</button>
+              </div>
+            </article>
+          `;
+        }).join('');
+      };
+
+      const upsertMyRegisteredEventCard = (eventId, registrationCount = 0, eventData = null) => {
+        const grid = document.querySelector('#myRegisteredEventsPopup .my-events-grid');
+        if (!grid || !eventId) {
+          return;
+        }
+
+        const existingCard = grid.querySelector(`.my-event-card [data-event-id="${eventId}"]`)?.closest('.my-event-card');
+        if (existingCard) {
+          const countNode = existingCard.querySelector(`[data-registration-count-for="${eventId}"]`);
+          if (countNode) {
+            countNode.textContent = String(Number(registrationCount || 0));
+          }
+          return;
+        }
+
+        const emptyMessage = grid.querySelector('.js-no-events-msg');
+        if (emptyMessage) {
+          emptyMessage.remove();
+        }
+
+        const eventRow = document.querySelector(`.event[data-event-id="${eventId}"]`);
+        const title = String(eventData?.charity_name || eventRow?.querySelector('h5')?.textContent || `Event #${eventId}`).trim();
+        const status = String(eventData?.status || eventRow?.querySelector('[data-event-status]')?.textContent || 'Scheduled').trim();
+
+        const summaryText = (eventRow?.querySelector('p')?.textContent || 'Date TBD').replace(/\s+/g, ' ').trim();
+        const summaryParts = summaryText.split('·').map((part) => part.trim()).filter(Boolean);
+        const eventDate = String(eventData?.event_date || (summaryParts.length > 0 ? summaryParts[0] : 'Date TBD')).trim();
+
+        let quantity = Number(eventData?.total_quantity || 0);
+        const qtyMatch = summaryText.match(/(\d+)\s*items/i);
+        if (quantity <= 0 && qtyMatch && qtyMatch[1]) {
+          quantity = Number(qtyMatch[1]) || 0;
+        }
+
+        const registerWrapper = eventRow?.querySelector('[data-register-wrapper]');
+        const unregisterToken = String(eventData?.unregister_token || registerWrapper?.dataset.unregisterToken || '');
+        const viewUrl = String(eventData?.view_url || `/client/food-donation/event/${eventId}`);
+        const unregisterUrl = String(eventData?.unregister_url || `/client/food-donation/event/${eventId}/unregister`);
+
+        const card = document.createElement('article');
+        card.className = 'my-event-card';
+        card.innerHTML = `
+          <span class="my-event-date">${escapeHtml(eventDate)}</span>
+          <h4 class="my-event-title">${escapeHtml(title)}</h4>
+          <p class="my-event-summary">
+            ${Number(quantity)} items · ${escapeHtml(status)} ·
+            <span data-registration-count-for="${eventId}">${Number(registrationCount || 0)}</span> registered
+          </p>
+          <div class="event-inline-actions">
+            <a class="event-register-btn-ui" href="${escapeHtml(viewUrl)}">View Details</a>
+            <button
+              type="button"
+              class="event-register-btn-ui js-unregister-btn"
+              data-event-id="${eventId}"
+              data-unregister-url="${escapeHtml(unregisterUrl)}"
+              data-csrf="${escapeHtml(unregisterToken)}"
+            >Unregister</button>
+          </div>
+        `;
+
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(8px)';
+        grid.prepend(card);
+        requestAnimationFrame(() => {
+          card.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
         });
-        const data = await response.json();
+      };
 
-        if (data.success) {
-          const deliveryFormModal = document.getElementById('deliveryFormModal');
-          if(deliveryFormModal){
-            deliveryFormModal.style.display = 'none';
-          }
-          if(orderTypeModal){
-            orderTypeModal.style.display = 'none';
-            document.body.style.overflow = '';
-          }
+      const updateMyRegistrationsPage = (eventId, isRegistered) => {
+        const card = document.querySelector(`.my-reg-card [data-event-id="${eventId}"]`)?.closest('.my-reg-card');
+        const grid = document.querySelector('.my-reg-grid');
+        const shell = document.querySelector('.my-registrations-shell');
 
-          cart = [];
-          updateCart();
-
-          document.getElementById('deliveryForm').reset();
-          pendingDeliveryOrderId = null;
-          document.getElementById('deliveryOrderId').value = '';
-          document.getElementById('deliverySavedOrderIdInput').value = '';
-
-          alert('✅ Your delivery details have been saved successfully!\nOrder ID: #' + orderId + '\nDelivery ID: #' + data.delivery_id);
-        } else {
-          alert('❌ Error: ' + (data.message || 'Failed to save delivery details'));
+        if (!card) {
+          return;
         }
-      } catch (error) {
-        console.error('Error saving delivery:', error);
-        alert('❌ Error saving delivery details. Please try again.');
-      }
-    });
-  }
 
-  // Handle get current location button
-  const getCurrentLocationBtn = document.getElementById('getCurrentLocation');
-  if(getCurrentLocationBtn) {
-    getCurrentLocationBtn.addEventListener('click', function() {
-      const latitudeInput = document.getElementById('deliveryLatitude');
-      const longitudeInput = document.getElementById('deliveryLongitude');
-      
-      if (navigator.geolocation) {
-        getCurrentLocationBtn.textContent = '📍 Getting location...';
-        getCurrentLocationBtn.disabled = true;
-        
-        navigator.geolocation.getCurrentPosition(
-          function(position) {
-            const latitude = position.coords.latitude.toFixed(6);
-            const longitude = position.coords.longitude.toFixed(6);
-            
-            latitudeInput.value = latitude;
-            longitudeInput.value = longitude;
-            
-            getCurrentLocationBtn.textContent = '📍 Location updated!';
-            getCurrentLocationBtn.style.background = '#28a745';
-            
-            setTimeout(() => {
-              getCurrentLocationBtn.textContent = '📍 Get Current Location';
-              getCurrentLocationBtn.style.background = '#28a745';
-              getCurrentLocationBtn.disabled = false;
-            }, 2000);
-          },
-          function(error) {
-            let errorMessage = 'Unable to get your location.';
-            switch(error.code) {
-              case error.PERMISSION_DENIED:
-                errorMessage = 'Location access denied. Please enable location services.';
-                break;
-              case error.POSITION_UNAVAILABLE:
-                errorMessage = 'Location information is unavailable.';
-                break;
-              case error.TIMEOUT:
-                errorMessage = 'Location request timed out.';
-                break;
+        if (!isRegistered) {
+          card.remove();
+        }
+
+        if (grid && grid.children.length === 0 && shell && !shell.querySelector('.my-reg-empty')) {
+          const empty = document.createElement('div');
+          empty.className = 'my-reg-empty';
+          empty.innerHTML = `
+            <p>You have not registered for any events yet.</p>
+            <a href="{{ path('app_client_food_donation_calendar') }}" class="btn-register-link">Browse Events</a>
+          `;
+          grid.remove();
+          shell.appendChild(empty);
+        }
+      };
+
+      const notifyRecommendationsRefresh = (options = {}) => {
+        document.dispatchEvent(new CustomEvent('recommendations:refresh', {
+          detail: options,
+        }));
+      };
+
+      const syncRegistrationState = async (options = {}) => {
+        const shouldRefreshRecommendations = options.notifyRecommendations === true;
+        const popup = document.getElementById('myRegisteredEventsPopup');
+        if (!popup) {
+          return;
+        }
+
+        try {
+          const response = await fetch(REGISTRATION_STATE_ENDPOINT, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            return;
+          }
+
+          const payload = await response.json();
+          if (!payload || payload.success !== true) {
+            return;
+          }
+
+          const registrationCounts = payload.registration_counts || {};
+          Object.keys(registrationCounts).forEach((eventId) => {
+            setRegistrationCount(Number(eventId), registrationCounts[eventId]);
+          });
+
+          const registeredEventIds = new Set((payload.registered_event_ids || []).map((id) => Number(id)));
+          const eventMap = new Map((payload.my_events || []).map((event) => [Number(event.id || 0), event]));
+
+          document.querySelectorAll('.event[data-event-id]').forEach((eventNode) => {
+            const eventId = Number(eventNode.getAttribute('data-event-id') || 0);
+            if (!eventId) {
+              return;
             }
-            
-            alert('❌ ' + errorMessage);
-            getCurrentLocationBtn.textContent = '📍 Get Current Location';
-            getCurrentLocationBtn.disabled = false;
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000 // 5 minutes
+
+            const isRegistered = registeredEventIds.has(eventId);
+            const eventData = eventMap.get(eventId);
+            replaceEventCardRegisterState(eventId, isRegistered, String(eventData?.register_token || ''));
+          });
+
+          renderMyRegisteredEvents(payload.my_events || []);
+          if (shouldRefreshRecommendations) {
+            notifyRecommendationsRefresh({
+              instant: true,
+              forceLoading: true,
+            });
           }
-        );
-      } else {
-        alert('❌ Geolocation is not supported by this browser.');
-      }
-    });
-  }
-
-  if(closeOrderTypeBtn) {
-    closeOrderTypeBtn.addEventListener('click', function() {
-      if(orderTypeModal){
-        orderTypeModal.style.display = 'none';
-        document.body.style.overflow = '';
-      }
-    });
-  }
-
-  // Handle close delivery form button
-  const closeDeliveryFormBtn = document.getElementById('closeDeliveryForm');
-  const deliveryFormModal = document.getElementById('deliveryFormModal');
-  if(closeDeliveryFormBtn) {
-    closeDeliveryFormBtn.addEventListener('click', function() {
-      if(deliveryFormModal){
-        deliveryFormModal.style.display = 'none';
-      }
-      // Show order type modal again
-      if(orderTypeModal){
-        orderTypeModal.style.display = 'flex';
-      }
-      // Reset the form
-      document.getElementById('deliveryForm').reset();
-    });
-  }
-
-  // Close delivery form by clicking outside
-  if(deliveryFormModal) {
-    deliveryFormModal.addEventListener('click', function(e) {
-      if(e.target === deliveryFormModal) {
-        deliveryFormModal.style.display = 'none';
-        // Show order type modal again
-        if(orderTypeModal){
-          orderTypeModal.style.display = 'flex';
+        } catch (error) {
+          console.error('Registration sync failed:', error);
         }
-        // Reset the form
-        document.getElementById('deliveryForm').reset();
-      }
-    });
-  }
+      };
 
-  if(orderTypeModal) {
-    orderTypeModal.addEventListener('click', function(e) {
-      if(e.target === orderTypeModal) {
-        orderTypeModal.style.display = 'none';
-        document.body.style.overflow = '';
-      }
-    });
-  }
+      const postEventAction = async ({ url, token }) => {
+        const formData = new FormData();
+        formData.append('_token', token);
 
-  // ── ESC KEY ────────────────────────────────────────────────
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { 
-      closeBookingPopup(); 
-      closeCart(); 
-      closeProfilePopup();
-      if(orderTypeModal) orderTypeModal.style.display = 'none';
-    }
-  });
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+        });
 
-  // ── SCROLL REVEAL ──────────────────────────────────────────
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('show'); observer.unobserve(entry.target); }});
-  }, { threshold: 0.15 });
-  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.message || 'Request failed.');
+        }
 
-  // ── NAV SCROLL ─────────────────────────────────────────────
-  window.addEventListener('scroll', () => {
-    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
-  });
+        return payload;
+      };
+
+      const setInlineRegisterButtonLoading = (button, isLoading, loadingText = 'Registering...') => {
+        if (!button) {
+          return;
+        }
+
+        if (!button.dataset.defaultText) {
+          button.dataset.defaultText = String(button.textContent || 'Register');
+        }
+
+        if (isLoading) {
+          button.disabled = true;
+          button.classList.add('is-registering');
+          button.textContent = loadingText;
+          return;
+        }
+
+        button.disabled = false;
+        button.classList.remove('is-registering');
+        button.textContent = button.dataset.defaultText;
+      };
+
+      document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('.js-event-register-form');
+        if (!form) {
+          return;
+        }
+
+        event.preventDefault();
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (!submitButton) {
+          return;
+        }
+
+        const eventId = Number(form.dataset.eventId || 0);
+        const registerToken = String(form.querySelector('input[name="_token"]')?.value || '');
+        setInlineRegisterButtonLoading(submitButton, true, 'Registering...');
+
+        try {
+          const payload = await postEventAction({
+            url: form.action,
+            token: registerToken,
+          });
+
+          setRegistrationCount(eventId, payload.registration_count ?? 0);
+          replaceEventCardRegisterState(eventId, true, registerToken);
+          upsertMyRegisteredEventCard(eventId, payload.registration_count ?? 0, payload.registered_event || null);
+          showToast(payload.message || 'You are now registered for this event.', 'success');
+          notifyRecommendationsRefresh({
+            instant: true,
+            forceLoading: true,
+          });
+          await syncRegistrationState({ notifyRecommendations: false });
+        } catch (error) {
+          setInlineRegisterButtonLoading(submitButton, false);
+          showToast(error instanceof Error ? error.message : 'Registration failed. Please try again.', 'error');
+        }
+      });
+
+      document.addEventListener('click', async (event) => {
+        const modalUnregisterButton = event.target.closest('.js-unregister-btn');
+        if (modalUnregisterButton && modalUnregisterButton.closest('#myRegisteredEventsPopup')) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          const eventId = modalUnregisterButton.dataset.eventId;
+          const csrfToken = modalUnregisterButton.dataset.csrf || modalUnregisterButton.dataset.unregisterToken || '';
+          const eventTitle = modalUnregisterButton.closest('.my-event-card')?.querySelector('.my-event-title')?.textContent || 'this event';
+
+          if (!eventId || !csrfToken) {
+            showToast('Unable to unregister right now. Please refresh and try again.', 'error');
+            return;
+          }
+
+          const confirmModal = document.createElement('div');
+          confirmModal.className = 'custom-confirm-modal';
+          confirmModal.innerHTML = `
+            <div class="custom-confirm-box">
+              <h4>Unregister from "${escapeHtml(eventTitle)}"?</h4>
+              <p>You will be removed from this event.</p>
+              <div class="confirm-actions">
+                <button class="confirm-cancel-btn" type="button">Cancel</button>
+                <button class="confirm-proceed-btn" type="button">Unregister</button>
+              </div>
+            </div>
+          `;
+
+          document.body.appendChild(confirmModal);
+
+          const closeConfirmModal = () => {
+            if (confirmModal.parentNode) {
+              confirmModal.remove();
+            }
+          };
+
+          confirmModal.querySelector('.confirm-cancel-btn')?.addEventListener('click', closeConfirmModal);
+
+          confirmModal.querySelector('.confirm-proceed-btn')?.addEventListener('click', async () => {
+            modalUnregisterButton.disabled = true;
+            modalUnregisterButton.textContent = 'Unregistering...';
+
+            try {
+              const response = await fetch(
+                `{{ path('app_client_food_donation_unregister', {'id': 'PLACEHOLDER'}) }}`.replace('PLACEHOLDER', eventId),
+                {
+                  method: 'POST',
+                  headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json',
+                  },
+                  body: '_token=' + encodeURIComponent(csrfToken),
+                }
+              );
+
+              const payload = await response.json();
+              if (!response.ok || !payload.success) {
+                throw new Error(payload.message || 'Failed to unregister. Please try again.');
+              }
+
+              const numericEventId = Number(eventId);
+              setRegistrationCount(numericEventId, payload.registration_count ?? 0);
+
+              const card = modalUnregisterButton.closest('.my-event-card');
+              if (card) {
+                card.style.transition = 'opacity 0.3s ease';
+                card.style.opacity = '0';
+
+                window.setTimeout(() => {
+                  card.remove();
+                  const popupGrid = document.querySelector('#myRegisteredEventsPopup .my-events-grid');
+                  if (popupGrid && popupGrid.querySelectorAll('.my-event-card').length === 0) {
+                    popupGrid.innerHTML = '<p class="empty-copy js-no-events-msg">You are not registered for any events yet.</p>';
+                  }
+                }, 300);
+              }
+
+              replaceEventCardRegisterState(numericEventId, false, String(modalUnregisterButton.dataset.registerToken || ''));
+              updateMyRegistrationsPage(numericEventId, false);
+              showToast(payload.message || 'You have been unregistered from this event.', 'success');
+              document.dispatchEvent(new CustomEvent('recommendations:refresh', {
+                detail: {
+                  instant: true,
+                  forceLoading: true,
+                },
+              }));
+              await syncRegistrationState({ notifyRecommendations: false });
+            } catch (error) {
+              modalUnregisterButton.disabled = false;
+              modalUnregisterButton.textContent = 'Unregister';
+              showToast(error instanceof Error ? error.message : 'An error occurred. Please try again.', 'error');
+            } finally {
+              closeConfirmModal();
+            }
+          });
+
+          confirmModal.addEventListener('click', (clickEvent) => {
+            if (clickEvent.target === confirmModal) {
+              closeConfirmModal();
+            }
+          });
+
+          return;
+        }
+
+        const toggleButton = event.target.closest('.js-event-toggle-btn');
+        if (!toggleButton) {
+          return;
+        }
+
+        const eventId = Number(toggleButton.dataset.eventId || 0);
+        const action = String(toggleButton.dataset.action || 'unregister').toLowerCase();
+        const isRegisterAction = action === 'register';
+        const actionUrl = isRegisterAction ? toggleButton.dataset.registerUrl : toggleButton.dataset.unregisterUrl;
+        const token = isRegisterAction ? toggleButton.dataset.registerToken : toggleButton.dataset.unregisterToken;
+        const previousText = toggleButton.textContent;
+
+        if (!actionUrl || !token) {
+          return;
+        }
+
+        toggleButton.disabled = true;
+        toggleButton.textContent = 'Loading...';
+
+        try {
+          const payload = await postEventAction({ url: actionUrl, token });
+          const isNowRegistered = Boolean(payload.registered);
+
+          setRegistrationCount(eventId, payload.registration_count ?? 0);
+          setButtonState(toggleButton, isNowRegistered ? 'unregister' : 'register');
+          replaceEventCardRegisterState(eventId, isNowRegistered, String(toggleButton.dataset.registerToken || ''));
+          updateMyRegistrationsPage(eventId, isNowRegistered);
+          showToast(payload.message || 'Registration updated.', 'success');
+          await syncRegistrationState({ notifyRecommendations: true });
+        } catch (error) {
+          toggleButton.textContent = previousText;
+          showToast(error instanceof Error ? error.message : 'Action failed. Please try again.', 'error');
+        } finally {
+          toggleButton.disabled = false;
+        }
+      });
+
+      syncRegistrationState();
+      window.setInterval(syncRegistrationState, REGISTRATION_SYNC_MS);
+
+      document.addEventListener('my-registrations:open', () => {
+        syncRegistrationState();
+      });
+
+      document.addEventListener('registration-state-changed', (event) => {
+        const detail = event.detail || {};
+        const eventId = Number(detail.eventId || 0);
+
+        if (eventId > 0) {
+          const registrationCount = Number(detail.registrationCount || 0);
+          const eventData = detail.event && typeof detail.event === 'object' ? detail.event : null;
+          const registerToken = String(eventData?.register_token || '');
+
+          setRegistrationCount(eventId, registrationCount);
+          replaceEventCardRegisterState(eventId, true, registerToken);
+          upsertMyRegisteredEventCard(eventId, registrationCount, eventData);
+        }
+
+        syncRegistrationState({ notifyRecommendations: false });
+      });
+    })();
   </script>
+  <script>
+    (function () {
+      const STATUS_ENDPOINT = '/api/refresh-event-statuses';
+      const INTERVAL_MS = 30000;
 
+      const prettyLabel = (apiStatus) => {
+        const mapping = {
+          SCHEDULED: 'Scheduled',
+          IN_PROGRESS: 'In Progress',
+          ONGOING: 'Ongoing',
+          COMPLETED: 'Completed',
+          CANCELLED: 'Cancelled',
+        };
+
+        return mapping[apiStatus] || 'Scheduled';
+      };
+
+      const refreshStatuses = async () => {
+        try {
+          const response = await fetch(STATUS_ENDPOINT, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+
+          if (!response.ok) {
+            throw new Error('Refresh failed');
+          }
+
+          const data = await response.json();
+          if (!data || data.success !== true || !Array.isArray(data.events)) {
+            return;
+          }
+
+          data.events.forEach((eventItem) => {
+            const row = document.querySelector(`[data-event-id="${eventItem.id}"]`);
+            if (!row) {
+              return;
+            }
+
+            const apiStatus = String(eventItem.status || 'SCHEDULED').toUpperCase();
+            const statusNode = row.querySelector('[data-event-status]');
+            if (statusNode) {
+              statusNode.textContent = prettyLabel(apiStatus);
+              statusNode.className = `status status-${apiStatus.toLowerCase()}`;
+            }
+
+            const registerWrapper = row.querySelector('[data-register-wrapper]');
+            if (registerWrapper) {
+              registerWrapper.style.display = apiStatus === 'SCHEDULED' ? '' : 'none';
+            }
+          });
+        } catch (error) {
+          console.error('Home event refresh failed:', error);
+        }
+      };
+
+      refreshStatuses();
+      setInterval(refreshStatuses, INTERVAL_MS);
+    })();
+  </script>
+  {% endblock %}
 </body>
 </html>

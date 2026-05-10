@@ -1,0 +1,347 @@
+{# ─────────────────────────────────────────────────────────────────────────
+   templates/delivery/_driver_table.html.twig
+   Drop-in replacement — paste into your driver_deliveries layout.
+   ───────────────────────────────────────────────────────────────────────── #}
+
+{# ══ TABLE ROWS ══════════════════════════════════════════════════════════ #}
+{% for delivery in deliveries %}
+    <tr>
+        <td>{{ delivery.order_id }}</td>
+        <td>{{ delivery.recipient_name }}<br><span class="meta-text">{{ delivery.recipient_phone }}</span></td>
+        <td>{{ delivery.delivery_address }}</td>
+        <td>{{ delivery.status }}</td>
+        <td>{{ delivery.pickup_location }}</td>
+        <td>{{ delivery.order_total }} TND</td>
+        <td>{{ delivery.created_at ? delivery.created_at|date('Y-m-d H:i') : '-' }}</td>
+        <td class="action-cell">
+            {% set myId = app.session.get('delivery_man_id') %}
+
+            {% if delivery.status == 'PENDING_ASSIGNMENT' and delivery.deliveryMan and delivery.deliveryMan.delivery_man_id == myId %}
+                {# ── Accept / Decline ── #}
+                <form method="post"
+                      action="{{ path('app_delivery_candidate_accept', {'id': delivery.delivery_id}) }}"
+                      style="display:inline-block;margin-right:.5rem;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('candidate_accept' ~ delivery.delivery_id) }}">
+                    <button type="submit" class="btn-action"
+                            onclick="return confirm('Accept this delivery?');">Accept</button>
+                </form>
+                <form method="post"
+                      action="{{ path('app_delivery_candidate_decline', {'id': delivery.delivery_id}) }}"
+                      style="display:inline-block;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('candidate_decline' ~ delivery.delivery_id) }}">
+                    <button type="submit" class="btn-action btn-danger"
+                            onclick="return confirm('Decline? It will be offered to the next candidate.');">Decline</button>
+                </form>
+
+            {% elseif delivery.status in ['DELIVERED', 'CANCELLED'] %}
+                {# ── Terminal — no actions ── #}
+                <span style="color:#999;font-size:.85rem;">{{ delivery.status }}</span>
+
+            {% else %}
+                {# ── Active delivery actions ── #}
+                <form method="post"
+                      action="{{ path('app_delivery_driver_status', {'id': delivery.delivery_id}) }}"
+                      style="display:inline-flex;gap:.4rem;flex-wrap:wrap;align-items:center;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('driver_status' ~ delivery.delivery_id) }}">
+
+                    <button type="submit" name="action" value="in_transit" class="btn-action">
+                        In Transit
+                    </button>
+
+                    {#
+                        FIXED SHARE LOCATION BUTTON
+                        ───────────────────────────
+                        data-location-url  → the POST endpoint  (/delivery/ID/location)
+                        data-delivery-id   → scopes watch/interval per delivery
+                        data-csrf          → CSRF token sent as X-CSRF-Token header in JS fetch
+                        id="share-btn-ID"  → lets JS find & update this button's text/style
+                    #}
+                    <button type="button"
+                            class="btn-action share-location-btn"
+                            id="share-btn-{{ delivery.delivery_id }}"
+                            data-location-url="{{ path('app_delivery_update_location', {'id': delivery.delivery_id}) }}"
+                            data-delivery-id="{{ delivery.delivery_id }}"
+                            data-csrf="{{ csrf_token('location_push_' ~ delivery.delivery_id) }}">
+                        📡 Share Location
+                    </button>
+
+                    <button type="button"
+                            class="btn-action btn-success mark-delivered-btn"
+                            data-url="{{ path('app_delivery_mark_delivered', {'id': delivery.delivery_id}) }}"
+                            data-delivery-id="{{ delivery.delivery_id }}">
+                        Delivered
+                    </button>
+
+                    <button type="submit" name="action" value="cancel"
+                            class="btn-action btn-danger"
+                            onclick="return confirm('Cancel this delivery?');">
+                        Cancel
+                    </button>
+                </form>
+            {% endif %}
+        </td>
+    </tr>
+{% else %}
+    <tr><td colspan="8" style="text-align:center;padding:2rem;">No deliveries found.</td></tr>
+{% endfor %}
+
+
+{# ══ DRIVER SCRIPT ════════════════════════════════════════════════════════
+   Paste this at the bottom of your driver template (driver_deliveries.html.twig)
+   if _driver_table is included inside it, OR keep it here if this partial
+   is the only place these buttons appear.
+   ══════════════════════════════════════════════════════════════════════════ #}
+<script>
+(function () {
+    'use strict';
+
+    // ── Per-delivery tracking state ────────────────────────────────────────
+    var watches   = {};   // { deliveryId: watchId }
+    var intervals = {};   // { deliveryId: intervalId }  (backup 6-s push)
+    var lastPos   = {};   // { deliveryId: { lat, lon } }
+
+    var TERMINAL = ['delivered', 'cancelled'];
+
+    // ── validateBtn: catch broken URLs before any fetch is attempted ───────
+    function validateBtn(btn) {
+        var url = btn.dataset.locationUrl;
+        var id  = btn.dataset.deliveryId;
+
+        if (!url || !id) {
+            console.error('[ShareLocation] Missing data-location-url or data-delivery-id on:', btn);
+            alert('Configuration error: location URL or delivery ID missing.\nCheck that delivery.delivery_id is not null in your Twig template.');
+            return false;
+        }
+        // Must match /delivery/DIGITS/location
+        if (!/\/delivery\/\d+\/location/.test(url)) {
+            console.error('[ShareLocation] Malformed URL:', url);
+            alert('Location URL is malformed: ' + url + '\nExpected: /delivery/{id}/location');
+            return false;
+        }
+        return true;
+    }
+
+    // ── setBtnState ────────────────────────────────────────────────────────
+    function setBtnState(btn, state) {
+        if (!btn) return;
+        var map = {
+            sharing: { text: '📡 Sharing…',           disabled: false, bg: '#e8f5e9', color: '#2e7d32' },
+            done:    { text: '✅ Done',                disabled: true,  bg: '#eee',    color: '#999'    },
+            error:   { text: '⚠️ GPS error — retry',  disabled: false, bg: '#fff3e0', color: '#e65100' },
+            idle:    { text: '📡 Share Location',      disabled: false, bg: '',        color: ''        }
+        };
+        var s = map[state] || map.idle;
+        btn.textContent      = s.text;
+        btn.disabled         = s.disabled;
+        btn.style.opacity    = s.disabled ? '0.55' : '1';
+        btn.style.background = s.bg;
+        btn.style.color      = s.color;
+    }
+
+    // ── stopSharing: clean up watch + interval for one delivery ───────────
+    function stopSharing(deliveryId) {
+        if (watches[deliveryId] !== undefined) {
+            navigator.geolocation.clearWatch(watches[deliveryId]);
+            delete watches[deliveryId];
+        }
+        if (intervals[deliveryId] !== undefined) {
+            clearInterval(intervals[deliveryId]);
+            delete intervals[deliveryId];
+        }
+        delete lastPos[deliveryId];
+        setBtnState(document.getElementById('share-btn-' + deliveryId), 'done');
+    }
+
+    // ── pushCoords: POST lat/lon to Symfony ───────────────────────────────
+    function pushCoords(deliveryId, locationUrl, lat, lon) {
+        // Read CSRF token from button data attribute (set by Twig csrf_token())
+        var btn  = document.getElementById('share-btn-' + deliveryId);
+        var csrf = btn ? (btn.dataset.csrf || '') : '';
+
+        fetch(locationUrl, {
+            method:      'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type':     'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token':     csrf          // PHP reads this from the header
+            },
+            body: JSON.stringify({ lat: lat, lon: lon })
+        })
+        .then(function (r) {
+            if (!r.ok) {
+                // Log the error body so you can debug auth/CSRF rejections
+                r.text().then(function (t) {
+                    console.warn('[ShareLocation] HTTP ' + r.status + ' for delivery ' + deliveryId + ':', t);
+                });
+                return null;
+            }
+            return r.json();
+        })
+        .then(function (data) {
+            if (!data) return;
+            console.log('[ShareLocation] Push OK for delivery', deliveryId, data);
+            // Server signals order is done → auto-stop sharing
+            if (data.status && TERMINAL.indexOf(data.status.toLowerCase()) !== -1) {
+                stopSharing(deliveryId);
+            }
+        })
+        .catch(function (err) {
+            console.warn('[ShareLocation] Network error for delivery', deliveryId, ':', err);
+        });
+    }
+
+    // ── Share Location button handler ──────────────────────────────────────
+    document.querySelectorAll('.share-location-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+
+            // 1. Validate attributes before doing anything
+            if (!validateBtn(btn)) return;
+
+            var deliveryId  = btn.dataset.deliveryId;
+            var locationUrl = btn.dataset.locationUrl;
+
+            // 2. Guard against double-click
+            if (watches[deliveryId] !== undefined) {
+                console.log('[ShareLocation] Already sharing delivery', deliveryId);
+                return;
+            }
+
+            // 3. Check browser support
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+
+            setBtnState(btn, 'sharing');
+
+            // 4. watchPosition with safe timeout settings
+            //    timeout: Infinity  → never kill the watch on slow GPS hardware
+            //    maximumAge: 10000  → accept a 10-s cached fix for the first event
+            var watchId = navigator.geolocation.watchPosition(
+                function (position) {
+                    var lat = position.coords.latitude;
+                    var lon = position.coords.longitude;
+                    console.log('[ShareLocation] Position for delivery', deliveryId, lat, lon,
+                                '(accuracy:', Math.round(position.coords.accuracy), 'm)');
+                    lastPos[deliveryId] = { lat: lat, lon: lon };
+                    pushCoords(deliveryId, locationUrl, lat, lon);
+                },
+                function (err) {
+                    console.error('[ShareLocation] GPS error code', err.code, ':', err.message);
+                    setBtnState(btn, 'error');
+                    // Clean up so driver can retry
+                    if (watches[deliveryId] !== undefined) {
+                        navigator.geolocation.clearWatch(watches[deliveryId]);
+                        delete watches[deliveryId];
+                    }
+                    if (intervals[deliveryId] !== undefined) {
+                        clearInterval(intervals[deliveryId]);
+                        delete intervals[deliveryId];
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge:         10000,    // accept cached fix up to 10 s old
+                    timeout:            Infinity  // never time out — let browser resolve GPS
+                }
+            );
+            watches[deliveryId] = watchId;
+
+            // 5. Backup interval: push every 6 s even if driver hasn't moved
+            //    (some Android browsers only fire watchPosition on significant movement)
+            var intervalId = setInterval(function () {
+                var pos = lastPos[deliveryId];
+                if (pos) {
+                    pushCoords(deliveryId, locationUrl, pos.lat, pos.lon);
+                }
+            }, 6000);
+            intervals[deliveryId] = intervalId;
+        });
+    });
+
+    // ── Mark Delivered button handler ──────────────────────────────────────
+    document.querySelectorAll('.mark-delivered-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var deliveryId = btn.dataset.deliveryId;
+            var url        = btn.dataset.url;
+
+            if (!url) {
+                alert('Configuration error: missing data-url on Delivered button.');
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                alert('Geolocation is required to mark as delivered.');
+                return;
+            }
+
+            btn.disabled    = true;
+            btn.textContent = '⏳ Getting GPS…';
+
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    var lat = pos.coords.latitude;
+                    var lon = pos.coords.longitude;
+                    console.log('[MarkDelivered] GPS:', lat, lon,
+                                '(accuracy:', Math.round(pos.coords.accuracy), 'm)');
+
+                    // Warn if GPS accuracy is poor (>100 m) before hitting the 50-m geofence
+                    if (pos.coords.accuracy > 100) {
+                        var proceed = confirm(
+                            'GPS accuracy is low (' + Math.round(pos.coords.accuracy) + ' m).\n' +
+                            'The server requires you to be within 50 m of the client.\n' +
+                            'Proceed anyway?'
+                        );
+                        if (!proceed) {
+                            btn.disabled    = false;
+                            btn.textContent = 'Delivered';
+                            return;
+                        }
+                    }
+
+                    fetch(url, {
+                        method:      'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type':     'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ latitude: lat, longitude: lon })
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) {
+                            stopSharing(deliveryId);
+                            btn.textContent = '✅ Delivered';
+                            btn.disabled    = true;
+                            // Reload table to reflect new status
+                            setTimeout(function () { window.location.reload(); }, 800);
+                        } else {
+                            alert(data.message || 'Could not mark as delivered.');
+                            btn.disabled    = false;
+                            btn.textContent = 'Delivered';
+                        }
+                    })
+                    .catch(function (err) {
+                        alert('Network error: ' + err.message);
+                        btn.disabled    = false;
+                        btn.textContent = 'Delivered';
+                    });
+                },
+                function (err) {
+                    alert('GPS error: ' + err.message + '\nPlease enable location and try again.');
+                    btn.disabled    = false;
+                    btn.textContent = 'Delivered';
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout:            60000,   // give browser up to 60 s for first fix
+                    maximumAge:         10000    // accept cached fix up to 10 s old
+                }
+            );
+        });
+    });
+
+})();
+</script>

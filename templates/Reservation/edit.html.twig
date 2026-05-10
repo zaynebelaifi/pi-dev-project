@@ -10,37 +10,40 @@
   </div>
 </div>
 
-{{ form_start(form, {'action': path('app_reservation_edit', {id: reservation.reservationId}), 'method': 'POST'}) }}
+{{ form_start(form, {
+    'action': path('app_reservation_edit', {id: reservation.reservationId}),
+    'method': 'POST',
+    'attr': {'novalidate': 'novalidate'}
+}) }}
+
 <div class="form-card" style="max-width:520px;background:var(--white);border-radius:12px;padding:2rem;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-top:1.5rem;">
 
   <div style="margin-bottom:1.2rem;">
-    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Client ID</label>
+    {{ form_label(form.clientId, 'Client ID', {'label_attr': {'style': 'display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;'}}) }}
     {{ form_widget(form.clientId, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;'}}) }}
     {{ form_errors(form.clientId) }}
   </div>
 
   <div style="margin-bottom:1.2rem;">
-    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Table</label>
+    {{ form_label(form.table, 'Table', {'label_attr': {'style': 'display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;'}}) }}
     {{ form_widget(form.table, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;background:var(--white);outline:none;'}}) }}
     {{ form_errors(form.table) }}
   </div>
 
   <div style="margin-bottom:1.2rem;">
-    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Date</label>
+    {{ form_label(form.reservationDate, 'Date', {'label_attr': {'style': 'display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;'}}) }}
     {{ form_widget(form.reservationDate, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;'}}) }}
     {{ form_errors(form.reservationDate) }}
   </div>
 
   <div style="margin-bottom:1.2rem;">
-    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Time</label>
+    {{ form_label(form.reservationTime, 'Time', {'label_attr': {'style': 'display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;'}}) }}
     {{ form_widget(form.reservationTime, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;'}}) }}
     {{ form_errors(form.reservationTime) }}
   </div>
 
   <div style="margin-bottom:1.2rem;">
-    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">
-      Number of Guests <span style="color:var(--text-3);font-weight:400;font-size:.78rem;">(max 8)</span>
-    </label>
+    {{ form_label(form.numberOfGuests, 'Number of Guests', {'label_attr': {'style': 'display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;'}}) }}
     {{ form_widget(form.numberOfGuests, {'attr': {
         'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;outline:none;',
         'min': 1,
@@ -51,7 +54,7 @@
   </div>
 
   <div style="margin-bottom:1.8rem;">
-    <label style="display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;">Status</label>
+    {{ form_label(form.status, 'Status', {'label_attr': {'style': 'display:block;font-size:.82rem;font-weight:600;color:var(--text-sec);margin-bottom:.4rem;'}}) }}
     {{ form_widget(form.status, {'attr': {'style': 'width:100%;padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem;background:var(--white);outline:none;'}}) }}
     {{ form_errors(form.status) }}
   </div>

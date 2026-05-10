@@ -12,6 +12,7 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Validator\Constraints\Range;
 
 class ReservationType extends AbstractType
 {
@@ -20,6 +21,10 @@ class ReservationType extends AbstractType
         $builder
             ->add('clientId', IntegerType::class, [
                 'label' => 'Client ID',
+                'disabled' => true,
+                'attr' => [
+                    'readonly' => 'readonly',
+                ],
             ])
             ->add('table', EntityType::class, [
                 'class' => RestaurantTable::class,
@@ -39,6 +44,14 @@ class ReservationType extends AbstractType
             ])
             ->add('numberOfGuests', IntegerType::class, [
                 'label' => 'Number of Guests',
+                'attr' => [
+                    'min' => 1,
+                    'max' => 8,
+                    'placeholder' => 'Enter between 1 and 8',
+                ],
+                'constraints' => [
+                    new Range(min: 1, max: 8),
+                ],
             ])
             ->add('status', ChoiceType::class, [
                 'label' => 'Status',

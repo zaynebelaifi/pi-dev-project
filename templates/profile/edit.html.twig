@@ -9,6 +9,12 @@
             <span class="auth-tag">BIG 4 Coffee Lounge</span>
             <h1>Edit Profile</h1>
             <p>Update your contact details so your orders, reservations, and loyalty rewards stay current.</p>
+            {% if app.request.query.get('faceid') == 'setup' %}
+                <div class="faceid-onboarding-banner">
+                    <strong>Next step:</strong>
+                    use the Face ID section below to register this device and sign in without typing your password next time.
+                </div>
+            {% endif %}
         </div>
 
         <div class="profile-form-wrapper">
@@ -25,6 +31,13 @@
             {{ form_end(form) }}
 
             <a href="{{ path('app_profile') }}" class="btn btn-secondary" style="text-align:center;">Back to Profile</a>
+
+            <div class="faceid-box">
+                <h3>Face ID Security</h3>
+                <p>Register this device to sign in with Face ID.</p>
+                <button type="button" class="btn btn-faceid" id="faceid-register-btn">Enable Face ID on this device</button>
+                <p class="faceid-status" id="faceid-register-status" aria-live="polite"></p>
+            </div>
         </div>
     </div>
 </div>
@@ -57,6 +70,15 @@
 .auth-intro p {
     margin: 1rem 0 0;
     color: var(--text-2);
+    line-height: 1.6;
+}
+.faceid-onboarding-banner {
+    margin-top: 1.25rem;
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(47, 90, 199, 0.18);
+    background: rgba(239, 246, 255, 0.95);
+    color: #1e3f9c;
     line-height: 1.6;
 }
 .profile-form-wrapper {
@@ -112,10 +134,67 @@
 .btn-secondary:hover {
     background: #fff7eb;
 }
+.faceid-box {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid rgba(47, 90, 199, 0.2);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(239, 246, 255, 0.85), rgba(255, 255, 255, 0.92));
+}
+.faceid-box h3 {
+    margin: 0;
+    color: #1e3f9c;
+    font-size: 1.1rem;
+}
+.faceid-box p {
+    margin: 0.5rem 0 0.85rem;
+    color: var(--text-2);
+}
+.btn-faceid {
+    width: 100%;
+    padding: 0.95rem 1.1rem;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(135deg, #2f5ac7 0%, #1e3f9c 100%);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.18s ease;
+}
+.btn-faceid:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, #264aad 0%, #173178 100%);
+}
+.btn-faceid:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+.faceid-status {
+    min-height: 1.2rem;
+    margin: 0.8rem 0 0;
+    font-size: 0.92rem;
+}
 @media (max-width: 700px) {
     .form-grid {
         grid-template-columns: 1fr;
     }
 }
 </style>
+
+<script src="{{ asset('js/webauthn-register.js') }}?v=2"></script>
+<script>
+(() => {
+    if (!window.Big4WebauthnRegister) {
+        return;
+    }
+
+    window.Big4WebauthnRegister.init({
+        buttonId: 'faceid-register-btn',
+        statusId: 'faceid-register-status',
+        startUrl: '{{ path('app_webauthn_register_start') }}',
+        completeUrl: '{{ path('app_webauthn_register_complete') }}'
+    });
+})();
+</script>
 {% endblock %}

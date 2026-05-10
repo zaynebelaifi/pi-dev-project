@@ -17,6 +17,7 @@ class NotificationRepository extends ServiceEntityRepository
         parent::__construct($registry, Notification::class);
     }
 
+<<<<<<< HEAD
     public function countUnreadForUser(User $user): int
     {
         return (int) $this->createQueryBuilder('n')
@@ -40,5 +41,34 @@ class NotificationRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+=======
+    /**
+     * @return Notification[]
+     */
+    public function findByRecipient(User $recipient, bool $unreadOnly = false): array
+    {
+        $qb = $this->createQueryBuilder('n')
+            ->andWhere('n.recipient = :recipient')
+            ->setParameter('recipient', $recipient)
+            ->orderBy('n.created_at', 'DESC');
+
+        if ($unreadOnly) {
+            $qb->andWhere('n.is_read = :isRead')->setParameter('isRead', false);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function countUnread(User $recipient): int
+    {
+        return (int) $this->createQueryBuilder('n')
+            ->select('COUNT(n.id)')
+            ->andWhere('n.recipient = :recipient')
+            ->andWhere('n.is_read = :isRead')
+            ->setParameter('recipient', $recipient)
+            ->setParameter('isRead', false)
+            ->getQuery()
+            ->getSingleScalarResult();
+>>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
     }
 }
