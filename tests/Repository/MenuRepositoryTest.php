@@ -3,7 +3,7 @@
 namespace App\Tests\Repository;
 
 use App\Repository\MenuRepository;
-use Doctrine\ORM\AbstractQuery;
+use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -94,10 +94,10 @@ final class MenuRepositoryTest extends TestCase
     }
 
     /**
-     * @return AbstractQuery&MockObject
+     * @return Query&MockObject
      */
-    private function createQueryMock(): AbstractQuery
+    private function createQueryMock(): Query
     {
-        return $this->createMock(AbstractQuery::class);
+        return $this->createMock(Query::class);
     }
 }

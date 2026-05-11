@@ -10,6 +10,7 @@ use App\Repository\IngredientRepository;
 use App\Repository\MenuRepository;
 use App\Service\DishAvailabilityService;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,7 +22,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class AdminDishController extends AbstractController
 {
     #[Route('/', name: 'admin_dish_index', methods: ['GET'])]
-    public function index(Request $request, DishRepository $dishRepository, MenuRepository $menuRepository, DishAvailabilityService $availabilityService): Response
+    public function index(Request $request, DishRepository $dishRepository, MenuRepository $menuRepository, DishAvailabilityService $availabilityService, PaginatorInterface $paginator): Response
     {
         $session = $request->getSession();
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
@@ -42,10 +43,16 @@ final class AdminDishController extends AbstractController
         $sort = (string) $request->query->get('sort', 'created_at');
         $dir = (string) $request->query->get('dir', 'DESC');
 
-        $dishes = $dishRepository->findForAdminList($search, $sort, $dir, $selectedMenu);
+        $pagination = $paginator->paginate(
+            $dishRepository->findForAdminList($search, $sort, $dir, $selectedMenu),
+            max(1, $request->query->getInt('page', 1)),
+            10
+        );
+        $dishes = $pagination->getItems();
 
         return $this->render('admin/dish/index.html.twig', [
             'dishes' => $dishes,
+            'pagination' => $pagination,
             'selectedMenu' => $selectedMenu,
             'search' => $search,
             'sort' => $sort,

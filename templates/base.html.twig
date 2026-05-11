@@ -163,6 +163,7 @@
   <!-- FOOD MENU -->
   <section id="menu-section">
     <div class="container">
+      {% set flattenedMenuDishes = flatMenuItems|default([]) %}
       <div class="section-head reveal">
         <div>
           <small>Luxury Menu</small>
@@ -185,38 +186,51 @@
             <p style="margin:.25rem 0 0;color:var(--text-2);">All available dishes</p>
           </div>
 
-          <div class="menu-grid">
-            {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
-            {% for section in menuSections %}
-              {% if section.dishes is defined and section.dishes|length > 0 %}
-                {% for dish in section.dishes %}
-                  <div class="menu-card reveal compact">
-                    <div class="menu-card-inner">
-                      <div class="menu-thumb">
-                        <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
-                      </div>
-                      <div class="menu-card-content">
-                        <h4>{{ dish.name }}</h4>
-                        <p class="short-desc">{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
-                        <div class="menu-card-footer">
-                          <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
-                          <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endfor %}
+          {% set fallbackImage = 'https://placehold.co/900x600/f3eadb/6b4b28?text=BIG+4+Dish' %}
+          <div
+            class="menu-gallery-shell"
+            data-menu-gallery
+            data-dishes="{{ flattenedMenuDishes|json_encode|e('html_attr') }}"
+            data-fallback-image="{{ fallbackImage|e('html_attr') }}"
+            data-page-size="{{ menuPageSize|default(4) }}"
+          >
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+              <div style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+                <label for="menuCurrencySelect" style="font-weight:600; color:var(--brown);">Currency</label>
+                <select id="menuCurrencySelect" style="padding:.55rem .8rem; border-radius:999px; border:1px solid rgba(184,135,42,.18); background:#fff; color:var(--brown);">
+                  <option value="TND">TND</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="CNY">CNY</option>
+                </select>
+              </div>
+              <div id="menuGalleryStatus" style="color:var(--text-2); padding:0.5rem 1rem; border-radius:8px; background:var(--ivory-2);">
+                Showing menu
+              </div>
+            </div>
+
+            <div id="menuCardsGrid" class="menu-paged-grid" aria-live="polite"></div>
+
+            <div style="margin-top:1.25rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+                <button type="button" id="menuPrevBtn" class="nav-btn" style="padding:.55rem 1rem;">Previous</button>
+                <div id="menuPageDots" style="display:flex; align-items:center; gap:.45rem; flex-wrap:wrap;"></div>
+                <button type="button" id="menuNextBtn" class="nav-btn" style="padding:.55rem 1rem;">Next</button>
+              </div>
+              <div style="color:var(--text-3); font-size:.92rem;">
+                Swipe left or right on the dishes to move between pages.
+              </div>
+            </div>
           </div>
 
           {# Instead of repeating dishes, show a compact category list linking to sections. #}
           <div style="margin:1.2rem 0 .7rem;">
             <h5 style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:500;color:var(--espresso);margin:0 0 .5rem;">Categories</h5>
             <div class="menu-categories" style="display:flex;flex-wrap:wrap;gap:.6rem">
+              <button type="button" class="menu-category is-active" data-menu-filter="__all__" style="padding:.5rem .8rem;border:1px solid rgba(184,135,42,.12);border-radius:999px;background:rgba(255,255,255,.92);color:var(--brown);text-decoration:none;font-weight:600">All ({{ flattenedMenuDishes|length }})</button>
               {% for section in menuSections %}
                 {% if section.dishes is defined and section.dishes|length > 0 %}
-                  <a href="#menu-section" class="menu-category" style="padding:.5rem .8rem;border:1px solid rgba(184,135,42,.12);border-radius:999px;background:rgba(255,255,255,.92);color:var(--brown);text-decoration:none;font-weight:600">{{ section.menu.title }} ({{ section.dishes|length }})</a>
+                  <button type="button" class="menu-category" data-menu-filter="{{ section.menu.title|e('html_attr') }}" style="padding:.5rem .8rem;border:1px solid rgba(184,135,42,.12);border-radius:999px;background:rgba(255,255,255,.92);color:var(--brown);text-decoration:none;font-weight:600">{{ section.menu.title }} ({{ section.dishes|length }})</button>
                 {% endif %}
               {% endfor %}
             </div>
@@ -590,6 +604,46 @@
     <input type="hidden" name="cart_items" id="redirectCartItemsInput">
     <input type="hidden" name="order_total" id="redirectCartTotalInput">
   </form>
+
+  {% if flattenedMenuDishes is not empty %}
+    <div
+      class="mood-chat-shell"
+      data-menu-assistant
+      data-dishes="{{ flattenedMenuDishes|json_encode|e('html_attr') }}"
+      data-ai-endpoint="{{ path('app_ai_bot_ask') }}"
+    >
+      <button class="mood-chat-toggle" type="button" id="moodChatToggle" aria-expanded="false" aria-controls="moodChatPanel">
+        <span>AI Menu Guide</span>
+        <strong>Suggest Food</strong>
+      </button>
+
+      <div class="mood-chat-panel" id="moodChatPanel" hidden>
+        <div class="mood-chat-header">
+          <h4>Find Your Next Plate</h4>
+          <p>Ask for sweet, light, coffee-friendly, or premium dishes and get instant demo suggestions from the live menu.</p>
+          <span class="mood-chat-hint">Working validation widget</span>
+        </div>
+
+        <div class="mood-chat-quick">
+          <button type="button" data-prompt="I want something sweet">Sweet</button>
+          <button type="button" data-prompt="I want a coffee pairing">Coffee Pairing</button>
+          <button type="button" data-prompt="I want something light">Light</button>
+          <button type="button" data-prompt="Show me your premium signature dish">Signature</button>
+        </div>
+
+        <div class="mood-chat-messages" id="moodChatMessages">
+          <div class="mood-chat-msg assistant">
+            I’m ready. Ask what you feel like eating and I’ll suggest dishes from the menu shown on this page.
+          </div>
+        </div>
+
+        <form class="mood-chat-form" id="moodChatForm">
+          <input type="text" id="moodChatInput" placeholder="Example: I want something sweet with coffee" autocomplete="off">
+          <button type="submit">Ask AI</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
 
   {% endblock %}
 
@@ -1245,6 +1299,387 @@
 
       refreshStatuses();
       setInterval(refreshStatuses, INTERVAL_MS);
+    })();
+  </script>
+  <script>
+    (function () {
+      const gallery = document.querySelector('[data-menu-gallery]');
+      if (!gallery) {
+        return;
+      }
+
+      const grid = document.getElementById('menuCardsGrid');
+      const prevButton = document.getElementById('menuPrevBtn');
+      const nextButton = document.getElementById('menuNextBtn');
+      const status = document.getElementById('menuGalleryStatus');
+      const dots = document.getElementById('menuPageDots');
+      const currencySelect = document.getElementById('menuCurrencySelect');
+      const filterButtons = Array.from(document.querySelectorAll('[data-menu-filter]'));
+      const fallbackImage = gallery.getAttribute('data-fallback-image') || '';
+      const pageSize = Math.max(1, Number(gallery.getAttribute('data-page-size') || 4));
+      const rates = { TND: 1, USD: 0.32, EUR: 0.30, CNY: 2.31 };
+
+      let dishes = [];
+      let currentPage = 1;
+      let activeFilter = '__all__';
+      let touchStartX = 0;
+
+      try {
+        dishes = JSON.parse(gallery.getAttribute('data-dishes') || '[]');
+      } catch (error) {
+        console.error('Menu gallery data is invalid.', error);
+        dishes = [];
+      }
+
+      const escapeHtml = (value) => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+      const normalizedCurrency = () => {
+        const selected = String(currencySelect?.value || 'TND').toUpperCase();
+
+        return Object.prototype.hasOwnProperty.call(rates, selected) ? selected : 'TND';
+      };
+
+      const filteredDishes = () => {
+        if (activeFilter === '__all__') {
+          return dishes;
+        }
+
+        return dishes.filter((dish) => String(dish.menuTitle || '') === activeFilter);
+      };
+
+      const totalPages = () => Math.max(1, Math.ceil(filteredDishes().length / pageSize));
+
+      const convertPrice = (basePrice) => {
+        const currency = normalizedCurrency();
+        const amount = Number(basePrice || 0) * rates[currency];
+
+        return `${amount.toFixed(2)} ${currency}`;
+      };
+
+      const renderDots = () => {
+        const pages = totalPages();
+        dots.innerHTML = '';
+
+        for (let page = 1; page <= pages; page += 1) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = String(page);
+          button.className = 'menu-page-dot';
+          button.style.cssText = `padding:.35rem .65rem;border-radius:999px;border:1px solid rgba(184,135,42,.18);background:${page === currentPage ? 'var(--gold)' : '#fff'};color:${page === currentPage ? '#fff' : 'var(--brown)'};font-weight:600;`;
+          button.addEventListener('click', () => {
+            currentPage = page;
+            renderGallery();
+          });
+          dots.appendChild(button);
+        }
+      };
+
+      const renderGallery = () => {
+        const activeDishes = filteredDishes();
+        const pages = Math.max(1, Math.ceil(activeDishes.length / pageSize));
+        currentPage = Math.min(Math.max(1, currentPage), pages);
+
+        const startIndex = (currentPage - 1) * pageSize;
+        const visibleDishes = activeDishes.slice(startIndex, startIndex + pageSize);
+
+        grid.innerHTML = visibleDishes.map((dish) => `
+          <div class="menu-card reveal compact show">
+            <div class="menu-card-inner">
+              <div class="menu-thumb">
+                <img
+                  src="${escapeHtml(dish.imageUrl || fallbackImage)}"
+                  alt="${escapeHtml(dish.name || 'Signature dish')}"
+                  loading="lazy"
+                  onerror="if (this.src !== '${escapeHtml(fallbackImage)}') { this.src='${escapeHtml(fallbackImage)}'; }"
+                >
+              </div>
+              <div class="menu-card-content">
+                <h4>${escapeHtml(dish.name || 'Signature dish')}</h4>
+                <p class="short-desc">${escapeHtml(dish.description || 'Freshly prepared signature item from our kitchen.')}</p>
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; margin-top:.85rem; flex-wrap:wrap;">
+                  <div>
+                    <span class="price" style="display:block;">${convertPrice(dish.basePrice)}</span>
+                    <small style="display:block; margin-top:.2rem; color:var(--text-3);">${Number(dish.basePrice || 0).toFixed(2)} TND base price</small>
+                  </div>
+                  <button class="add-cart-btn" data-name="${escapeHtml(dish.name || 'Dish')}" data-price="${Number(dish.basePrice || 0).toFixed(2)}">Add to Cart</button>
+                </div>
+                <div style="margin-top:.45rem; color:var(--text-3); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase;">
+                  ${escapeHtml(dish.menuTitle || 'Chef Specials')}
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        prevButton.disabled = currentPage <= 1;
+        nextButton.disabled = currentPage >= pages;
+        prevButton.style.opacity = currentPage <= 1 ? '0.55' : '1';
+        nextButton.style.opacity = currentPage >= pages ? '0.55' : '1';
+
+        const label = activeFilter === '__all__' ? 'All menus' : activeFilter;
+        status.textContent = activeDishes.length === 0
+          ? `No dishes in ${label}`
+          : `${label} • page ${currentPage} of ${pages} • ${activeDishes.length} dishes`;
+
+        renderDots();
+      };
+
+      filterButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          activeFilter = button.getAttribute('data-menu-filter') || '__all__';
+          currentPage = 1;
+
+          filterButtons.forEach((item) => {
+            item.classList.toggle('is-active', item === button);
+            item.style.background = item === button ? 'var(--gold)' : 'rgba(255,255,255,.92)';
+            item.style.color = item === button ? '#fff' : 'var(--brown)';
+          });
+
+          renderGallery();
+        });
+      });
+
+      prevButton?.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage -= 1;
+          renderGallery();
+        }
+      });
+
+      nextButton?.addEventListener('click', () => {
+        if (currentPage < totalPages()) {
+          currentPage += 1;
+          renderGallery();
+        }
+      });
+
+      currencySelect?.addEventListener('change', renderGallery);
+
+      grid?.addEventListener('touchstart', (event) => {
+        touchStartX = event.changedTouches[0]?.clientX || 0;
+      }, { passive: true });
+
+      grid?.addEventListener('touchend', (event) => {
+        const touchEndX = event.changedTouches[0]?.clientX || 0;
+        const deltaX = touchEndX - touchStartX;
+
+        if (Math.abs(deltaX) < 40) {
+          return;
+        }
+
+        if (deltaX < 0 && currentPage < totalPages()) {
+          currentPage += 1;
+          renderGallery();
+        }
+
+        if (deltaX > 0 && currentPage > 1) {
+          currentPage -= 1;
+          renderGallery();
+        }
+      }, { passive: true });
+
+      renderGallery();
+    })();
+  </script>
+  <script>
+    (function () {
+      const shell = document.querySelector('[data-menu-assistant]');
+      if (!shell) {
+        return;
+      }
+
+      const toggle = shell.querySelector('#moodChatToggle');
+      const panel = shell.querySelector('#moodChatPanel');
+      const messages = shell.querySelector('#moodChatMessages');
+      const form = shell.querySelector('#moodChatForm');
+      const input = shell.querySelector('#moodChatInput');
+      const quickButtons = shell.querySelectorAll('[data-prompt]');
+      const aiEndpoint = shell.getAttribute('data-ai-endpoint') || '';
+
+      let dishes = [];
+
+      try {
+        dishes = JSON.parse(shell.getAttribute('data-dishes') || '[]');
+      } catch (error) {
+        dishes = [];
+      }
+
+      const escapeHtml = (value) => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+      const scoreDish = (dish, query) => {
+        const q = String(query || '').toLowerCase();
+        const haystack = [
+          dish.name,
+          dish.description,
+          dish.menuTitle,
+        ].join(' ').toLowerCase();
+
+        let score = 0;
+
+        if (q.includes('sweet') || q.includes('dessert')) {
+          if (/(sweet|dessert|chocolate|caramel|vanilla|cream)/.test(haystack)) {
+            score += 5;
+          }
+        }
+
+        if (q.includes('coffee') || q.includes('espresso') || q.includes('drink')) {
+          if (/(coffee|espresso|latte|mocha|cappuccino)/.test(haystack)) {
+            score += 5;
+          }
+        }
+
+        if (q.includes('light') || q.includes('fresh') || q.includes('healthy')) {
+          if (/(light|fresh|salad|grilled|fruit)/.test(haystack)) {
+            score += 5;
+          }
+        }
+
+        if (q.includes('premium') || q.includes('signature') || q.includes('luxury')) {
+          score += 3;
+        }
+
+        q.split(/\s+/).filter(Boolean).forEach((word) => {
+          if (haystack.includes(word)) {
+            score += 2;
+          }
+        });
+
+        if (score === 0) {
+          score = Math.max(1, 20 - Number(dish.basePrice || 0));
+        }
+
+        return score;
+      };
+
+      const openPanel = () => {
+        panel.hidden = false;
+        toggle.setAttribute('aria-expanded', 'true');
+      };
+
+      const appendMessage = (content, role = 'assistant') => {
+        const node = document.createElement('div');
+        node.className = `mood-chat-msg ${role}`;
+        node.innerHTML = content;
+        messages.appendChild(node);
+        messages.scrollTop = messages.scrollHeight;
+        return node;
+      };
+
+      const buildDishCard = (dish, reason) => `
+        <div class="mood-chat-dish-card">
+          <h5>${escapeHtml(dish.name || 'Signature dish')}</h5>
+          <p class="dish-desc">${escapeHtml(dish.description || 'Freshly prepared from our current menu.')}</p>
+          <p class="dish-reason">${escapeHtml(reason)}</p>
+          <span class="dish-price">${Number(dish.basePrice || 0).toFixed(2)} TND · ${escapeHtml(dish.menuTitle || 'Chef Specials')}</span>
+        </div>
+      `;
+
+      const suggestDishes = (query) => {
+        if (!Array.isArray(dishes) || dishes.length === 0) {
+          return [];
+        }
+
+        return [...dishes]
+          .map((dish) => ({ dish, score: scoreDish(dish, query) }))
+          .sort((left, right) => right.score - left.score)
+          .slice(0, 3)
+          .map(({ dish }, index) => ({
+            ...dish,
+            reason: index === 0
+              ? `Best match for "${query}".`
+              : `Also a good fit for "${query}".`,
+          }));
+      };
+
+      const askBackendAi = async (query, picks) => {
+        if (!aiEndpoint) {
+          return null;
+        }
+
+        const menuSummary = picks.map((dish) => `${dish.name} (${dish.menuTitle})`).join(', ');
+        const question = menuSummary
+          ? `${query}. Current best menu matches: ${menuSummary}. Keep the answer short and mention food suggestions.`
+          : query;
+
+        const response = await fetch(aiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ question }),
+        });
+
+        if (!response.ok) {
+          throw new Error('AI request failed.');
+        }
+
+        const payload = await response.json();
+        return payload && payload.success ? String(payload.answer || '').trim() : null;
+      };
+
+      const handleSuggestion = async (query) => {
+        const normalized = String(query || '').trim();
+        if (normalized === '') {
+          return;
+        }
+
+        openPanel();
+        appendMessage(escapeHtml(normalized), 'user');
+
+        const picks = suggestDishes(normalized);
+        if (picks.length > 0) {
+          appendMessage(picks.map((dish) => buildDishCard(dish, dish.reason)).join(''), 'assistant');
+        } else {
+          appendMessage('I could not match that exactly, but the menu is loaded and ready. Try sweet, light, coffee, or signature.', 'assistant');
+        }
+
+        const loadingNode = appendMessage('Thinking...', 'assistant loading');
+
+        try {
+          const aiText = await askBackendAi(normalized, picks);
+          loadingNode.className = 'mood-chat-msg assistant';
+          loadingNode.innerHTML = escapeHtml(aiText || 'Based on the current menu, I recommend the dishes shown above for your request.');
+        } catch (error) {
+          loadingNode.className = 'mood-chat-msg assistant';
+          loadingNode.innerHTML = 'The AI service is unavailable right now, but the menu suggestions above are ready for the validation demo.';
+        }
+      };
+
+      toggle?.addEventListener('click', () => {
+        const willOpen = panel.hidden;
+        panel.hidden = !willOpen;
+        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) {
+          window.setTimeout(() => input?.focus(), 60);
+        }
+      });
+
+      quickButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          void handleSuggestion(button.getAttribute('data-prompt') || '');
+        });
+      });
+
+      form?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const query = input?.value || '';
+        if (input) {
+          input.value = '';
+        }
+        void handleSuggestion(query);
+      });
     })();
   </script>
   {% endblock %}

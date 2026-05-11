@@ -15,7 +15,7 @@ class EventRegistration
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: FoodDonationEvent::class)]
+    #[ORM\ManyToOne(targetEntity: FoodDonationEvent::class, inversedBy: 'eventRegistrations')]
     #[ORM\JoinColumn(name: 'donation_event_id', referencedColumnName: 'donation_event_id', nullable: false, onDelete: 'CASCADE')]
     private ?FoodDonationEvent $event = null;
 

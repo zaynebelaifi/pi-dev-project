@@ -13,6 +13,11 @@ use App\Repository\MenuRepository;
 #[ORM\Table(name: 'menu')]
 class Menu
 {
+    public function __construct()
+    {
+        $this->dishs = new ArrayCollection();
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -118,9 +123,6 @@ class Menu
      */
     public function getDishs(): Collection
     {
-        if (!$this->dishs instanceof Collection) {
-            $this->dishs = new ArrayCollection();
-        }
         return $this->dishs;
     }
 

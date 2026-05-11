@@ -24,10 +24,10 @@ class GPSLog
     private ?DeliveryMan $deliveryMan = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 6)]
-    private ?float $latitude = null;
+    private ?string $latitude = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 6)]
-    private ?float $longitude = null;
+    private ?string $longitude = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $accuracy = null;
@@ -78,24 +78,24 @@ class GPSLog
 
     public function getLatitude(): ?float
     {
-        return $this->latitude;
+        return $this->latitude !== null ? (float) $this->latitude : null;
     }
 
     public function setLatitude(?float $latitude): self
     {
-        $this->latitude = $latitude;
+        $this->latitude = $latitude !== null ? (string) $latitude : null;
 
         return $this;
     }
 
     public function getLongitude(): ?float
     {
-        return $this->longitude;
+        return $this->longitude !== null ? (float) $this->longitude : null;
     }
 
     public function setLongitude(?float $longitude): self
     {
-        $this->longitude = $longitude;
+        $this->longitude = $longitude !== null ? (string) $longitude : null;
 
         return $this;
     }

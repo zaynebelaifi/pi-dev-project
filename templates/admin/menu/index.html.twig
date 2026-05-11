@@ -36,7 +36,7 @@
   <div class="delivery-table-card">
     <div class="table-header">
       <div class="table-title">Menus</div>
-      <div class="table-count">{{ menus|length }} total</div>
+      <div class="table-count">{{ pagination is defined ? pagination.getTotalItemCount : menus|length }} total</div>
     </div>
 
     {% if menus is empty %}
@@ -97,6 +97,15 @@
       </table>
     {% endif %}
   </div>
+
+  {% if pagination is defined and pagination.getPageCount() > 1 %}
+    <div style="margin-top:1rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+      {{ knp_pagination_render(pagination) }}
+      <div style="color:var(--text-2); padding:0.5rem 1rem; border-radius:8px; background:var(--ivory-2);">
+        Page {{ pagination.getCurrentPageNumber() }} of {{ pagination.getPageCount() }}
+      </div>
+    </div>
+  {% endif %}
 
   <style>
     .list-filters {

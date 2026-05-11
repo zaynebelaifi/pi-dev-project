@@ -6,6 +6,7 @@
 parameters:
     anthropic_api_key: '%env(string:ANTHROPIC_API_KEY)%'
     gemini_api_key: '%env(string:GEMINI_API_KEY)%'
+    openweathermap_api_key_fallback: ''
 
 services:
     # default configuration for services in *this* file
@@ -24,7 +25,7 @@ services:
 
     App\Service\OpenWeatherMapService:
         arguments:
-            $apiKey: '%env(string:OPENWEATHERMAP_API_KEY)%'
+            $apiKey: '%env(default:openweathermap_api_key_fallback:string:OPENWEATHERMAP_API_KEY)%'
 
     App\Service\StripeCheckoutService:
         arguments:

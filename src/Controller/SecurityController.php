@@ -12,6 +12,7 @@ use App\Form\RegistrationType;
 use App\Repository\DeliveryManRepository;
 use App\Repository\PasswordResetTokenRepository;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -56,6 +57,15 @@ final class SecurityController extends AbstractController
                 ]);
             }
 
+            $existingPhoneUser = $userRepository->findOneByPhoneLoose($user->getPhone());
+            if ($existingPhoneUser instanceof User) {
+                $form->get('phone')->addError(new FormError('An account with this phone number already exists. Please use another number or sign in.'));
+
+                return $this->render('security/register.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+
             $user->setEmail($normalizedEmail);
 
             $hashedPassword = $passwordHasher->hashPassword($user, $user->getPassword());
@@ -69,8 +79,21 @@ final class SecurityController extends AbstractController
                 $user->setRole('ROLE_CLIENT');
             }
 
-            $entityManager->persist($user);
-            $entityManager->flush();
+            try {
+                $entityManager->persist($user);
+                $entityManager->flush();
+            } catch (UniqueConstraintViolationException $exception) {
+                $constraintMessage = strtolower($exception->getMessage());
+                if (str_contains($constraintMessage, 'phone')) {
+                    $form->get('phone')->addError(new FormError('An account with this phone number already exists. Please use another number or sign in.'));
+                } else {
+                    $form->get('email')->addError(new FormError('An account with this email already exists. Please sign in or reset your password.'));
+                }
+
+                return $this->render('security/register.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
 
             $tokenStorage->setToken(new PostAuthenticationToken($user, 'main', $user->getRoles()));
             $authSessionService->populateSession($request->getSession(), $user);
@@ -389,12 +412,18 @@ final class SecurityController extends AbstractController
             return null;
         }
 
-        return $userRepository->createQueryBuilder('u')
-            ->andWhere('LOWER(u.email) = :email')
-            ->setParameter('email', $normalizedEmail)
-            ->orderBy('u.id', 'DESC')
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
+        $connection = $userRepository->getEntityManager()->getConnection();
+        $userId = $connection->fetchOne(
+            'SELECT id FROM `users` WHERE LOWER(email) = :email ORDER BY id DESC LIMIT 1',
+            ['email' => $normalizedEmail]
+        );
+
+        if ($userId === false || $userId === null) {
+            return null;
+        }
+
+        $user = $userRepository->find((int) $userId);
+
+        return $user instanceof User ? $user : null;
     }
 }
