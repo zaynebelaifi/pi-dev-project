@@ -136,7 +136,13 @@ class ClientFoodDonationController extends AbstractController
             throw $this->createAccessDeniedException('Only customers can view registered events.');
         }
 
-        $registrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
+        try {
+            $registrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
+        } catch (TableNotFoundException) {
+            $this->addFlash('error', 'Event registrations are unavailable until database migrations are applied.');
+
+            return $this->redirectToRoute('app_home');
+        }
 
         return $this->render('client_food_donation/my_registrations.html.twig', [
             'registrations' => $registrations,
@@ -162,43 +168,50 @@ class ClientFoodDonationController extends AbstractController
             ], Response::HTTP_FORBIDDEN);
         }
 
-        $events = $this->foodDonationEventRepository->findBy([], ['event_date' => 'ASC']);
-        $eventIds = [];
-        foreach ($events as $event) {
-            if ($event instanceof FoodDonationEvent && $event->getDonationEventId() !== null) {
-                $eventIds[] = (int) $event->getDonationEventId();
-            }
-        }
-
-        $registeredIds = $this->eventRegistrationRepository->findRegisteredEventIdsForUserId((int) $user->getId(), $eventIds);
-        $registrationCounts = $this->eventRegistrationRepository->countByEventIds($eventIds);
-
-        $myRegistrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
-        $myEvents = [];
-        foreach ($myRegistrations as $registration) {
-            if (!$registration instanceof EventRegistration) {
-                continue;
+        try {
+            $events = $this->foodDonationEventRepository->findBy([], ['event_date' => 'ASC']);
+            $eventIds = [];
+            foreach ($events as $event) {
+                if ($event instanceof FoodDonationEvent && $event->getDonationEventId() !== null) {
+                    $eventIds[] = (int) $event->getDonationEventId();
+                }
             }
 
-            $event = $registration->getEvent();
-            if (!$event instanceof FoodDonationEvent || $event->getDonationEventId() === null) {
-                continue;
-            }
+            $registeredIds = $this->eventRegistrationRepository->findRegisteredEventIdsForUserId((int) $user->getId(), $eventIds);
+            $registrationCounts = $this->eventRegistrationRepository->countByEventIds($eventIds);
 
-            $eventId = (int) $event->getDonationEventId();
-            $myEvents[] = [
-                'id' => $eventId,
-                'charity_name' => (string) ($event->getCharityName() ?? ('Event #' . $eventId)),
-                'event_date' => $event->getEventDate()?->format('M j, Y H:i') ?? 'Date TBD',
-                'status' => (string) ($event->getStatus() ?? FoodDonationEvent::STATUS_SCHEDULED),
-                'total_quantity' => (int) ($event->getTotalQuantity() ?? 0),
-                'registration_count' => (int) ($registrationCounts[$eventId] ?? 0),
-                'view_url' => $this->generateUrl('app_client_food_donation_show', ['id' => $eventId]),
-                'register_url' => $this->generateUrl('app_client_food_donation_register', ['id' => $eventId]),
-                'unregister_url' => $this->generateUrl('app_client_food_donation_unregister', ['id' => $eventId]),
-                'register_token' => $this->csrfTokenManager->getToken('register-event' . $eventId)->getValue(),
-                'unregister_token' => $this->csrfTokenManager->getToken('unregister-event' . $eventId)->getValue(),
-            ];
+            $myRegistrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
+            $myEvents = [];
+            foreach ($myRegistrations as $registration) {
+                if (!$registration instanceof EventRegistration) {
+                    continue;
+                }
+
+                $event = $registration->getEvent();
+                if (!$event instanceof FoodDonationEvent || $event->getDonationEventId() === null) {
+                    continue;
+                }
+
+                $eventId = (int) $event->getDonationEventId();
+                $myEvents[] = [
+                    'id' => $eventId,
+                    'charity_name' => (string) ($event->getCharityName() ?? ('Event #' . $eventId)),
+                    'event_date' => $event->getEventDate()?->format('M j, Y H:i') ?? 'Date TBD',
+                    'status' => (string) ($event->getStatus() ?? FoodDonationEvent::STATUS_SCHEDULED),
+                    'total_quantity' => (int) ($event->getTotalQuantity() ?? 0),
+                    'registration_count' => (int) ($registrationCounts[$eventId] ?? 0),
+                    'view_url' => $this->generateUrl('app_client_food_donation_show', ['id' => $eventId]),
+                    'register_url' => $this->generateUrl('app_client_food_donation_register', ['id' => $eventId]),
+                    'unregister_url' => $this->generateUrl('app_client_food_donation_unregister', ['id' => $eventId]),
+                    'register_token' => $this->csrfTokenManager->getToken('register-event' . $eventId)->getValue(),
+                    'unregister_token' => $this->csrfTokenManager->getToken('unregister-event' . $eventId)->getValue(),
+                ];
+            }
+        } catch (TableNotFoundException) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Event registrations are unavailable until database migrations are applied.',
+            ], Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
         return new JsonResponse([
@@ -266,7 +279,19 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
 
-        if ($this->eventRegistrationRepository->isUserRegisteredForEvent((int) $user->getId(), (int) $event->getDonationEventId())) {
+        try {
+            $alreadyRegistered = $this->eventRegistrationRepository->isUserRegisteredForEvent((int) $user->getId(), (int) $event->getDonationEventId());
+        } catch (TableNotFoundException) {
+            if ($isAjaxRequest) {
+                return new JsonResponse(['success' => false, 'message' => 'Event registrations are unavailable until database migrations are applied.'], Response::HTTP_SERVICE_UNAVAILABLE);
+            }
+
+            $this->addFlash('error', 'Event registrations are unavailable until database migrations are applied.');
+
+            return $this->redirectToRoute('app_home');
+        }
+
+        if ($alreadyRegistered) {
             if ($isAjaxRequest) {
                 $registrationCount = (int) ($this->eventRegistrationRepository->countByEventIds([(int) $event->getDonationEventId()])[(int) $event->getDonationEventId()] ?? 0);
 
@@ -290,8 +315,18 @@ class ClientFoodDonationController extends AbstractController
             ->setUser($user)
             ->setCreatedAt(new \DateTimeImmutable('now'));
 
-        $this->entityManager->persist($registration);
-        $this->entityManager->flush();
+        try {
+            $this->entityManager->persist($registration);
+            $this->entityManager->flush();
+        } catch (TableNotFoundException | NotNullConstraintViolationException) {
+            if ($isAjaxRequest) {
+                return new JsonResponse(['success' => false, 'message' => 'Event registrations are unavailable until database migrations are applied.'], Response::HTTP_SERVICE_UNAVAILABLE);
+            }
+
+            $this->addFlash('error', 'Event registrations are unavailable until database migrations are applied.');
+
+            return $this->redirectToRoute('app_home');
+        }
 
         $registrationEvent = new EventRegistrationEvent($user, $event);
         $this->eventDispatcher->dispatch($registrationEvent);
@@ -363,17 +398,33 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
 
-        $registration = $this->eventRegistrationRepository->findOneBy([
-            'event' => $event,
-            'user' => $user,
-        ]);
+        try {
+            $registration = $this->eventRegistrationRepository->findOneBy([
+                'event' => $event,
+                'user' => $user,
+            ]);
+        } catch (TableNotFoundException) {
+            if ($isAjaxRequest) {
+                return new JsonResponse(['success' => false, 'message' => 'Event registrations are unavailable until database migrations are applied.'], Response::HTTP_SERVICE_UNAVAILABLE);
+            }
+
+            $this->addFlash('error', 'Event registrations are unavailable until database migrations are applied.');
+
+            return $this->redirectToRoute('app_home');
+        }
 
         if (!$registration instanceof EventRegistration) {
             if ($isAjaxRequest) {
+                try {
+                    $registrationCount = (int) ($this->eventRegistrationRepository->countByEventIds([(int) $event->getDonationEventId()])[(int) $event->getDonationEventId()] ?? 0);
+                } catch (TableNotFoundException) {
+                    return new JsonResponse(['success' => false, 'message' => 'Event registrations are unavailable until database migrations are applied.'], Response::HTTP_SERVICE_UNAVAILABLE);
+                }
+
                 return new JsonResponse([
                     'success' => true,
                     'registered' => false,
-                    'registration_count' => (int) ($this->eventRegistrationRepository->countByEventIds([(int) $event->getDonationEventId()])[(int) $event->getDonationEventId()] ?? 0),
+                    'registration_count' => $registrationCount,
                     'message' => 'You are not registered for this event.',
                 ]);
             }
@@ -383,10 +434,30 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
 
-        $this->entityManager->remove($registration);
-        $this->entityManager->flush();
+        try {
+            $this->entityManager->remove($registration);
+            $this->entityManager->flush();
+        } catch (TableNotFoundException | NotNullConstraintViolationException) {
+            if ($isAjaxRequest) {
+                return new JsonResponse(['success' => false, 'message' => 'Event registrations are unavailable until database migrations are applied.'], Response::HTTP_SERVICE_UNAVAILABLE);
+            }
 
-        $registrationCount = (int) ($this->eventRegistrationRepository->countByEventIds([(int) $event->getDonationEventId()])[(int) $event->getDonationEventId()] ?? 0);
+            $this->addFlash('error', 'Event registrations are unavailable until database migrations are applied.');
+
+            return $this->redirectToRoute('app_home');
+        }
+
+        try {
+            $registrationCount = (int) ($this->eventRegistrationRepository->countByEventIds([(int) $event->getDonationEventId()])[(int) $event->getDonationEventId()] ?? 0);
+        } catch (TableNotFoundException) {
+            if ($isAjaxRequest) {
+                return new JsonResponse(['success' => false, 'message' => 'Event registrations are unavailable until database migrations are applied.'], Response::HTTP_SERVICE_UNAVAILABLE);
+            }
+
+            $this->addFlash('error', 'Event registrations are unavailable until database migrations are applied.');
+
+            return $this->redirectToRoute('app_home');
+        }
 
         if ($isAjaxRequest) {
             return new JsonResponse([
@@ -510,7 +581,15 @@ class ClientFoodDonationController extends AbstractController
             ], Response::HTTP_FORBIDDEN);
         }
 
-        $registrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
+        try {
+            $registrations = $this->eventRegistrationRepository->findForUserId((int) $user->getId());
+        } catch (TableNotFoundException) {
+            return new JsonResponse([
+                'success' => false,
+                'events' => [],
+                'message' => 'Event registrations are unavailable until database migrations are applied.',
+            ], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
         $registeredEvents = [];
         foreach ($registrations as $registration) {
             if (!$registration instanceof EventRegistration) {

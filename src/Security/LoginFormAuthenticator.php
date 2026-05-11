@@ -38,7 +38,16 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
 
     public function supports(Request $request): ?bool
     {
-        return $request->isMethod('POST') && $request->getPathInfo() === '/login';
+        if (!$request->isMethod('POST')) {
+            return false;
+        }
+
+        $route = $request->attributes->get('_route');
+        if (is_string($route) && $route !== '') {
+            return $route === 'app_login';
+        }
+
+        return $request->getPathInfo() === '/login';
     }
 
     public function authenticate(Request $request): SelfValidatingPassport
@@ -151,7 +160,13 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
 
         $legacyHash = base64_encode(hash('sha256', $plainPassword, true));
 
-        return hash_equals($stored, $legacyHash);
+        if (hash_equals($stored, $legacyHash)) {
+            return true;
+        }
+
+        $legacyHex = hash('sha256', $plainPassword);
+
+        return hash_equals($stored, $legacyHex);
     }
 
     private function upgradeLegacyPasswordHash(User $user, string $plainPassword): void
