@@ -1,0 +1,6 @@
+{
+  "build/app.js": "/build/app.js",
+  "build/admin.js": "/build/admin.js",
+  "build/runtime.js": "/build/runtime.js",
+  "build/vendors-node_modules_symfony_stimulus-bridge_dist_index_js.js": "/build/vendors-node_modules_symfony_stimulus-bridge_dist_index_js.js"
+}
