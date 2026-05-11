@@ -20,6 +20,8 @@ class DeliveryMan
     public function __construct()
     {
         $this->deliverys = new ArrayCollection();
+        $this->gps_logs = new ArrayCollection();
+        $this->assignment_history = new ArrayCollection();
         $this->phone = new Phone('');
         $this->email = new Email(null);
     }
@@ -276,30 +278,30 @@ class DeliveryMan
 
     // GPS and Fleet Management fields
     #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
-    private ?float $latitude = null;
+    private ?string $latitude = null;
 
     public function getLatitude(): ?float
     {
-        return $this->latitude ? (float) $this->latitude : null;
+        return $this->latitude !== null ? (float) $this->latitude : null;
     }
 
     public function setLatitude(?float $latitude): self
     {
-        $this->latitude = $latitude;
+        $this->latitude = $latitude !== null ? (string) $latitude : null;
         return $this;
     }
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
-    private ?float $longitude = null;
+    private ?string $longitude = null;
 
     public function getLongitude(): ?float
     {
-        return $this->longitude ? (float) $this->longitude : null;
+        return $this->longitude !== null ? (float) $this->longitude : null;
     }
 
     public function setLongitude(?float $longitude): self
     {
-        $this->longitude = $longitude;
+        $this->longitude = $longitude !== null ? (string) $longitude : null;
         return $this;
     }
 
@@ -416,10 +418,6 @@ class DeliveryMan
      */
     public function getGpsLogs(): Collection
     {
-        if (!$this->gps_logs instanceof Collection) {
-            $this->gps_logs = new ArrayCollection();
-        }
-
         return $this->gps_logs;
     }
 
@@ -431,10 +429,6 @@ class DeliveryMan
      */
     public function getAssignmentHistory(): Collection
     {
-        if (!$this->assignment_history instanceof Collection) {
-            $this->assignment_history = new ArrayCollection();
-        }
-
         return $this->assignment_history;
     }
 

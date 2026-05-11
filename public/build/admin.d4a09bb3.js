@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkbig4_frontend=self.webpackChunkbig4_frontend||[]).push([[884],{828:function(n,t,u){var c=u(425);t.A={"symfony--ux-chartjs--chart":c.A}},926:function(n,t,u){(0,u(66).E)()}},function(n){n.O(0,[622],function(){return t=926,n(n.s=t);var t});n.O()}]);

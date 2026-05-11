@@ -12,6 +12,11 @@ use App\Repository\FleetCarRepository;
 #[ORM\Table(name: 'fleet_car')]
 class FleetCar
 {
+    public function __construct()
+    {
+        $this->assigned_delivery_men = new ArrayCollection();
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -204,31 +209,31 @@ class FleetCar
     }
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
-    private ?float $latitude = null;
+    private ?string $latitude = null;
 
     public function getLatitude(): ?float
     {
-        return $this->latitude;
+        return $this->latitude !== null ? (float) $this->latitude : null;
     }
 
     public function setLatitude(?float $latitude): self
     {
-        $this->latitude = $latitude;
+        $this->latitude = $latitude !== null ? (string) $latitude : null;
 
         return $this;
     }
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
-    private ?float $longitude = null;
+    private ?string $longitude = null;
 
     public function getLongitude(): ?float
     {
-        return $this->longitude;
+        return $this->longitude !== null ? (float) $this->longitude : null;
     }
 
     public function setLongitude(?float $longitude): self
     {
-        $this->longitude = $longitude;
+        $this->longitude = $longitude !== null ? (string) $longitude : null;
 
         return $this;
     }
@@ -331,10 +336,6 @@ class FleetCar
      */
     public function getAssignedDeliveryMen(): Collection
     {
-        if (!$this->assigned_delivery_men instanceof Collection) {
-            $this->assigned_delivery_men = new ArrayCollection();
-        }
-
         return $this->assigned_delivery_men;
     }
 

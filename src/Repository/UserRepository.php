@@ -76,7 +76,7 @@ class UserRepository extends ServiceEntityRepository
         }
 
         return $this->createQueryBuilder('u')
-            ->andWhere('u.phone IN (:phones)')
+            ->andWhere('(u.phone IN (:phones) OR u.phone_number IN (:phones))')
             ->setParameter('phones', $candidates)
             ->setMaxResults(1)
             ->getQuery()

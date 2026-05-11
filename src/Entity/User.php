@@ -11,9 +11,15 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use App\Repository\UserRepository;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: 'user')]
+#[ORM\Table(name: 'users')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    public function __construct()
+    {
+        $this->audit_logs = new ArrayCollection();
+        $this->notifications = new ArrayCollection();
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -284,10 +290,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getAuditLogs(): Collection
     {
-        if (!$this->audit_logs instanceof Collection) {
-            $this->audit_logs = new ArrayCollection();
-        }
-
         return $this->audit_logs;
     }
 
@@ -299,10 +301,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getNotifications(): Collection
     {
-        if (!$this->notifications instanceof Collection) {
-            $this->notifications = new ArrayCollection();
-        }
-
         return $this->notifications;
     }
 
