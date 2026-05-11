@@ -35,8 +35,10 @@
       {% set user_email = app.request.session.get('user_email') %}
       {% set user_phone = app.request.session.get('user_phone') %}
       {% set user_address = app.request.session.get('user_address') %}
-      {% set is_customer = is_granted('ROLE_CUSTOMER') or is_granted('ROLE_CLIENT') %}
-      {% set is_authenticated = is_granted('IS_AUTHENTICATED_FULLY') %}
+      {% set session_user_id = app.request.session.get('user_id') %}
+      {% set normalized_role = (user_role ?: '')|upper %}
+      {% set is_customer = is_granted('ROLE_CUSTOMER') or is_granted('ROLE_CLIENT') or normalized_role in ['ROLE_CLIENT', 'ROLE_CUSTOMER'] %}
+      {% set is_authenticated = is_granted('IS_AUTHENTICATED_FULLY') or session_user_id is not empty %}
       <div class="nav-actions">
         <button class="cart-btn" id="openCart">
           CART <span class="cart-badge" id="cartCount">0</span>
@@ -344,7 +346,7 @@
                       {% else %}
                         <div class="register-status">
                           <span class="status-badge">SCHEDULED</span>
-                          <span class="registered-count">0 registered</span>
+                          <span class="registered-count">{{ registrationCounts[event.donationEventId]|default(0) }} registered</span>
                         </div>
                         <form method="post" action="{{ path('app_client_food_donation_register', {'id': event.donationEventId}) }}" class="js-event-register-form" data-event-id="{{ event.donationEventId }}">
                           <input type="hidden" name="_token" value="{{ csrf_token('register-event' ~ event.donationEventId) }}">
@@ -725,9 +727,7 @@
 
         const currentToken = wrapper.querySelector('input[name="_token"]')?.value || '';
         const effectiveToken = String(registerToken || currentToken || '');
-        const unregisterToken = String(wrapper.dataset.unregisterToken || '');
-        const registerUrl = `/client/food-donation/event/${eventId}/register`;
-        const unregisterUrl = `/client/food-donation/event/${eventId}/unregister`;
+        const currentCount = Number(document.querySelector(`[data-registration-count-for="${eventId}"]`)?.textContent || 0);
 
         if (isRegistered) {
           wrapper.dataset.registered = '1';
@@ -741,6 +741,10 @@
 
         wrapper.dataset.registered = '0';
         wrapper.innerHTML = `
+          <div class="register-status">
+            <span class="status-badge">SCHEDULED</span>
+            <span class="registered-count">${currentCount} registered</span>
+          </div>
           <form method="post" action="/client/food-donation/event/${eventId}/register" class="js-event-register-form" data-event-id="${eventId}">
             <input type="hidden" name="_token" value="${effectiveToken}">
             <button type="submit" class="event-register-btn-ui">Register</button>

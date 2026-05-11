@@ -41,19 +41,11 @@ class FoodDonationEventType extends AbstractType
             ])
             ->add('status', ChoiceType::class, [
                 'choices' => [
-<<<<<<< HEAD
-                    'Scheduled' => 'SCHEDULED',
-                    'Pending' => 'PENDING',
-                    'In Progress' => 'IN_PROGRESS',
-                    'Cancelled' => 'CANCELLED',
-                    'Completed' => 'COMPLETED',
-=======
                     'Scheduled' => FoodDonationEvent::STATUS_SCHEDULED,
                     'In Progress' => FoodDonationEvent::STATUS_IN_PROGRESS,
                     'Ongoing' => FoodDonationEvent::STATUS_ONGOING,
                     'Completed' => FoodDonationEvent::STATUS_COMPLETED,
                     'Cancelled' => FoodDonationEvent::STATUS_CANCELLED,
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
                 ],
                 'required' => false,
                 'placeholder' => 'Auto (calculated from event date/time)',

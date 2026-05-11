@@ -5,23 +5,12 @@
 {% block topbar_breadcrumb %}Big 4 | Admin | Donations | Events{% endblock %}
 
 {% block body %}
-<<<<<<< HEAD
-
-=======
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
   <style>
     .live-filter-form {
       display: grid;
-<<<<<<< HEAD
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: .8rem;
       margin-bottom: 1rem;
-=======
-      grid-template-columns: 2fr 1fr 1fr 1fr;
-      gap: .9rem;
-      margin-bottom: 1.45rem;
-      align-items: end;
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
     }
 
     .filter-card {
@@ -38,7 +27,6 @@
       letter-spacing: .16em;
       text-transform: uppercase;
       color: var(--text-3);
-<<<<<<< HEAD
       margin-bottom: .35rem;
     }
     .don-stat-val {
@@ -125,8 +113,6 @@
       background: rgba(250, 246, 239, .9);
       font-size: .64rem;
       color: var(--text-2);
-=======
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
       font-weight: 600;
     }
 
@@ -1045,59 +1031,6 @@
     </div>
   </div>
 
-<<<<<<< HEAD
-  <div class="don-grid">
-    <div class="don-stat">
-      <div class="don-stat-lbl">Total Events</div>
-      <div class="don-stat-val">{{ total_events }}</div>
-    </div>
-    <div class="don-stat">
-      <div class="don-stat-lbl">Total Quantity Planned</div>
-      <div class="don-stat-val">{{ total_quantity }}</div>
-    </div>
-    <div class="don-stat">
-      <div class="don-stat-lbl">Pending Events</div>
-      <div class="don-stat-val">{{ pending_count }}</div>
-    </div>
-    <div class="don-stat">
-      <div class="don-stat-lbl">Scheduled Events</div>
-      <div class="don-stat-val">{{ scheduled_count }}</div>
-    </div>
-    <div class="don-stat">
-      <div class="don-stat-lbl">In Progress</div>
-      <div class="don-stat-val">{{ in_progress_count }}</div>
-    </div>
-    <div class="don-stat">
-      <div class="don-stat-lbl">Completed Events</div>
-      <div class="don-stat-val">{{ completed_count }}</div>
-    </div>
-  </div>
-
-  {% set hasFilters = search or status or sort != 'event_date' or direction != 'asc' %}
-  <form method="get" class="list-filters don-card" data-live-search="true" style="display:flex;flex-wrap:wrap;gap:.85rem;margin-bottom:1.3rem;align-items:center;">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search donation events" class="search-input" style="flex:1;min-width:240px;padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);">
-    <select name="status" class="status-filter" style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;min-width:190px;background:var(--ivory);color:var(--text);">
-      <option value="">All statuses</option>
-      <option value="PENDING" {{ status == 'PENDING' ? 'selected' : '' }}>Pending</option>
-      <option value="SCHEDULED" {{ status == 'SCHEDULED' ? 'selected' : '' }}>Scheduled</option>
-      <option value="IN_PROGRESS" {{ status == 'IN_PROGRESS' ? 'selected' : '' }}>In progress</option>
-      <option value="COMPLETED" {{ status == 'COMPLETED' ? 'selected' : '' }}>Completed</option>
-      <option value="CANCELLED" {{ status == 'CANCELLED' ? 'selected' : '' }}>Cancelled</option>
-    </select>
-    <select name="sort" style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);color:var(--text);">
-      <option value="event_date" {{ sort == 'event_date' ? 'selected' : '' }}>Sort: Date</option>
-      <option value="donation_event_id" {{ sort == 'donation_event_id' ? 'selected' : '' }}>Sort: ID</option>
-      <option value="total_quantity" {{ sort == 'total_quantity' ? 'selected' : '' }}>Sort: Quantity</option>
-      <option value="charity_name" {{ sort == 'charity_name' ? 'selected' : '' }}>Sort: Charity</option>
-      <option value="status" {{ sort == 'status' ? 'selected' : '' }}>Sort: Status</option>
-      <option value="updated_at" {{ sort == 'updated_at' ? 'selected' : '' }}>Sort: Updated</option>
-    </select>
-    <select name="direction" style="padding:.9rem 1rem;border:1px solid var(--border-2);border-radius:12px;background:var(--ivory);color:var(--text);">
-      <option value="asc" {{ direction == 'asc' ? 'selected' : '' }}>Asc</option>
-      <option value="desc" {{ direction == 'desc' ? 'selected' : '' }}>Desc</option>
-    </select>
-    {% if hasFilters %}<a href="{{ path('app_food_donation_event_index') }}" class="t-btn">Reset</a>{% endif %}
-=======
   <form method="get" class="list-filters live-filter-form">
     <div class="filter-card">
       <label class="filter-label" for="eventSearch">Search</label>
@@ -1132,7 +1065,6 @@
         <option value="Cancelled" {{ status == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
       </select>
     </div>
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
   </form>
 
   <div class="tbl-card">
@@ -1155,16 +1087,6 @@
       </thead>
       <tbody>
         {% for event in food_donation_events %}
-<<<<<<< HEAD
-          <tr>
-            <td class="event-id">#{{ event.donationEventId }}</td>
-            <td>{{ event.eventDate ? event.eventDate|date('Y-m-d') : '—' }}</td>
-            <td>{{ event.totalQuantity }}</td>
-            <td>{{ event.charityName }}</td>
-            <td>
-              {% set normalized = (event.status ?: 'UNKNOWN')|upper %}
-              <span class="status-chip {{ normalized == 'PENDING' ? 'status-pending' : normalized == 'SCHEDULED' ? 'status-scheduled' : normalized == 'IN_PROGRESS' ? 'status-in-progress' : normalized == 'COMPLETED' ? 'status-completed' : normalized == 'CANCELLED' ? 'status-cancelled' : 'status-unknown' }}">{{ normalized }}</span>
-=======
           <tr
             data-event-id="{{ event.donationEventId }}"
             data-status="{{ event.status }}"
@@ -1187,7 +1109,6 @@
               {% set statusLower = eventStatus|lower %}
               {% set statusApiClass = statusLower == 'in progress' ? 'in_progress' : statusLower %}
               <span class="event-status-badge status status-{{ statusApiClass }} {{ statusLower == 'cancelled' ? 'event-status-cancelled' : statusLower == 'completed' ? 'event-status-completed' : statusLower == 'ongoing' ? 'event-status-ongoing' : statusLower == 'in progress' ? 'event-status-in-progress' : 'event-status-scheduled' }}">{{ eventStatus }}</span>
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
             </td>
             <td>{% if event.deliveryId %}<span class="meta-pill">#{{ event.deliveryId }}</span>{% else %}<span class="meta-pill">Not linked</span>{% endif %}</td>
             <td data-sort-value="{{ event.updatedAt ? event.updatedAt|date('Y-m-d H:i') : '' }}">{{ event.updatedAt ? event.updatedAt|date('Y-m-d H:i') : '—' }}</td>

@@ -50,7 +50,6 @@ class FoodDonationItemRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-<<<<<<< HEAD
     /**
      * @return array<int, array{donation_event_id:int, item_id:int, quantity:int, item_name:string|null}>
      */
@@ -64,7 +63,8 @@ class FoodDonationItemRepository extends ServiceEntityRepository
             .'ORDER BY fdi.item_id';
 
         return $conn->fetchAllAssociative($sql, ['eventId' => $eventId]);
-=======
+    }
+
     public function findByDonationEventId(int $eventId): array
     {
         return $this->createQueryBuilder('f')
@@ -134,7 +134,6 @@ class FoodDonationItemRepository extends ServiceEntityRepository
         }
 
         return $counts;
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
     }
 
     //    /**

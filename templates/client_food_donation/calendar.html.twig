@@ -31,7 +31,7 @@
         <article class="feature-card feature-card-dark">
           <span class="feature-label">Calendar Focus</span>
           <strong id="currentMonthLabel"></strong>
-          <p>Track scheduled, pending, completed, and cancelled food donation events from a single view.</p>
+          <p>Track scheduled, in-progress, completed, and cancelled food donation events from a single view.</p>
         </article>
         <article class="feature-card">
           <span class="feature-label">Events On Day</span>
@@ -54,7 +54,7 @@
             </div>
             <div class="calendar-legend">
               <div><span class="legend-dot legend-upcoming"></span>Upcoming</div>
-              <div><span class="legend-dot legend-pending"></span>Pending</div>
+              <div><span class="legend-dot legend-pending"></span>In Progress</div>
               <div><span class="legend-dot legend-completed"></span>Completed</div>
               <div><span class="legend-dot legend-cancelled"></span>Cancelled</div>
             </div>
@@ -108,14 +108,58 @@
 
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const statusColors = {
-      'SCHEDULED': 'legend-upcoming',
-      'PENDING': 'legend-pending',
-      'COMPLETED': 'legend-completed',
-      'CANCELLED': 'legend-cancelled'
+      SCHEDULED: 'legend-upcoming',
+      IN_PROGRESS: 'legend-pending',
+      ONGOING: 'legend-pending',
+      COMPLETED: 'legend-completed',
+      CANCELLED: 'legend-cancelled',
+    };
+    const statusLabels = {
+      SCHEDULED: 'Scheduled',
+      IN_PROGRESS: 'In Progress',
+      ONGOING: 'Ongoing',
+      COMPLETED: 'Completed',
+      CANCELLED: 'Cancelled',
     };
 
     let currentDate = new Date();
     let selectedDay = null;
+
+    const normalizeStatus = (status) => {
+      const normalized = String(status || '')
+        .trim()
+        .toUpperCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
+      if (normalized === 'IN_PROGRESS') return 'IN_PROGRESS';
+      if (normalized === 'ONGOING') return 'ONGOING';
+      if (normalized === 'COMPLETED') return 'COMPLETED';
+      if (normalized === 'CANCELLED') return 'CANCELLED';
+      return 'SCHEDULED';
+    };
+
+    const formatStatusLabel = (event) => {
+      if (event.statusLabel) {
+        return String(event.statusLabel);
+      }
+      return statusLabels[normalizeStatus(event.status)] || 'Scheduled';
+    };
+
+    const parseDateKey = (dateKey) => {
+      const [year, month, day] = String(dateKey).split('-').map(Number);
+      return new Date(year, (month || 1) - 1, day || 1);
+    };
+
+    const normalizeEvent = (event) => {
+      const status = normalizeStatus(event.status);
+      return {
+        ...event,
+        status,
+        statusLabel: event.statusLabel || statusLabels[status] || 'Scheduled',
+      };
+    };
+
+    events = Array.isArray(events) ? events.map(normalizeEvent) : [];
 
     let groupedEvents = events.reduce((acc, event) => {
       if (!event.eventDateKey) return acc;
@@ -203,7 +247,7 @@
         cell.classList.toggle('day-cell-active', cell.dataset.date === dateKey);
       });
 
-      const formattedDate = new Date(dateKey).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const formattedDate = parseDateKey(dateKey).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       selectedDateLabel.textContent = formattedDate;
       selectedDateHeading.textContent = formattedDate;
 
@@ -219,7 +263,7 @@
         card.innerHTML = `
           <div class="event-summary-head">
             <strong>${event.charityName}</strong>
-            <span class="status-badge ${statusColors[event.status] || 'legend-upcoming'}">${event.status}</span>
+            <span class="status-badge ${statusColors[event.status] || 'legend-upcoming'}">${formatStatusLabel(event)}</span>
           </div>
           <div class="event-summary-meta">${event.eventDate}</div>
           <div class="event-summary-meta">Items: ${event.totalQuantity}</div>
@@ -238,7 +282,7 @@
       summaryTotalEvents.textContent = currentEvents.length;
       if (currentEvents.length) {
         const nextEvent = currentEvents[0];
-        summaryNextEvent.innerHTML = `${formatShortLabel(nextEvent.charityName)} <span class="summary-status ${statusColors[nextEvent.status] || 'legend-upcoming'}">${nextEvent.status}</span>`;
+        summaryNextEvent.innerHTML = `${formatShortLabel(nextEvent.charityName)} <span class="summary-status ${statusColors[nextEvent.status] || 'legend-upcoming'}">${formatStatusLabel(nextEvent)}</span>`;
       } else {
         summaryNextEvent.textContent = 'No events scheduled';
       }
@@ -273,7 +317,8 @@
           (payload.events || []).forEach((updated) => {
             const idx = events.findIndex((e) => String(e.id) === String(updated.id));
             if (idx !== -1) {
-              events[idx].status = updated.status;
+              events[idx].status = normalizeStatus(updated.status);
+              events[idx].statusLabel = String(updated.label || statusLabels[events[idx].status] || 'Scheduled');
               if (updated.totalQuantity !== undefined) events[idx].totalQuantity = updated.totalQuantity;
             }
           });

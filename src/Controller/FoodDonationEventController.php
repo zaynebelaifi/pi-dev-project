@@ -12,15 +12,10 @@ use App\Repository\DishRepository;
 use App\Repository\EventRegistrationRepository;
 use App\Repository\FoodDonationEventRepository;
 use App\Repository\FoodDonationItemRepository;
-<<<<<<< HEAD
 use App\Repository\RatingRepository;
 use App\Repository\UserRepository;
 use App\Service\DonationItemStockService;
 use App\Service\DonationOptimizationService;
-use App\Service\EventNotificationService;
-=======
-use App\Repository\UserRepository;
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
 use Doctrine\ORM\EntityManagerInterface;
 use Nucleos\DompdfBundle\Wrapper\DompdfWrapperInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -69,12 +64,12 @@ final class FoodDonationEventController extends AbstractController
         $itemCountsByEvent = $this->foodDonationItemRepository->countByEventIds($eventIds);
         $eventItemsMap = $this->foodDonationItemRepository->findGroupedByEventIds($eventIds);
 
-        $totalEvents = $foodDonationEventRepository->countAllEvents();
-        $totalQuantity = $foodDonationEventRepository->sumTotalQuantity();
-        $pendingCount = $foodDonationEventRepository->countByStatus('PENDING');
-        $scheduledCount = $foodDonationEventRepository->countByStatus('SCHEDULED');
-        $inProgressCount = $foodDonationEventRepository->countByStatus('IN_PROGRESS');
-        $completedCount = $foodDonationEventRepository->countByStatus('COMPLETED');
+        $totalEvents = $this->foodDonationEventRepository->countAllEvents();
+        $totalQuantity = $this->foodDonationEventRepository->sumTotalQuantity();
+        $pendingCount = $this->foodDonationEventRepository->countByStatus('PENDING');
+        $scheduledCount = $this->foodDonationEventRepository->countByStatus('SCHEDULED');
+        $inProgressCount = $this->foodDonationEventRepository->countByStatus('IN_PROGRESS');
+        $completedCount = $this->foodDonationEventRepository->countByStatus('COMPLETED');
 
         return $this->render('admin/food_donation_event/index.html.twig', [
             'food_donation_events' => $events,
@@ -83,27 +78,20 @@ final class FoodDonationEventController extends AbstractController
             'status' => $status,
             'sort' => $sort,
             'direction' => $direction,
-<<<<<<< HEAD
             'total_events' => $totalEvents,
             'total_quantity' => $totalQuantity,
             'pending_count' => $pendingCount,
             'scheduled_count' => $scheduledCount,
             'in_progress_count' => $inProgressCount,
             'completed_count' => $completedCount,
-=======
             'newEventId' => $newEventId > 0 ? $newEventId : null,
             'itemCountsByEvent' => $itemCountsByEvent,
             'eventItemsMap' => $eventItemsMap,
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
         ]);
     }
 
     #[Route('/new', name: 'app_food_donation_event_new', methods: ['GET', 'POST'])]
-<<<<<<< HEAD
-    public function new(Request $request, EntityManagerInterface $entityManager, EventNotificationService $notificationService, UserRepository $userRepository): Response
-=======
     public function new(Request $request): Response
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
@@ -126,15 +114,6 @@ final class FoodDonationEventController extends AbstractController
             $organizer = $this->resolveCurrentUser($request);
             $this->eventDispatcher->dispatch(new EventCreatedEvent($foodDonationEvent, $organizer));
 
-            $userId = (int) $request->getSession()->get('user_id', 0);
-            if ($userId > 0) {
-                $user = $userRepository->find($userId);
-                if ($user) {
-                    $notificationService->notifyEventCreated($user, $foodDonationEvent);
-                    $entityManager->flush();
-                }
-            }
-
             $this->addFlash('success', 'Donation event created successfully.');
             return $this->redirectToRoute('app_food_donation_event_index', [
                 'newEventId' => $foodDonationEvent->getDonationEventId(),
@@ -154,25 +133,6 @@ final class FoodDonationEventController extends AbstractController
             return $redirect;
         }
 
-<<<<<<< HEAD
-        $items = [];
-        if (null !== $foodDonationEvent->getDonationEventId()) {
-            $items = $foodDonationItemRepository->findItemsWithDishNames($foodDonationEvent->getDonationEventId());
-        }
-
-        $avgEvent = $ratingRepository->getAverageEventRating($foodDonationEvent);
-        $avgFood = $ratingRepository->getAverageFoodRating($foodDonationEvent);
-        $ratingCount = $ratingRepository->getRatingCount($foodDonationEvent);
-        $ratings = $ratingRepository->findRatingsWithUsers($foodDonationEvent);
-
-        return $this->render('admin/food_donation_event/show.html.twig', [
-            'food_donation_event' => $foodDonationEvent,
-            'event_items' => $items,
-            'avg_event_rating' => $avgEvent,
-            'avg_food_rating' => $avgFood,
-            'rating_count' => $ratingCount,
-            'ratings' => $ratings,
-=======
         $eventId = (int) ($foodDonationEvent->getDonationEventId() ?? 0);
         $rawItems = $eventId > 0 ? $this->foodDonationItemRepository->findByDonationEventId($eventId) : [];
         $eventItems = array_map(static fn (array $item): array => [
@@ -180,28 +140,31 @@ final class FoodDonationEventController extends AbstractController
             'quantity' => (int) ($item['quantity'] ?? 0),
             'itemId' => (int) ($item['itemId'] ?? 0),
         ], $rawItems);
+        $avgEvent = $ratingRepository->getAverageEventRating($foodDonationEvent);
+        $avgFood = $ratingRepository->getAverageFoodRating($foodDonationEvent);
+        $ratingCount = $ratingRepository->getRatingCount($foodDonationEvent);
+        $ratings = $ratingRepository->findRatingsWithUsers($foodDonationEvent);
 
         return $this->render('admin/food_donation_event/show.html.twig', [
             'food_donation_event' => $foodDonationEvent,
+            'event_items' => $rawItems,
             'eventItems' => $eventItems,
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
+            'avg_event_rating' => $avgEvent,
+            'avg_food_rating' => $avgFood,
+            'rating_count' => $ratingCount,
+            'ratings' => $ratings,
         ]);
     }
 
     #[Route('/{donation_event_id}/edit', name: 'app_food_donation_event_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, FoodDonationEvent $foodDonationEvent, EntityManagerInterface $entityManager, EventNotificationService $notificationService, UserRepository $userRepository): Response
+    public function edit(Request $request, FoodDonationEvent $foodDonationEvent, EntityManagerInterface $entityManager): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
         }
 
-<<<<<<< HEAD
-        $previousStatus = $foodDonationEvent->getStatus();
-=======
         $isAjax = $request->isXmlHttpRequest()
             || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
-
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
         $form = $this->createForm(FoodDonationEventType::class, $foodDonationEvent);
         $form->handleRequest($request);
 
@@ -210,18 +173,6 @@ final class FoodDonationEventController extends AbstractController
             $foodDonationEvent->setSmsReminderSent(false);
             $entityManager->flush();
 
-<<<<<<< HEAD
-            $newStatus = $foodDonationEvent->getStatus();
-            if ($previousStatus !== $newStatus) {
-                $userId = (int) $request->getSession()->get('user_id', 0);
-                if ($userId > 0) {
-                    $user = $userRepository->find($userId);
-                    if ($user) {
-                        $notificationService->notifyEventStatusChanged($user, $foodDonationEvent, $newStatus);
-                        $entityManager->flush();
-                    }
-                }
-=======
             $organizer = $this->resolveCurrentUser($request);
             $updatedEvent = new EventUpdatedEvent($foodDonationEvent, $organizer);
             $this->eventDispatcher->dispatch($updatedEvent);
@@ -250,7 +201,6 @@ final class FoodDonationEventController extends AbstractController
                         'newEventId' => $foodDonationEvent->getDonationEventId(),
                     ]),
                 ]);
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
             }
 
             $this->addFlash('success', 'Donation event updated successfully.');
@@ -281,33 +231,6 @@ final class FoodDonationEventController extends AbstractController
             return $redirect;
         }
 
-<<<<<<< HEAD
-        if ($this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $request->request->get('_token'))) {
-            $connection = $entityManager->getConnection();
-            $connection->beginTransaction();
-
-            try {
-                if (null !== $foodDonationEvent->getDonationEventId()) {
-                    $items = $foodDonationItemRepository->findBy([
-                        'donation_event_id' => $foodDonationEvent->getDonationEventId(),
-                    ]);
-
-                    foreach ($items as $item) {
-                        $stockService->restoreForDish((int) $item->getItem_id(), (int) $item->getQuantity());
-                        $entityManager->remove($item);
-                    }
-                }
-
-                $entityManager->remove($foodDonationEvent);
-                $entityManager->flush();
-                $connection->commit();
-
-                $this->addFlash('success', 'Donation event deleted successfully.');
-            } catch (\Throwable $e) {
-                $connection->rollBack();
-                $this->addFlash('error', 'Failed to delete event: '.$e->getMessage());
-            }
-=======
         $isAjax = $request->isXmlHttpRequest() || str_contains((string) $request->headers->get('Accept', ''), 'application/json');
         $token = (string) $request->request->get('_token', '');
 
@@ -322,11 +245,39 @@ final class FoodDonationEventController extends AbstractController
             $this->addFlash('error', 'Invalid security token. Please refresh and try again.');
 
             return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
         }
 
-        $entityManager->remove($foodDonationEvent);
-        $entityManager->flush();
+        $connection = $entityManager->getConnection();
+        $connection->beginTransaction();
+
+        try {
+            if (null !== $foodDonationEvent->getDonationEventId()) {
+                $items = $foodDonationItemRepository->findBy([
+                    'donation_event_id' => $foodDonationEvent->getDonationEventId(),
+                ]);
+
+                foreach ($items as $item) {
+                    $stockService->restoreForDish((int) $item->getItem_id(), (int) $item->getQuantity());
+                    $entityManager->remove($item);
+                }
+            }
+
+            $entityManager->remove($foodDonationEvent);
+            $entityManager->flush();
+            $connection->commit();
+        } catch (\Throwable $e) {
+            $connection->rollBack();
+
+            if ($isAjax) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Failed to delete event: '.$e->getMessage(),
+                ], Response::HTTP_CONFLICT);
+            }
+
+            $this->addFlash('error', 'Failed to delete event: '.$e->getMessage());
+            return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
+        }
 
         if ($isAjax) {
             return new JsonResponse([
@@ -466,7 +417,6 @@ final class FoodDonationEventController extends AbstractController
         return null;
     }
 
-<<<<<<< HEAD
     #[Route('/recommendations', name: 'app_food_donation_event_recommendations', methods: ['GET'])]
     public function recommendations(Request $request, DonationOptimizationService $optimizationService): Response
     {
@@ -481,7 +431,8 @@ final class FoodDonationEventController extends AbstractController
             'near_expiry_days' => $nearExpiryDays,
             'recommendations' => $recommendations,
         ]);
-=======
+    }
+
     private function resolveCurrentUser(Request $request): ?User
     {
         $securityUser = $this->getUser();
@@ -520,6 +471,5 @@ final class FoodDonationEventController extends AbstractController
         }
 
         return $errors;
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
     }
 }

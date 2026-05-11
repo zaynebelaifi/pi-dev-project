@@ -38,12 +38,14 @@ class EventNotificationService
     private function createNotification(User $user, FoodDonationEvent $event, string $message): void
     {
         $notification = new Notification();
-        $notification->setUser($user);
-        $notification->setEvent($event);
+        $notification->setRecipient($user);
+        $notification->setType('INFO');
+        $notification->setTitle('Food donation event update');
         $notification->setMessage($message);
-        $notification->setNotificationType('BOTH');
-        $notification->setStatus('PENDING');
-        $notification->setScheduledTime(new \DateTimeImmutable());
+        $notification->setRelatedEntity('food_donation_event');
+        $notification->setRelatedEntityId($event->getDonationEventId());
+        $notification->setCreatedAt(new \DateTimeImmutable());
+        $notification->setIsRead(false);
 
         $this->entityManager->persist($notification);
     }

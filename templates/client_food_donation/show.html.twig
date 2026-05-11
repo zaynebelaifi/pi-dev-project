@@ -19,7 +19,7 @@
 
         {# ── Role-based action buttons ── #}
         <div class="event-registration-actions">
-          {% if is_granted('ROLE_CUSTOMER') or is_granted('ROLE_CLIENT') %}
+          {% if isCustomer %}
             {% if statusLower == 'scheduled' %}
               <button
                 type="button"
@@ -38,7 +38,7 @@
             <a href="{{ path('app_client_food_donation_my_registrations') }}" class="btn-my-events">
               My Registered Events
             </a>
-          {% elseif not is_granted('IS_AUTHENTICATED_FULLY') %}
+          {% elseif not isAuthenticated %}
             <a href="{{ path('app_login') }}" class="btn-login">Login to Register</a>
           {% endif %}
         </div>

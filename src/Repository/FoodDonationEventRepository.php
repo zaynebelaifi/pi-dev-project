@@ -74,7 +74,6 @@ class FoodDonationEventRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-<<<<<<< HEAD
     public function countAllEvents(): int
     {
         return (int) $this->createQueryBuilder('f')
@@ -99,7 +98,8 @@ class FoodDonationEventRepository extends ServiceEntityRepository
             ->select('COALESCE(SUM(f.total_quantity), 0)')
             ->getQuery()
             ->getSingleScalarResult();
-=======
+    }
+
     /**
      * @return FoodDonationEvent[]
      */
@@ -134,7 +134,6 @@ class FoodDonationEventRepository extends ServiceEntityRepository
         }
 
         return $qb->getQuery()->getResult();
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
     }
 
     //    /**

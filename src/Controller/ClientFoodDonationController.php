@@ -44,12 +44,14 @@ class ClientFoodDonationController extends AbstractController
     {
         $events = $this->foodDonationEventRepository->findBy([], ['event_date' => 'ASC']);
 
-        $eventsData = array_map(static function ($event) {
+        $eventsData = array_map(function ($event) {
             $date = $event->getEvent_date();
+            $normalizedStatus = $this->normalizeEventStatus($event->getStatus());
             return [
                 'id' => $event->getDonation_event_id(),
                 'charityName' => $event->getCharity_name(),
-                'status' => $event->getStatus(),
+                'status' => $this->toApiStatus($normalizedStatus),
+                'statusLabel' => $normalizedStatus,
                 'eventDate' => $date ? $date->format('Y-m-d H:i') : null,
                 'eventDateKey' => $date ? $date->format('Y-m-d') : null,
                 'totalQuantity' => $event->getTotal_quantity(),
@@ -94,10 +96,10 @@ class ClientFoodDonationController extends AbstractController
         $isCancelled = $normalizedStatus === FoodDonationEvent::STATUS_CANCELLED;
         $currentUser = $this->resolveCurrentUser($request);
         $currentUserId = $currentUser?->getId();
-        $isAdmin = $request->getSession()->get('user_role') === 'ROLE_ADMIN';
 
         $userRole = (string) $request->getSession()->get('user_role');
-        $isCustomer = $this->isCustomerGranted();
+        $isAuthenticated = $this->isGranted('IS_AUTHENTICATED_FULLY') || is_numeric($request->getSession()->get('user_id'));
+        $isCustomer = $currentUser instanceof User && $this->isCustomerUser($currentUser, $request);
         $isAdmin = $userRole === 'ROLE_ADMIN' || $this->isGranted('ROLE_ADMIN');
         $isRegistered = $isCustomer && $currentUser instanceof User
             ? $this->eventRegistrationRepository->isUserRegisteredForEvent((int) $currentUser->getId(), (int) $event->getDonationEventId())
@@ -116,6 +118,7 @@ class ClientFoodDonationController extends AbstractController
             'currentUserId' => $currentUserId,
             'isAdmin' => $isAdmin,
             'isCustomer' => $isCustomer,
+            'isAuthenticated' => $isAuthenticated,
             'isRegistered' => $isRegistered,
         ]);
     }
@@ -125,11 +128,11 @@ class ClientFoodDonationController extends AbstractController
     {
         $user = $this->resolveCurrentUser($request);
 
-        if (!$this->isGranted('IS_AUTHENTICATED_FULLY') || !$user instanceof User) {
+        if (!$this->hasAuthenticatedUser($request, $user)) {
             return $this->redirectToRoute('app_login');
         }
 
-        if (!$this->isCustomerGranted()) {
+        if (!$this->isCustomerUser($user, $request)) {
             throw $this->createAccessDeniedException('Only customers can view registered events.');
         }
 
@@ -223,7 +226,7 @@ class ClientFoodDonationController extends AbstractController
         }
 
         $user = $this->resolveCurrentUser($request);
-        if (!$this->isGranted('IS_AUTHENTICATED_FULLY') || !$user instanceof User) {
+        if (!$this->hasAuthenticatedUser($request, $user)) {
             if ($isAjaxRequest) {
                 return new JsonResponse(['success' => false, 'message' => 'Please log in to register for events.'], Response::HTTP_UNAUTHORIZED);
             }
@@ -233,7 +236,7 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        if (!$this->isCustomerGranted()) {
+        if (!$this->isCustomerUser($user, $request)) {
             if ($isAjaxRequest) {
                 return new JsonResponse(['success' => false, 'message' => 'Only customers can register for events.'], Response::HTTP_FORBIDDEN);
             }
@@ -329,7 +332,7 @@ class ClientFoodDonationController extends AbstractController
         }
 
         $user = $this->resolveCurrentUser($request);
-        if (!$this->isGranted('IS_AUTHENTICATED_FULLY') || !$user instanceof User) {
+        if (!$this->hasAuthenticatedUser($request, $user)) {
             if ($isAjaxRequest) {
                 return new JsonResponse(['success' => false, 'message' => 'Please log in to manage registrations.'], Response::HTTP_UNAUTHORIZED);
             }
@@ -339,7 +342,7 @@ class ClientFoodDonationController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        if (!$this->isCustomerGranted()) {
+        if (!$this->isCustomerUser($user, $request)) {
             if ($isAjaxRequest) {
                 return new JsonResponse(['success' => false, 'message' => 'Only customers can manage event registrations.'], Response::HTTP_FORBIDDEN);
             }
@@ -820,6 +823,20 @@ class ClientFoodDonationController extends AbstractController
         return $this->userRepository->find((int) $sessionUserId);
     }
 
+    private function hasAuthenticatedUser(Request $request, ?User $user): bool
+    {
+        if (!$user instanceof User) {
+            return false;
+        }
+
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+            return true;
+        }
+
+        $sessionUserId = $request->getSession()->get('user_id');
+        return is_numeric($sessionUserId) && (int) $sessionUserId === (int) $user->getId();
+    }
+
     /**
      * @param FoodDonationEvent[] $registeredEvents
      * @param FoodDonationEvent[] $candidateEvents
@@ -919,11 +936,6 @@ class ClientFoodDonationController extends AbstractController
         return $rows;
     }
 
-    private function isCustomerGranted(): bool
-    {
-        return $this->isGranted('ROLE_CUSTOMER') || $this->isGranted('ROLE_CLIENT');
-    }
-
     private function isCustomerUser(User $user, Request $request): bool
     {
         $role = strtoupper(trim((string) ($user->getRole() ?? '')));
@@ -971,6 +983,17 @@ class ClientFoodDonationController extends AbstractController
             'completed' => FoodDonationEvent::STATUS_COMPLETED,
             'cancelled' => FoodDonationEvent::STATUS_CANCELLED,
             default => FoodDonationEvent::STATUS_SCHEDULED,
+        };
+    }
+
+    private function toApiStatus(string $status): string
+    {
+        return match ($status) {
+            FoodDonationEvent::STATUS_IN_PROGRESS => 'IN_PROGRESS',
+            FoodDonationEvent::STATUS_ONGOING => 'ONGOING',
+            FoodDonationEvent::STATUS_COMPLETED => 'COMPLETED',
+            FoodDonationEvent::STATUS_CANCELLED => 'CANCELLED',
+            default => 'SCHEDULED',
         };
     }
 }

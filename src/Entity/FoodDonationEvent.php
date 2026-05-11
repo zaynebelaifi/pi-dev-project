@@ -109,13 +109,8 @@ class FoodDonationEvent
 
     #[ORM\Column(type: 'string', length: 50, nullable: false, options: ['default' => self::STATUS_SCHEDULED])]
     #[Assert\NotBlank(message: 'Status is required.')]
-<<<<<<< HEAD
-    #[Assert\Choice(choices: ['SCHEDULED', 'PENDING', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED'], message: 'Please select a valid status.')]
-    private ?string $status = 'PENDING';
-=======
     #[Assert\Choice(choices: [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS, self::STATUS_ONGOING, self::STATUS_COMPLETED, self::STATUS_CANCELLED], message: 'Please select a valid status.')]
     private ?string $status = self::STATUS_SCHEDULED;
->>>>>>> 3e30a5f219658876febfe98b0d7cf8dfd724b166
 
     public function getStatus(): ?string
     {

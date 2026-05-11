@@ -20,8 +20,32 @@
       .replaceAll("'", '&#039;');
   }
 
+  function normalizeStatus(status) {
+    const normalized = String(status || '')
+      .trim()
+      .toUpperCase()
+      .replaceAll('-', '_')
+      .replaceAll(' ', '_');
+    if (normalized === 'IN_PROGRESS') return 'IN_PROGRESS';
+    if (normalized === 'ONGOING') return 'ONGOING';
+    if (normalized === 'COMPLETED') return 'COMPLETED';
+    if (normalized === 'CANCELLED') return 'CANCELLED';
+    return 'SCHEDULED';
+  }
+
+  function prettyStatus(status) {
+    const mapping = {
+      SCHEDULED: 'Scheduled',
+      IN_PROGRESS: 'In Progress',
+      ONGOING: 'Ongoing',
+      COMPLETED: 'Completed',
+      CANCELLED: 'Cancelled',
+    };
+    return mapping[normalizeStatus(status)] || 'Scheduled';
+  }
+
   function toStatusClass(status) {
-    return String(status || 'Scheduled').toLowerCase().replaceAll(' ', '-');
+    return normalizeStatus(status).toLowerCase();
   }
 
   function createEventCard(event) {
@@ -31,13 +55,14 @@
       ? date.toLocaleString('en-US', { month: 'short' }).toUpperCase()
       : 'TBD';
 
-    const status = String(event.status || 'Scheduled');
+    const statusKey = normalizeStatus(event.status);
+    const statusLabel = prettyStatus(statusKey);
     const safeReason = escapeHtml(event.aiReason || 'Recommended for you based on your past registrations.');
     const viewUrl = escapeHtml(event.viewUrl || `/client/food-donation/event/${Number(event.donationEventId || 0)}`);
     const match = Math.max(1, Math.min(100, Number(event.matchPercentage || 80)));
     const registerUrl = escapeHtml(event.registerUrl || '');
     const registerToken = escapeHtml(event.registerToken || '');
-    const canRegister = status.toLowerCase() === 'scheduled' && registerUrl !== '' && registerToken !== '';
+    const canRegister = statusKey === 'SCHEDULED' && registerUrl !== '' && registerToken !== '';
 
     return `
       <article class="recommendation-card" data-event-id="${Number(event.donationEventId || 0)}">
@@ -54,7 +79,7 @@
           <p class="recommendation-reason"><strong>Why recommended?</strong> ${safeReason}</p>
 
           <div class="recommendation-actions">
-            <span class="rec-status-badge rec-status-${escapeHtml(toStatusClass(status))}">${escapeHtml(status)}</span>
+            <span class="rec-status-badge rec-status-${escapeHtml(toStatusClass(statusKey))}">${escapeHtml(statusLabel)}</span>
             ${canRegister
               ? `<button type="button" class="rec-register-btn js-ai-register-btn" data-register-url="${registerUrl}" data-register-token="${registerToken}">Register</button>`
               : `<a class="rec-register-btn" href="${viewUrl}">View Event</a>`}

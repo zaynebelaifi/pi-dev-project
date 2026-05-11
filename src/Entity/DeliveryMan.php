@@ -252,10 +252,6 @@ class DeliveryMan
     #[ORM\OneToMany(targetEntity: Delivery::class, mappedBy: 'deliveryMan')]
         private Collection $deliverys;
 
-    public function __construct()
-    {
-        $this->deliverys = new ArrayCollection();
-    }
     /**
      * @return Collection<int, Delivery>
      */
