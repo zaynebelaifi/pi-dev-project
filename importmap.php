@@ -29,5 +29,14 @@ return [
     '@hotwired/turbo' => [
         'path' => './assets/vendor/@hotwired/turbo/turbo.index.js',
     ],
+    '@symfony/ux-chartjs' => [
+        'path' => './assets/vendor/@symfony/ux-chartjs/ux-chartjs.index.js',
+    ],
+    'chart.js' => [
+        'path' => './assets/vendor/chart.js/chart.js.index.js',
+    ],
+    '@kurkle/color' => [
+        'path' => './assets/vendor/@kurkle/color/color.index.js',
+    ],
 
 ];

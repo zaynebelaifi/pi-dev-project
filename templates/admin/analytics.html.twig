@@ -196,13 +196,21 @@
 
 {% block page_scripts %}
   <script>
-    window.adminAnalytics = {
-      wasteByType: {{ wasteByTypeChart|json_encode|raw }},
-      stockHealth: {{ stockHealthChart|json_encode|raw }},
-      topWasted: {{ topWastedChart|json_encode|raw }},
-      revenueTrend: {{ revenueTrendChart|json_encode|raw }}
-    };
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('analyticsFilterForm');
+      if (!form) {
+        return;
+      }
+
+      ['wastePeriodCombo', 'revenuePeriodCombo', 'revenueSortCombo', 'revenueFromDatePicker', 'revenueToDatePicker']
+        .forEach(function (id) {
+          const control = document.getElementById(id);
+          if (control) {
+            control.addEventListener('change', function () {
+              form.submit();
+            });
+          }
+        });
+    });
   </script>
-  <script src="{{ asset('vendor/chart.umd.min.js') }}" defer></script>
-  <script src="{{ asset('admin/analytics.js') }}" defer></script>
 {% endblock %}
