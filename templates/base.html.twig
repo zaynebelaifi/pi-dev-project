@@ -419,6 +419,48 @@
         </div>
       </div>
     </section>
+
+    <section class="ai-reviews-section" id="ai-reviews">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <small>AI Curated</small>
+            <h3><span class="ai-badge">AI Reviews</span> What Guests Loved</h3>
+          </div>
+          <p class="recommended-subtitle">Short highlights from recent event feedback.</p>
+        </div>
+
+        <div class="ai-review-grid">
+          <article class="ai-review-card reveal">
+            <div class="ai-review-head">
+              <span class="ai-review-badge">AI Summary</span>
+              <span class="ai-review-score">4.9</span>
+            </div>
+            <h4>Jazz Night Tasting</h4>
+            <p>Guests praised the live band and the signature dessert pairing. Service was quick and attentive.</p>
+            <div class="ai-review-meta">Top mentions: ambiance, dessert, service</div>
+          </article>
+          <article class="ai-review-card reveal">
+            <div class="ai-review-head">
+              <span class="ai-review-badge">AI Summary</span>
+              <span class="ai-review-score">4.7</span>
+            </div>
+            <h4>Weekend Brunch</h4>
+            <p>Favorites included the truffle omelette and chilled brew. Seating comfort was highlighted.</p>
+            <div class="ai-review-meta">Top mentions: brunch, comfort, coffee</div>
+          </article>
+          <article class="ai-review-card reveal">
+            <div class="ai-review-head">
+              <span class="ai-review-badge">AI Summary</span>
+              <span class="ai-review-score">4.8</span>
+            </div>
+            <h4>Chef Table Experience</h4>
+            <p>Guests loved the curated menu flow and personal chef touch. Pacing was smooth.</p>
+            <div class="ai-review-meta">Top mentions: menu, chef, pacing</div>
+          </article>
+        </div>
+      </div>
+    </section>
   {% endif %}
 
   <!-- CTA -->
@@ -650,6 +692,7 @@
   {% endblock %}
 
   {% block javascripts %}
+            {{ encore_entry_script_tags('app') }}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   {{ encore_entry_script_tags('app') }}
   <script src="/js/recommendations.js?v=2"></script>

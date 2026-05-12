@@ -2058,6 +2058,43 @@
       line-height:1.06;
       padding-right:3.2rem;
     }
+
+    /* AI REVIEWS */
+    .ai-reviews-section{padding:1.2rem 0 2.2rem}
+    .ai-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+    .ai-review-card{
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:1rem 1.1rem 1.2rem;
+      background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(249,244,236,.98));
+      box-shadow:0 10px 0 #eee3cd,0 18px 30px rgba(92,61,30,.08);
+      transition:.25s ease;
+    }
+    .ai-review-card:hover{transform:translateY(4px);box-shadow:0 7px 0 #eee3cd,0 12px 22px rgba(92,61,30,.08)}
+    .ai-review-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
+    .ai-review-badge{
+      display:inline-flex;
+      align-items:center;
+      padding:.28rem .7rem;
+      border-radius:999px;
+      background:rgba(184,135,42,.12);
+      color:var(--brown);
+      font-size:.62rem;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+    .ai-review-score{font-weight:700;color:var(--espresso);font-size:.95rem}
+    .ai-review-card h4{margin:0 0 .45rem;font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--espresso)}
+    .ai-review-card p{margin:0;color:var(--text-2);line-height:1.55;font-size:.92rem}
+    .ai-review-meta{margin-top:.6rem;color:var(--text-3);font-size:.72rem;letter-spacing:.04em}
+
+    @media(max-width:980px){
+      .ai-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:640px){
+      .ai-review-grid{grid-template-columns:1fr}
+    }
     .recommendation-charity,.recommendation-meta,.recommendation-description,.recommendation-reason{
       margin:.45rem 0 0;
       color:var(--text-2);
