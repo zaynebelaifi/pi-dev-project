@@ -153,22 +153,75 @@
         <p>A polished menu designed for coffee lovers, brunch guests, and elegant dining moments.</p>
       </div>
 
-      {% if menuSections is defined and menuSections is not empty %}
-        {% for section in menuSections %}
-          <div style="margin:1.2rem 0 .7rem;">
-            <h4 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:500;color:var(--espresso);margin:0;">
-              {{ section.menu.title }}
-            </h4>
-            {% if section.menu.description %}
-              <p style="margin:.25rem 0 0;color:var(--text-2);">{{ section.menu.description }}</p>
-            {% endif %}
-          </div>
-          <div class="menu-grid">
+      {% set helperFilters = menuHelper.filters|default({}) %}
+      <form class="menu-helper reveal" method="get" action="{{ path(app.request.attributes.get('_route') ?: 'app_landingpage') }}#menu-section">
+        <div class="menu-helper-copy">
+          <span>Smart Menu Helper</span>
+          <h4>Tell us your mood</h4>
+          <p>{{ menuHelper.message|default('Tell us what you like and we will highlight smart picks from the menu.') }}</p>
+        </div>
+        <div class="menu-helper-grid">
+          <label>
+            <span>Budget</span>
+            <select name="budget">
+              <option value="">Any budget</option>
+              <option value="low" {{ helperFilters.budget|default('') == 'low' ? 'selected' : '' }}>Easy under 12 TND</option>
+              <option value="medium" {{ helperFilters.budget|default('') == 'medium' ? 'selected' : '' }}>Balanced 12-25 TND</option>
+              <option value="premium" {{ helperFilters.budget|default('') == 'premium' ? 'selected' : '' }}>Premium 25+ TND</option>
+            </select>
+          </label>
+          <label>
+            <span>Favorite type</span>
+            <select name="category">
+              <option value="">All menu types</option>
+              {% for category in menuHelper.categoryOptions|default([]) %}
+                <option value="{{ category }}" {{ helperFilters.category|default('') == category ? 'selected' : '' }}>{{ category }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            <span>Diet</span>
+            <select name="diet">
+              <option value="">Any diet</option>
+              <option value="vegetarian" {{ helperFilters.diet|default('') == 'vegetarian' ? 'selected' : '' }}>Vegetarian leaning</option>
+              <option value="non_vegetarian" {{ helperFilters.diet|default('') == 'non_vegetarian' ? 'selected' : '' }}>Non-vegetarian</option>
+            </select>
+          </label>
+          <label>
+            <span>Mood</span>
+            <select name="mood">
+              <option value="">Any mood</option>
+              <option value="spicy" {{ helperFilters.mood|default('') == 'spicy' ? 'selected' : '' }}>Spicy</option>
+              <option value="sweet" {{ helperFilters.mood|default('') == 'sweet' ? 'selected' : '' }}>Sweet</option>
+              <option value="healthy" {{ helperFilters.mood|default('') == 'healthy' ? 'selected' : '' }}>Healthy</option>
+              <option value="popular" {{ helperFilters.mood|default('') == 'popular' ? 'selected' : '' }}>Popular</option>
+            </select>
+          </label>
+          <label class="menu-helper-search">
+            <span>Search taste</span>
+            <input type="search" name="q" value="{{ helperFilters.q|default('') }}" placeholder="coffee, cake, chicken...">
+          </label>
+        </div>
+        <div class="menu-helper-actions">
+          <button type="submit">Find smart picks</button>
+          <a href="{{ path(app.request.attributes.get('_route') ?: 'app_landingpage') }}#menu-section">Reset</a>
+        </div>
+      </form>
+
+      <div id="menu-results" data-menu-results>
+        {% if menuSections is defined and menuSections is not empty %}
+          <div class="menu-grid menu-grid-flat">
+          {% for section in menuSections %}
             {% for dish in section.dishes %}
               {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
-              <div class="menu-card reveal">
+              {% set isSmartPick = dish.id in menuHelper.recommendedIds|default([]) %}
+              <div class="menu-card reveal {{ isSmartPick ? 'smart-pick' : '' }}">
+                {% if isSmartPick %}
+                  <span class="smart-pick-badge">Smart pick</span>
+                {% endif %}
                 <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
                 <div class="menu-card-content">
+                  <span class="menu-card-category">{{ section.menu.title }}</span>
                   <h4>{{ dish.name }}</h4>
                   <p>{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
                   <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
@@ -176,19 +229,25 @@
                 </div>
               </div>
             {% endfor %}
-          </div>
-        {% endfor %}
-      {% else %}
-        <div class="menu-grid">
-          <div class="menu-card reveal">
-            <div class="menu-card-content">
-              <h4>Menu Coming Soon</h4>
-              <p>Our dishes are being updated right now. Please check back shortly.</p>
-              <span class="price">--</span>
+          {% endfor %}
+            </div>
+          {% if dishPagination is defined %}
+            <div class="menu-pagination" data-menu-pagination>
+              {{ knp_pagination_render(dishPagination) }}
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="menu-grid menu-grid-flat">
+            <div class="menu-card reveal">
+              <div class="menu-card-content">
+                <h4>No matching picks</h4>
+                <p>Try resetting the helper or choosing a different budget, category, or mood.</p>
+                <span class="price">--</span>
+              </div>
             </div>
           </div>
-        </div>
-      {% endif %}
+        {% endif %}
+      </div>
     </div>
   </section>
 
@@ -671,6 +730,215 @@
       border: 1px solid rgba(108, 84, 47, 0.12);
     }
 
+    .menu-helper {
+      margin: 0 0 2rem;
+      padding: 1.25rem;
+      border-radius: 24px;
+      border: 1px solid rgba(212, 175, 55, 0.22);
+      background: linear-gradient(135deg, rgba(255, 253, 247, 0.96), rgba(249, 239, 217, 0.88));
+      box-shadow: 0 18px 46px rgba(92, 61, 30, 0.08);
+    }
+
+    .menu-helper-copy {
+      display: grid;
+      gap: 0.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .menu-helper-copy span,
+    .menu-helper label span {
+      color: var(--gold);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .menu-helper-copy h4 {
+      margin: 0;
+      color: var(--espresso);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .menu-helper-copy p {
+      margin: 0;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .menu-helper-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+
+    .menu-helper label {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .menu-helper-search {
+      grid-column: span 2;
+    }
+
+    .menu-helper select,
+    .menu-helper input {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid rgba(108, 84, 47, 0.16);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--espresso);
+      padding: 0.78rem 0.9rem;
+      font: inherit;
+    }
+
+    .menu-helper-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .menu-helper-actions button,
+    .menu-helper-actions a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0.72rem 1.1rem;
+      border-radius: 999px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .menu-helper-actions button {
+      border: none;
+      background: linear-gradient(135deg, #c7972f 0%, #8a5b12 100%);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .menu-helper-actions a {
+      color: var(--espresso);
+      background: rgba(108, 84, 47, 0.08);
+    }
+
+    .smart-pick {
+      border-color: rgba(212, 175, 55, 0.45);
+    }
+
+    .menu-grid-flat {
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      align-items: stretch;
+    }
+
+    .menu-grid-flat .menu-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .menu-grid-flat .menu-card-content {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .menu-grid-flat .add-cart-btn {
+      margin-top: auto;
+    }
+
+    .menu-card-category {
+      display: inline-flex;
+      width: fit-content;
+      margin-bottom: 0.6rem;
+      border-radius: 999px;
+      padding: 0.28rem 0.58rem;
+      background: rgba(184, 135, 42, 0.12);
+      color: #8a5b12;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .smart-pick-badge {
+      position: absolute;
+      top: 0.85rem;
+      right: 0.85rem;
+      z-index: 1;
+      border-radius: 999px;
+      padding: 0.35rem 0.65rem;
+      background: rgba(44, 29, 15, 0.86);
+      color: #fff8e6;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .menu-pagination {
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0 0;
+    }
+
+    #menu-results {
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    #menu-results.is-loading {
+      opacity: 0.55;
+      pointer-events: none;
+      transform: translateY(4px);
+    }
+
+    .menu-pagination .pagination {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .menu-pagination .page,
+    .menu-pagination .current,
+    .menu-pagination .next,
+    .menu-pagination .previous,
+    .menu-pagination .first,
+    .menu-pagination .last {
+      list-style: none;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(108, 84, 47, 0.14);
+      overflow: hidden;
+    }
+
+    .menu-pagination a,
+    .menu-pagination span {
+      display: inline-flex;
+      min-width: 42px;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0.85rem;
+      color: var(--espresso);
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .menu-pagination .current {
+      background: linear-gradient(135deg, #c7972f 0%, #8a5b12 100%);
+    }
+
+    .menu-pagination .current span {
+      color: #fff;
+    }
+
     @media (max-width: 640px) {
       .delivery-modal-header,
       .delivery-modal-body {
@@ -682,6 +950,12 @@
       .delivery-location-grid,
       .delivery-modal-actions {
         grid-template-columns: 1fr;
+      }
+
+      .menu-helper-grid,
+      .menu-helper-search {
+        grid-template-columns: 1fr;
+        grid-column: span 1;
       }
     }
   </style>
@@ -1065,14 +1339,23 @@
   let cart = [];
   let pendingDeliveryOrderId = null;
 
-  document.querySelectorAll('.add-cart-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      cart.push({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) });
-      updateCart();
-      btn.textContent = 'Added';
-      setTimeout(() => btn.textContent = 'Add to Cart', 1200);
+  function bindAddCartButtons(root = document) {
+    root.querySelectorAll('.add-cart-btn').forEach(btn => {
+      if (btn.dataset.cartBound === '1') {
+        return;
+      }
+
+      btn.dataset.cartBound = '1';
+      btn.addEventListener('click', () => {
+        cart.push({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) });
+        updateCart();
+        btn.textContent = 'Added';
+        setTimeout(() => btn.textContent = 'Add to Cart', 1200);
+      });
     });
-  });
+  }
+
+  bindAddCartButtons();
 
   function updateCart() {
     const container = document.getElementById('cartItems');
@@ -1090,6 +1373,57 @@
 
   function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
   window.removeFromCart = removeFromCart;
+
+  const menuResults = document.querySelector('[data-menu-results]');
+
+  function bindMenuPagination() {
+    if (!menuResults) {
+      return;
+    }
+
+    menuResults.querySelectorAll('.menu-pagination a').forEach(link => {
+      if (link.dataset.ajaxBound === '1') {
+        return;
+      }
+
+      link.dataset.ajaxBound = '1';
+      link.addEventListener('click', async event => {
+        event.preventDefault();
+
+        const targetUrl = new URL(link.href, window.location.origin);
+        menuResults.classList.add('is-loading');
+
+        try {
+          const response = await fetch(targetUrl.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+          const html = await response.text();
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          const nextResults = doc.querySelector('[data-menu-results]');
+
+          if (!nextResults) {
+            window.location.href = targetUrl.toString();
+            return;
+          }
+
+          menuResults.innerHTML = nextResults.innerHTML;
+          history.pushState({}, '', targetUrl.pathname + targetUrl.search + '#menu-section');
+          bindAddCartButtons(menuResults);
+          bindMenuPagination();
+          menuResults.querySelectorAll('.reveal').forEach(el => {
+            el.classList.add('show');
+            observer.observe(el);
+          });
+        } catch (error) {
+          window.location.href = targetUrl.toString();
+        } finally {
+          menuResults.classList.remove('is-loading');
+        }
+      });
+    });
+  }
+
+  bindMenuPagination();
 
   // ── ORDER TYPE MODAL ───────────────────────────────────────
   const checkoutBtn = document.getElementById('checkoutBtn');

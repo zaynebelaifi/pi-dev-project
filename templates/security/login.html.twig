@@ -12,6 +12,13 @@
                 <p>Sign in to manage your deliveries, track orders, and keep everything running smoothly.</p>
             </div>
             <div class="auth-side">
+                {% for message in app.flashes('error') %}
+                    <div class="alert alert-error">{{ message }}</div>
+                {% endfor %}
+                {% for message in app.flashes('success') %}
+                    <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+
                 {% if error %}
                     <div class="alert alert-error">
                         {{ error }}
@@ -23,6 +30,12 @@
                     <div class="form-row">{{ form_row(form.password) }}</div>
                     <button type="submit" class="btn btn-primary">Sign In</button>
                 {{ form_end(form) }}
+
+                <div class="auth-divider"><span>or</span></div>
+                <a href="{{ path('app_google_connect') }}" class="btn btn-google" aria-label="Continue with Google">
+                    <span class="google-mark" aria-hidden="true">G</span>
+                    Continue with Google
+                </a>
 
                 <p class="auth-footer">
                     Don’t have an account? <a href="{{ path('app_register') }}">Sign Up</a>
@@ -135,6 +148,63 @@
     padding: 1rem 1.1rem;
     border-radius: 16px;
     margin-bottom: 1.25rem;
+}
+.alert-success {
+    background: #edf8f1;
+    color: #1f5e3b;
+    border: 1px solid #aad7be;
+    padding: 1rem 1.1rem;
+    border-radius: 16px;
+    margin-bottom: 1.25rem;
+}
+.auth-divider {
+    position: relative;
+    margin: 1.2rem 0 0.9rem;
+    text-align: center;
+}
+.auth-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(184, 135, 42, 0.24);
+}
+.auth-divider span {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    padding: 0 0.8rem;
+    color: var(--text-2);
+    font-size: 0.9rem;
+}
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    background: #fff;
+    color: #2d2a26;
+    border: 1px solid rgba(45, 42, 38, 0.16);
+    box-shadow: 0 10px 24px rgba(45, 42, 38, 0.08);
+}
+.btn-google:hover {
+    background: #f8f9fb;
+    transform: translateY(-1px);
+}
+.google-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #4285f4;
+    background: #fff;
+    border: 1px solid rgba(45, 42, 38, 0.14);
+    font-weight: 800;
 }
 .auth-footer {
     margin-top: 1.4rem;
