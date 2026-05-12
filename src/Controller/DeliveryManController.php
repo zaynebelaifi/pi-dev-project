@@ -3,10 +3,16 @@
 namespace App\Controller;
 
 use App\Entity\DeliveryMan;
+use App\Entity\User;
 use App\Form\DeliveryManType;
 use App\Repository\DeliveryManRepository;
+use Knp\Component\Pager\PaginatorInterface;
+use App\Repository\UserRepository;
 use App\Repository\DeliveryRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class DeliveryManController extends AbstractController
 {
     #[Route(name: 'app_delivery_man_index', methods: ['GET'])]
-    public function index(Request $request, DeliveryManRepository $deliveryManRepository): Response
+    public function index(Request $request, DeliveryManRepository $deliveryManRepository, PaginatorInterface $paginator): Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
             return $this->redirectToRoute('app_login');
@@ -26,8 +32,19 @@ final class DeliveryManController extends AbstractController
         $sort = $request->query->get('sort', 'date_of_joining');
         $direction = $request->query->get('direction', 'DESC');
 
+        $qb = $deliveryManRepository->searchAndSortQueryBuilder($search, $sort, $direction);
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = (int) $request->query->get('limit', 25);
+
+        $pagination = $paginator->paginate(
+            $qb,
+            $page,
+            $limit
+        );
+
         return $this->render('delivery_man/index.html.twig', [
-            'delivery_men' => $deliveryManRepository->searchAndSort($search, $sort, $direction),
+            'pagination' => $pagination,
+            'delivery_men' => $pagination->getItems(),
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,
@@ -35,7 +52,7 @@ final class DeliveryManController extends AbstractController
     }
 
     #[Route('/new', name: 'app_delivery_man_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, UserRepository $userRepository): Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
             return $this->redirectToRoute('app_login');
@@ -46,14 +63,68 @@ final class DeliveryManController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+            $form->addError(new FormError('Please complete all required fields and fix invalid values.'));
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $deliveryMan->setCreated_at(new \DateTime());
             $deliveryMan->setUpdated_at(new \DateTime());
-            $entityManager->persist($deliveryMan);
-            $entityManager->flush();
+            try {
+                $entityManager->persist($deliveryMan);
+                $entityManager->flush();
+            } catch (UniqueConstraintViolationException $e) {
+                if ($form->has('phone')) {
+                    $form->get('phone')->addError(new FormError('This phone number is already used.'));
+                } else {
+                    $form->addError(new FormError('A delivery driver with this phone already exists.'));
+                }
+            }
+
+            // Create or update a User account for this delivery driver so they can sign in
+            $email = strtolower(trim((string) $deliveryMan->getEmail()));
+            if ($email !== '') {
+                $existing = $userRepository->createQueryBuilder('u')
+                    ->andWhere('LOWER(u.email) = :email')
+                    ->setParameter('email', $email)
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+
+                $plainPassword = preg_replace('/\s+/', '', (string) $deliveryMan->getName()) . 'delivery72';
+
+                if (!$existing) {
+                    $user = new User();
+                    $user->setEmail($email);
+                    // Try to split name into first/last
+                    $parts = preg_split('/\s+/', trim((string) $deliveryMan->getName()));
+                    $user->setFirstName($parts[0] ?? null);
+                    $user->setLastName($parts[1] ?? null);
+                    $user->setRole('ROLE_DELIVERY_MAN');
+                    $user->setReference_id((int) $deliveryMan->getDelivery_man_id());
+                    $hashed = $passwordHasher->hashPassword($user, (string) $plainPassword);
+                    $user->setPassword($hashed);
+                    $entityManager->persist($user);
+                    $entityManager->flush();
+
+                    $this->addFlash('success', sprintf('Driver created. Credentials — email: %s password: %s', $email, $plainPassword));
+                } else {
+                    // Ensure reference_id and role are set
+                    $changed = false;
+                    if ($existing->getReference_id() !== $deliveryMan->getDelivery_man_id()) {
+                        $existing->setReference_id((int) $deliveryMan->getDelivery_man_id());
+                        $changed = true;
+                    }
+                    if ($existing->getRole() !== 'ROLE_DELIVERY_MAN') {
+                        $existing->setRole('ROLE_DELIVERY_MAN');
+                        $changed = true;
+                    }
+                    if ($changed) {
+                        $entityManager->flush();
+                    }
+
+                    $this->addFlash('info', sprintf('Driver created — existing user %s updated.', $email));
+                }
+            }
 
             return $this->redirectToRoute('app_delivery_man_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -86,14 +157,22 @@ final class DeliveryManController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'Please complete all required fields and fix invalid values.');
+            $form->addError(new FormError('Please complete all required fields and fix invalid values.'));
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $deliveryMan->setUpdated_at(new \DateTime());
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_delivery_man_index', [], Response::HTTP_SEE_OTHER);
+            try {
+                $entityManager->flush();
+                return $this->redirectToRoute('app_delivery_man_index', [], Response::HTTP_SEE_OTHER);
+            } catch (UniqueConstraintViolationException $e) {
+                if ($form->has('phone')) {
+                    $form->get('phone')->addError(new FormError('This phone number is already used.'));
+                } else {
+                    $form->addError(new FormError('A delivery driver with this phone already exists.'));
+                }
+                // fall through to render form with inline errors
+            }
         }
 
         return $this->render('delivery_man/edit.html.twig', [
@@ -103,10 +182,15 @@ final class DeliveryManController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_delivery_man_delete', methods: ['POST'])]
-    public function delete(Request $request, DeliveryMan $deliveryMan, EntityManagerInterface $entityManager, DeliveryRepository $deliveryRepository): Response
+    public function delete(Request $request, ?DeliveryMan $deliveryMan, EntityManagerInterface $entityManager, DeliveryRepository $deliveryRepository): Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {
             return $this->redirectToRoute('app_login');
+        }
+        
+        if (null === $deliveryMan) {
+            $this->addFlash('error', 'Delivery driver not found.');
+            return $this->redirectToRoute('app_delivery_man_index', [], Response::HTTP_SEE_OTHER);
         }
 
         if ($this->isCsrfTokenValid('delete'.$deliveryMan->getDelivery_man_id(), $request->request->get('_token'))) {
