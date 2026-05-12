@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Embeddable]
 class Email
 {
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(name: 'email', type: 'string', length: 255, nullable: true)]
     #[Assert\Email(message: 'Please enter a valid email address.')]
     #[Assert\Length(max: 255, maxMessage: 'Email address cannot be longer than {{ limit }} characters.')]
     private ?string $address = null;

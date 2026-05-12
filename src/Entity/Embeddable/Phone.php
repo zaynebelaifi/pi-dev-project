@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Embeddable]
 class Phone
 {
-    #[ORM\Column(type: 'string', length: 20)]
+    #[ORM\Column(name: 'phone', type: 'string', length: 20)]
     #[Assert\NotBlank(message: 'Phone number is required.')]
     #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Phone number must be exactly 8 digits.')]
     private string $number;

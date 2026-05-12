@@ -30,9 +30,9 @@ class Delivery
     }
 
     #[ORM\Column(type: 'integer', nullable: false)]
-    private int $order_id;
+    private ?int $order_id = null;
 
-    public function getOrder_id(): int
+    public function getOrder_id(): ?int
     {
         return $this->order_id;
     }

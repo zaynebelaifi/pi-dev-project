@@ -57,7 +57,7 @@ class DeliveryMan
         return $this;
     }
 
-    #[ORM\Embedded(class: Phone::class, columnPrefix: 'phone_')]
+    #[ORM\Embedded(class: Phone::class, columnPrefix: false)]
     private Phone $phone;
 
     public function getPhone(): Phone
@@ -71,7 +71,7 @@ class DeliveryMan
         return $this;
     }
 
-    #[ORM\Embedded(class: Email::class, columnPrefix: 'email_')]
+    #[ORM\Embedded(class: Email::class, columnPrefix: false)]
     private Email $email;
 
     public function getEmail(): Email

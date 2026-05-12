@@ -1,5 +1,5 @@
 {{ form_start(form, {'attr': {'class': 'delivery-form', 'novalidate': 'novalidate'}}) }}
-    {% if delivery and delivery.order_id %}
+    {% if delivery and delivery.order_id is not null %}
         <div class="delivery-summary">
             <div><strong>Order #:</strong> #{{ delivery.order_id }}</div>
             <div><strong>Status:</strong> {{ delivery.status|default('PENDING')|replace({'_': ' '}) }}</div>
