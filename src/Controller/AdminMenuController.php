@@ -6,6 +6,7 @@ use App\Entity\Menu;
 use App\Form\MenuType;
 use App\Repository\MenuRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class AdminMenuController extends AbstractController
 {
     #[Route('/', name: 'admin_menu_index', methods: ['GET'])]
-    public function index(Request $request, MenuRepository $menuRepository): Response
+    public function index(Request $request, MenuRepository $menuRepository, PaginatorInterface $paginator): Response
     {
         $session = $request->getSession();
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
@@ -25,9 +26,15 @@ final class AdminMenuController extends AbstractController
         $search = \trim((string) $request->query->get('q', ''));
         $sort = (string) $request->query->get('sort', 'created_at');
         $dir = (string) $request->query->get('dir', 'DESC');
+        $pagination = $paginator->paginate(
+            $menuRepository->findForAdminList($search, $sort, $dir),
+            max(1, $request->query->getInt('page', 1)),
+            8
+        );
 
         return $this->render('admin/menu/index.html.twig', [
-            'menus' => $menuRepository->findForAdminList($search, $sort, $dir),
+            'menus' => $pagination->getItems(),
+            'pagination' => $pagination,
             'search' => $search,
             'sort' => $sort,
             'dir' => \strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC',

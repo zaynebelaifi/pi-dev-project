@@ -12,6 +12,11 @@ use App\Repository\MenuRepository;
 #[ORM\Table(name: 'menu')]
 class Menu
 {
+    public function __construct()
+    {
+        $this->dishs = new ArrayCollection();
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -111,10 +116,6 @@ class Menu
 
     #[ORM\OneToMany(targetEntity: Dish::class, mappedBy: 'menu')]
     private Collection $dishs;
-    public function __construct()
-{
-    $this->dishs = new ArrayCollection();
-}
 
     /**
      * @return Collection<int, Dish>

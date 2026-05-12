@@ -28,7 +28,7 @@ class Wasterecord
     }
 
     #[ORM\ManyToOne(targetEntity: Ingredient::class, inversedBy: 'wasteRecords')]
-    #[ORM\JoinColumn(name: 'ingredientId', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'ingredient_id', referencedColumnName: 'id', nullable: false)]
     #[Assert\NotNull(message: 'Ingredient is required.')]
     private ?Ingredient $ingredient = null;
 

@@ -197,10 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const cartTotal = document.getElementById('cartTotal');
     const cartCount = document.getElementById('cartCount');
     const checkoutBtn = document.getElementById('checkoutBtn');
-    const cartOverlay = document.getElementById('cartOverlay');
-    const openCart = document.getElementById('openCart');
-    const openCart2 = document.getElementById('openCart2');
-    const closeCart = document.getElementById('closeCart');
 
     let cart = [];
 
@@ -235,32 +231,39 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // Existing direct bindings (for buttons present at load)
-    document.querySelectorAll('.add-cart-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const name = btn.dataset.name;
-        const price = Number(btn.dataset.price);
+    function pulseAddToCartButton(btn){
+      if(!btn){
+        return;
+      }
 
-        cart.push({name, price});
-        updateCart();
+      const defaultLabel = btn.dataset.defaultLabel || btn.textContent.trim() || 'Add to Cart';
+      btn.dataset.defaultLabel = defaultLabel;
+      btn.textContent = 'Added';
 
-        btn.textContent = "Added";
-        setTimeout(()=> btn.textContent = "Add to Cart", 1200);
-      });
-    });
+      window.clearTimeout(Number(btn.dataset.resetTimer || 0));
+      const timer = window.setTimeout(() => {
+        btn.textContent = defaultLabel;
+        delete btn.dataset.resetTimer;
+      }, 900);
 
-    // Event delegation: ensure dynamically inserted or later-updated buttons also work
+      btn.dataset.resetTimer = String(timer);
+    }
+
     document.addEventListener('click', function(e) {
       const btn = e.target.closest && e.target.closest('.add-cart-btn');
       if (!btn) return;
+
       e.preventDefault();
       const name = btn.dataset.name;
       const price = Number(btn.dataset.price);
+
+      if(!name || Number.isNaN(price)){
+        return;
+      }
+
       cart.push({name, price});
       updateCart();
-      const original = btn.textContent;
-      btn.textContent = 'Added';
-      setTimeout(()=> btn.textContent = original || 'Add to Cart', 1200);
+      pulseAddToCartButton(btn);
     });
 
     function updateCart(){
