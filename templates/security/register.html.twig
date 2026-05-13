@@ -28,11 +28,7 @@
                     <button type="submit" class="btn btn-primary">Create account</button>
                 {{ form_end(form) }}
 
-                <div class="auth-divider"><span>or</span></div>
-                <a href="{{ path('app_google_connect') }}" class="btn btn-google" aria-label="Continue with Google">
-                    <span class="google-mark" aria-hidden="true">G</span>
-                    Continue with Google
-                </a>
+                {# Social login (Google) removed because OAuth provider not configured in this environment #}
 
                 <p class="auth-footer">
                     Already have an account? <a href="{{ path('app_login') }}">Sign In</a>
