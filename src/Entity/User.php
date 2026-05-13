@@ -16,7 +16,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'bigint')]
     private ?int $id = null;
 
     public function getId(): ?int
@@ -72,6 +72,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+<<<<<<< Updated upstream
+    #[ORM\Column(type: 'integer', nullable: true)]
+=======
     /**
      * @return string[]
      */
@@ -104,7 +107,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // No transient sensitive property is stored on the entity.
     }
 
-    #[ORM\Column(type: 'integer', nullable: true)]
+    #[ORM\Column(type: 'bigint', nullable: true)]
+>>>>>>> Stashed changes
     private ?int $reference_id = null;
 
     public function getReference_id(): ?int

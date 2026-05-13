@@ -1,6 +1,6 @@
 {
     "ahmed-bhs/doctrine-doctor": {
-        "version": "1.1",
+        "version": "1.0",
         "recipe": {
             "repo": "github.com/symfony/recipes-contrib",
             "branch": "main",
@@ -46,6 +46,11 @@
             "./config/packages/doctrine_migrations.yaml",
             "./migrations/.gitignore"
         ]
+    },
+<<<<<<< Updated upstream
+=======
+    "knplabs/knp-paginator-bundle": {
+        "version": "v6.10.0"
     },
     "lexik/jwt-authentication-bundle": {
         "version": "2.18",
@@ -95,6 +100,7 @@
             "./phpstan.dist.neon"
         ]
     },
+>>>>>>> Stashed changes
     "phpunit/phpunit": {
         "version": "11.5",
         "recipe": {
@@ -322,6 +328,8 @@
             "./templates/base.html.twig"
         ]
     },
+<<<<<<< Updated upstream
+=======
     "symfony/uid": {
         "version": "6.4",
         "recipe": {
@@ -334,6 +342,10 @@
             "./config/packages/uid.yaml"
         ]
     },
+    "symfony/ux-chartjs": {
+        "version": "v2.35.0"
+    },
+>>>>>>> Stashed changes
     "symfony/ux-turbo": {
         "version": "2.30",
         "recipe": {

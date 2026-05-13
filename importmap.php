@@ -26,8 +26,25 @@ return [
     '@symfony/stimulus-bundle' => [
         'path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js',
     ],
+<<<<<<< Updated upstream
     '@hotwired/turbo' => [
-        'path' => './assets/vendor/@hotwired/turbo/turbo.index.js',
+        'version' => '7.3.0',
+=======
+    '@symfony/ux-turbo' => [
+        'version' => '2.34.0',
+    ],
+    'chart.js' => [
+        'version' => '4.5.1',
+    ],
+    '@kurkle/color' => [
+        'version' => '0.3.4',
+    ],
+    '@symfony/ux-chartjs' => [
+        'version' => '2.35.0',
+    ],
+    '@hotwired/turbo' => [
+        'version' => '8.0.23',
+>>>>>>> Stashed changes
     ],
     '@symfony/ux-chartjs' => [
         'path' => './assets/vendor/@symfony/ux-chartjs/ux-chartjs.index.js',

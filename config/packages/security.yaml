@@ -16,6 +16,8 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+<<<<<<< Updated upstream
+=======
 
         api_login:
             pattern: ^/api/login$
@@ -27,12 +29,18 @@ security:
             stateless: true
             security: false
 
+        ai_bot_public:
+            pattern: ^/api/ai-bot
+            stateless: true
+            security: false
+
         api:
             pattern: ^/api
             stateless: true
             provider: app_user_provider
             jwt: ~
 
+>>>>>>> Stashed changes
         main:
             lazy: true
             provider: app_user_provider
@@ -53,6 +61,10 @@ security:
 
     # Ensure access to dashboard requires authenticated application user.
     access_control:
+<<<<<<< Updated upstream
+        # - { path: ^/admin, roles: ROLE_ADMIN }
+        # - { path: ^/profile, roles: ROLE_USER }
+=======
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/cars, roles: ROLE_ADMIN }
         - { path: ^/api/assignments, roles: ROLE_ADMIN }
@@ -61,6 +73,7 @@ security:
         - { path: ^/api/gps, roles: [ROLE_ADMIN, ROLE_DELIVERY_MAN] }
         - { path: ^/api/notifications, roles: ROLE_USER }
         - { path: ^/api/driver, roles: ROLE_DELIVERY_MAN }
+        - { path: ^/api/ai-bot, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: ROLE_USER }
         - { path: ^/dashboard$, roles: ROLE_USER }
         - { path: ^/webauthn/register, roles: ROLE_USER }
@@ -71,6 +84,7 @@ when@prod:
             - { path: ^/webauthn, requires_channel: https }
             - { path: ^/login, requires_channel: https }
             - { path: ^/register, requires_channel: https }
+>>>>>>> Stashed changes
 
 when@test:
     security:
