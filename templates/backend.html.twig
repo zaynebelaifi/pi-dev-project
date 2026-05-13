@@ -244,6 +244,7 @@ tbody tr:hover .dots{color:var(--gold);}
   <div class="sidebar-sec">
     <div class="sidebar-sec-lbl">Operations</div>
     <a class="nav-item {{ activeRoute == 'app_delivery_index' ? 'active' : '' }}" href="{{ path('app_delivery_index') }}"><div class="nav-icon">🛵</div>Delivery<span class="nav-badge red">7</span></a>
+    <a class="nav-item {{ activeRoute == 'admin_fleet_dashboard' ? 'active' : '' }}" href="{{ path('admin_fleet_dashboard') }}"><div class="nav-icon">📍</div>Fleet Dashboard</a>
     <a class="nav-item {{ activeRoute starts with 'admin_menu_' or activeRoute starts with 'admin_dish_' ? 'active' : '' }}" href="{{ path('admin_menu_index') }}"><div class="nav-icon">📋</div>Menu Manager</a>
     <a class="nav-item {{ activeRoute starts with 'admin_ingredient_' ? 'active' : '' }}" href="{{ path('admin_ingredient_index') }}"><div class="nav-icon">🥬</div>Ingredients</a>
     <a class="nav-item {{ activeRoute starts with 'admin_waste_' ? 'active' : '' }}" href="{{ path('admin_waste_index') }}"><div class="nav-icon">🗑️</div>Waste Tracker</a>

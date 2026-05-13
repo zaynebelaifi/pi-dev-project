@@ -3,6 +3,8 @@
 namespace App\Command;
 
 use App\Entity\DeliveryMan;
+use App\Entity\Embeddable\Email;
+use App\Entity\Embeddable\Phone;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -38,16 +40,22 @@ class SyncDeliveryMenCommand extends Command
         $created = 0;
         foreach ($deliveryUsers as $user) {
             // Check if delivery man already exists
-            $deliveryMan = $this->entityManager->getRepository(DeliveryMan::class)->findOneBy(['email' => $user->getEmail()]);
+            $deliveryMan = $this->entityManager->getRepository(DeliveryMan::class)
+                ->createQueryBuilder('dm')
+                ->andWhere('LOWER(dm.email.address) = :email')
+                ->setParameter('email', strtolower((string) $user->getEmail()))
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult();
             
             if (!$deliveryMan) {
                 $deliveryMan = new DeliveryMan();
-                $deliveryMan->setEmail($user->getEmail());
+                $deliveryMan->setEmail(new Email($user->getEmail()));
                 $deliveryMan->setName($user->getFirstName() . ' ' . $user->getLastName());
-                $deliveryMan->setPhone($user->getPhone() ?? 'N/A');
+                $deliveryMan->setPhone(new Phone($this->normalizePhone($user->getPhone(), (int) ($user->getId() ?? 0))));
                 $deliveryMan->setStatus('active');
-                $deliveryMan->setCreated_at(new \DateTime());
-                $deliveryMan->setUpdated_at(new \DateTime());
+                $deliveryMan->setCreatedAt(new \DateTime());
+                $deliveryMan->setUpdatedAt(new \DateTime());
                 
                 $this->entityManager->persist($deliveryMan);
                 $created++;
@@ -62,5 +70,15 @@ class SyncDeliveryMenCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    private function normalizePhone(?string $phone, int $fallbackId): string
+    {
+        $digits = preg_replace('/\D/', '', (string) $phone);
+        if (strlen($digits) >= 8) {
+            return substr($digits, -8);
+        }
+
+        return str_pad((string) max(1, $fallbackId), 8, '0', STR_PAD_LEFT);
     }
 }

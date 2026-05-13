@@ -88,7 +88,7 @@ class DeliveryManRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('dm');
 
         if ($search) {
-            $qb->andWhere('dm.name LIKE :search OR dm.email LIKE :search OR dm.phone LIKE :search OR dm.vehicle_type LIKE :search OR dm.vehicle_number LIKE :search OR dm.status LIKE :search')
+            $qb->andWhere('dm.name LIKE :search OR dm.email.address LIKE :search OR dm.phone.number LIKE :search OR dm.vehicle_type LIKE :search OR dm.vehicle_number LIKE :search OR dm.status LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
 
@@ -119,7 +119,7 @@ class DeliveryManRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('dm');
 
         if ($search) {
-            $qb->andWhere('dm.name LIKE :search OR dm.email LIKE :search OR dm.phone LIKE :search OR dm.vehicle_type LIKE :search OR dm.vehicle_number LIKE :search OR dm.status LIKE :search')
+            $qb->andWhere('dm.name LIKE :search OR dm.email.address LIKE :search OR dm.phone.number LIKE :search OR dm.vehicle_type LIKE :search OR dm.vehicle_number LIKE :search OR dm.status LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
 

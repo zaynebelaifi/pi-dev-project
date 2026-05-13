@@ -7,12 +7,8 @@ use App\Repository\DishRepository;
 use App\Repository\MenuRepository;
 use App\Repository\RestaurantTableRepository;
 use App\Service\MenuRecommendationService;
-use Knp\Component\Pager\PaginatorInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Utils\WeatherImpactService;
 use Knp\Component\Pager\PaginatorInterface;
-use App\Repository\MenuRepository;
-use App\Repository\RestaurantTableRepository;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -30,18 +26,13 @@ final class landingpageController extends AbstractController
         private DishRepository $dishRepository,
         private RestaurantTableRepository $tableRepository,
         private MenuRecommendationService $menuRecommendationService,
-    ) {}
-
-    #[Route('/', name: 'app_home')]
-    public function home(Request $request, PaginatorInterface $paginator): Response
         private Connection $connection,
         private HttpClientInterface $httpClient,
-        private PaginatorInterface $paginator,
         private WeatherImpactService $weatherImpactService,
     ) {}
 
     #[Route('/', name: 'app_home')]
-    public function home(Request $request): Response
+    public function home(Request $request, PaginatorInterface $paginator): Response
     {
         $session  = $this->requestStack->getSession();
         $userRole = $session->get('user_role');
@@ -59,16 +50,11 @@ final class landingpageController extends AbstractController
 
     #[Route('/landingpage', name: 'app_landingpage')]
     public function index(Request $request, PaginatorInterface $paginator): Response
-        return $this->renderLandingPage($request);
-    }
-
-    #[Route('/landingpage', name: 'app_landingpage')]
-    public function index(Request $request): Response
     {
-        return $this->renderLandingPage($request);
+        return $this->renderLandingPage($request, $paginator);
     }
 
-    private function renderLandingPage(Request $request): Response
+    private function renderLandingPage(Request $request, PaginatorInterface $paginator): Response
     {
         $menuSections = $this->buildMenuSections();
 
@@ -91,7 +77,7 @@ final class landingpageController extends AbstractController
         }
 
         $dishes = is_array($selectedSection['dishes'] ?? null) ? $selectedSection['dishes'] : [];
-        $paginatedDishes = $this->paginator->paginate(
+        $paginatedDishes = $paginator->paginate(
             $dishes,
             max(1, $request->query->getInt('page', 1)),
             3,
@@ -147,21 +133,6 @@ final class landingpageController extends AbstractController
         ];
     }
 
-    /**
-     * @param Dish[] $dishes
-     */
-    private function buildMenuSections(array $dishes): array
-    {
-        $menuSections = [];
-        foreach ($dishes as $dish) {
-            $menu = $dish->getMenu();
-            if (null === $menu || null === $menu->getId()) {
-                continue;
-            }
-
-            $menuId = $menu->getId();
-            if (!isset($menuSections[$menuId])) {
-                $menuSections[$menuId] = [
     #[Route('/landingpage/mood-recommendations', name: 'app_landingpage_mood_recommendations', methods: ['POST'])]
     public function moodRecommendations(Request $request): JsonResponse
     {
@@ -945,8 +916,43 @@ final class landingpageController extends AbstractController
         return $labels;
     }
 
-    private function buildMenuSections(): array
+    /**
+     * @param Dish[] $dishes
+     */
+    private function buildMenuSections(array $dishes = []): array
     {
+        if ($dishes !== []) {
+            $menuSections = [];
+            foreach ($dishes as $dish) {
+                $menu = $dish->getMenu();
+                if (null === $menu || null === $menu->getId()) {
+                    continue;
+                }
+
+                $menuId = $menu->getId();
+                if (!isset($menuSections[$menuId])) {
+                    $menuSections[$menuId] = [
+                        'menu' => [
+                            'id' => $menuId,
+                            'title' => $menu->getTitle(),
+                            'description' => $menu->getDescription(),
+                        ],
+                        'dishes' => [],
+                    ];
+                }
+
+                $menuSections[$menuId]['dishes'][] = [
+                    'id' => $dish->getId(),
+                    'name' => $dish->getName(),
+                    'description' => $dish->getDescription(),
+                    'basePrice' => $dish->getBase_price(),
+                    'imageUrl' => $dish->getImageUrl() ?? null,
+                ];
+            }
+
+            return array_values($menuSections);
+        }
+
         // Try the ORM query first; if schema/mapping is out-of-sync this can throw.
         try {
             $menus = $this->menuRepository->createQueryBuilder('m')
@@ -965,6 +971,7 @@ final class landingpageController extends AbstractController
 
             $menuSections = [];
             foreach ($menus as $menu) {
+                $menuId = $menu->getId();
                 $dishes = [];
                 foreach ($menu->getDishs() as $dish) {
                     $available = $dish->isAvailable();
@@ -986,16 +993,10 @@ final class landingpageController extends AbstractController
                         'title'       => $menu->getTitle(),
                         'description' => $menu->getDescription(),
                     ],
-                    'dishes' => [],
+                    'dishes' => $dishes,
                 ];
             }
 
-            $menuSections[$menuId]['dishes'][] = [
-                'id'          => $dish->getId(),
-                'name'        => $dish->getName(),
-                'description' => $dish->getDescription(),
-                'basePrice'   => $dish->getBase_price(),
-                'imageUrl'    => $dish->getImageUrl() ?? null,
             return $menuSections;
         } catch (\Throwable $e) {
             // Fallback: use DBAL raw queries to be resilient to schema/mapping drift.

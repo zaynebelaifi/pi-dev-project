@@ -1040,7 +1040,7 @@ private function notifyDelivered(Delivery $delivery, MessageBusInterface $bus): 
             $driverEmail = strtolower(trim((string) $session->get('user_email', '')));
             if ($driverEmail !== '') {
                 $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
-                    ->andWhere('LOWER(dm.email) = :email')
+                    ->andWhere('LOWER(dm.email.address) = :email')
                     ->setParameter('email', $driverEmail)
                     ->setMaxResults(1)
                     ->getQuery()

@@ -67,8 +67,8 @@ final class DeliveryManController extends AbstractController
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $deliveryMan->setCreated_at(new \DateTime());
-            $deliveryMan->setUpdated_at(new \DateTime());
+            $deliveryMan->setCreatedAt(new \DateTime());
+            $deliveryMan->setUpdatedAt(new \DateTime());
             try {
                 $entityManager->persist($deliveryMan);
                 $entityManager->flush();
@@ -161,7 +161,7 @@ final class DeliveryManController extends AbstractController
         }
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $deliveryMan->setUpdated_at(new \DateTime());
+            $deliveryMan->setUpdatedAt(new \DateTime());
             try {
                 $entityManager->flush();
                 return $this->redirectToRoute('app_delivery_man_index', [], Response::HTTP_SEE_OTHER);

@@ -145,9 +145,14 @@
       background: #c9302c;
       transform: translateY(-2px);
     }
+    .nav-links a.active {
+      color: var(--gold);
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
+  {% set activeRoute = app.request.attributes.get('_route') %}
   <!-- NAV -->
   <nav id="nav">
     <div class="nav-inner">
@@ -160,9 +165,10 @@
       </a>
 
       <ul class="nav-links">
-        <li><a href="{{ path('app_delivery_index') }}">Deliveries</a></li>
-        <li><a href="{{ path('app_delivery_man_index') }}">Delivery Men</a></li>
-        <li><a href="{{ path('app_landingpage') }}">Home</a></li>
+        <li><a class="{{ activeRoute == 'app_delivery_index' ? 'active' : '' }}" href="{{ path('app_delivery_index') }}">Deliveries</a></li>
+        <li><a class="{{ activeRoute starts with 'app_delivery_man_' ? 'active' : '' }}" href="{{ path('app_delivery_man_index') }}">Delivery Men</a></li>
+        <li><a class="{{ activeRoute == 'admin_fleet_dashboard' ? 'active' : '' }}" href="{{ path('admin_fleet_dashboard') }}">Fleet Dashboard</a></li>
+        <li><a class="{{ activeRoute == 'app_landingpage' ? 'active' : '' }}" href="{{ path('app_landingpage') }}">Home</a></li>
       </ul>
 
       <div class="nav-actions">
