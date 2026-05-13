@@ -228,6 +228,10 @@
             <td class="table-actions">
               <a class="mini-action" href="{{ path('app_food_donation_event_edit', {donation_event_id: event.donationEventId}) }}">Edit</a>
               <a class="mini-action" href="{{ path('app_food_donation_event_show', {donation_event_id: event.donationEventId}) }}">View</a>
+              <form method="post" action="{{ path('app_food_donation_event_delete', {donation_event_id: event.donationEventId}) }}" class="ajax-delete" style="display:inline-block;margin:0">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.donationEventId) }}">
+                <button type="submit" class="mini-action delete-action" aria-label="Delete event">Delete</button>
+              </form>
             </td>
           </tr>
         {% else %}
@@ -238,4 +242,13 @@
       </tbody>
     </table>
   </div>
+  {% block page_scripts %}
+  {{ parent() }}
+  <style>
+    .ajax-deleting { opacity: 0.0; transform: translateX(-8px); transition: opacity .28s ease, transform .28s ease, height .28s ease, margin .28s ease, padding .28s ease; }
+  </style>
+  <script>
+    // JS moved to assets/js/admin-delete.js
+  </script>
+  {% endblock %}
 {% endblock %}

@@ -1,0 +1,2 @@
+# Lexik JWT Authentication config disabled — bundle not installed in this environment
+# Restore to lexik_jwt_authentication.yaml after installing lexik/jwt-authentication-bundle

@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/food/donation/event')]
@@ -103,16 +104,29 @@ final class FoodDonationEventController extends AbstractController
     }
 
     #[Route('/{donation_event_id}', name: 'app_food_donation_event_delete', methods: ['POST'])]
-    public function delete(Request $request, FoodDonationEvent $foodDonationEvent, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, int $donation_event_id, EntityManagerInterface $entityManager): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
+        }
+        $foodDonationEvent = $entityManager->getRepository(FoodDonationEvent::class)->find($donation_event_id);
+
+        if (!$foodDonationEvent) {
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => false, 'message' => 'Not found'], Response::HTTP_NOT_FOUND);
+            }
+            $this->addFlash('error', 'Donation event not found.');
+            return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
         }
 
         if ($this->isCsrfTokenValid('delete'.$foodDonationEvent->getDonation_event_id(), $request->request->get('_token'))) {
             $entityManager->remove($foodDonationEvent);
             $entityManager->flush();
             $this->addFlash('success', 'Donation event deleted successfully.');
+
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => true]);
+            }
         }
 
         return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);

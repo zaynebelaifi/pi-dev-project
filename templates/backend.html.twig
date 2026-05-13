@@ -739,5 +739,39 @@ document.querySelectorAll('form[data-live-search="true"][method="get"]').forEach
 </script>
 {% block page_scripts %}{% endblock %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Global toast container for small non-blocking notifications -->
+<div id="globalToast" aria-live="polite" aria-atomic="true" style="position:fixed;right:18px;bottom:18px;z-index:2000;pointer-events:none;">
+  <div id="globalToastMsg" style="min-width:220px;max-width:360px;background:#111;color:#fff;padding:.7rem 1rem;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transform:translateY(8px);transition:all .28s ease;pointer-events:auto;display:flex;gap:.6rem;align-items:center;font-size:.92rem;">
+    <div id="globalToastIcon" style="width:10px;height:10px;border-radius:50%;background:#888;flex:0 0 auto;"></div>
+    <div id="globalToastText" style="flex:1 1 auto;line-height:1.2"></div>
+  </div>
+</div>
+<script>
+  (function(){
+    let toastTimer=null;
+    const container = document.getElementById('globalToast');
+    const msg = document.getElementById('globalToastMsg');
+    const text = document.getElementById('globalToastText');
+    const icon = document.getElementById('globalToastIcon');
+
+    window.showToast = function(message, type='info', timeout=3000){
+      if (!msg) return;
+      clearTimeout(toastTimer);
+      text.textContent = message;
+      if (type === 'success') { msg.style.background = '#1f6f41'; icon.style.background = '#9be7a0'; }
+      else if (type === 'error') { msg.style.background = '#5b1919'; icon.style.background = '#f3a6a6'; }
+      else { msg.style.background = '#111'; icon.style.background = '#888'; }
+
+      msg.style.opacity = '1';
+      msg.style.transform = 'translateY(0)';
+      toastTimer = setTimeout(()=>{
+        msg.style.opacity = '0';
+        msg.style.transform = 'translateY(8px)';
+      }, timeout);
+    };
+  })();
+</script>
+<script src="/build/admin-delete.js"></script>
 </body>
 </html>

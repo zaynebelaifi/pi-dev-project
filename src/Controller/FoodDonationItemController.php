@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/food/donation/item')]
@@ -145,16 +146,32 @@ final class FoodDonationItemController extends AbstractController
     }
 
     #[Route('/{donation_event_id}/{item_id}', name: 'app_food_donation_item_delete', methods: ['POST'])]
-    public function delete(Request $request, FoodDonationItem $foodDonationItem, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, int $donation_event_id, int $item_id, EntityManagerInterface $entityManager): Response
     {
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
+        }
+        $foodDonationItem = $entityManager->getRepository(FoodDonationItem::class)->findOneBy([
+            'donation_event_id' => $donation_event_id,
+            'item_id' => $item_id,
+        ]);
+
+        if (!$foodDonationItem) {
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => false, 'message' => 'Not found'], Response::HTTP_NOT_FOUND);
+            }
+            $this->addFlash('error', 'Donation item not found.');
+            return $this->redirectToRoute('app_food_donation_item_index', [], Response::HTTP_SEE_OTHER);
         }
 
         if ($this->isCsrfTokenValid('delete'.$foodDonationItem->getDonation_event_id().'_'.$foodDonationItem->getItem_id(), $request->request->get('_token'))) {
             $entityManager->remove($foodDonationItem);
             $entityManager->flush();
             $this->addFlash('success', 'Donation item deleted successfully.');
+
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['success' => true]);
+            }
         }
 
         return $this->redirectToRoute('app_food_donation_item_index', [], Response::HTTP_SEE_OTHER);
