@@ -46,7 +46,7 @@ class DeliveryMan
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
+    #[ORM\Column(name: 'phone_number', type: 'string', nullable: false)]
     #[Assert\NotBlank(message: 'Phone number is required.')]
     #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Phone number must be exactly 8 digits.')]
     private ?string $phone = null;
@@ -62,7 +62,7 @@ class DeliveryMan
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(name: 'email_address', type: 'string', nullable: true)]
     #[Assert\Email(message: 'Please enter a valid email address.')]
     #[Assert\Length(max: 255, maxMessage: 'Email address cannot be longer than {{ limit }} characters.')]
     private ?string $email = null;
@@ -210,6 +210,62 @@ class DeliveryMan
     public function setUpdated_at(\DateTimeInterface $updated_at): self
     {
         $this->updated_at = $updated_at;
+        return $this;
+    }
+
+    #[ORM\Column(name: 'latitude', type: 'decimal', nullable: true)]
+    private ?string $currentLatitude = null;
+
+    public function getCurrentLatitude(): ?string
+    {
+        return $this->currentLatitude;
+    }
+
+    public function setCurrentLatitude(?string $currentLatitude): self
+    {
+        $this->currentLatitude = $currentLatitude;
+        return $this;
+    }
+
+    #[ORM\Column(name: 'longitude', type: 'decimal', nullable: true)]
+    private ?string $currentLongitude = null;
+
+    public function getCurrentLongitude(): ?string
+    {
+        return $this->currentLongitude;
+    }
+
+    public function setCurrentLongitude(?string $currentLongitude): self
+    {
+        $this->currentLongitude = $currentLongitude;
+        return $this;
+    }
+
+    #[ORM\Column(name: 'last_location_update', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $lastSeenAt = null;
+
+    public function getLastSeenAt(): ?\DateTimeInterface
+    {
+        return $this->lastSeenAt;
+    }
+
+    public function setLastSeenAt(?\DateTimeInterface $lastSeenAt): self
+    {
+        $this->lastSeenAt = $lastSeenAt;
+        return $this;
+    }
+
+    #[ORM\Column(name: 'is_available', type: 'boolean', nullable: false, options: ['default' => true])]
+    private bool $available = true;
+
+    public function isAvailable(): bool
+    {
+        return $this->available;
+    }
+
+    public function setAvailable(bool $available): self
+    {
+        $this->available = $available;
         return $this;
     }
 

@@ -2,12 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\Delivery;
+use App\Entity\DeliveryMan;
 use App\Repository\IngredientRepository;
 use App\Repository\WasterecordRepository;
 use App\Repository\DeliveryManRepository;
 use App\Repository\DeliveryRepository;
 use App\Service\AdminAnalyticsService;
 use App\Service\ExpiredIngredientWasteService;
+use App\Service\WhatsAppNotificationService;
 use App\Utils\AiStockInsightService;
 use App\Repository\UserRepository;
 use App\Repository\FleetCarRepository;
@@ -73,7 +76,13 @@ final class AdminController extends AbstractController
     }
 
     #[Route('/users/{id}/ban', name: 'app_admin_user_ban', methods: ['POST'])]
-    public function banUser(int $id, Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager): Response
+    public function banUser(
+        int $id,
+        Request $request,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+        WhatsAppNotificationService $whatsAppNotificationService,
+    ): Response
     {
         $session = $request->getSession();
         if ($session->get('user_role') !== 'ROLE_ADMIN') {
@@ -81,9 +90,37 @@ final class AdminController extends AbstractController
         }
 
         $user = $userRepository->find($id);
-        if ($user) {
-            $user->setBanned(!$user->isBanned());
+        if (!$user) {
+            $this->addFlash('danger', sprintf('Unable to ban user #%d. Please try again.', $id));
+
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        $name = trim(sprintf('%s %s', (string) $user->getFirstName(), (string) $user->getLastName()));
+        $identity = '' !== $name ? $name : (string) $user->getEmail();
+
+        if (!$this->isCsrfTokenValid('ban'.$id, (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', sprintf('Unable to ban user #%d %s. Please try again.', $user->getId(), $identity));
+
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        if ($user->isBanned()) {
+            $this->addFlash('warning', sprintf('User #%d %s is already banned.', $user->getId(), $identity));
+
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        try {
+            $user->setBanned(true);
             $entityManager->flush();
+            $this->addFlash('success', sprintf('User #%d %s has been banned successfully.', $user->getId(), $identity));
+
+            if (!$whatsAppNotificationService->notifyUserBanned($user, $identity)) {
+                $this->addFlash('warning', sprintf('User #%d %s was banned, but the WhatsApp notification could not be sent.', $user->getId(), $identity));
+            }
+        } catch (\Throwable) {
+            $this->addFlash('danger', sprintf('Unable to ban user #%d %s. Please try again.', $user->getId(), $identity));
         }
 
         return $this->redirectToRoute('app_admin_users');
@@ -191,6 +228,124 @@ final class AdminController extends AbstractController
             'deliveryMen' => $deliveryManRepository->findAll(),
             'search' => $search,
         ]);
+    }
+
+    #[Route('/fleet-dashboard', name: 'admin_fleet_dashboard', methods: ['GET'])]
+    public function fleetDashboard(Request $request, DeliveryRepository $deliveryRepository, DeliveryManRepository $deliveryManRepository): Response
+    {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $now = new \DateTimeImmutable();
+        $onlineCutoff = $now->modify('-5 minutes');
+        $deliveryMen = $deliveryManRepository->findBy([], ['name' => 'ASC']);
+        $activeDeliveries = $this->findActiveAssignedDeliveries($deliveryRepository);
+        $activeDeliveryByDriverId = $this->indexActiveDeliveriesByDriver($activeDeliveries);
+        $onlineDeliveryMen = array_filter(
+            $deliveryMen,
+            fn (DeliveryMan $deliveryMan): bool => $this->isDeliveryManOnline($deliveryMan, $onlineCutoff)
+        );
+
+        $markers = [];
+        foreach ($deliveryMen as $deliveryMan) {
+            $latitude = $this->toFloatOrNull($deliveryMan->getCurrentLatitude());
+            $longitude = $this->toFloatOrNull($deliveryMan->getCurrentLongitude());
+            if (null === $latitude || null === $longitude) {
+                continue;
+            }
+
+            $activeDelivery = $activeDeliveryByDriverId[$deliveryMan->getDelivery_man_id() ?? 0] ?? null;
+            $markers[] = [
+                'id' => $deliveryMan->getDelivery_man_id(),
+                'name' => $deliveryMan->getName() ?: 'Unnamed driver',
+                'lat' => $latitude,
+                'lng' => $longitude,
+                'online' => $this->isDeliveryManOnline($deliveryMan, $onlineCutoff),
+                'activeDelivery' => $activeDelivery ? ('#'.$activeDelivery->getDelivery_id()) : 'None',
+                'lastSeen' => $deliveryMan->getLastSeenAt()?->format('Y-m-d H:i:s') ?? 'Never',
+            ];
+        }
+
+        $alerts = $this->buildFleetAlerts($activeDeliveries);
+        $pendingDeliveries = $deliveryRepository->createQueryBuilder('d')
+            ->andWhere('d.deliveryMan IS NULL')
+            ->andWhere('UPPER(COALESCE(d.status, :pending)) NOT IN (:closedStatuses)')
+            ->setParameter('pending', 'PENDING')
+            ->setParameter('closedStatuses', ['DELIVERED', 'CANCELLED'])
+            ->orderBy('d.created_at', 'DESC')
+            ->setMaxResults(12)
+            ->getQuery()
+            ->getResult();
+
+        return $this->render('admin/fleet_dashboard.html.twig', [
+            'onlineCount' => count($onlineDeliveryMen),
+            'activeCount' => count($activeDeliveries),
+            'alertCount' => count($alerts),
+            'alerts' => $alerts,
+            'pendingDeliveries' => $pendingDeliveries,
+            'markers' => $markers,
+            'hasMarkers' => count($markers) > 0,
+        ]);
+    }
+
+    #[Route('/fleet-dashboard/deliveries/{id}/ai-assign', name: 'admin_fleet_dashboard_ai_assign', methods: ['POST'])]
+    public function aiAssignDelivery(
+        int $id,
+        Request $request,
+        DeliveryRepository $deliveryRepository,
+        DeliveryManRepository $deliveryManRepository,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $session = $request->getSession();
+        if ($session->get('user_role') !== 'ROLE_ADMIN') {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $delivery = $deliveryRepository->find($id);
+        if (!$delivery || !$this->isCsrfTokenValid('fleet_ai_assign'.$id, (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', sprintf('Unable to assign delivery #%d. Please try again.', $id));
+
+            return $this->redirectToRoute('admin_fleet_dashboard');
+        }
+
+        if ($delivery->getDeliveryMan()) {
+            $this->addFlash('warning', sprintf('Delivery #%d is already assigned.', $delivery->getDelivery_id()));
+
+            return $this->redirectToRoute('admin_fleet_dashboard');
+        }
+
+        $onlineCutoff = new \DateTimeImmutable('-5 minutes');
+        $onlineDeliveryMen = array_values(array_filter(
+            $deliveryManRepository->findAll(),
+            fn (DeliveryMan $deliveryMan): bool => $this->isDeliveryManOnline($deliveryMan, $onlineCutoff)
+        ));
+
+        if ([] === $onlineDeliveryMen) {
+            $this->addFlash('warning', 'No online delivery man available.');
+
+            return $this->redirectToRoute('admin_fleet_dashboard');
+        }
+
+        $activeDeliveryByDriverId = $this->indexActiveDeliveriesByDriver($this->findActiveAssignedDeliveries($deliveryRepository));
+        $bestDeliveryMan = $this->chooseBestDeliveryMan($delivery, $onlineDeliveryMen, $activeDeliveryByDriverId);
+        if (!$bestDeliveryMan) {
+            $this->addFlash('warning', 'No online delivery man available.');
+
+            return $this->redirectToRoute('admin_fleet_dashboard');
+        }
+
+        $delivery->setDeliveryMan($bestDeliveryMan);
+        if (!$delivery->getStatus() || in_array(strtoupper((string) $delivery->getStatus()), ['PENDING', 'CREATED'], true)) {
+            $delivery->setStatus('ASSIGNED');
+        }
+        $delivery->setUpdated_at(new \DateTimeImmutable());
+        $entityManager->flush();
+
+        $this->addFlash('success', sprintf('Delivery #%d assigned to %s.', $delivery->getDelivery_id(), $bestDeliveryMan->getName() ?: 'selected driver'));
+
+        return $this->redirectToRoute('admin_fleet_dashboard');
     }
 
     #[Route('/vehicles/{id}/assign-driver', name: 'app_admin_assign_driver', methods: ['POST'])]
@@ -315,5 +470,155 @@ final class AdminController extends AbstractController
             'usedFallback' => (bool) ($result['usedFallback'] ?? false),
             'fallbackReason' => (string) ($result['reason'] ?? ''),
         ]);
+    }
+
+    /**
+     * @return Delivery[]
+     */
+    private function findActiveAssignedDeliveries(DeliveryRepository $deliveryRepository): array
+    {
+        return $deliveryRepository->createQueryBuilder('d')
+            ->leftJoin('d.deliveryMan', 'dm')
+            ->addSelect('dm')
+            ->andWhere('d.deliveryMan IS NOT NULL')
+            ->andWhere('UPPER(COALESCE(d.status, :pending)) NOT IN (:closedStatuses)')
+            ->setParameter('pending', 'PENDING')
+            ->setParameter('closedStatuses', ['DELIVERED', 'CANCELLED'])
+            ->orderBy('d.created_at', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @param Delivery[] $activeDeliveries
+     *
+     * @return array<int, Delivery>
+     */
+    private function indexActiveDeliveriesByDriver(array $activeDeliveries): array
+    {
+        $indexed = [];
+        foreach ($activeDeliveries as $delivery) {
+            $deliveryManId = $delivery->getDeliveryMan()?->getDelivery_man_id();
+            if ($deliveryManId && !isset($indexed[$deliveryManId])) {
+                $indexed[$deliveryManId] = $delivery;
+            }
+        }
+
+        return $indexed;
+    }
+
+    private function isDeliveryManOnline(DeliveryMan $deliveryMan, \DateTimeImmutable $onlineCutoff): bool
+    {
+        $lastSeenAt = $deliveryMan->getLastSeenAt();
+
+        return $lastSeenAt instanceof \DateTimeInterface
+            && \DateTimeImmutable::createFromInterface($lastSeenAt) >= $onlineCutoff;
+    }
+
+    /**
+     * @param Delivery[] $activeDeliveries
+     *
+     * @return array<int, string>
+     */
+    private function buildFleetAlerts(array $activeDeliveries): array
+    {
+        $alerts = [];
+        foreach ($activeDeliveries as $delivery) {
+            $deliveryMan = $delivery->getDeliveryMan();
+            if (!$deliveryMan) {
+                continue;
+            }
+
+            $driverLatitude = $this->toFloatOrNull($deliveryMan->getCurrentLatitude());
+            $driverLongitude = $this->toFloatOrNull($deliveryMan->getCurrentLongitude());
+            $destinationLatitude = $this->toFloatOrNull($delivery->getCurrentLatitude());
+            $destinationLongitude = $this->toFloatOrNull($delivery->getCurrentLongitude());
+            if (
+                null === $driverLatitude
+                || null === $driverLongitude
+                || null === $destinationLatitude
+                || null === $destinationLongitude
+            ) {
+                continue;
+            }
+
+            $distanceKm = $this->haversineDistanceKm($driverLatitude, $driverLongitude, $destinationLatitude, $destinationLongitude);
+            if ($distanceKm > 3.0) {
+                $alerts[] = sprintf(
+                    'Delivery man %s is %.1f km away from delivery #%d destination.',
+                    $deliveryMan->getName() ?: 'Unknown',
+                    $distanceKm,
+                    $delivery->getDelivery_id()
+                );
+            }
+        }
+
+        return $alerts;
+    }
+
+    /**
+     * @param DeliveryMan[] $onlineDeliveryMen
+     * @param array<int, Delivery> $activeDeliveryByDriverId
+     */
+    private function chooseBestDeliveryMan(Delivery $delivery, array $onlineDeliveryMen, array $activeDeliveryByDriverId): ?DeliveryMan
+    {
+        usort($onlineDeliveryMen, function (DeliveryMan $first, DeliveryMan $second) use ($delivery, $activeDeliveryByDriverId): int {
+            $firstActive = isset($activeDeliveryByDriverId[$first->getDelivery_man_id() ?? 0]);
+            $secondActive = isset($activeDeliveryByDriverId[$second->getDelivery_man_id() ?? 0]);
+            if ($firstActive !== $secondActive) {
+                return $firstActive <=> $secondActive;
+            }
+
+            $firstDistance = $this->distanceFromDeliveryManToDelivery($first, $delivery);
+            $secondDistance = $this->distanceFromDeliveryManToDelivery($second, $delivery);
+            if ($firstDistance !== $secondDistance) {
+                return $firstDistance <=> $secondDistance;
+            }
+
+            return strcmp((string) $first->getName(), (string) $second->getName());
+        });
+
+        return $onlineDeliveryMen[0] ?? null;
+    }
+
+    private function distanceFromDeliveryManToDelivery(DeliveryMan $deliveryMan, Delivery $delivery): float
+    {
+        $driverLatitude = $this->toFloatOrNull($deliveryMan->getCurrentLatitude());
+        $driverLongitude = $this->toFloatOrNull($deliveryMan->getCurrentLongitude());
+        $destinationLatitude = $this->toFloatOrNull($delivery->getCurrentLatitude());
+        $destinationLongitude = $this->toFloatOrNull($delivery->getCurrentLongitude());
+        if (
+            null === $driverLatitude
+            || null === $driverLongitude
+            || null === $destinationLatitude
+            || null === $destinationLongitude
+        ) {
+            return INF;
+        }
+
+        return $this->haversineDistanceKm($driverLatitude, $driverLongitude, $destinationLatitude, $destinationLongitude);
+    }
+
+    private function haversineDistanceKm(float $fromLatitude, float $fromLongitude, float $toLatitude, float $toLongitude): float
+    {
+        $earthRadiusKm = 6371.0;
+        $latitudeDelta = deg2rad($toLatitude - $fromLatitude);
+        $longitudeDelta = deg2rad($toLongitude - $fromLongitude);
+        $fromLatitude = deg2rad($fromLatitude);
+        $toLatitude = deg2rad($toLatitude);
+
+        $a = sin($latitudeDelta / 2) ** 2
+            + cos($fromLatitude) * cos($toLatitude) * sin($longitudeDelta / 2) ** 2;
+
+        return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
+    }
+
+    private function toFloatOrNull(mixed $value): ?float
+    {
+        if (null === $value || '' === $value || !is_numeric($value)) {
+            return null;
+        }
+
+        return (float) $value;
     }
 }
