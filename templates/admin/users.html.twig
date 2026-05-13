@@ -9,6 +9,15 @@
 </div>
 
 <div class="admin-content">
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
     <table class="admin-table">
         <thead>
             <tr>
@@ -30,7 +39,8 @@
                     <td>{{ user.banned ? 'Yes' : 'No' }}</td>
                     <td>
                         <form method="post" action="{{ path('app_admin_user_ban', {id: user.id}) }}" style="display: inline;">
-                            <button type="submit" class="btn-small">{{ user.banned ? 'Unban' : 'Ban' }}</button>
+                            <input type="hidden" name="_token" value="{{ csrf_token('ban' ~ user.id) }}">
+                            <button type="submit" class="btn-small">Ban</button>
                         </form>
                         <form method="post" action="{{ path('app_admin_user_delete', {id: user.id}) }}" style="display: inline;" onsubmit="return confirm('Are you sure?')">
                             <button type="submit" class="btn-small btn-danger">Delete</button>

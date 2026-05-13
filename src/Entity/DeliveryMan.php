@@ -6,13 +6,24 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use App\Entity\Embeddable\Phone;
+use App\Entity\Embeddable\Email;
 
 use App\Repository\DeliveryManRepository;
 
 #[ORM\Entity(repositoryClass: DeliveryManRepository::class)]
-#[ORM\Table(name: 'delivery_man')]
+#[ORM\Table(name: 'delivery_man', options: ['collation' => 'utf8mb4_general_ci'])]
+#[UniqueEntity(fields: ['phone'], message: 'This phone number is already used.')]
 class DeliveryMan
 {
+    public function __construct()
+    {
+        $this->deliverys = new ArrayCollection();
+        $this->phone = new Phone('');
+        $this->email = new Email(null);
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -33,48 +44,44 @@ class DeliveryMan
     #[Assert\NotBlank(message: 'Name is required.')]
     #[Assert\Length(min: 2, max: 100, minMessage: 'Name must be at least {{ limit }} characters long.', maxMessage: 'Name cannot be longer than {{ limit }} characters.')]
     #[Assert\Regex(pattern: '/^[a-zA-Z\s\-\.\']+$/', message: 'Name can only contain letters, spaces, hyphens, dots, and apostrophes.')]
-    private ?string $name = null;
+    private string $name;
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function setName(?string $name): self
+    public function setName(string $name): self
     {
         $this->name = $name;
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
-    #[Assert\NotBlank(message: 'Phone number is required.')]
-    #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Phone number must be exactly 8 digits.')]
-    private ?string $phone = null;
+    #[ORM\Embedded(class: Phone::class, columnPrefix: 'phone_')]
+    private Phone $phone;
 
-    public function getPhone(): ?string
+    public function getPhone(): Phone
     {
         return $this->phone;
     }
 
-    public function setPhone(?string $phone): self
+    public function setPhone(Phone|string|null $phone): self
     {
-        $this->phone = $phone;
+        $this->phone = $phone instanceof Phone ? $phone : new Phone((string) $phone);
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    #[Assert\Email(message: 'Please enter a valid email address.')]
-    #[Assert\Length(max: 255, maxMessage: 'Email address cannot be longer than {{ limit }} characters.')]
-    private ?string $email = null;
+    #[ORM\Embedded(class: Email::class, columnPrefix: 'email_')]
+    private Email $email;
 
-    public function getEmail(): ?string
+    public function getEmail(): Email
     {
         return $this->email;
     }
 
-    public function setEmail(?string $email): self
+    public function setEmail(Email|string|null $email): self
     {
-        $this->email = $email;
+        $this->email = $email instanceof Email ? $email : new Email($email !== null ? (string) $email : null);
         return $this;
     }
 
@@ -139,7 +146,7 @@ class DeliveryMan
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
     #[Assert\Positive(message: 'Salary must be greater than zero.')]
     #[Assert\LessThanOrEqual(value: 999999.99, message: 'Salary cannot exceed {{ compared_value }}.')]
     private ?string $salary = null;
@@ -170,7 +177,7 @@ class DeliveryMan
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 3, scale: 2, nullable: true)]
     #[Assert\Range(min: 0, max: 5, notInRangeMessage: 'Rating must be between {{ min }} and {{ max }}.')]
     private ?string $rating = null;
 
@@ -186,33 +193,118 @@ class DeliveryMan
     }
 
     #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $created_at = null;
+    private \DateTimeInterface $created_at;
 
-    public function getCreated_at(): ?\DateTimeInterface
+    public function getCreated_at(): \DateTimeInterface
     {
         return $this->created_at;
     }
 
-    public function setCreated_at(\DateTimeInterface $created_at): self
+    protected function setCreated_at(\DateTimeInterface $created_at): self
     {
         $this->created_at = $created_at;
         return $this;
     }
 
     #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $updated_at = null;
+    private \DateTimeInterface $updated_at;
 
-    public function getUpdated_at(): ?\DateTimeInterface
+    public function getUpdated_at(): \DateTimeInterface
     {
         return $this->updated_at;
     }
 
-    public function setUpdated_at(\DateTimeInterface $updated_at): self
+    protected function setUpdated_at(\DateTimeInterface $updated_at): self
     {
         $this->updated_at = $updated_at;
         return $this;
     }
 
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $createdBy = null;
+
+    public function getCreatedBy(): ?string
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?string $createdBy): self
+    {
+        $this->createdBy = $createdBy;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $updatedBy = null;
+
+    public function getUpdatedBy(): ?string
+    {
+        return $this->updatedBy;
+    }
+
+    public function setUpdatedBy(?string $updatedBy): self
+    {
+        $this->updatedBy = $updatedBy;
+        return $this;
+    }
+
+    #[ORM\Column(name: 'latitude', type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?string $currentLatitude = null;
+
+    public function getCurrentLatitude(): ?string
+    {
+        return $this->currentLatitude;
+    }
+
+    public function setCurrentLatitude(?string $currentLatitude): self
+    {
+        $this->currentLatitude = $currentLatitude;
+        return $this;
+    }
+
+    #[ORM\Column(name: 'longitude', type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?string $currentLongitude = null;
+
+    public function getCurrentLongitude(): ?string
+    {
+        return $this->currentLongitude;
+    }
+
+    public function setCurrentLongitude(?string $currentLongitude): self
+    {
+        $this->currentLongitude = $currentLongitude;
+        return $this;
+    }
+
+    #[ORM\Column(name: 'last_location_update', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $lastSeenAt = null;
+
+    public function getLastSeenAt(): ?\DateTimeInterface
+    {
+        return $this->lastSeenAt;
+    }
+
+    public function setLastSeenAt(?\DateTimeInterface $lastSeenAt): self
+    {
+        $this->lastSeenAt = $lastSeenAt;
+        return $this;
+    }
+
+    #[ORM\Column(name: 'is_available', type: 'boolean', nullable: false, options: ['default' => true])]
+    private bool $available = true;
+
+    public function isAvailable(): bool
+    {
+        return $this->available;
+    }
+
+    public function setAvailable(bool $available): self
+    {
+        $this->available = $available;
+        return $this;
+    }
+
+    /** @var Collection<int, \App\Entity\Delivery> */
     #[ORM\OneToMany(targetEntity: Delivery::class, mappedBy: 'deliveryMan')]
     private Collection $deliverys;
 
@@ -221,9 +313,6 @@ class DeliveryMan
      */
     public function getDeliverys(): Collection
     {
-        if (!$this->deliverys instanceof Collection) {
-            $this->deliverys = new ArrayCollection();
-        }
         return $this->deliverys;
     }
 

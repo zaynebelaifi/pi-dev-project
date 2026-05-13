@@ -248,7 +248,6 @@
                 </select>
             </div>
             <div class="btn-actions">
-                <button type="submit" class="t-btn primary">🔄 Apply Filters</button>
                 <a href="{{ path('app_delivery_man_new') }}" class="t-btn primary" style="background: var(--green); border-color: var(--green);">+ Add Driver</a>
             </div>
         </form>
@@ -258,7 +257,7 @@
         <div class="table-header">
             <div>
                 <div class="table-title">All Drivers</div>
-                <div class="table-count">{{ delivery_men|length }} team members</div>
+                <div class="table-count">{{ pagination.getTotalItemCount() }} team members</div>
             </div>
         </div>
         <table class="delivery-table">
@@ -275,7 +274,7 @@
                 </tr>
             </thead>
             <tbody>
-            {% for delivery_man in delivery_men %}
+            {% for delivery_man in pagination %}
                 <tr>
                     <td>
                         <div class="driver-cell">
@@ -327,6 +326,13 @@
             {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div style="padding:1rem; display:flex; justify-content:center;">
+        {% if pagination.getPageCount() > 1 %}
+            {{ knp_pagination_render(pagination) }}
+        {% else %}
+            <div style="color:var(--text-2); padding:0.5rem 1rem; border-radius:8px; background:var(--ivory-2);">Page {{ pagination.getCurrentPageNumber() }} of {{ pagination.getPageCount() }}</div>
+        {% endif %}
     </div>
 
     <script>

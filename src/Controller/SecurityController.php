@@ -3,16 +3,22 @@
 namespace App\Controller;
 
 use App\Entity\DeliveryMan;
+use App\Entity\PasswordResetCode;
 use App\Entity\User;
+use App\Entity\Embeddable\Email as DeliveryManEmail;
+use App\Entity\Embeddable\Phone;
 use App\Form\LoginType;
 use App\Form\RegistrationType;
 use App\Repository\DeliveryManRepository;
+use App\Repository\PasswordResetCodeRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -144,12 +150,161 @@ final class SecurityController extends AbstractController
         ]);
     }
 
+    #[Route('/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
+    public function forgotPassword(
+        Request $request,
+        UserRepository $userRepository,
+        PasswordResetCodeRepository $passwordResetCodeRepository,
+        EntityManagerInterface $entityManager,
+        MailerInterface $mailer,
+    ): Response {
+        if ($request->isMethod('POST')) {
+            $email = strtolower(trim((string) $request->request->get('email', '')));
+
+            if (!$this->isCsrfTokenValid('forgot_password', (string) $request->request->get('_token'))) {
+                $this->addFlash('error', 'Please try again.');
+
+                return $this->redirectToRoute('app_forgot_password');
+            }
+
+            $user = $this->findUserByEmail($userRepository, $email);
+            $recentCount = $passwordResetCodeRepository->countRecentForEmail($email, new \DateTimeImmutable('-1 hour'));
+
+            if ($user && $recentCount < 3) {
+                $code = (string) random_int(100000, 999999);
+                $now = new \DateTimeImmutable();
+
+                $resetCode = new PasswordResetCode();
+                $resetCode
+                    ->setEmail($email)
+                    ->setCodeHash(password_hash($code, PASSWORD_DEFAULT))
+                    ->setExpiresAt($now->modify('+10 minutes'))
+                    ->setCreatedAt($now);
+
+                $entityManager->persist($resetCode);
+                $entityManager->flush();
+
+                try {
+                    $message = (new Email())
+                        ->from('no-reply@big4.local')
+                        ->to($email)
+                        ->subject('Your BIG 4 password reset code')
+                        ->html($this->renderView('emails/password_reset_code.html.twig', [
+                            'code' => $code,
+                        ]));
+
+                    $mailer->send($message);
+                } catch (\Throwable) {
+                    // Keep the response safe and non-enumerating even if mail transport fails.
+                }
+            }
+
+            $this->addFlash('success', 'If this email exists, a reset code has been sent.');
+
+            return $this->redirectToRoute('app_reset_password_verify', ['email' => $email]);
+        }
+
+        return $this->render('security/forgot_password.html.twig');
+    }
+
+    #[Route('/reset-password/verify', name: 'app_reset_password_verify', methods: ['GET', 'POST'])]
+    public function verifyResetPassword(
+        Request $request,
+        UserRepository $userRepository,
+        PasswordResetCodeRepository $passwordResetCodeRepository,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher,
+    ): Response {
+        $email = strtolower(trim((string) ($request->request->get('email') ?: $request->query->get('email', ''))));
+
+        if ($request->isMethod('POST')) {
+            $code = trim((string) $request->request->get('code', ''));
+            $newPassword = (string) $request->request->get('new_password', '');
+            $confirmPassword = (string) $request->request->get('confirm_password', '');
+
+            if (!$this->isCsrfTokenValid('reset_password_verify', (string) $request->request->get('_token'))) {
+                $this->addFlash('error', 'Please try again.');
+
+                return $this->redirectToRoute('app_reset_password_verify', ['email' => $email]);
+            }
+
+            $user = $this->findUserByEmail($userRepository, $email);
+            $resetCode = $passwordResetCodeRepository->findLatestUsableForEmail($email);
+            $now = new \DateTimeImmutable();
+
+            if (!$user || !$resetCode || $resetCode->isExpired($now) || $resetCode->isUsed() || $resetCode->getAttempts() >= 5) {
+                $this->addFlash('error', 'Invalid or expired reset code.');
+
+                return $this->redirectToRoute('app_reset_password_verify', ['email' => $email]);
+            }
+
+            if (!preg_match('/^\d{6}$/', $code) || !password_verify($code, $resetCode->getCodeHash())) {
+                $resetCode->incrementAttempts();
+                $entityManager->flush();
+                $this->addFlash('error', 'Invalid or expired reset code.');
+
+                return $this->redirectToRoute('app_reset_password_verify', ['email' => $email]);
+            }
+
+            $passwordError = $this->validateNewPassword($newPassword, $confirmPassword);
+            if ($passwordError) {
+                $this->addFlash('error', $passwordError);
+
+                return $this->redirectToRoute('app_reset_password_verify', ['email' => $email]);
+            }
+
+            $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
+            $resetCode->setUsedAt($now);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Password updated successfully. You can now sign in.');
+
+            return $this->redirectToRoute('app_login');
+        }
+
+        return $this->render('security/reset_password_verify.html.twig', [
+            'email' => $email,
+        ]);
+    }
+
     #[Route('/logout', name: 'app_logout', methods: ['GET'])]
     public function logout(SessionInterface $session): Response
     {
         $session->clear();
 
         return $this->redirectToRoute('app_home');
+    }
+
+    private function findUserByEmail(UserRepository $userRepository, string $email): ?User
+    {
+        if ('' === $email) {
+            return null;
+        }
+
+        $user = $userRepository->findOneBy(['email' => $email]);
+        if ($user) {
+            return $user;
+        }
+
+        return $userRepository->createQueryBuilder('u')
+            ->andWhere('LOWER(u.email) = :email')
+            ->setParameter('email', strtolower($email))
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    private function validateNewPassword(string $newPassword, string $confirmPassword): ?string
+    {
+        if (strlen($newPassword) < 8) {
+            return 'Password must be at least 8 characters.';
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            return 'Password confirmation does not match.';
+        }
+
+        return null;
     }
 
     private function isLegacyPasswordValid(User $user, string $plainPassword): bool
@@ -167,7 +322,7 @@ final class SecurityController extends AbstractController
     private function resolveOrCreateDeliveryManProfile(User $user, string $email, DeliveryManRepository $deliveryManRepository, EntityManagerInterface $entityManager): ?DeliveryMan
     {
         $deliveryMan = $deliveryManRepository->createQueryBuilder('dm')
-            ->andWhere('LOWER(dm.email) = :email')
+            ->andWhere('LOWER(dm.email.address) = :email')
             ->setParameter('email', strtolower($email))
             ->setMaxResults(1)
             ->getQuery()
@@ -178,14 +333,14 @@ final class SecurityController extends AbstractController
         }
 
         if ($deliveryMan) {
-            if (!$deliveryMan->getEmail()) {
-                $deliveryMan->setEmail(strtolower($email));
+            if ($deliveryMan->getEmail()->isEmpty()) {
+                $deliveryMan->setEmail(new DeliveryManEmail(strtolower($email)));
             }
             if (!$deliveryMan->getStatus()) {
                 $deliveryMan->setStatus('active');
             }
             if (!$deliveryMan->getUpdated_at()) {
-                $deliveryMan->setUpdated_at(new \DateTimeImmutable());
+                $deliveryMan->setUpdatedAt(new \DateTimeImmutable());
             }
             $entityManager->flush();
 
@@ -202,13 +357,13 @@ final class SecurityController extends AbstractController
 
         $deliveryMan = new DeliveryMan();
         $deliveryMan->setName($displayName);
-        $deliveryMan->setPhone($phone);
-        $deliveryMan->setEmail(strtolower($email));
+        $deliveryMan->setPhone(new Phone($phone));
+        $deliveryMan->setEmail(new DeliveryManEmail(strtolower($email)));
         $deliveryMan->setStatus('active');
         $deliveryMan->setDate_of_joining(new \DateTimeImmutable('today'));
         $deliveryMan->setRating(0.0);
-        $deliveryMan->setCreated_at($now);
-        $deliveryMan->setUpdated_at($now);
+        $deliveryMan->setCreatedAt($now);
+        $deliveryMan->setUpdatedAt($now);
 
         $entityManager->persist($deliveryMan);
         $entityManager->flush();
@@ -231,7 +386,12 @@ final class SecurityController extends AbstractController
 
         $base = (int) $candidate;
         $attempt = 0;
-        while ($deliveryManRepository->findOneBy(['phone' => $candidate])) {
+        while ($deliveryManRepository->createQueryBuilder('dm')
+            ->andWhere('dm.phone.number = :phone')
+            ->setParameter('phone', $candidate)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult()) {
             $attempt++;
             $candidate = str_pad((string) (($base + $attempt) % 100000000), 8, '0', STR_PAD_LEFT);
         }

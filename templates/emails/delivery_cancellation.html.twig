@@ -1,0 +1,101 @@
+{#
+  Delivery Cancellation Email Template
+  Colors: Navy (#1B2A3B), Gold (#A88E5B)
+#}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Delivery Cancelled</title>
+    <style>
+      body {
+        background: #f8f9fa;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #1B2A3B;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        background: #fff;
+        max-width: 600px;
+        margin: 40px auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(27,42,59,0.08);
+        border: 1px solid #A88E5B;
+        overflow: hidden;
+      }
+      .header {
+        background: #1B2A3B;
+        color: #fff;
+        padding: 32px 32px 16px 32px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 2rem;
+        letter-spacing: 1px;
+      }
+      .gold-bar {
+        height: 6px;
+        background: #A88E5B;
+        width: 100%;
+      }
+      .content {
+        padding: 32px;
+      }
+      .content h2 {
+        color: #A88E5B;
+        margin-top: 0;
+      }
+      .footer {
+        background: #f4f4f4;
+        color: #888;
+        text-align: center;
+        padding: 16px 32px;
+        font-size: 0.95rem;
+      }
+      .order-id {
+        background: #1B2A3B;
+        color: #fff;
+        display: inline-block;
+        padding: 6px 18px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin: 16px 0 24px 0;
+        letter-spacing: 1px;
+      }
+      a.button {
+        background: #A88E5B;
+        color: #fff !important;
+        padding: 12px 32px;
+        border-radius: 24px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 24px;
+        transition: background 0.2s;
+      }
+      a.button:hover {
+        background: #8c753e;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Delivery Cancelled</h1>
+      </div>
+      <div class="gold-bar"></div>
+      <div class="content">
+        <h2>Dear {{ recipientName|default('Customer') }},</h2>
+        <p>We regret to inform you that your delivery order has been <span style="color:#A88E5B;font-weight:bold;">cancelled</span> by the delivery partner.</p>
+        <div class="order-id">Order ID: {{ orderId }}</div>
+        <p>If you have any questions or need assistance, please contact our support team.</p>
+        <a href="{{ supportUrl|default('#') }}" class="button">Contact Support</a>
+      </div>
+      <div class="footer">
+        &copy; {{ "now"|date("Y") }} Your Company Name. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>

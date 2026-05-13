@@ -24,6 +24,12 @@
                     <button type="submit" class="btn btn-primary">Create account</button>
                 {{ form_end(form) }}
 
+                <div class="auth-divider"><span>or</span></div>
+                <a href="{{ path('app_google_connect') }}" class="btn btn-google" aria-label="Continue with Google">
+                    <span class="google-mark" aria-hidden="true">G</span>
+                    Continue with Google
+                </a>
+
                 <p class="auth-footer">
                     Already have an account? <a href="{{ path('app_login') }}">Sign In</a>
                 </p>
@@ -133,6 +139,55 @@
 .btn-primary:hover {
     background: linear-gradient(135deg, #b27a1d 0%, #8a5b12 100%);
     transform: translateY(-1px);
+}
+.auth-divider {
+    position: relative;
+    margin: 1.2rem 0 0.9rem;
+    text-align: center;
+}
+.auth-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(184, 135, 42, 0.24);
+}
+.auth-divider span {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    padding: 0 0.8rem;
+    color: var(--text-2);
+    font-size: 0.9rem;
+}
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    background: #fff;
+    color: #2d2a26;
+    border: 1px solid rgba(45, 42, 38, 0.16);
+    box-shadow: 0 10px 24px rgba(45, 42, 38, 0.08);
+}
+.btn-google:hover {
+    background: #f8f9fb;
+    transform: translateY(-1px);
+}
+.google-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #4285f4;
+    background: #fff;
+    border: 1px solid rgba(45, 42, 38, 0.14);
+    font-weight: 800;
 }
 .auth-footer {
     margin-top: 1.4rem;
