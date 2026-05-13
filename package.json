@@ -9,7 +9,7 @@
     "build": "npx encore production"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "browserslist": [
     "> 1%",
