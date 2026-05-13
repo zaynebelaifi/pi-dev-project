@@ -208,42 +208,6 @@
         </div>
       </form>
 
-      <div id="menu-results" data-menu-results>
-        {% if menuSections is defined and menuSections is not empty %}
-          <div class="menu-grid menu-grid-flat">
-          {% for section in menuSections %}
-            {% for dish in section.dishes %}
-              {% set fallbackImage = 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1000&q=80' %}
-              {% set isSmartPick = dish.id in menuHelper.recommendedIds|default([]) %}
-              <div class="menu-card reveal {{ isSmartPick ? 'smart-pick' : '' }}">
-                {% if isSmartPick %}
-                  <span class="smart-pick-badge">Smart pick</span>
-                {% endif %}
-                <img src="{{ dish.imageUrl ?: fallbackImage }}" alt="{{ dish.name }}">
-                <div class="menu-card-content">
-                  <span class="menu-card-category">{{ section.menu.title }}</span>
-                  <h4>{{ dish.name }}</h4>
-                  <p>{{ dish.description ?: 'Freshly prepared signature item from our kitchen.' }}</p>
-                  <span class="price">{{ dish.basePrice|number_format(2, '.', ' ') }} TND</span>
-                  <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}">Add to Cart</button>
-                </div>
-              </div>
-            {% endfor %}
-          {% endfor %}
-            </div>
-          {% if dishPagination is defined %}
-            <div class="menu-pagination" data-menu-pagination>
-              {{ knp_pagination_render(dishPagination) }}
-            </div>
-          {% endif %}
-        {% else %}
-          <div class="menu-grid menu-grid-flat">
-            <div class="menu-card reveal">
-              <div class="menu-card-content">
-                <h4>No matching picks</h4>
-                <p>Try resetting the helper or choosing a different budget, category, or mood.</p>
-                <span class="price">--</span>
-              </div>
       <div id="menuDynamicArea">
         {% if menuSections is defined and menuSections is not empty and selectedSection is defined and selectedSection %}
           <div class="menu-picker-row" style="margin-bottom:2rem;">
@@ -289,7 +253,7 @@
                           <option value="EUR">EUR</option>
                           <option value="CNY">CNY</option>
                         </select>
-                        <button class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}" style="padding:.7rem 1.2rem;font-size:.85rem;white-space:nowrap;">Add</button>
+                        <button type="button" class="add-cart-btn" data-name="{{ dish.name }}" data-price="{{ dish.basePrice|number_format(2, '.', '') }}" style="padding:.7rem 1.2rem;font-size:.85rem;white-space:nowrap;">Add</button>
                       </div>
                     </div>
                   </div>
@@ -1108,16 +1072,6 @@
       margin: 2rem 0 0;
     }
 
-    #menu-results {
-      transition: opacity 0.18s ease, transform 0.18s ease;
-    }
-
-    #menu-results.is-loading {
-      opacity: 0.55;
-      pointer-events: none;
-      transform: translateY(4px);
-    }
-
     .menu-pagination .pagination {
       display: flex;
       gap: 0.4rem;
@@ -1637,23 +1591,6 @@
   const dishFallbackApiUrl = '{{ path("app_api_dish_fallback_image") }}';
   const genericDishFallbackUrl = 'https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?auto=format&fit=crop&w=1200&q=80';
 
-  function bindAddCartButtons(root = document) {
-    root.querySelectorAll('.add-cart-btn').forEach(btn => {
-      if (btn.dataset.cartBound === '1') {
-        return;
-      }
-
-      btn.dataset.cartBound = '1';
-      btn.addEventListener('click', () => {
-        cart.push({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) });
-        updateCart();
-        btn.textContent = 'Added';
-        setTimeout(() => btn.textContent = 'Add to Cart', 1200);
-      });
-    });
-  }
-
-  bindAddCartButtons();
   const menuSection = document.getElementById('menu-section');
   let menuRequestController = null;
 
@@ -2009,7 +1946,20 @@
       return;
     }
 
-    cart.push({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) });
+    event.preventDefault();
+
+    if (btn.disabled || btn.dataset.addPending === '1') {
+      return;
+    }
+
+    const price = parseFloat(btn.dataset.price || '0');
+    if (!Number.isFinite(price)) {
+      return;
+    }
+
+    btn.dataset.addPending = '1';
+    btn.disabled = true;
+    cart.push({ name: btn.dataset.name || 'Menu item', price });
     updateCart();
 
     const originalText = btn.textContent;
@@ -2017,6 +1967,8 @@
     setTimeout(() => {
       if (document.body.contains(btn)) {
         btn.textContent = originalText || 'Add to Cart';
+        btn.disabled = false;
+        delete btn.dataset.addPending;
       }
     }, 1200);
   });
@@ -2046,56 +1998,6 @@
   function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
   window.removeFromCart = removeFromCart;
 
-  const menuResults = document.querySelector('[data-menu-results]');
-
-  function bindMenuPagination() {
-    if (!menuResults) {
-      return;
-    }
-
-    menuResults.querySelectorAll('.menu-pagination a').forEach(link => {
-      if (link.dataset.ajaxBound === '1') {
-        return;
-      }
-
-      link.dataset.ajaxBound = '1';
-      link.addEventListener('click', async event => {
-        event.preventDefault();
-
-        const targetUrl = new URL(link.href, window.location.origin);
-        menuResults.classList.add('is-loading');
-
-        try {
-          const response = await fetch(targetUrl.toString(), {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-          });
-          const html = await response.text();
-          const doc = new DOMParser().parseFromString(html, 'text/html');
-          const nextResults = doc.querySelector('[data-menu-results]');
-
-          if (!nextResults) {
-            window.location.href = targetUrl.toString();
-            return;
-          }
-
-          menuResults.innerHTML = nextResults.innerHTML;
-          history.pushState({}, '', targetUrl.pathname + targetUrl.search + '#menu-section');
-          bindAddCartButtons(menuResults);
-          bindMenuPagination();
-          menuResults.querySelectorAll('.reveal').forEach(el => {
-            el.classList.add('show');
-            observer.observe(el);
-          });
-        } catch (error) {
-          window.location.href = targetUrl.toString();
-        } finally {
-          menuResults.classList.remove('is-loading');
-        }
-      });
-    });
-  }
-
-  bindMenuPagination();
   // ── FEEDBACK WIDGET ──────────────────────────────────────
   const feedbackSection = document.getElementById('feedback');
   const API_BASE = feedbackSection?.dataset.feedbackBase || '';
