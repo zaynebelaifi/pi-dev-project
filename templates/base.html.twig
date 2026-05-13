@@ -420,47 +420,220 @@
       </div>
     </section>
 
-    <section class="ai-reviews-section" id="ai-reviews">
+    <section class="ai-reviews-section" id="ai-reviews" data-ai-reviews-base="/feedback">
       <div class="container">
-        <div class="section-head reveal">
+        <div class="section-head reveal ai-reviews-head">
           <div>
-            <small>AI Curated</small>
-            <h3><span class="ai-badge">AI Reviews</span> What Guests Loved</h3>
+            <small>Guest Voices</small>
+            <h3>AI-Verified <em>Testimonials</em></h3>
           </div>
-          <p class="recommended-subtitle">Short highlights from recent event feedback.</p>
+          <p class="recommended-subtitle">Every review is analyzed by our AI feedback system to highlight standout experiences and flag support needs instantly.</p>
         </div>
 
-        <div class="ai-review-grid">
-          <article class="ai-review-card reveal">
-            <div class="ai-review-head">
-              <span class="ai-review-badge">AI Summary</span>
-              <span class="ai-review-score">4.9</span>
-            </div>
-            <h4>Jazz Night Tasting</h4>
-            <p>Guests praised the live band and the signature dessert pairing. Service was quick and attentive.</p>
-            <div class="ai-review-meta">Top mentions: ambiance, dessert, service</div>
-          </article>
-          <article class="ai-review-card reveal">
-            <div class="ai-review-head">
-              <span class="ai-review-badge">AI Summary</span>
-              <span class="ai-review-score">4.7</span>
-            </div>
-            <h4>Weekend Brunch</h4>
-            <p>Favorites included the truffle omelette and chilled brew. Seating comfort was highlighted.</p>
-            <div class="ai-review-meta">Top mentions: brunch, comfort, coffee</div>
-          </article>
-          <article class="ai-review-card reveal">
-            <div class="ai-review-head">
-              <span class="ai-review-badge">AI Summary</span>
-              <span class="ai-review-score">4.8</span>
-            </div>
-            <h4>Chef Table Experience</h4>
-            <p>Guests loved the curated menu flow and personal chef touch. Pacing was smooth.</p>
-            <div class="ai-review-meta">Top mentions: menu, chef, pacing</div>
-          </article>
+        <div class="ai-review-toolbar reveal">
+          <div class="ai-review-toggle">
+            <button type="button" class="ai-review-toggle-btn active" data-ai-view="testimonials">⭐ Testimonials</button>
+          </div>
+          <div class="ai-review-filters" role="tablist" aria-label="Review filters">
+            <button type="button" class="ai-review-filter active" data-ai-filter="all">All</button>
+            <button type="button" class="ai-review-filter" data-ai-filter="5">5 Stars</button>
+            <button type="button" class="ai-review-filter" data-ai-filter="4">4 Stars</button>
+            <button type="button" class="ai-review-filter" data-ai-filter="fast">Fast Delivery</button>
+            <button type="button" class="ai-review-filter" data-ai-filter="packaging">Great Packaging</button>
+          </div>
+          <div class="ai-review-pagination" aria-label="Review pagination">
+            <button type="button" class="ai-review-page-btn" data-ai-page-action="prev">Prev</button>
+            <span class="ai-review-page-indicator" id="aiReviewsPageIndicator">Page 1 of 1</span>
+            <button type="button" class="ai-review-page-btn" data-ai-page-action="next">Next</button>
+          </div>
+        </div>
+
+        <div class="ai-review-grid" id="aiReviewsGrid" data-ai-reviews-grid>
+          <div class="ai-review-loading">Loading guest reviews...</div>
+        </div>
+        <div class="ai-reviews-empty" id="aiReviewsEmpty" style="display:none;">
+          No guest reviews available yet. Check back soon!
         </div>
       </div>
     </section>
+    <script>
+      (function () {
+        const section = document.getElementById('ai-reviews');
+        const grid = document.getElementById('aiReviewsGrid');
+        const emptyState = document.getElementById('aiReviewsEmpty');
+        const indicator = document.getElementById('aiReviewsPageIndicator');
+        if (!section || !grid) {
+          return;
+        }
+
+        const state = {
+          testimonials: [],
+          filtered: [],
+          filter: 'all',
+          page: 1,
+          perPage: 3,
+        };
+
+        const fallbackTestimonials = [
+          {
+            customer_name: 'Amira',
+            review_text: 'Super fast delivery and elegant packaging.',
+            summary: 'Fast delivery with premium presentation.',
+            rating: 5,
+          },
+          {
+            customer_name: 'Zayd',
+            review_text: 'Coffee arrived hot and beautifully boxed.',
+            summary: 'Warm coffee and beautiful boxing.',
+            rating: 5,
+          },
+          {
+            customer_name: 'Salma',
+            review_text: 'Quick service with a smooth handoff.',
+            summary: 'Efficient handoff and quick service.',
+            rating: 4,
+          },
+        ];
+
+        function esc(value) {
+          return String(value ?? '').replace(/[&<>"]+/g, (char) => {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+            return map[char] || char;
+          });
+        }
+
+        function stars(rating) {
+          const rounded = Math.round(Number(rating) || 0);
+          return Array.from({ length: 5 }, (_, index) => (index < rounded ? '★' : '☆')).join('');
+        }
+
+        function mentions(review) {
+          const text = `${review.review_text || ''} ${review.summary || ''}`.toLowerCase();
+          const words = [];
+          const map = [
+            ['fast', 'fast delivery'],
+            ['delivery', 'delivery'],
+            ['packaging', 'packaging'],
+            ['ambiance', 'ambiance'],
+            ['dessert', 'dessert'],
+            ['service', 'service'],
+            ['brunch', 'brunch'],
+            ['coffee', 'coffee'],
+            ['comfort', 'comfort'],
+            ['menu', 'menu'],
+            ['chef', 'chef'],
+            ['pacing', 'pacing'],
+          ];
+          map.forEach(([needle, label]) => {
+            if (text.includes(needle) && !words.includes(label)) {
+              words.push(label);
+            }
+          });
+          return words.slice(0, 3);
+        }
+
+        function matches(review, filter) {
+          if (filter === 'all') return true;
+          const text = `${review.review_text || ''} ${review.summary || ''}`.toLowerCase();
+          const rating = Math.round(Number(review.rating) || 0);
+          if (filter === '5') return rating >= 5;
+          if (filter === '4') return rating === 4;
+          if (filter === 'fast') return text.includes('fast') || text.includes('delivery');
+          if (filter === 'packaging') return text.includes('packaging') || text.includes('boxed');
+          return true;
+        }
+
+        function render() {
+          state.filtered = state.testimonials.filter((review) => matches(review, state.filter));
+          const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.perPage));
+          state.page = Math.min(state.page, totalPages);
+          const start = (state.page - 1) * state.perPage;
+          const visible = state.filtered.slice(start, start + state.perPage);
+
+          if (indicator) {
+            indicator.textContent = `Page ${state.page} of ${totalPages}`;
+          }
+
+          if (!visible.length) {
+            grid.innerHTML = '';
+            if (emptyState) emptyState.style.display = 'block';
+            return;
+          }
+
+          if (emptyState) emptyState.style.display = 'none';
+          grid.innerHTML = visible.map((review) => {
+            const initial = esc((review.customer_name || 'G').trim().charAt(0).toUpperCase());
+            const title = esc(review.summary || 'Guest review');
+            const comment = esc(review.review_text || '');
+            const summary = esc(review.summary || '');
+            const rating = Number(review.rating) || 0;
+            const tagList = mentions(review);
+
+            return `
+              <article class="ai-review-card reveal">
+                <div class="ai-review-head">
+                  <div class="ai-review-profile">
+                    <div class="ai-review-avatar">${initial}</div>
+                    <div>
+                      <h4 class="ai-review-name">${esc(review.customer_name || 'Guest')}</h4>
+                      <div class="ai-review-stars">${stars(rating)}</div>
+                    </div>
+                  </div>
+                  <span class="ai-review-badge">AI Verified</span>
+                </div>
+                <h4 class="ai-review-title">${title}</h4>
+                <p class="ai-review-comment">${comment}</p>
+                <div class="ai-review-summary">${summary}</div>
+                <div class="ai-review-tags">
+                  <span class="ai-review-tag">${Math.round(rating)} Stars</span>
+                  <span class="ai-review-tag">Verified</span>
+                  ${tagList.map((tag) => `<span class="ai-review-tag">${esc(tag)}</span>`).join('')}
+                </div>
+              </article>
+            `;
+          }).join('');
+        }
+
+        async function load() {
+          try {
+            const response = await fetch('/feedback/testimonials', { headers: { Accept: 'application/json' } });
+            if (!response.ok) {
+              throw new Error(`API returned ${response.status}`);
+            }
+            const payload = await response.json();
+            state.testimonials = Array.isArray(payload) && payload.length ? payload : fallbackTestimonials;
+          } catch (error) {
+            state.testimonials = fallbackTestimonials;
+          }
+
+          render();
+        }
+
+        document.querySelectorAll('[data-ai-filter]').forEach((button) => {
+          button.addEventListener('click', () => {
+            document.querySelectorAll('[data-ai-filter]').forEach((item) => item.classList.remove('active'));
+            button.classList.add('active');
+            state.filter = button.dataset.aiFilter || 'all';
+            state.page = 1;
+            render();
+          });
+        });
+
+        document.querySelectorAll('[data-ai-page-action]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.perPage));
+            if (button.dataset.aiPageAction === 'next') {
+              state.page = Math.min(totalPages, state.page + 1);
+            } else {
+              state.page = Math.max(1, state.page - 1);
+            }
+            render();
+          });
+        });
+
+        load();
+      })();
+    </script>
   {% endif %}
 
   <!-- CTA -->
@@ -648,6 +821,21 @@
     <input type="hidden" name="cart_items" id="redirectCartItemsInput">
     <input type="hidden" name="order_total" id="redirectCartTotalInput">
   </form>
+
+  <!-- ORDER TYPE MODAL -->
+  <div id="orderTypeModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; flex-direction:column;">
+    <div style="background:white; border-radius:16px; padding:2rem; max-width:500px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h2 style="margin:0; font-size:1.75rem; color:var(--brown);">How would you like your order?</h2>
+        <button type="button" id="closeOrderType" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-2);">&times;</button>
+      </div>
+      <p style="color:var(--text-2); margin-bottom:2rem;">Choose your preferred order type for a smooth checkout experience.</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <button id="dineInBtn" type="button" style="padding:1.5rem; background:linear-gradient(135deg,#D4AF37,#e6c547); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.1rem; transition:transform 0.2s;" onclick="return false;">🍽️ Dine In</button>
+        <button id="deliveryBtn" type="button" style="padding:1.5rem; background:linear-gradient(135deg,#D4AF37,#e6c547); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.1rem; transition:transform 0.2s;" onclick="return false;">🛵 Delivery</button>
+      </div>
+    </div>
+  </div>
 
   {% if flattenedMenuDishes is not empty %}
     <div

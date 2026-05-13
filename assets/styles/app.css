@@ -2060,40 +2060,117 @@
     }
 
     /* AI REVIEWS */
-    .ai-reviews-section{padding:1.2rem 0 2.2rem}
-    .ai-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
-    .ai-review-card{
-      border:1px solid var(--line);
-      border-radius:22px;
-      padding:1rem 1.1rem 1.2rem;
-      background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(249,244,236,.98));
-      box-shadow:0 10px 0 #eee3cd,0 18px 30px rgba(92,61,30,.08);
-      transition:.25s ease;
+    .ai-reviews-section{
+      padding:2rem 0 2.6rem;
+      background:linear-gradient(180deg,rgba(252,248,240,.72),rgba(248,241,231,.95));
+      border-top:1px solid rgba(184,135,42,.08);
+      border-bottom:1px solid rgba(184,135,42,.08);
     }
-    .ai-review-card:hover{transform:translateY(4px);box-shadow:0 7px 0 #eee3cd,0 12px 22px rgba(92,61,30,.08)}
-    .ai-review-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
-    .ai-review-badge{
-      display:inline-flex;
+    .ai-reviews-head{align-items:flex-start;gap:2rem}
+    .ai-reviews-head h3{display:flex;align-items:baseline;gap:.75rem;flex-wrap:wrap}
+    .ai-reviews-head em{font-style:italic;color:var(--gold)}
+    .ai-review-toolbar{
+      display:flex;
       align-items:center;
-      padding:.28rem .7rem;
-      border-radius:999px;
-      background:rgba(184,135,42,.12);
-      color:var(--brown);
-      font-size:.62rem;
-      font-weight:700;
-      letter-spacing:.12em;
-      text-transform:uppercase;
+      justify-content:space-between;
+      gap:1rem;
+      flex-wrap:wrap;
+      margin:1.5rem 0 1.4rem;
     }
-    .ai-review-score{font-weight:700;color:var(--espresso);font-size:.95rem}
-    .ai-review-card h4{margin:0 0 .45rem;font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--espresso)}
-    .ai-review-card p{margin:0;color:var(--text-2);line-height:1.55;font-size:.92rem}
-    .ai-review-meta{margin-top:.6rem;color:var(--text-3);font-size:.72rem;letter-spacing:.04em}
+    .ai-review-toggle,.ai-review-pagination,.ai-review-filters{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .ai-review-filter,.ai-review-toggle-btn,.ai-review-page-btn{
+      appearance:none;
+      border:1px solid rgba(184,135,42,.16);
+      border-radius:999px;
+      padding:.7rem 1.15rem;
+      background:linear-gradient(180deg,#fff,rgba(255,250,242,.96));
+      color:var(--espresso);
+      font-family:'Jost',sans-serif;
+      font-size:.78rem;
+      font-weight:700;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      box-shadow:0 2px 0 rgba(143,106,31,.18);
+      transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .ai-review-toggle-btn.active,.ai-review-filter.active{
+      background:linear-gradient(180deg,#e6c05f 0%,#d6a94a 55%,#b6862a 100%);
+      color:#fff;
+      box-shadow:0 6px 0 #936a1d,0 14px 28px rgba(92,61,30,.12);
+      transform:translateY(-1px);
+    }
+    .ai-review-page-indicator{font-size:.8rem;letter-spacing:.1em;color:var(--text-3);text-transform:uppercase}
+    .ai-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.2rem}
+    .ai-review-card{
+      position:relative;
+      border:1px solid rgba(184,135,42,.16);
+      border-radius:28px;
+      padding:1.25rem 1.25rem 1.15rem;
+      background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(252,248,240,.98));
+      box-shadow:0 12px 0 #f0e2c8,0 22px 34px rgba(92,61,30,.08);
+      transition:transform .25s ease, box-shadow .25s ease;
+      min-height:250px;
+    }
+    .ai-review-card:hover{transform:translateY(4px);box-shadow:0 8px 0 #f0e2c8,0 14px 24px rgba(92,61,30,.08)}
+    .ai-review-card.is-hidden{display:none}
+    .ai-review-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.9rem}
+    .ai-review-profile{display:flex;align-items:center;gap:.8rem;min-width:0}
+    .ai-review-avatar{
+      width:2.8rem;height:2.8rem;border-radius:50%;
+      display:grid;place-items:center;
+      background:linear-gradient(180deg,#f4e4bf,#ead09b);
+      color:var(--espresso);
+      font-family:'Cormorant Garamond',serif;
+      font-size:1.2rem;
+      font-weight:700;
+      box-shadow:inset 0 0 0 1px rgba(184,135,42,.14);
+      flex:0 0 auto;
+    }
+    .ai-review-name{margin:0;color:var(--espresso);font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:700;line-height:1.05}
+    .ai-review-stars{display:flex;align-items:center;gap:.1rem;color:#d39a29;font-size:.82rem;letter-spacing:.05em;margin-top:.25rem}
+    .ai-review-badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:.44rem .9rem;border-radius:999px;
+      background:rgba(59,132,95,.12);color:#2f7f4f;
+      font-size:.66rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .ai-review-score{font-weight:700;color:var(--espresso);font-size:1rem}
+    .ai-review-title{margin:0 0 .55rem;font-family:'Cormorant Garamond',serif;font-size:1.35rem;line-height:1.1;color:var(--espresso)}
+    .ai-review-comment{margin:0;color:var(--text-2);line-height:1.6;font-size:.95rem}
+    .ai-review-summary{margin:.85rem 0 0;color:var(--text-3);font-size:.9rem;line-height:1.6}
+    .ai-review-tags{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-top:1rem}
+    .ai-review-tag{
+      display:inline-flex;align-items:center;
+      padding:.36rem .72rem;border-radius:999px;
+      background:rgba(184,135,42,.1);color:var(--brown);
+      font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    }
+    .ai-reviews-empty{
+      margin-top:1rem;
+      padding:1.5rem 1.25rem;
+      border:1px dashed rgba(184,135,42,.2);
+      border-radius:18px;
+      background:rgba(255,255,255,.72);
+      color:var(--text-3);
+      text-align:center;
+    }
+    .ai-review-loading{
+      grid-column:1/-1;
+      text-align:center;
+      padding:2rem;
+      color:var(--text-3);
+    }
 
     @media(max-width:980px){
       .ai-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .ai-review-toolbar{align-items:flex-start}
     }
     @media(max-width:640px){
       .ai-review-grid{grid-template-columns:1fr}
+      .ai-review-head{align-items:flex-start}
+      .ai-review-toolbar,.ai-review-filters,.ai-review-pagination{width:100%}
+      .ai-review-page-btn,.ai-review-filter,.ai-review-toggle-btn{width:100%;justify-content:center}
     }
     .recommendation-charity,.recommendation-meta,.recommendation-description,.recommendation-reason{
       margin:.45rem 0 0;

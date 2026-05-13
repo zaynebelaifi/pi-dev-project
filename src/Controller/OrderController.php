@@ -153,11 +153,11 @@ final class OrderController extends AbstractController
         $cartItems  = $request->query->get('cart_items');
         $orderTotal = $request->query->get('order_total');
         $orderType  = $request->query->get('order_type');
-        $paymentMethod = strtoupper(trim((string) $request->query->get('payment_method', '')));
+        $paymentMethod = strtoupper(trim((string) $request->query->get('payment_method', 'CASH')));
         $isAjax = $request->query->getBoolean('ajax', false);
         $sessionUserId = (int) $request->getSession()->get('user_id', 0);
 
-        if (!$cartItems || !$orderTotal || !$orderType || $paymentMethod === '') {
+        if (!$cartItems || !$orderTotal || !$orderType) {
             if (!$isAjax) {
                 $this->addFlash('error', 'Your cart is empty. Add items before ordering.');
                 return $this->redirect($request->headers->get('referer') ?: $this->generateUrl('app_home'));
@@ -180,6 +180,10 @@ final class OrderController extends AbstractController
 
         $clientId = $this->resolveClientIdForOrder($em->getConnection(), $sessionUserId);
         if ($clientId === null) {
+            if (!$isAjax) {
+                $this->addFlash('error', 'Unable to identify a valid client account. Please sign in.');
+                return $this->redirectToRoute('app_login');
+            }
             return new JsonResponse([
                 'success' => false,
                 'message' => 'Unable to identify a valid client account for this order. Please sign in and try again.',
@@ -204,13 +208,33 @@ final class OrderController extends AbstractController
             } else {
                 $request->getSession()->remove('checkout_order_id');
             }
+
+            // Handle AJAX requests
+            if ($isAjax) {
+                return new JsonResponse([
+                    'success'  => true,
+                    'message'  => 'Your order has been created successfully!',
+                    'order_id' => $order->getOrderId(),
+                ]);
+            }
+
+            // Handle browser requests
+            if ($orderType === 'DINE_IN') {
+                $this->addFlash('success', 'Your dine-in order has been created! Your order is now being prepared.');
+                return $this->redirectToRoute('app_home');
+            }
         } catch (\Throwable $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Failed to create order: ' . $e->getMessage(),
-            ], 500);
+            if ($isAjax) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Failed to create order: ' . $e->getMessage(),
+                ], 500);
+            }
+            $this->addFlash('error', 'Failed to create order: ' . $e->getMessage());
+            return $this->redirectToRoute('app_home');
         }
 
+        // This should not be reached - DELIVERY orders go to DeliveryController
         return new JsonResponse([
             'success'  => true,
             'message'  => 'Your order has been created successfully!',
