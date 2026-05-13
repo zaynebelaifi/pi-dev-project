@@ -412,18 +412,6 @@ final class SecurityController extends AbstractController
             return null;
         }
 
-        $connection = $userRepository->getEntityManager()->getConnection();
-        $userId = $connection->fetchOne(
-            'SELECT id FROM `users` WHERE LOWER(email) = :email ORDER BY id DESC LIMIT 1',
-            ['email' => $normalizedEmail]
-        );
-
-        if ($userId === false || $userId === null) {
-            return null;
-        }
-
-        $user = $userRepository->find((int) $userId);
-
-        return $user instanceof User ? $user : null;
+        return $userRepository->findOneByNormalizedEmail($normalizedEmail);
     }
 }

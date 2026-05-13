@@ -61,6 +61,7 @@ final class DeliveryManController extends AbstractController
 
         return $this->render('delivery_man/index.html.twig', [
             'delivery_men' => $deliveryMen,
+            'pagination' => $pagination,
             'search' => $search,
             'sort' => $sort,
             'direction' => $direction,

@@ -86,19 +86,27 @@ final class landingpageController extends AbstractController
         if (!$user instanceof User) {
             $sessionUserId = $session->get('user_id');
             if (is_numeric($sessionUserId)) {
-                $user = $this->userRepository->find((int) $sessionUserId);
+                try {
+                    $user = $this->userRepository->find((int) $sessionUserId);
+                } catch (\Throwable $exception) {
+                    $user = null;
+                }
             }
         }
 
         $isCustomer = $user instanceof User
             && in_array($user->getRole(), ['ROLE_CLIENT', 'ROLE_CUSTOMER'], true);
 
-        $menus = $this->menuRepository->createQueryBuilder('m')
-            ->where('m.isActive = :active')
-            ->setParameter('active', true)
-            ->orderBy('m.created_at', 'ASC')
-            ->getQuery()
-            ->getResult();
+        try {
+            $menus = $this->menuRepository->createQueryBuilder('m')
+                ->where('m.isActive = :active')
+                ->setParameter('active', true)
+                ->orderBy('m.created_at', 'ASC')
+                ->getQuery()
+                ->getResult();
+        } catch (\Throwable $exception) {
+            $menus = [];
+        }
 
         $menuSections = [];
         $flatMenuItems = [];
@@ -136,20 +144,25 @@ final class landingpageController extends AbstractController
             }
         }
 
-        $donationEvents = $this->foodDonationEventRepository->createQueryBuilder('e')
-            ->where('e.event_date >= :now')
-            ->setParameter('now', new \DateTimeImmutable('now'))
-            ->orderBy('e.event_date', 'ASC')
-            ->setMaxResults(6)
-            ->getQuery()
-            ->getResult();
-
-        if (count($donationEvents) === 0) {
+        $donationEvents = [];
+        try {
             $donationEvents = $this->foodDonationEventRepository->createQueryBuilder('e')
-                ->orderBy('e.event_date', 'DESC')
+                ->where('e.event_date >= :now')
+                ->setParameter('now', new \DateTimeImmutable('now'))
+                ->orderBy('e.event_date', 'ASC')
                 ->setMaxResults(6)
                 ->getQuery()
                 ->getResult();
+
+            if (count($donationEvents) === 0) {
+                $donationEvents = $this->foodDonationEventRepository->createQueryBuilder('e')
+                    ->orderBy('e.event_date', 'DESC')
+                    ->setMaxResults(6)
+                    ->getQuery()
+                    ->getResult();
+            }
+        } catch (\Throwable $exception) {
+            $donationEvents = [];
         }
 
         $isUserLoggedIn = $user instanceof User;
@@ -160,25 +173,37 @@ final class landingpageController extends AbstractController
             $donationEvents
         )));
 
-        if ($isCustomer && $eventIds !== [] && $user instanceof User) {
-            $registeredEventIds = $this->eventRegistrationRepository->findRegisteredEventIdsForUserId(
-                (int) $user->getId(),
-                $eventIds
+        try {
+            if ($isCustomer && $eventIds !== [] && $user instanceof User) {
+                $registeredEventIds = $this->eventRegistrationRepository->findRegisteredEventIdsForUserId(
+                    (int) $user->getId(),
+                    $eventIds
+                );
+            }
+
+            if ($isCustomer && $user instanceof User) {
+                $myRegisteredEvents = $this->foodDonationEventRepository->findByRegisteredUser($user);
+            }
+
+            $myEventIds = array_values(array_unique(array_filter(array_map(
+                static fn ($event): ?int => $event->getDonationEventId(),
+                $myRegisteredEvents
+            ))));
+            $registrationCounts = $this->eventRegistrationRepository->countByEventIds(
+                array_values(array_unique(array_merge($eventIds, $myEventIds)))
             );
+        } catch (\Throwable $exception) {
+            $registeredEventIds = [];
+            $myRegisteredEvents = [];
+            $registrationCounts = [];
         }
-
-        if ($isCustomer && $user instanceof User) {
-            $myRegisteredEvents = $this->foodDonationEventRepository->findByRegisteredUser($user);
-        }
-
-        $myEventIds = array_values(array_unique(array_filter(array_map(
-            static fn ($event): ?int => $event->getDonationEventId(),
-            $myRegisteredEvents
-        ))));
-        $registrationCounts = $this->eventRegistrationRepository->countByEventIds(
-            array_values(array_unique(array_merge($eventIds, $myEventIds)))
-        );
         $currentWeather = $this->openWeatherMapService->getCurrentByCity('Tunis');
+        $availableTables = [];
+        try {
+            $availableTables = $this->restaurantTableRepository->findBy(['status' => 'AVAILABLE']);
+        } catch (\Throwable $exception) {
+            $availableTables = [];
+        }
 
         return $this->render('base.html.twig', [
             'controller_name' => 'landingpageController',
@@ -186,7 +211,7 @@ final class landingpageController extends AbstractController
             'flatMenuItems' => $flatMenuItems,
             'menuPageSize' => self::MENU_PAGE_SIZE,
             'currentWeather' => $currentWeather,
-            'availableTables' => $this->restaurantTableRepository->findBy(['status' => 'AVAILABLE']),
+            'availableTables' => $availableTables,
             'donationEvents' => $donationEvents,
             'isUserLoggedIn' => $isUserLoggedIn,
             'registeredEventIds' => $registeredEventIds,

@@ -35,7 +35,7 @@ final class LoginController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $user = $userRepository->findOneBy(['email' => $email]);
+        $user = $userRepository->findOneByNormalizedEmail($email);
         if (!$user instanceof User || !$passwordHasher->isPasswordValid($user, $password) || $user->isBanned()) {
             return new JsonResponse([
                 'message' => 'Invalid credentials.',

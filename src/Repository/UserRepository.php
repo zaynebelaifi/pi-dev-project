@@ -24,12 +24,23 @@ class UserRepository extends ServiceEntityRepository
      */
     public function findByNormalizedEmail(string $email): array
     {
-        return $this->createQueryBuilder('u')
-            ->andWhere('LOWER(u.email) = :email')
-            ->setParameter('email', strtolower(trim($email)))
-            ->orderBy('u.id', 'DESC')
-            ->getQuery()
-            ->getResult();
+        $normalizedEmail = strtolower(trim($email));
+
+        try {
+            return $this->createQueryBuilder('u')
+                ->andWhere('LOWER(u.email) = :email')
+                ->setParameter('email', $normalizedEmail)
+                ->orderBy('u.id', 'DESC')
+                ->getQuery()
+                ->getResult();
+        } catch (\Throwable $exception) {
+            return $this->findLegacyUsersByNormalizedEmail($normalizedEmail);
+        }
+    }
+
+    public function findOneByNormalizedEmail(string $email): ?User
+    {
+        return $this->findByNormalizedEmail($email)[0] ?? null;
     }
 
     /**
@@ -81,5 +92,36 @@ class UserRepository extends ServiceEntityRepository
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * @return User[]
+     */
+    private function findLegacyUsersByNormalizedEmail(string $email): array
+    {
+        try {
+            $rows = $this->getEntityManager()->getConnection()->fetchAllAssociative(
+                'SELECT id, email, password, role FROM `user1` WHERE LOWER(email) = :email ORDER BY id DESC',
+                ['email' => $email]
+            );
+        } catch (\Throwable $exception) {
+            return [];
+        }
+
+        $users = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $user = new User();
+            $user->setId((int) ($row['id'] ?? 0));
+            $user->setEmail((string) ($row['email'] ?? ''));
+            $user->setPassword((string) ($row['password'] ?? ''));
+            $user->setRole((string) ($row['role'] ?? 'ROLE_CLIENT'));
+            $users[] = $user;
+        }
+
+        return $users;
     }
 }
