@@ -37,29 +37,11 @@ final class WeatherImpactService
             $item->expiresAfter(600);
 
             try {
-<<<<<<< Updated upstream
-                $response = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [
-                    'query' => [
-                        'latitude' => $lat,
-                        'longitude' => $lon,
-                        'current' => 'temperature_2m',
-                        'timezone' => 'auto',
-                    ],
-                    'timeout' => 8,
-                ]);
-
-                $payload = $response->toArray(false);
-                $temperature = isset($payload['current']['temperature_2m']) ? (float) $payload['current']['temperature_2m'] : null;
-
-                if (null === $temperature) {
-                    return $this->fallbackWeather('Temperature data unavailable from API response.');
-=======
                 if (trim($this->openWeatherMapApiKey) !== '') {
                     $openWeatherImpact = $this->fetchOpenWeatherImpact($lat, $lon);
                     if ($openWeatherImpact !== null) {
                         return $openWeatherImpact;
                     }
->>>>>>> Stashed changes
                 }
 
                 $openMeteoImpact = $this->fetchOpenMeteoImpact($lat, $lon);

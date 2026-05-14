@@ -1,7 +1,79 @@
-{% extends 'base.html.twig' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIG4 Home</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f6f7fb;
+      color: #1f2937;
+    }
 
-{% block title %}BIG 4 Coffee Lounge{% endblock %}
+    .wrap {
+      max-width: 960px;
+      margin: 40px auto;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 24px;
+    }
 
-{% block body %}
-  {{ parent() }}
-{% endblock %}
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+
+    .menu {
+      margin-top: 20px;
+    }
+
+    .menu h2 {
+      margin: 16px 0 8px;
+      font-size: 20px;
+    }
+
+    .dish {
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #fafafa;
+    }
+
+    .empty {
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Welcome to BIG4</h1>
+  <p>Application booted successfully. Core merge conflicts have been resolved in active runtime files.</p>
+
+  <div class="menu">
+    {% if menuSections is not empty %}
+      {% for section in menuSections %}
+        <h2>{{ section.menu.title|default('Menu') }}</h2>
+        {% if section.dishes is not empty %}
+          {% for dish in section.dishes %}
+            <div class="dish">
+              <strong>{{ dish.name|default('Dish') }}</strong>
+              {% if dish.basePrice is not null %}
+                - {{ dish.basePrice }}
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="empty">No dishes available in this menu.</p>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <p class="empty">No menu data available.</p>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

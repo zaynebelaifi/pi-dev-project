@@ -3,8 +3,6 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
-<<<<<<< Updated upstream
-=======
 
 orders_reservations_analytics_bundle_controllers:
     resource:
@@ -29,4 +27,3 @@ donation_item_delete_event:
     path: /admin/donation-items/{id}/delete-event
     controller: App\Controller\DonationItemController::deleteEvent
     methods: [POST]
->>>>>>> Stashed changes

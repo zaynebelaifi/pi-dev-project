@@ -132,17 +132,6 @@ final class FoodDonationEventController extends AbstractController
         if ($redirect = $this->denyUnlessAdmin($request)) {
             return $redirect;
         }
-<<<<<<< Updated upstream
-=======
-
-        $eventId = (int) ($foodDonationEvent->getDonationEventId() ?? 0);
-        $rawItems = $eventId > 0 ? $this->foodDonationItemRepository->findByDonationEventId($eventId) : [];
-        $eventItems = array_map(static fn (array $item): array => [
-            'name' => (string) ($item['dishName'] ?? 'Unnamed item'),
-            'quantity' => (int) ($item['quantity'] ?? 0),
-            'itemId' => (int) ($item['itemId'] ?? 0),
-        ], $rawItems);
->>>>>>> Stashed changes
 
         $eventId = (int) ($foodDonationEvent->getDonationEventId() ?? 0);
         $rawItems = $eventId > 0 ? $this->foodDonationItemRepository->findByDonationEventId($eventId) : [];
@@ -303,8 +292,6 @@ final class FoodDonationEventController extends AbstractController
         return $this->redirectToRoute('app_food_donation_event_index', [], Response::HTTP_SEE_OTHER);
     }
 
-<<<<<<< Updated upstream
-=======
     #[Route('/{donation_event_id}/export-pdf', name: 'app_food_donation_event_export_pdf', methods: ['GET'])]
     public function exportPdf(FoodDonationEvent $foodDonationEvent): Response
     {
@@ -400,8 +387,6 @@ final class FoodDonationEventController extends AbstractController
 
         return $this->redirectToRoute('app_food_donation_event_index');
     }
-
->>>>>>> Stashed changes
     private function denyUnlessAdmin(Request $request): ?Response
     {
         if ($request->getSession()->get('user_role') !== 'ROLE_ADMIN') {

@@ -47,8 +47,6 @@
             "./migrations/.gitignore"
         ]
     },
-<<<<<<< Updated upstream
-=======
     "knplabs/knp-paginator-bundle": {
         "version": "v6.10.0"
     },
@@ -100,7 +98,6 @@
             "./phpstan.dist.neon"
         ]
     },
->>>>>>> Stashed changes
     "phpunit/phpunit": {
         "version": "11.5",
         "recipe": {
@@ -328,8 +325,6 @@
             "./templates/base.html.twig"
         ]
     },
-<<<<<<< Updated upstream
-=======
     "symfony/uid": {
         "version": "6.4",
         "recipe": {
@@ -345,7 +340,6 @@
     "symfony/ux-chartjs": {
         "version": "v2.35.0"
     },
->>>>>>> Stashed changes
     "symfony/ux-turbo": {
         "version": "2.30",
         "recipe": {

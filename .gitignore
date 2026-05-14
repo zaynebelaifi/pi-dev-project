@@ -19,8 +19,6 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
-<<<<<<< Updated upstream
-=======
 
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
@@ -29,4 +27,3 @@
 ###> phpstan/phpstan ###
 phpstan.neon
 ###< phpstan/phpstan ###
->>>>>>> Stashed changes

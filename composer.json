@@ -13,14 +13,13 @@
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.5",
         "dompdf/dompdf": "^3.0",
-<<<<<<< Updated upstream
-=======
         "gemini-api-php/client": "^1.7",
         "knplabs/knp-paginator-bundle": "^6.10",
+        "knpuniversity/oauth2-client-bundle": "^2.20",
+        "league/oauth2-google": "^5.0",
         "lexik/jwt-authentication-bundle": "^2.18",
         "nucleos/dompdf-bundle": "^4.3",
         "nyholm/psr7": "^1.8",
->>>>>>> Stashed changes
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpmailer/phpmailer": "^7.0",
         "phpstan/phpdoc-parser": "^2.3",
@@ -52,24 +51,16 @@
         "symfony/string": "6.4.*",
         "symfony/translation": "6.4.*",
         "symfony/twig-bundle": "6.4.*",
-<<<<<<< Updated upstream
-        "symfony/ux-turbo": "^2.30",
-=======
         "symfony/ux-chartjs": "*",
         "symfony/ux-turbo": "^2.35",
->>>>>>> Stashed changes
         "symfony/validator": "6.4.*",
         "symfony/web-link": "6.4.*",
         "symfony/yaml": "6.4.*",
         "twig/extra-bundle": "^2.12|^3.0",
-<<<<<<< Updated upstream
-        "twig/twig": "^2.12|^3.0"
-=======
         "twig/twig": "^2.12|^3.0",
         "twilio/sdk": "^8.11",
         "web-auth/webauthn-symfony-bundle": "^5.2",
         "webmozart/assert": "1.11"
->>>>>>> Stashed changes
     },
     "config": {
         "allow-plugins": {
