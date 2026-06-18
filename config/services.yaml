@@ -33,8 +33,10 @@ services:
 
     App\Service\CustomerAiBotService:
         arguments:
-            $endpoint: '%env(string:FREE_CHAT_API_URL)%'
-            $timeout: '%env(int:FREE_CHAT_TIMEOUT)%'
+            $hfApiUrl: '%env(string:HF_API_URL)%'
+            $hfApiToken: '%env(string:HF_API_TOKEN)%'
+            $hfModel: '%env(string:HF_MODEL)%'
+            $timeout: '%env(int:HF_TIMEOUT)%'
 
     App\Service\PaymentConfirmationMailer:
         arguments:
